@@ -1,0 +1,119 @@
+/* Layout: A4 sheets of 3x3 poker cards (63x88 mm) with dashed cut lines. Ink-only black on white.
+   Front = engraved title + level seal, stat grid, effect, boxed dice ledger, scaling strip. Back = rules text. */
+:root {
+  --paper: #ffffff;
+  --ink: #111111;
+  --ink-2: #4a4a4a;
+  --hair: #9a9a9a;
+  --ground: #e9e8e4;
+  --display: "IM Fell English", "Iowan Old Style", Georgia, serif;
+  --caps: "IM Fell English SC", "IM Fell English", Georgia, serif;
+  --body: "Crimson Pro", Georgia, "Times New Roman", serif;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+body { background: var(--ground); color: var(--ink); font-family: var(--body); font-variant-numeric: lining-nums; }
+i { font-style: italic; }
+
+.deck { display: flex; flex-direction: column; align-items: center; gap: 28px; padding-inline: 16px; padding-block: 24px; }
+.intro { max-width: 190mm; width: 100%; }
+.intro h1 { font-family: var(--display); font-weight: 400; font-size: 28px; margin: 0 0 4px; }
+.intro p { margin: 0; font-size: 15px; line-height: 1.4; color: var(--ink-2); max-width: 65ch; }
+
+.sheet { background: var(--paper); width: 100%; max-width: 210mm; padding: 6mm 4mm; box-shadow: 0 1px 4px rgba(0,0,0,.15); display: flex; flex-direction: column; gap: 4mm; }
+.sheet-l { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; font-size: 12px; color: var(--ink-2); }
+.sheet-l b { font-family: var(--caps); font-weight: 400; font-size: 15px; color: var(--ink); letter-spacing: .03em; }
+.sheet-f { font-size: 10.5px; color: var(--ink-2); text-align: center; font-style: italic; }
+.grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 0; }
+
+/* ---------- card ---------- */
+.card { width: 63mm; height: 88mm; padding: 2.2mm; outline: 0.25mm dashed var(--hair); outline-offset: -0.125mm; position: relative; flex: none; background: var(--paper); }
+.card.empty { outline: none; }
+.frame { height: 100%; border: 0.55mm solid var(--ink); border-radius: 2.2mm; padding: 2.1mm 2.4mm 1.4mm; display: flex; flex-direction: column; gap: 1.3mm; position: relative; overflow: hidden; }
+.frame::before { content: ""; position: absolute; inset: 0.9mm; border: 0.15mm solid var(--ink); border-radius: 1.5mm; pointer-events: none; }
+.frame > * { position: relative; }
+
+header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1.5mm; }
+.t { min-width: 0; padding-top: .4mm; }
+h3 { font-family: var(--display); font-weight: 400; font-size: 14.5pt; line-height: .98; margin: 0; letter-spacing: -.005em; text-wrap: balance; }
+.da { font-family: var(--display); font-style: italic; font-size: 8.5pt; color: var(--ink-2); margin-top: .5mm; }
+
+.badge { flex: none; width: 10.5mm; height: 10.5mm; border-radius: 50%; border: 0.5mm solid var(--ink); display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; box-shadow: 0 0 0 0.5mm var(--paper), 0 0 0 0.7mm var(--ink); margin: .5mm .5mm 0 0; }
+.badge b { font-family: var(--body); font-weight: 600; font-variant-numeric: lining-nums; font-size: 13pt; margin-top: -.4mm; }
+.badge small { font-size: 4.6pt; text-transform: uppercase; letter-spacing: .12em; margin-top: .2mm; }
+.badge.rule b { font-size: 12pt; }
+.bh .badge { width: 7.5mm; height: 7.5mm; border-width: 0.35mm; box-shadow: none; }
+.bh .badge b { font-size: 10pt; margin-top: -.3mm; }
+.bh .badge small { display: none; }
+
+.kicker { font-family: var(--body); font-variant: small-caps; font-variant-numeric: lining-nums; font-weight: 600; font-size: 7.6pt; letter-spacing: .05em; border-bottom: 0.2mm solid var(--ink); padding-bottom: .7mm; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kicker i { font-variant: normal; font-weight: 400; color: var(--ink-2); letter-spacing: 0; }
+
+.stats { display: grid; grid-template-columns: 1fr 1fr; margin: 0; border: 0.2mm solid var(--ink); }
+.stats div { padding: .5mm 1.1mm .6mm; min-width: 0; }
+.stats div:nth-child(odd) { border-right: 0.2mm solid var(--ink); }
+.stats div:nth-child(-n+2) { border-bottom: 0.2mm solid var(--ink); }
+.stats dt { font-size: 5pt; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-2); }
+.stats dd { margin: 0; font-size: 7.6pt; font-weight: 600; line-height: 1.1; }
+
+.tags { display: flex; gap: 1mm; flex-wrap: wrap; }
+.tag { font-size: 6.4pt; font-weight: 700; border: 0.25mm solid var(--ink); border-radius: 3mm; padding: .1mm 1.6mm .2mm; letter-spacing: .02em; }
+
+.eff { font-size: 8.8pt; line-height: 1.22; margin: 0; flex: 1; }
+
+.dice { border: 0.45mm solid var(--ink); border-radius: 1.2mm; overflow: hidden; }
+.drow { display: grid; grid-template-columns: 14mm 1fr; grid-template-rows: auto auto; column-gap: 1.2mm; align-items: baseline; padding: .6mm 1.4mm .7mm; }
+.drow .dl { grid-row: 1 / span 2; align-self: center; }
+.drow .ds { grid-column: 2; }
+.drow + .drow { border-top: 0.15mm solid var(--ink); }
+.dl { font-family: var(--caps); font-size: 6.8pt; letter-spacing: .03em; line-height: 1; }
+.dv { font-family: var(--body); font-weight: 700; font-variant-numeric: lining-nums tabular-nums; font-size: 11pt; line-height: 1; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ds { font-size: 6.2pt; line-height: 1.05; color: var(--ink-2); font-style: italic; min-width: 0; }
+.ds i { font-style: normal; }
+
+.scale { display: flex; flex-direction: column; gap: .3mm; }
+.scale-t { font-size: 5pt; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-2); }
+.scale table { width: 100%; border-collapse: collapse; table-layout: fixed; font-variant-numeric: tabular-nums; }
+.scale th, .scale td { border: 0.15mm solid var(--ink); text-align: center; padding: .2mm 0; }
+.scale th { font-size: 5.6pt; font-weight: 600; background: var(--ink); color: var(--paper); }
+.scale td { font-family: var(--body); font-weight: 600; font-variant-numeric: lining-nums tabular-nums; font-size: 8.2pt; }
+
+footer { display: flex; justify-content: space-between; align-items: center; font-size: 5pt; text-transform: uppercase; letter-spacing: .16em; color: var(--ink-2); margin-top: auto; }
+.orn { font-size: 6pt; letter-spacing: 0; color: var(--ink); }
+
+/* back + rule cards */
+.bh { align-items: center; border-bottom: 0.45mm double var(--ink); border-bottom-width: 0.8mm; padding-bottom: .8mm; }
+.bh h3 { font-size: 12pt; }
+.rules { flex: 1; display: flex; flex-direction: column; gap: 1.1mm; min-height: 0; }
+.rules section { min-width: 0; }
+.rules h4 { margin: 0 0 .2mm; font-family: var(--caps); font-weight: 400; font-size: 7.6pt; letter-spacing: .03em; display: flex; align-items: center; gap: 1mm; }
+.rules h4::after { content: ""; flex: 1; border-bottom: 0.15mm solid var(--ink); }
+.rules h4 i { font-family: var(--body); font-size: 6.6pt; color: var(--ink-2); letter-spacing: 0; }
+.rules p, .rules li { font-size: 7.9pt; line-height: 1.2; margin: 0; }
+.rules ul { margin: 0; padding-left: 2.6mm; }
+.rules li { margin-bottom: .25mm; }
+.rules li::marker { content: "◆ "; font-size: 4.5pt; }
+.front .rules p { font-size: 7.8pt; }
+
+@media (max-width: 520px) {
+  .sheet { padding: 12px 8px; }
+}
+
+@page { size: A4; margin: 0; }
+@media print {
+  body { background: var(--paper); }
+  .deck { display: block; padding: 0; }
+  .intro { display: none; }
+  .sheet { width: 210mm; height: 297mm; max-width: none; box-shadow: none; padding: 0; gap: 0; justify-content: center; align-items: center; break-after: page; page-break-after: always; position: relative; }
+  .sheet:last-child { break-after: auto; page-break-after: auto; }
+  .sheet-l { position: absolute; top: 7mm; left: 10.5mm; right: 10.5mm; }
+  .sheet-l span { display: none; }
+  .sheet-f { position: absolute; bottom: 8mm; left: 0; right: 0; }
+  .grid { width: 189mm; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+@media screen { .card.empty { display: none; } }
+
+.ico-k { display: inline-block; width: 2.2mm; height: 2.2mm; border: 0.25mm solid var(--ink); border-radius: 50%; background: linear-gradient(90deg, var(--ink) 50%, transparent 50%); vertical-align: -0.3mm; }
+.frame > header, .kicker, .stats, .tags, .dice, .scale, footer { flex-shrink: 0; }
+.eff { min-height: 0; overflow: hidden; }

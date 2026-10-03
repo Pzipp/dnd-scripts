@@ -1,0 +1,336 @@
+{
+ "ball-bearings": {
+  "type": "udstyr",
+  "navn": "Ball Bearings",
+  "dansk": "Metalkugler",
+  "kicker": "Udstyr · <i>pose med 1.000 stk.</i>",
+  "felter": [
+   [
+    "Tid",
+    "Utilize-handling"
+   ],
+   [
+    "Område",
+    "10 × 10 fod"
+   ],
+   [
+    "Afstand",
+    "Inden for 10 fod"
+   ],
+   [
+    "Varighed",
+    "Til de samles op"
+   ]
+  ],
+  "effekt": "Strø kuglerne ud på jorden. Fjender, der går ind på dem, kan falde.",
+  "slag": [
+   [
+    "Redning",
+    "DEX DC 10",
+    "ellers Prone (væltet)"
+   ]
+  ],
+  "bag": [
+   {
+    "titel": "Sådan virker det",
+    "tekst": "Første gang et væsen går ind på området i en tur, slår det et DEX-redningskast mod DC 10. Fejler det, falder det og er <i>Prone</i>."
+   },
+   {
+    "titel": "Godt at vide",
+    "punkter": [
+     "Læg dem i en dør eller smal gang, når I flygter.",
+     "Det tager 10 minutter at samle dem op igen.",
+     "Prone: angreb inden for 5 fod mod væsnet har fordel."
+    ]
+   }
+  ]
+ },
+ "oil": {
+  "type": "udstyr",
+  "navn": "Oil",
+  "dansk": "Olie",
+  "kicker": "Udstyr · <i>flaske</i>",
+  "felter": [
+   [
+    "Kast",
+    "I stedet for et angreb"
+   ],
+   [
+    "Afstand",
+    "Op til 20 fod"
+   ],
+   [
+    "Hæld",
+    "Utilize, 5 × 5 fod"
+   ],
+   [
+    "Varighed",
+    "1 minut"
+   ]
+  ],
+  "effekt": "Kast olie på et væsen. Tager det ildskade, mens det er dækket af olie, tager det <b>5 ekstra</b> ildskade.",
+  "slag": [
+   [
+    "Redning",
+    "DEX",
+    "DC 8 + DEX + PB (din)"
+   ],
+   [
+    "Ekstra ild",
+    "+5",
+    "første gang det tager ildskade"
+   ]
+  ],
+  "bag": [
+   {
+    "titel": "Kast på et væsen",
+    "tekst": "Når du tager Attack-handlingen, kan du kaste flasken i stedet for ét angreb. Mål inden for 20 fod slår DEX-redningskast. Fejler det, er det dækket af olie i 1 minut. Rammes det af ild i den tid, tager det 5 ekstra ildskade."
+   },
+   {
+    "titel": "Hæld på jorden",
+    "tekst": "Utilize-handling: hæld olien ud på et felt på 5 × 5 fod lige ved dig. Tænder du den, brænder den i 2 runder og giver 5 ildskade til væsner, der går ind i feltet eller slutter deres tur der (én gang pr. tur)."
+   },
+   {
+    "titel": "Lampeolie",
+    "tekst": "Én flaske holder en lygte tændt i 6 timer."
+   }
+  ]
+ },
+ "healers-kit": {
+  "type": "udstyr",
+  "navn": "Healer's Kit",
+  "dansk": "Førstehjælpskit",
+  "kicker": "Udstyr · <i>10 brug</i>",
+  "felter": [
+   [
+    "Tid",
+    "Utilize-handling"
+   ],
+   [
+    "Afstand",
+    "Berøring"
+   ],
+   [
+    "Brug",
+    "10"
+   ],
+   [
+    "Kræver",
+    "Intet slag"
+   ]
+  ],
+  "effekt": "Stabiliser et bevidstløst væsen på 0 HP, uden at du skal slå Medicine.",
+  "slag": [
+   [
+    "Stabil",
+    "Automatisk",
+    "koster 1 brug"
+   ]
+  ],
+  "bag": [
+   {
+    "titel": "Stabil betyder",
+    "punkter": [
+     "Væsnet slår ikke flere dødsslag.",
+     "Det er stadig bevidstløst på 0 HP.",
+     "Det får 1 HP efter 1d4 timer."
+    ]
+   },
+   {
+    "titel": "Uden kit",
+    "tekst": "Du kan også prøve med Medicine (WIS) mod DC 10. Kittet virker altid."
+   }
+  ]
+ },
+ "thieves-tools": {
+  "type": "udstyr",
+  "navn": "Thieves' Tools",
+  "dansk": "Tyveværktøj",
+  "kicker": "Værktøj · <i>DEX</i>",
+  "felter": [
+   [
+    "Tid",
+    "Utilize-handling"
+   ],
+   [
+    "Evne",
+    "DEX"
+   ],
+   [
+    "Kræver",
+    "Trænet: + PB"
+   ],
+   [
+    "Varighed",
+    "Øjeblikkelig"
+   ]
+  ],
+  "effekt": "Dirk låse op og desarmer fælder.",
+  "slag": [
+   [
+    "Lås",
+    "DEX DC 15",
+    "dirk en lås"
+   ],
+   [
+    "Fælde",
+    "DEX DC 15",
+    "desarmer en fælde"
+   ]
+  ],
+  "bag": [
+   {
+    "titel": "Slaget",
+    "tekst": "d20 + DEX + PB, hvis du er trænet. Har du <i>Expertise</i>, lægger du PB til to gange. DM'en kan gøre DC højere for svære låse."
+   },
+   {
+    "titel": "Godt at vide",
+    "punkter": [
+     "Find først fælden med <i>Search</i> (Perception eller Investigation).",
+     "Fejler du på en fælde, kan den gå af.",
+     "Det larmer at dirke. Hold udkig efter vagter."
+    ]
+   }
+  ]
+ },
+ "bullseye-lantern": {
+  "type": "udstyr",
+  "navn": "Bullseye Lantern",
+  "dansk": "Blændlygte",
+  "kicker": "Udstyr · <i>lys</i>",
+  "felter": [
+   [
+    "Lys",
+    "Kegle 60 fod"
+   ],
+   [
+    "Svagt lys",
+    "60 fod mere"
+   ],
+   [
+    "Brænder",
+    "6 timer pr. olie"
+   ],
+   [
+    "Tid",
+    "Utilize"
+   ]
+  ],
+  "effekt": "Lyser kraftigt i en kegle på 60 fod og svagt 60 fod længere ud.",
+  "slag": [
+   [
+    "Kraftigt lys",
+    "60 fod",
+    "kegle"
+   ],
+   [
+    "Svagt lys",
+    "+60 fod",
+    "ud over keglen"
+   ]
+  ],
+  "bag": [
+   {
+    "titel": "Sådan virker det",
+    "tekst": "Lyset peger kun én vej, så du kan lyse ned ad en gang uden at lyse dig selv op fra alle sider."
+   },
+   {
+    "titel": "Godt at vide",
+    "punkter": [
+     "Én flaske olie holder 6 timer.",
+     "Lys afslører dig. Sluk den, hvis du vil gemme dig."
+    ]
+   }
+  ]
+ },
+ "torch": {
+  "type": "udstyr",
+  "navn": "Torch",
+  "dansk": "Fakkel",
+  "kicker": "Udstyr · <i>lys</i>",
+  "felter": [
+   [
+    "Lys",
+    "20 fod"
+   ],
+   [
+    "Svagt lys",
+    "20 fod mere"
+   ],
+   [
+    "Brænder",
+    "1 time"
+   ],
+   [
+    "Tid",
+    "Utilize"
+   ]
+  ],
+  "effekt": "Lyser kraftigt 20 fod rundt om dig og svagt 20 fod længere ud.",
+  "slag": [
+   [
+    "Som våben",
+    "1",
+    "ildskade, simpelt nærkampsvåben"
+   ]
+  ],
+  "bag": [
+   {
+    "titel": "Sådan virker det",
+    "tekst": "En fakkel brænder i 1 time. Du kan slå med den som et simpelt nærkampsvåben og give 1 ildskade."
+   },
+   {
+    "titel": "Godt at vide",
+    "punkter": [
+     "Brug den til at tænde olie.",
+     "Den lyser til alle sider, så fjender kan se dig."
+    ]
+   }
+  ]
+ },
+ "grappling-hook": {
+  "type": "udstyr",
+  "navn": "Grappling Hook",
+  "dansk": "Entrehage",
+  "kicker": "Udstyr · <i>bindes til reb</i>",
+  "felter": [
+   [
+    "Tid",
+    "Utilize-handling"
+   ],
+   [
+    "Afstand",
+    "Op til 50 fod"
+   ],
+   [
+    "Evne",
+    "DEX"
+   ],
+   [
+    "Kræver",
+    "Reb"
+   ]
+  ],
+  "effekt": "Kast krogen op på en kant, et rækværk eller lignende. Sidder den fast, kan du klatre op ad rebet.",
+  "slag": [
+   [
+    "Kast",
+    "DEX DC 13",
+    "Acrobatics"
+   ]
+  ],
+  "bag": [
+   {
+    "titel": "Sådan virker det",
+    "tekst": "Kast krogen mod noget, den kan hægte sig fast i, inden for 50 fod. Slå DEX (Acrobatics) mod DC 13. Lykkes det, sidder den fast."
+   },
+   {
+    "titel": "Godt at vide",
+    "punkter": [
+     "At klatre koster 1 ekstra fod pr. fod.",
+     "Bind rebet til krogen, før du kaster."
+    ]
+   }
+  ]
+ }
+}
