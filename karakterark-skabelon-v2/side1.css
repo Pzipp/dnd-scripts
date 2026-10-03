@@ -1,0 +1,80 @@
+/* Side 1 · karakterark: ét A4-ark. Stat-bånd øverst; venstre kolonne evner/skills; højre kolonne angreb, ture, regler, træk og udstyr.
+   Mørke farver giver tydelige gråtoner i sort-hvid; betydning bæres af form (● ◉ ★). */
+:root{
+  --parch:#f6eedb; --ink:#1f1811; --muted:#54452f; --accent:#6e2a12; --line:#a88a5c; --paper:#fff;
+  --str:#7d1f1f; --dex:#1f5229; --con:#7a420b; --int:#1d3c6e; --wis:#47296a; --cha:#7a2152;
+  color-scheme:light;
+}
+@page{size:A4;margin:9mm}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:"Crimson Pro",Georgia,serif;font-size:10pt;line-height:1.25;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.page{width:192mm;margin:0 auto}
+h1,h2,h3{font-family:"IM Fell English",serif;font-weight:normal;margin:0}
+em{color:var(--muted)}
+p{margin:0 0 .9mm}
+.box{background:var(--parch);border:1px solid var(--line);border-radius:2mm;padding:1.6mm 2.2mm}
+.box h2{font-size:11.5pt;color:var(--accent);border-bottom:1px solid var(--line);padding-bottom:.4mm;margin-bottom:1mm}
+.box h2 em{font-family:"Crimson Pro",serif;font-size:8.5pt}
+.grid{display:grid;gap:2.5mm}
+.top{grid-template-columns:repeat(8,1fr);margin-bottom:2.5mm}
+.stat{text-align:center;padding:1.2mm .8mm}
+.stat .lbl{font-size:6.6pt;text-transform:uppercase;letter-spacing:.4px;color:var(--muted)}
+.stat .big{font-family:"IM Fell English",serif;font-size:18pt;line-height:1.05}
+.main{grid-template-columns:52mm 1fr;align-items:start}
+.ab{border-left:4px solid var(--c);margin-bottom:1.6mm;padding:1mm 1.8mm;background:var(--parch);border-radius:0 1.5mm 1.5mm 0;border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.ab .row1{display:flex;justify-content:space-between;align-items:baseline}
+.ab .name{font-family:"IM Fell English",serif;font-size:11pt;color:var(--c)}
+.ab .score{font-size:8pt;color:var(--muted)}
+.ab .mod{font-family:"IM Fell English",serif;font-size:15pt;color:var(--c)}
+.ab ul{list-style:none;margin:.3mm 0 0;padding:0;font-size:9pt}
+.ab li{display:flex;justify-content:space-between;border-top:1px dotted var(--line);padding:.15mm 0}
+.ab li.save{font-weight:600}
+.dot{display:inline-block;width:2.4mm;height:2.4mm;border:1px solid var(--ink);border-radius:50%;margin-right:1mm;vertical-align:-.2mm;background:#fff}
+.dot.p{background:var(--ink)}
+.dot.e{background:var(--ink);box-shadow:0 0 0 .6mm var(--parch),0 0 0 1mm var(--ink)}
+.str{--c:var(--str)}.dex{--c:var(--dex)}.con{--c:var(--con)}.int{--c:var(--int)}.wis{--c:var(--wis)}.cha{--c:var(--cha)}
+.legend{font-size:7pt;color:var(--muted);margin:.5mm 0 2mm}
+.kv{display:grid;grid-template-columns:1fr auto;font-size:8.6pt}
+.kv b{text-align:right}
+table{width:100%;border-collapse:collapse;font-size:9.2pt}
+th{font-size:6.8pt;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);text-align:left;font-weight:600;border-bottom:1px solid var(--line);padding:.3mm .8mm}
+td{border-bottom:1px dotted var(--line);padding:.5mm .8mm;vertical-align:top}
+td.n{white-space:nowrap;font-weight:600}
+td.nw{white-space:nowrap}
+.two{grid-template-columns:1fr 1fr}
+.turn h3{font-size:10.5pt;color:var(--accent);margin-bottom:.6mm}
+.turn ol{margin:0;padding-left:4.5mm}
+.turn li{margin:0 0 .6mm}
+.feat p b{color:var(--accent)}
+.tag{font-size:6.6pt;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);float:right;font-family:"Crimson Pro",serif;font-weight:600}
+.cbx{display:inline-block;width:2.6mm;height:2.6mm;border:1px solid var(--ink);border-radius:50%;margin-left:.8mm;vertical-align:-.3mm;background:#fff}
+ul.t{margin:0;padding-left:4mm}
+ul.t li{margin:0 0 .6mm}
+.small{font-size:9pt}
+.foot{margin-top:1.5mm;font-size:6.8pt;color:var(--muted);text-align:center}
+@media screen{body{padding:16px}.page{max-width:100%}}
+@media screen and (max-width:760px){.page{width:auto}.top{grid-template-columns:repeat(4,1fr)}.main,.two{grid-template-columns:1fr}}
+/* formler under tallene */
+small.f{display:block;font-size:6.4pt;line-height:1.05;color:var(--muted);font-style:italic;font-weight:400;white-space:nowrap}
+.sf{font-size:6.4pt;font-style:italic;font-weight:400;color:var(--muted);margin-right:1.2mm}
+
+/* header (navn + klasse/art/baggrund/spiller) */
+.head{display:grid;grid-template-columns:auto 1fr;gap:4px 16px;align-items:end;border-bottom:2px solid var(--accent);padding-bottom:5px;margin-bottom:2.5mm}
+.name{display:flex;align-items:baseline;gap:7px}
+.name h1{font-size:34px;line-height:1;color:var(--accent)}
+.epithet{font-family:"IM Fell English",serif;font-style:italic;color:var(--muted);font-size:15px}
+.ident{display:grid;grid-template-columns:repeat(4,auto);gap:2px 12px;margin:0;justify-content:end}
+.ident dt{font-size:8.6px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.ident dd{margin:0;font-weight:600;font-size:11.6px}
+.ident dd i{font-weight:400;color:var(--muted)}
+/* Expertise = sort firkant på spidsen (◆) */
+.dot.e{border-radius:0;transform:rotate(45deg) scale(.85);box-shadow:none;background:var(--ink);border-color:var(--ink)}
+/* magi */
+.dcs{display:grid;grid-template-columns:1fr 1fr;gap:2mm;margin-bottom:1mm}
+.dc{border:1px solid var(--line);border-radius:2mm;padding:.8mm 1.6mm;font-size:9pt}
+.dc span{display:block;font-size:6.6pt;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);font-weight:600}
+.dc.wide{grid-column:1 / -1}
+.spells{margin:0;display:grid;grid-template-columns:max-content 1fr;gap:.4mm 2mm;font-size:8.6pt}
+.spells dt{font-weight:700}
+.spells dd{margin:0}
+.slots{font-size:8.8pt;margin-bottom:.8mm}
