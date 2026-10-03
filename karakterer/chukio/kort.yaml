@@ -1,0 +1,20 @@
+# Kortbunke for chukio: id'er fra bibliotek/*.yaml (og evt. egne kort under 'egne').
+# Felt-reference: docs/kort-yaml.md
+# Lav kort:  python3 dnd.py kort chukio
+
+# Titel på HTML/PDF-filen.
+titel: Chukio evnekort
+# Kortene i rækkefølge. 9 kort pr. A4-ark.
+kort:
+- second-wind
+- action-surge
+- tactical-mind
+- two-weapon-fighting
+- nick
+- graze
+- slow
+- light-to-vaaben
+- savage-attacker
+- alert
+- heroic-inspiration
+- healers-kit

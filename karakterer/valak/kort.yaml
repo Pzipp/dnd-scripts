@@ -1,0 +1,25 @@
+# Kortbunke for valak: id'er fra bibliotek/*.yaml (og evt. egne kort under 'egne').
+# Felt-reference: docs/kort-yaml.md
+# Lav kort:  python3 dnd.py kort valak
+
+# Titel på HTML/PDF-filen.
+titel: Valak spellkort
+# Kortene i rækkefølge. 9 kort pr. A4-ark.
+kort:
+- eldritch-blast
+- fire-bolt
+- shocking-grasp
+- poison-spray
+- minor-illusion
+- shape-water
+- thaumaturgy
+- guidance
+- spare-the-dying
+- hex
+- armor-of-agathys
+- witch-bolt
+- cure-wounds
+- detect-magic
+- comprehend-languages
+- regel-slots
+- regel-konc

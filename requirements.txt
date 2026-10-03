@@ -1,0 +1,3 @@
+pyyaml>=6.0
+# Kun til PDF (python3 dnd.py ... --pdf). Efter installation: playwright install chromium
+playwright>=1.40
