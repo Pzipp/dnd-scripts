@@ -252,9 +252,12 @@ def side1(v):
     o.append(f'<div class="legend"><span class="dot p"></span>trænet <em>(proficient)</em> &nbsp; <span class="dot e"></span>&nbsp;<em>Expertise</em> (dobbelt bonus)'
              f'<br>Slag = <b>d20 + formlen</b>. Modifier = (score − 10) ÷ 2, rundet ned. PB = {sgn(env["PB"])}.</div>')
     if v.get("passiv"):
-        o.append('<div class="box"><h2>Passive sanser</h2><div class="kv">' + "".join(
-            f"<span>{a}{(lambda fl: f' <small class=\"sf\">{fl}</small>' if fl else '')(formula(b))}</span><b>{fmt(b, env)}</b>"
-            for a, b in v["passiv"]) + "</div></div>")
+        rækker = []
+        for a, b in v["passiv"]:
+            fl = formula(b)
+            flag = f' <small class="sf">{fl}</small>' if fl else ""
+            rækker.append(f"<span>{a}{flag}</span><b>{fmt(b, env)}</b>")
+        o.append('<div class="box"><h2>Passive sanser</h2><div class="kv">' + "".join(rækker) + "</div></div>")
     if v.get("sprog"):
         o.append(f'<div class="box small" style="margin-top:2mm"><h2>Sprog <em>Languages</em></h2>{v["sprog"]}</div>')
     o.append('</div><div class="grid" style="align-content:start">')

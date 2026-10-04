@@ -1,0 +1,35 @@
+# dnd-webui: karakter-overlay (rediger YAML, generér HTML). Kør fra denne mappe:
+#   cp .env.example .env     # ret efter behov
+#   docker compose up -d --build
+#
+# Webui'en har INGEN login. Standard er kun denne maskine (127.0.0.1). Sæt
+# DND_BIND_IP=0.0.0.0 i .env, hvis andre på netværket skal kunne åbne den. Alle
+# der kan nå porten, kan ændre karakterne.
+name: dnd
+
+services:
+  dnd-webui:
+    build: .
+    container_name: dnd-webui
+    restart: unless-stopped
+
+    # Samme UID/GID som ejeren af denne mappe, så filer genereret i karakterer/
+    # ejes af dig og ikke af root. Ret i .env, hvis din bruger ikke er 1000.
+    user: "${DND_UID:-1000}:${DND_GID:-1000}"
+
+    # Hele repoet bind-mountes: karakterer/ og udskrifter/ bliver på værten, og
+    # git pull virker uden rebuild. En kodeændring kræver en genstart.
+    volumes:
+      - .:/app
+
+    ports:
+      - "${DND_BIND_IP:-127.0.0.1}:${DND_PORT:-8080}:8080"
+
+    environment:
+      - TZ=${TZ:-Europe/Copenhagen}
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

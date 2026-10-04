@@ -7,3 +7,6 @@ __pycache__/
 node_modules/
 .venv/
 .DS_Store
+
+# Lokal konfiguration (port, bind-adresse, UID) — se .env.example
+.env
