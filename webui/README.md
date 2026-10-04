@@ -1,39 +1,58 @@
 # D&D WebUI
 
-En lille Flask-WebUI oven på de eksisterende D&D-generatorer.
+Et lille valgfrit overlay til projektets eksisterende D&D-scripts.
 
 ## Funktioner
 
-- vælg karakter
-- vælg **Karakterark** eller **Kort**
-- rediger YAML direkte i browseren
-- vælg accentfarve
-- generer eksisterende HTML-output
-- se output direkte i WebUI eller åbn det i en ny fane
+- Vælg karakter.
+- Vælg **Karakterark** eller **Kort**.
+- Rediger den rigtige YAML-fil direkte i WebUI.
+- **Gem** skriver ændringerne tilbage til:
+  - `karakterer/<karakter>/karakter.yaml`
+  - `karakterer/<karakter>/kort.yaml`
+- **Generer** bruger derefter det eksisterende `dnd.py`/generator-script.
+- Output gemmes automatisk i karakterens eksisterende:
+  - `karakterer/<karakter>/udskrifter/`
+- Farvevælgeren ændrer accentfarven i det genererede HTML.
+- WebUI ændrer ikke de eksisterende generator-scripts.
 
-WebUI'en skriver **ikke** de redigerede YAML-data tilbage til \`karakterer/\`. YAML'en kopieres midlertidigt til \`webui/runtime/\`, og den eksisterende \`dnd.py\` køres som subprocess med \`--ud\` til \`webui/output/\`.
+## Overlay – ikke en separat parallel version
 
-De eksisterende scripts og deres data er derfor uafhængige af WebUI'en og er ikke ændret.
+WebUI er kun et ekstra interface til de eksisterende filer og scripts. Det laver ikke en kopi af YAML-data eller output i `webui/`.
 
-## Kør lokalt
+Det kører kun, når du starter det. Når WebUI ikke er startet, fungerer `dnd.py` og alle de eksisterende scripts præcis som før.
 
-Fra repository-roden:
+WebUI kan derfor bruges som et overlay, når det er praktisk, og ellers ignoreres.
 
-\`\`\`bash
+## Kør
+
+Fra projektets rod:
+
+```bash
 python3 -m venv .venv
 . .venv/bin/activate
 pip install -r webui/requirements.txt
 python webui/app.py
-\`\`\`
+```
 
 Åbn derefter:
 
-\`\`\`
+```
 http://localhost:8080
-\`\`\`
+```
 
-Porten kan ændres med \`PORT\`, fx:
+Alternativ port:
 
-\`\`\`bash
+```bash
 PORT=8081 python webui/app.py
-\`\`\`
+```
+
+## Arbejdsgang
+
+1. Vælg karakter og side.
+2. Rediger YAML.
+3. Tryk **Gem**.
+4. Tryk **Generer**.
+5. Den eksisterende generator skriver HTML direkte til karakterens `udskrifter/`-mappe.
+
+WebUI tillader ikke generering med ugemte ændringer, så output altid bygger på den YAML, der faktisk er gemt i projektet.
