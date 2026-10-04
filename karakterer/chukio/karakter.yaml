@@ -51,47 +51,7 @@ faelles:
 
 # ── Side 1 · Karakterark: én side pr. version ──
 versioner:
-- version: Som skrevet på papir
-  evner: {STR: 15, DEX: 15, CON: 12, INT: 14, WIS: 16, CHA: 20}
-  mod: {STR: 4, CHA: 0}
-  sprog: Common (modersmål), elvisk, entisk, lidt af hvert
-  stats:
-  - [<em>AC</em>, '15', som skrevet på papiret]
-  - [Max HP, '18', som skrevet]
-  - [<em>Hit Dice</em>, 2d10, 1 d10 pr. level]
-  - [Initiativ, '{+DEX+PB}', d20 + DEX + PB (Alert)]
-  - [Fart · <em>Speed</em>, '30', 'Dash: 60']
-  - [<em>Prof. bonus</em>, '{+PB}', level 1–4]
-  - [Passiv <em>Perc.</em>, '{10+WIS+PB}']
-  - [<em>Second Wind</em>, 1d10+2, 1d10 + level]
-  angreb:
-  - [Sabel ×2 <em>Scimitar</em>, '{+STR+PB}', '1d6{+STR} hug', '<b>Nick</b> · Light, Finesse']
-  - [Great sword, '{+STR+PB}', '2d6{+STR} hug', <b>Graze</b> · to hænder]
-  - [Dolk <em>Dagger</em>, '{+STR+PB}', '1d4{+STR} stik', kast 20/60 fod]
-  - [Slangebøsse <em>Sling</em>, '{+DEX+PB}', '1d4{+DEX} slag', <b>Slow</b> · 30/120 fod]
-  - [Ubevæbnet, '{+STR+PB}', '{1+STR} slag', <em>Unarmed Strike</em>]
-  traek:
-  - navn: Second Wind []
-    tag: kort hvil
-    tekst: 'Bonus Action: hel 1d10+2 HP. 1 brug pr. hvil (som på papiret).'
-  - {navn: 'Action Surge []', tag: kort hvil, tekst: 1 ekstra handling på din tur.}
-  - navn: Tactical Mind
-    tekst: Fejler du et evnetjek, kan du bruge Second Wind til at lægge 1d10 til. Fejler det stadig, er Second Wind ikke brugt.
-  - navn: Two-Weapon Fighting
-    tag: Fighting Style
-    tekst: Det ekstra angreb med et Light-våben får din modifier på skaden.
-  - navn: Savage Attacker
-    tag: Feat
-    tekst: '1 gang pr. tur, når du rammer med et våben: slå skaden to gange og brug den bedste.'
-  - navn: Alert
-    tag: Feat
-    tekst: +PB på initiativ (regnet med). Efter initiativ kan du bytte plads med en villig allieret.
-  - navn: Resourceful
-    tag: Menneske
-    tekst: 'Heroic Inspiration efter hvert Long Rest: slå en d20 om.'
-  fod: Tallene fra papiret er bevaret, også STR +4 og CHA 20 (+0). D&amp;D 2024 · PHB 2024 kap. 3 (Fighter), kap. 4 (Soldier, menneske).
-- version: Efter reglerne 2024
-  evner: {STR: 15, DEX: 15, CON: 12, INT: 14, WIS: 16, CHA: 18}
+- evner: {STR: 15, DEX: 15, CON: 12, INT: 14, WIS: 16, CHA: 18}
   sprog: Common, elvisk, Sylvan <em>(entisk)</em>
   stats:
   - [<em>AC</em>, '{10+DEX}', 10 + DEX · ingen rustning]

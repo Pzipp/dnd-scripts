@@ -38,51 +38,7 @@ faelles:
 
 # ── Side 1 · Karakterark: én side pr. version ──
 versioner:
-- version: Version A · som skrevet
-  evner: {STR: 10, DEX: 15, CON: 14, INT: 8, WIS: 17, CHA: 9}
-  stats:
-  - [<em>AC</em>, '18', som skrevet på arket]
-  - [Max HP, 13–20, 8+CON + 1d8+CON]
-  - [<em>Hit Dice</em>, 2d8, 1 d8 pr. level]
-  - [Initiativ, '{+DEX}']
-  - [Fart · <em>Speed</em>, '30', 'Dash: 60']
-  - [<em>Prof. bonus</em>, '{+PB}', level 1–4]
-  - [Passiv <em>Perc.</em>, '{10+WIS}']
-  - [Spell slots, 2 × 1., kort hvil]
-  angreb:
-  - [Kniv <em>Dagger</em>, '{+DEX+PB}', '1d4{+DEX} stik', kast 20/60 fod]
-  - [Stav <em>Quarterstaff</em>, '{+STR+PB}', '1d6{+STR} slag', 1d8 med to hænder]
-  - [Orksværd, '{+STR}', '1d8{+STR} hug', ikke trænet]
-  - [Eldritch Blast, '{+CHA+PB}', 1d10 kraft, 120 fod]
-  - [Fire Bolt, '{+CHA+PB}', 1d10 ild, 120 fod]
-  - [Shocking Grasp, '{+CHA+PB}', 1d8 lyn, berøring · målet får ingen reaction]
-  - [Poison Spray, '{+WIS+PB}', 1d12 gift, 30 fod]
-  magi:
-    dc:
-    - {navn: Warlock-magi · CHA, slag: '{+CHA+PB}', dc: '{8+CHA+PB}'}
-    - {navn: Tiefling + Cleric-magi · WIS, slag: '{+WIS+PB}', dc: '{8+WIS+PB}'}
-    slots: <b>Spell slots</b> 1. grad [][] · kommer igen ved kort hvil
-    liste:
-    - - Cantrips <em>CHA</em>
-      - Eldritch Blast · Minor Illusion · Fire Bolt · Shocking Grasp · Shape Water
-    - [Cantrips <em>WIS</em>, Poison Spray · Thaumaturgy · Guidance · Spare the Dying]
-    - - 1. grad <em>CHA</em>
-      - <b>Hex</b> · <b>Armor of Agathys</b> 5 midl. HP, 5 kulde til den, der rammer · <b>Witch Bolt</b> 2d12 lyn, så 1d12/tur (konc.)
-    - [1. grad <em>WIS</em>, '<b>Cure Wounds</b> 2d8{+WIS} HP · gratis 1× pr. lang hvil []']
-    - [Ritualer, Detect Magic · Comprehend Languages]
-  traek:
-  - navn: Mørkesyn <em>Darkvision</em>
-    tekst: 60 fod. Mørke ses som svagt lys, kun i gråtoner.
-  - {navn: Modstand mod gift, tekst: Halv skade fra gift (<em>Poison resistance</em>).}
-  - {navn: Pagtmagi <em>Pact Magic</em>, tekst: Spell slots kommer igen ved kort hvil.}
-  - navn: Magical Cunning []
-    tag: 1× Long Rest
-    tekst: 1 minuts meditation giver halvdelen af dine spell slots igen (rund op).
-  - {navn: Pact of the Tome, tekst: Skyggebog med 3 ekstra cantrips og 2 ritualer.}
-  - {navn: Eldritch Mind, tekst: Fordel på redningskast for koncentration.}
-  - {navn: Devil's Sight, tekst: 'Ser normalt i mørke, også magisk mørke, op til 120 fod.'}
-- version: Version B · WIS og CHA byttet
-  evner: {STR: 10, DEX: 15, CON: 14, INT: 8, WIS: 9, CHA: 17}
+- evner: {STR: 10, DEX: 15, CON: 14, INT: 8, WIS: 9, CHA: 17}
   stats:
   - [<em>AC</em> · Armor of Shadows, '{13+DEX}']
   - [Max HP, 13–20, 8+CON + 1d8+CON]
@@ -137,7 +93,6 @@ handlingsark:
 # ── Side 3 · Udstyrsark ──
 udstyrsark:
   ident:
-  - [Gælder, Version A og B]
   - [Opdateres, Løbende i spillet]
   venstre:
   - titel: Våben <i>Weapons</i>
