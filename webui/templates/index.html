@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>D&D WebUI</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header class="topbar">
+  <h1>D&D WebUI</h1>
+  <div class="controls">
+    <label>Karakter
+      <select id="character">
+        {% for character in characters %}
+        <option value="{{ character }}">{{ character }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Side
+      <select id="kind">
+        <option value="karakterark">Karakterark</option>
+        <option value="kort">Kort</option>
+      </select>
+    </label>
+    <label>Farve
+      <input id="color" type="color" value="#6e2a12" title="Vælg accentfarve">
+    </label>
+    <button id="save" type="button">Gem</button>
+    <button id="generate" type="button">Generer</button>
+  </div>
+</header>
+
+<main class="layout">
+  <section class="panel editor">
+    <div class="panel-head">
+      <h2>YAML</h2>
+      <span>Rediger den rigtige karakterfil</span>
+    </div>
+    <textarea id="yaml" spellcheck="false"></textarea>
+    <div id="status" class="status"></div>
+  </section>
+
+  <section class="panel preview">
+    <div class="panel-head">
+      <h2>Output</h2>
+      <a id="open-output" href="#" target="_blank" rel="noopener" hidden>Åbn i ny fane</a>
+    </div>
+    <div id="empty" class="empty">Gem og generer for at opdatere output.</div>
+    <iframe id="output" title="Genereret D&D output" hidden></iframe>
+  </section>
+</main>
+
+<script>
+const character = document.querySelector("#character");
+const kind = document.querySelector("#kind");
+const yamlBox = document.querySelector("#yaml");
+const color = document.querySelector("#color");
+const saveButton = document.querySelector("#save");
+const generateButton = document.querySelector("#generate");
+const statusBox = document.querySelector("#status");
+const output = document.querySelector("#output");
+const empty = document.querySelector("#empty");
+const openOutput = document.querySelector("#open-output");
+
+let savedYaml = "";
+
+function setStatus(text, error = false) {
+  statusBox.textContent = text;
+  statusBox.className = error ? "status error" : "status";
+}
+
+async function loadYaml() {
+  saveButton.disabled = true;
+  generateButton.disabled = true;
+  setStatus("Indlæser YAML…");
+  try {
+    const response = await fetch(
+      `/api/yaml?character=${encodeURIComponent(character.value)}&kind=${encodeURIComponent(kind.value)}`
+    );
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Kunne ikke hente YAML.");
+    yamlBox.value = data.yaml;
+    savedYaml = data.yaml;
+    setStatus("");
+  } catch (error) {
+    setStatus(error.message, true);
+  } finally {
+    saveButton.disabled = false;
+    generateButton.disabled = false;
+  }
+}
+
+yamlBox.addEventListener("input", () => {
+  if (yamlBox.value !== savedYaml) {
+    setStatus("Ikke gemt.");
+  } else {
+    setStatus("");
+  }
+});
+
+async function save() {
+  saveButton.disabled = true;
+  generateButton.disabled = true;
+  setStatus("Gemmer…");
+  try {
+    const response = await fetch("/api/save", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        character: character.value,
+        kind: kind.value,
+        yaml: yamlBox.value
+      })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Kunne ikke gemme YAML.");
+    savedYaml = yamlBox.value;
+    setStatus("Gemt.");
+  } catch (error) {
+    setStatus(error.message, true);
+  } finally {
+    saveButton.disabled = false;
+    generateButton.disabled = false;
+  }
+}
+
+async function generate() {
+  if (yamlBox.value !== savedYaml) {
+    setStatus("Gem ændringerne først.", true);
+    return;
+  }
+
+  generateButton.disabled = true;
+  saveButton.disabled = true;
+  setStatus("Genererer…");
+  try {
+    const response = await fetch("/api/generate", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        character: character.value,
+        kind: kind.value,
+        color: color.value
+      })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Generering fejlede.");
+    output.src = data.url + "?t=" + Date.now();
+    output.hidden = false;
+    empty.hidden = true;
+    openOutput.href = data.url;
+    openOutput.hidden = false;
+    setStatus("Færdig – output gemt i karakterens udskrifter.");
+  } catch (error) {
+    setStatus(error.message, true);
+  } finally {
+    generateButton.disabled = false;
+    saveButton.disabled = false;
+  }
+}
+
+character.addEventListener("change", loadYaml);
+kind.addEventListener("change", loadYaml);
+saveButton.addEventListener("click", save);
+generateButton.addEventListener("click", generate);
+loadYaml();
+</script>
+</body>
+</html>
