@@ -13,7 +13,7 @@ Et lille valgfrit overlay til projektets eksisterende D&D-scripts.
 - **Generer** bruger derefter det eksisterende `dnd.py`/generator-script.
 - Output gemmes automatisk i karakterens eksisterende:
   - `karakterer/<karakter>/udskrifter/`
-- Farvevælgeren ændrer accentfarven i det genererede HTML.
+- Stil-vælgeren vælger mellem **Farve** og **Sort/hvid**, og det samme tema som `dnd.py --stil` bruger. Outputtet er `karakterark-<stil>.html` eller `kort-<stil>.html`.
 - WebUI ændrer ikke de eksisterende generator-scripts.
 
 ## Overlay – ikke en separat parallel version

@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import html
 import os
-import re
 import subprocess
 import sys
 from pathlib import Path
@@ -64,36 +62,23 @@ def save_yaml(character: str, kind: str, yaml_text: str) -> None:
     path.write_text(yaml_text.rstrip() + "\n", encoding="utf-8")
 
 
-def check_color(color: str) -> str:
-    if not isinstance(color, str) or not re.fullmatch(r"#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})", color):
-        raise ValueError("Ugyldig farve.")
-    return color
+STILE = {"farve", "sorthvid"}
 
 
-def inject_color(source_html: str, color: str) -> str:
-    check_color(color)
-    safe = html.escape(color, quote=True)
-    override = (
-        "<style id=\"webui-color\">"
-        f":root{{--accent:{safe}!important;--accent-color:{safe}!important;}}"
-        f".s1,.sx,.card{{--accent:{safe}!important;--acc:{safe}!important;}}"
-        "</style>"
-    )
-    # Karakterarkene er hele HTML-dokumenter. Kortene er kun et fragment uden <head>,
-    # så der sættes stilen forrest i stedet.
-    if "</head>" in source_html:
-        return source_html.replace("</head>", override + "</head>", 1)
-    return override + source_html
+def check_stil(stil: str) -> str:
+    if stil not in STILE:
+        raise ValueError("Ukendt stil. Vælg farve eller sorthvid.")
+    return stil
 
 
-def generate(character: str, kind: str, color: str) -> str:
-    check_color(color)  # før generatoren kører, så en ugyldig farve ikke efterlader en ufarvet fil
+def generate(character: str, kind: str, stil: str) -> str:
+    check_stil(stil)  # før generatoren kører, så en ugyldig stil ikke giver en halv fil
     source = data_path(character, kind)
     target = output_dir(character)
 
     command = [
         sys.executable, str(DND), kind, str(source),
-        "--stil", "farve", "--ud", str(target),
+        "--stil", stil, "--ud", str(target),
     ]
     result = subprocess.run(
         command,
@@ -110,15 +95,13 @@ def generate(character: str, kind: str, color: str) -> str:
         )
 
     expected = target / (
-        "karakterark-farve.html" if kind == "karakterark" else "kort-farve.html"
+        f"{'karakterark' if kind == 'karakterark' else 'kort'}-{stil}.html"
     )
     if not expected.is_file():
         raise RuntimeError(
             "Generatoren afsluttede uden at lave den forventede HTML-fil."
         )
 
-    content = expected.read_text(encoding="utf-8")
-    expected.write_text(inject_color(content, color), encoding="utf-8")
     return f"/output/{character}/{expected.name}"
 
 
@@ -162,7 +145,7 @@ def api_generate():
             "url": generate(
                 payload.get("character", ""),
                 payload.get("kind", ""),
-                payload.get("color", "#6e2a12"),
+                payload.get("stil", "farve"),
             )
         })
     except (ValueError, RuntimeError) as exc:

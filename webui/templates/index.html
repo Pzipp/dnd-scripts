@@ -23,8 +23,11 @@
         <option value="kort">Kort</option>
       </select>
     </label>
-    <label>Farve
-      <input id="color" type="color" value="#6e2a12" title="Vælg accentfarve">
+    <label>Stil
+      <select id="stil">
+        <option value="farve">Farve</option>
+        <option value="sorthvid">Sort/hvid</option>
+      </select>
     </label>
     <button id="save" type="button">Gem</button>
     <button id="generate" type="button">Generer</button>
@@ -55,7 +58,7 @@
 const character = document.querySelector("#character");
 const kind = document.querySelector("#kind");
 const yamlBox = document.querySelector("#yaml");
-const color = document.querySelector("#color");
+const stil = document.querySelector("#stil");
 const saveButton = document.querySelector("#save");
 const generateButton = document.querySelector("#generate");
 const statusBox = document.querySelector("#status");
@@ -141,7 +144,7 @@ async function generate() {
       body: JSON.stringify({
         character: character.value,
         kind: kind.value,
-        color: color.value
+        stil: stil.value
       })
     });
     const data = await response.json();
