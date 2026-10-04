@@ -47,6 +47,24 @@ Alternativ port:
 PORT=8081 python webui/app.py
 ```
 
+## Stop
+
+Serveren kører, til du stopper den. Den stopper ikke af sig selv, når du lukker browserfanen.
+
+- **Kører den i en terminal:** tryk **Ctrl+C** i det terminalvindue, hvor du startede den.
+- **Kører den i baggrunden** (eller du kan ikke finde terminalen):
+
+  ```bash
+  pkill -f webui/app.py
+  ```
+
+  Du kan også finde processen med `ps aux | grep app.py` og stoppe den med `kill <PID>`.
+- **Kører den i en container:** `docker stop <navn>`. Navnet står i `docker ps`.
+
+Tjek, at den er stoppet, ved at åbne `http://localhost:8080` (eller din egen port). Får du en fejl i browseren, kører den ikke mere.
+
+Det du allerede har trykket **Gem** på, ligger i YAML-filerne og er i behold. Ændringer, du ikke har gemt, går tabt, når siden lukkes.
+
 ## Arbejdsgang
 
 1. Vælg karakter og side.
