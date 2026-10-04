@@ -1,0 +1,23 @@
+# Kortbunke for kvist: id'er fra bibliotek/*.yaml (og evt. egne kort under 'egne').
+# Felt-reference: docs/kort-yaml.md
+# Lav kort:  python3 dnd.py kort kvist
+
+# Titel på HTML/PDF-filen.
+titel: Kvist evnekort
+# Kortene i rækkefølge. 9 kort pr. A4-ark.
+kort:
+- sneak-attack
+- cunning-action
+- vex
+- nick
+- light-to-vaaben
+- thieves-cant
+- darkvision
+- kattens-held
+- staedig-uvilje
+- lige-paa-alle-fire
+- lucky
+- thieves-tools
+- ball-bearings
+- oil
+- bullseye-lantern

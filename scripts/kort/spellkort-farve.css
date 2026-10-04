@@ -1,0 +1,53 @@
+/* Farve: lægges oven på spellkort.css (som er sort/hvid). Samme layout og mål, kun farver.
+   Pergament som kortbaggrund og én accentfarve (--acc) pr. skole eller korttype.
+   Generatoren sætter data-kat på hvert kort: skolens navn (fx "Evocation") eller korttypen (fx "klasse"). */
+:root {
+  --paper: #f8f0dc;
+  --ink: #1f1811;
+  --ink-2: #54452f;
+  --hair: #a88a5c;
+  --ground: #e6dcc3;
+  --acc: #6e2a12;
+}
+.sheet { background: #fff; }
+.card { background: var(--paper); }
+.card.empty { background: transparent; }
+
+/* Accentfarver. Alle er mørke nok til at kunne bruges som tekst på pergament. */
+.card[data-kat="Evocation"]     { --acc: #9a2d12; }
+.card[data-kat="Abjuration"]    { --acc: #1d3c6e; }
+.card[data-kat="Conjuration"]   { --acc: #8a4a0c; }
+.card[data-kat="Divination"]    { --acc: #47296a; }
+.card[data-kat="Enchantment"]   { --acc: #8a2159; }
+.card[data-kat="Illusion"]      { --acc: #1f5f70; }
+.card[data-kat="Necromancy"]    { --acc: #3b4a2a; }
+.card[data-kat="Transmutation"] { --acc: #1f5229; }
+.card[data-kat="klasse"]        { --acc: #6e2a12; }
+.card[data-kat="mastery"]       { --acc: #7d1f1f; }
+.card[data-kat="feat"]          { --acc: #7a5a0a; }
+.card[data-kat="art"]           { --acc: #1d4a5e; }
+.card[data-kat="udstyr"]        { --acc: #4a3a2a; }
+.card[data-kat="regel"]         { --acc: #333333; }
+
+.frame { border-color: var(--acc); }
+.frame::before { border-color: var(--acc); }
+.badge { border-color: var(--acc); color: var(--acc); box-shadow: 0 0 0 0.5mm var(--paper), 0 0 0 0.7mm var(--acc); }
+.bh .badge { box-shadow: none; }
+.kicker { border-bottom-color: var(--acc); }
+.stats { border-color: var(--acc); }
+.stats div:nth-child(odd) { border-right-color: var(--acc); }
+.stats div:nth-child(-n+2) { border-bottom-color: var(--acc); }
+.tag { border-color: var(--acc); color: var(--acc); }
+.dice { border-color: var(--acc); }
+.drow + .drow { border-top-color: var(--acc); }
+.dv { color: var(--acc); }
+.scale th, .scale td { border-color: var(--acc); }
+.scale th { background: var(--acc); color: var(--paper); }
+.orn { color: var(--acc); }
+.bh { border-bottom-color: var(--acc); }
+.rules h4 { color: var(--acc); }
+.rules h4::after { border-bottom-color: var(--acc); }
+.rules li::marker { color: var(--acc); }
+.ico-k { border-color: var(--acc); background: linear-gradient(90deg, var(--acc) 50%, transparent 50%); }
+
+@media print { body { background: #fff; } }

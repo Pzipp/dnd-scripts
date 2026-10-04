@@ -1,0 +1,44 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# SKABELON: kortbunke (spellkort, evnekort og udstyrskort i pokerstørrelse, 63 × 88 mm)
+#
+# En bunke er en liste af kort-id'er. Kortene findes i bibliotek/*.yaml (se docs/kort-yaml.md).
+# Lav kortene:   python3 dnd.py kort <dit-karakternavn> --pdf
+#
+# Kortene er generelle: de viser formler (fx "d20 + spellangreb"), ikke dine tal.
+# Derfor kan de deles mellem karakterer og ændrer sig ikke ved level-stigning.
+# Print: A4, margin 0, ikke dobbeltsidet. Forside og bagside klippes ud hver for sig og lægges i
+# samme kortlomme. 9 kort pr. ark.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+titel: Skabelon kort                  # titel på HTML/PDF
+
+# Kort-id'er fra bibliotek/. Skriv et ukendt id, og scriptet foreslår det nærmeste.
+kort:
+  - second-wind
+  - light-to-vaaben
+  - sneak-attack
+  - regel-slots
+  - eksempel-evne                     # et eget kort, defineret under `egne` nedenfor
+
+# Egne kort, kun til denne karakter. Samme felter som i bibliotek/ (docs/kort-yaml.md).
+# Id'et må ikke findes i forvejen. Skriv `kilde: Hjemmelavet` på homebrew.
+# Et eget kort bliver kun printet, hvis id'et også står under `kort:` ovenfor.
+egne:
+  eksempel-evne:
+    type: klasse                      # klasse | mastery | feat | art | udstyr | regel (udelad = besværgelse)
+    navn: Example Feature             # engelsk navn (oversættes ikke)
+    dansk: Eksempel på evne           # dansk tekst
+    kicker: Hjemmelavet · <i>eksempel</i>   # linjen under navnet
+    kilde: Hjemmelavet
+    felter:                           # præcis 4 kasser [etiket, værdi]
+      - [Tid, Bonus Action]
+      - [Brug, 1 gang pr. kamp]
+      - [Afstand, 30 fod]
+      - [Kræver, Intet]
+    effekt: Kort tekst til forsiden, 2–4 linjer.
+    bag:                              # bagsiden: titel + tekst eller punkter
+      - {titel: Sådan virker det, tekst: Forklaring.}
+      - titel: Godt at vide
+        punkter:
+          - Første punkt.
+          - Andet punkt.

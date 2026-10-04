@@ -1,0 +1,8 @@
+# Kortbunke for mighty-bird: id'er fra bibliotek/*.yaml (og evt. egne kort under 'egne').
+# Felt-reference: docs/kort-yaml.md
+# Lav kort:  python3 dnd.py kort mighty-bird
+
+# Titel på HTML/PDF-filen.
+titel: Mighty Bird evnekort
+# Kortene i rækkefølge. 9 kort pr. A4-ark.
+kort: [rage, unarmored-defense, cleave, vex, tough, crafter, heroic-inspiration, oil, torch]

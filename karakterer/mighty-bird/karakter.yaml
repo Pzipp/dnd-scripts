@@ -1,0 +1,191 @@
+# Mighty Bird karakterark (D&D 2024).
+# Felt-reference: docs/karakterark-yaml.md · kommenteret skabelon: karakterer/_skabelon/karakter.yaml
+# Lav ark:  python3 dnd.py karakterark mighty-bird
+
+# Titel på HTML/PDF-filen.
+titel: Mighty Bird karakterark
+
+# ── Fælles felter: gælder alle versioner (hver version kan overskrive dem) ──
+faelles:
+  navn: Mighty Bird
+  ident:
+  - [Klasse, Barbarian 1]
+  - [Art, Menneske <i>(barn)</i>]
+  - [Baggrund, Farmer]
+  pb: 2
+  fart: 30
+  hit_die: 12
+  saves: [STR, CON]
+  skills: [Athletics, Intimidation, Animal Handling, Nature, Survival]
+  vaerktoej:
+    STR: [Carpenter's Tools]
+    DEX: [Woodcarver's Tools]
+    INT: [Brewer's Supplies]
+  sprog: 'Common + 2 sprog efter eget valg: ________ · ________'
+  kan_bruge:
+    Rustning: let, medium og skjold
+    Våben: simple og krigsvåben <i>(Martial)</i>
+    Værktøj: Carpenter's Tools · Woodcarver's Tools · Brewer's Supplies · Monster Harvesting Tools <i>(ikke PHB, aftal med DM)</i>
+  masteries:
+  - [Cleave, Greataxe]
+  - [Vex, Handaxe]
+  feats:
+  - 'Tough (fra Farmer): +2 HP pr. level'
+  - 'Crafter (menneske, <i>Versatile</i>): 3 håndværksværktøjer, 20 % rabat på ikke-magisk udstyr'
+
+# ── Side 1 · Karakterark: én side pr. version ──
+versioner:
+- evner: {STR: 18, DEX: 16, CON: 17, INT: 8, WIS: 5, CHA: 12}
+  stats:
+  - [<em>AC</em> · uden rustning, '{10+DEX+CON}']
+  - [Max HP, '17', 12+CON + 2 (Tough)]
+  - [<em>Hit Dice</em>, 1d12, 1 d12 pr. level]
+  - [Initiativ, '{+DEX}']
+  - [Fart · <em>Speed</em>, '30', 'Dash: 60']
+  - [<em>Prof. bonus</em>, '{+PB}', level 1–4]
+  - [Passiv <em>Perc.</em>, '{10+WIS}']
+  - [Raseri <em>Rage</em>, 2×, +2 skade]
+  passiv:
+  - [Perception, '{10+WIS}']
+  - [Insight, '{10+WIS}']
+  - [Investigation, '{10+INT}']
+  angreb:
+  - [Greataxe, '{+STR+PB}', '1d12{+STR} hug', '<b>Cleave</b> · to hænder · Raseri: +2 skade']
+  - [Handaxe ×4, '{+STR+PB}', '1d6{+STR} hug', '<b>Vex</b> · Light · kast 20/60 fod · Raseri: +2']
+  - [Ubevæbnet, '{+STR+PB}', '{1+STR} slag', <em>Unarmed Strike</em>]
+  regler:
+  - titel: Raseri
+    undertitel: Rage · 2 gange · 1 tilbage ved Short Rest, alle ved Long Rest
+    punkter:
+    - '<b>Start</b>: Bonus Action. Ikke i tung rustning.'
+    - <b>Halv skade</b> fra slag, stik og hug <em>(Bludgeoning, Piercing, Slashing)</em>.
+    - <b>+2 skade</b> på angreb med STR (begge økser, også kastet). <b>Fordel</b> på STR checks og STR saves.
+    - <b>Varer</b> til slutningen af din næste tur. Det fortsætter, hvis du angriber en fjende, tvinger en fjende til et save eller bruger en Bonus Action på det. Højst 10 minutter.
+    - Du kan ikke kaste magi eller holde koncentration, mens du raser.
+  traek:
+  - navn: Raseri <em>Rage</em> [][]
+    tag: Long Rest
+    tekst: Se kassen ovenfor. Start det i første tur af kampen.
+  - navn: Unarmored Defense
+    tekst: 'Uden rustning: AC = 10 + DEX + CON. Du må gerne bære skjold.'
+  - navn: Weapon Mastery
+    tekst: Greataxe (<em>Cleave</em>) og Handaxe (<em>Vex</em>). Kan byttes ved Long Rest.
+  - {navn: Tough, tag: Feat, tekst: +2 HP pr. level (regnet med).}
+  - navn: Crafter
+    tag: Feat
+    tekst: Trænet i 3 håndværksværktøjer. 20 % rabat på ikke-magisk udstyr. Kan lave simple ting under et Long Rest.
+  - navn: Resourceful []
+    tag: Menneske
+    tekst: '<em>Heroic Inspiration</em> efter hvert Long Rest: slå én d20 om.'
+  bonus:
+  - {navn: Raseri <em>Rage</em>, tekst: Start raseri. Gør det i din første tur.}
+  ture:
+  - undertitel: nærkamp
+    titel: HUG!
+    punkter:
+    - '<b>Bonus Action</b>: start <b>Raseri</b> (første tur).'
+    - Gå hen til fjenden.
+    - '<b>Attack</b>: Greataxe, d20{+STR+PB}. Rammer du: 1d12{+STR} + 2.'
+    - '<b>Cleave</b>: står der en fjende mere ved siden af, må du hugge den også (1d12 + 2).'
+  - undertitel: afstand
+    titel: Kast øksen
+    punkter:
+    - '<b>Attack</b>: kast en Handaxe, op til 20 fod (60 med ulempe).'
+    - 'Rammer du: <b>Vex</b> giver fordel på dit næste angreb mod samme fjende.'
+    - Saml øksen op igen efter kampen.
+  fod: D&amp;D 2024 · PHB 2024 kap. 3 (Barbarian), kap. 4 (Human, Farmer), kap. 5 (Tough, Crafter), kap. 6 (Greataxe, Handaxe).
+
+# ── Side 2 · Handlingsark ──
+handlingsark:
+  bonus_handlinger: {}
+  vaerktoej:
+  - {navn: Carpenter's Tools, evne: STR, brug: Bygge og reparere i træ}
+  - {navn: Woodcarver's Tools, evne: DEX, brug: 'Snitte pile, figurer, skafter'}
+  - {navn: Brewer's Supplies, evne: INT, brug: 'Brygge, finde ud af, om en drik er dårlig'}
+  ekstra:
+  - titel: Barbar
+    punkter:
+    - '<b>Raseri</b> [][]: Bonus Action. Halv skade fra våben, +2 skade med økserne, fordel på STR checks og saves.'
+    - '<b>Unarmored Defense</b>: AC 10 + DEX + CON = {10+DEX+CON}, så længe du ikke har rustning på.'
+    - '<b>Kast en økse</b>: Handaxe kan kastes 20 fod (60 fod med ulempe). Du bruger STR til at ramme.'
+
+# ── Side 3 · Udstyrsark ──
+udstyrsark:
+  ident:
+  - [Klasse, Barbarian 1]
+  - [Opdateres, Løbende i spillet]
+  venstre:
+  - titel: Våben <i>Weapons</i>
+    punkter:
+    - Greataxe · 1d12 hug · to hænder · <i>Cleave</i>
+    - Handaxe [][][][] · 1d6 hug · kast 20/60 ft · <i>Vex</i>
+    tomme: 2
+  - titel: Udstyr <i>Equipment</i>
+    punkter:
+    - 'Tøj: gammelt landmandstøj og ting fundet på vejen'
+    - Rygsæk · soverulle · reb · fyrtøj · vandsæk
+    - Fakler [][][][][][][][][][]
+    - Olie [][]
+    - Rationer [][][][][][][][][][]
+    - Carpenter's Tools · Woodcarver's Tools · Brewer's Supplies
+    - Monster Harvesting Tools
+    tomme: 8
+  - titel: Særlige genstande
+    punkter: []
+    tomme: 5
+  - {titel: Penge <i>Coins</i>, type: penge}
+  hoejre:
+  - titel: Kampagne og mission
+    punkter: []
+    tomme: 16
+  - titel: Steder
+    punkter: [<b>Gården</b> ved skovkanten · hjemme]
+    tomme: 8
+  - titel: Personer og væsner
+    punkter: []
+    tomme: 12
+
+# ── Side 4 · Baggrundsark ──
+baggrundsark:
+  ident:
+  - [Art, Menneske]
+  - [Baggrund, Farmer]
+  - [Fra, Gården ved skovkanten]
+  venstre:
+  - titel: Udseende <i>Appearance</i>
+    type: fakta
+    felter:
+    - [Alder, barn]
+    - [Højde, lille]
+    - [Vægt, '']
+    - [Øjne, '']
+    - [Hår, '']
+    - [Tøj, landmandstøj]
+  - titel: Historie <i>Backstory</i>
+    type: tekst
+    afsnit:
+    - Mighty Bird voksede op på en lille gård ved skovkanten sammen med sin mor, sin far og en flok dyr. Han var den mindste, så hans far kaldte ham <b>Bird</b>. Men når han svingede øksen, sagde de andre på gården <b>Mighty Bird</b>, og navnet blev hængende.
+    - Han hentede køerne hjem, passede marken og fældede træer med sin fars store økse. Om efteråret hakkede han brænde til hele vinteren, og ingen kunne hugge hurtigere.
+    - 'Men han havde et temperament som et tordenvejr. Blev han vred, gik der ting i stykker: hegn, spande og engang hele dørene til laden. Hans familie elskede ham, men gården kunne ikke holde til ham. Så en morgen pakkede han sin økse, et par håndøkser og lidt brød og gik ud for at se verden.'
+    - Han savner gården og vil gerne hjem på besøg, når han har noget at fortælle.
+    tomme: 3
+  - {titel: Træning og valg <i>Proficiencies</i>, type: traening}
+  hoejre:
+  - titel: Personlighed
+    punkter:
+    - Modig, stærk og nysgerrig.
+    - Temperament som et tordenvejr.
+    - Ved ikke meget om verden, men vil gerne se den.
+    tomme: 2
+  - titel: Familie og venner
+    punkter: [<b>Mor</b> · på gården, '<b>Far</b> · på gården, kaldte ham Bird']
+    tomme: 4
+  - titel: Fjender og rivaler
+    punkter: []
+    tomme: 5
+  - titel: Mål og drømme
+    punkter: [Se verden, Komme hjem på besøg med gode historier]
+    tomme: 4
+  - titel: Hemmeligheder
+    punkter: []
+    tomme: 5
