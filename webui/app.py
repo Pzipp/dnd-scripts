@@ -160,5 +160,39 @@ def output_file(character: str, filename: str):
     return send_from_directory(directory, filename)
 
 
+DATA_FILES = ("karakter.yaml", "kort.yaml")
+
+
+@app.get("/api/files")
+def api_files():
+    character = request.args.get("character", "")
+    if character not in character_dirs():
+        return jsonify({"error": "Ukendt karakter."}), 400
+    base = CHARACTERS / character
+    files = [
+        {"name": name, "group": "Data", "url": f"/download/{character}/{name}"}
+        for name in DATA_FILES if (base / name).is_file()
+    ]
+    out = base / "udskrifter"
+    if out.is_dir():
+        files += [
+            {"name": p.name, "group": "Udskrift", "url": f"/download/{character}/udskrifter/{p.name}"}
+            for p in sorted(out.iterdir()) if p.is_file()
+        ]
+    return jsonify({"files": files})
+
+
+@app.get("/download/<character>/<path:filename>")
+def download(character: str, filename: str):
+    if character not in character_dirs():
+        return jsonify({"error": "Ukendt karakter."}), 404
+    base = CHARACTERS / character
+    if filename in DATA_FILES:
+        return send_from_directory(base, filename, as_attachment=True)
+    if filename.startswith("udskrifter/"):
+        return send_from_directory(base / "udskrifter", filename.split("/", 1)[1], as_attachment=True)
+    return jsonify({"error": "Ukendt fil."}), 404
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", "8080")), debug=False)
