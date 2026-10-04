@@ -26,7 +26,7 @@ python3 dnd.py tjek                           # byg alt; meld fejl i data. KØR 
 | `dnd.py` | Indgangspunkt |
 | `karakterer/<navn>/karakter.yaml` | Karakterarket. Format: `docs/karakterark-yaml.md` |
 | `karakterer/<navn>/kort.yaml` | Kortbunke. Format: `docs/kort-yaml.md` |
-| `karakterer/<navn>/udskrifter/` | **Genereret.** Redigér aldrig i hånden |
+| `karakterer/<navn>/udskrifter/` | **Genereret, ikke i git.** Redigér aldrig i hånden |
 | `karakterer/_skabelon/` | Kommenteret skabelon til nye karakterer |
 | `bibliotek/*.yaml` | Delte kort (id → kort) |
 | `scripts/karakterark/`, `scripts/kort/`, `scripts/pdf/` | Generatorer og CSS. Hver mappe har en README |
@@ -67,7 +67,7 @@ python3 dnd.py tjek                           # byg alt; meld fejl i data. KØR 
 
 * **Redigér ikke** filer i `udskrifter/` i hånden. Generér dem igen.
 * **Slet eller overskriv ikke** en anden spillers karakter uden at spørge. Hver spiller ejer sin mappe i `karakterer/`.
-* Commit **ikke** `.html`-filer eller `__pycache__` (de er i `.gitignore`). PDF'er i `udskrifter/` committes, så alle kan printe uden Python. Regenerér dem kun, når data eller layout er ændret.
+* Commit **ikke** genererede filer: hele `udskrifter/` (HTML og PDF) og `__pycache__` er i `.gitignore`. Der er ingen færdige PDF'er i repoet; de laves med `python3 dnd.py ... --pdf`.
 * Foretræk at lave ændringer på en **gren** og lade en pull request gennemgå dem. Skriv ikke direkte til `main`, medmindre ejeren siger det.
 * Ret ikke i `scripts/` for at løse et dataproblem i en enkelt karakter. Brug `egne:` eller karakterens egen fil.
 * Læg ikke adgangskoder, nøgler eller personlige oplysninger i repoet. Repoet er offentligt.

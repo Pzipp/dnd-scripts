@@ -13,7 +13,7 @@ karakterer/
   _skabelon/          kommenteret skabelon til nye karakterer
 ```
 
-`.html`-filerne i `udskrifter/` committes ikke (de laves på ny med `python3 dnd.py ...`). PDF'erne committes, så alle kan printe uden Python.
+`udskrifter/` committes ikke (`.gitignore`). Alt i den, HTML som PDF, laves på ny med `python3 dnd.py ... --pdf`. Mappen oprettes af scriptet, første gang du laver noget.
 
 ## Ny karakter
 
