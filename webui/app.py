@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import html
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -63,9 +64,14 @@ def save_yaml(character: str, kind: str, yaml_text: str) -> None:
     path.write_text(yaml_text.rstrip() + "\n", encoding="utf-8")
 
 
-def inject_color(source_html: str, color: str) -> str:
-    if not isinstance(color, str) or not color.startswith("#") or len(color) not in (4, 7):
+def check_color(color: str) -> str:
+    if not isinstance(color, str) or not re.fullmatch(r"#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})", color):
         raise ValueError("Ugyldig farve.")
+    return color
+
+
+def inject_color(source_html: str, color: str) -> str:
+    check_color(color)
     safe = html.escape(color, quote=True)
     override = (
         "<style id=\"webui-color\">"
@@ -73,10 +79,15 @@ def inject_color(source_html: str, color: str) -> str:
         f".s1,.sx,.card{{--accent:{safe}!important;--acc:{safe}!important;}}"
         "</style>"
     )
-    return source_html.replace("</head>", override + "</head>", 1)
+    # Karakterarkene er hele HTML-dokumenter. Kortene er kun et fragment uden <head>,
+    # så der sættes stilen forrest i stedet.
+    if "</head>" in source_html:
+        return source_html.replace("</head>", override + "</head>", 1)
+    return override + source_html
 
 
 def generate(character: str, kind: str, color: str) -> str:
+    check_color(color)  # før generatoren kører, så en ugyldig farve ikke efterlader en ufarvet fil
     source = data_path(character, kind)
     target = output_dir(character)
 
