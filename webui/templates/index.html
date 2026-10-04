@@ -26,6 +26,7 @@
     <label>Farve
       <input id="color" type="color" value="#6e2a12" title="Vælg accentfarve">
     </label>
+    <button id="save" type="button">Gem</button>
     <button id="generate" type="button">Generer</button>
   </div>
 </header>
@@ -34,7 +35,7 @@
   <section class="panel editor">
     <div class="panel-head">
       <h2>YAML</h2>
-      <span>Ændringer gemmes ikke i projektet</span>
+      <span>Rediger den rigtige karakterfil</span>
     </div>
     <textarea id="yaml" spellcheck="false"></textarea>
     <div id="status" class="status"></div>
@@ -45,7 +46,7 @@
       <h2>Output</h2>
       <a id="open-output" href="#" target="_blank" rel="noopener" hidden>Åbn i ny fane</a>
     </div>
-    <div id="empty" class="empty">Vælg en karakter og generer.</div>
+    <div id="empty" class="empty">Gem og generer for at opdatere output.</div>
     <iframe id="output" title="Genereret D&D output" hidden></iframe>
   </section>
 </main>
@@ -55,11 +56,14 @@ const character = document.querySelector("#character");
 const kind = document.querySelector("#kind");
 const yamlBox = document.querySelector("#yaml");
 const color = document.querySelector("#color");
+const saveButton = document.querySelector("#save");
 const generateButton = document.querySelector("#generate");
 const statusBox = document.querySelector("#status");
 const output = document.querySelector("#output");
 const empty = document.querySelector("#empty");
 const openOutput = document.querySelector("#open-output");
+
+let savedYaml = "";
 
 function setStatus(text, error = false) {
   statusBox.textContent = text;
@@ -67,21 +71,68 @@ function setStatus(text, error = false) {
 }
 
 async function loadYaml() {
+  saveButton.disabled = true;
+  generateButton.disabled = true;
   setStatus("Indlæser YAML…");
-  const response = await fetch(
-    `/api/yaml?character=${encodeURIComponent(character.value)}&kind=${encodeURIComponent(kind.value)}`
-  );
-  const data = await response.json();
-  if (!response.ok) {
-    setStatus(data.error || "Kunne ikke hente YAML.", true);
-    return;
+  try {
+    const response = await fetch(
+      `/api/yaml?character=${encodeURIComponent(character.value)}&kind=${encodeURIComponent(kind.value)}`
+    );
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Kunne ikke hente YAML.");
+    yamlBox.value = data.yaml;
+    savedYaml = data.yaml;
+    setStatus("");
+  } catch (error) {
+    setStatus(error.message, true);
+  } finally {
+    saveButton.disabled = false;
+    generateButton.disabled = false;
   }
-  yamlBox.value = data.yaml;
-  setStatus("");
+}
+
+yamlBox.addEventListener("input", () => {
+  if (yamlBox.value !== savedYaml) {
+    setStatus("Ikke gemt.");
+  } else {
+    setStatus("");
+  }
+});
+
+async function save() {
+  saveButton.disabled = true;
+  generateButton.disabled = true;
+  setStatus("Gemmer…");
+  try {
+    const response = await fetch("/api/save", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        character: character.value,
+        kind: kind.value,
+        yaml: yamlBox.value
+      })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Kunne ikke gemme YAML.");
+    savedYaml = yamlBox.value;
+    setStatus("Gemt.");
+  } catch (error) {
+    setStatus(error.message, true);
+  } finally {
+    saveButton.disabled = false;
+    generateButton.disabled = false;
+  }
 }
 
 async function generate() {
+  if (yamlBox.value !== savedYaml) {
+    setStatus("Gem ændringerne først.", true);
+    return;
+  }
+
   generateButton.disabled = true;
+  saveButton.disabled = true;
   setStatus("Genererer…");
   try {
     const response = await fetch("/api/generate", {
@@ -90,27 +141,28 @@ async function generate() {
       body: JSON.stringify({
         character: character.value,
         kind: kind.value,
-        yaml: yamlBox.value,
         color: color.value
       })
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Generering fejlede.");
-    output.src = data.url;
+    output.src = data.url + "?t=" + Date.now();
     output.hidden = false;
     empty.hidden = true;
     openOutput.href = data.url;
     openOutput.hidden = false;
-    setStatus("Færdig.");
+    setStatus("Færdig – output gemt i karakterens udskrifter.");
   } catch (error) {
     setStatus(error.message, true);
   } finally {
     generateButton.disabled = false;
+    saveButton.disabled = false;
   }
 }
 
 character.addEventListener("change", loadYaml);
 kind.addEventListener("change", loadYaml);
+saveButton.addEventListener("click", save);
 generateButton.addEventListener("click", generate);
 loadYaml();
 </script>
