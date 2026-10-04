@@ -56,7 +56,7 @@ def inject_color(source_html: str, color: str) -> str:
     override = (
         "<style id=\"webui-color\">"
         f":root{{--accent:{safe}!important;--accent-color:{safe}!important;}}"
-        f"body{{--webui-accent:{safe};}}"
+        f".s1,.sx,.card{{--accent:{safe}!important;--acc:{safe}!important;}}"
         "</style>"
     )
     return source_html.replace("</head>", override + "</head>", 1)
