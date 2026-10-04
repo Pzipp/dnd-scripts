@@ -47,6 +47,19 @@ Alternativ port:
 PORT=8081 python webui/app.py
 ```
 
+## Kør i Docker
+
+Repoet har en `Dockerfile` (Python 3.12, kun Flask og PyYAML, uden PDF). Fra projektets rod:
+
+```bash
+docker build -t dnd-webui .
+docker run --rm -p 8080:8080 --user "$(id -u):$(id -g)" -v "$PWD":/app dnd-webui
+```
+
+`-v "$PWD":/app` er vigtig: karakterer, `bibliotek/` og `udskrifter/` ligger på værten, og containeren skriver til dem. `--user` sørger for, at genererede filer ejes af dig og ikke af root.
+
+Compose-stacken på homelab-serveren ligger i `stacks/games/dnd/`, og den bygger fra denne mappe.
+
 ## Stop
 
 Serveren kører, til du stopper den. Den stopper ikke af sig selv, når du lukker browserfanen.
