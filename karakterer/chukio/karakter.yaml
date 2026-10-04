@@ -20,9 +20,9 @@ faelles:
   vaerktoej:
     WIS: [Spil-sæt <i>Gaming Set</i>]
   kan_bruge:
-    Rustning: let, medium, tung og skjold
-    Våben: simple og krigsvåben <i>(Martial)</i>
-    Værktøj: spil-sæt <i>(Gaming Set)</i>
+    Rustning: Light, Medium, Heavy, Shield
+    Våben: Simple, Martial
+    Værktøj: Gaming Set
   masteries:
   - [Nick, Sabel <i>Scimitar</i>]
   - [Graze, Great sword]
@@ -63,11 +63,11 @@ versioner:
   - [Passiv <em>Perc.</em>, '{10+WIS+PB}']
   - [<em>Second Wind</em>, 1d10+2, 1d10 + level]
   angreb:
-  - [Sabel ×2 <em>Scimitar</em>, '{+STR+PB}', '1d6{+STR} hug', '<b>Nick</b> · Light, Finesse']
-  - [Great sword, '{+STR+PB}', '2d6{+STR} hug', <b>Graze</b> · to hænder]
-  - [Dolk <em>Dagger</em>, '{+STR+PB}', '1d4{+STR} stik', kast 20/60 fod]
-  - [Slangebøsse <em>Sling</em>, '{+DEX+PB}', '1d4{+DEX} slag', <b>Slow</b> · 30/120 fod]
-  - [Ubevæbnet, '{+STR+PB}', '{1+STR} slag', <em>Unarmed Strike</em>]
+  - [Sabel ×2 <em>Scimitar</em>, '{+STR+PB}', '1d6{+STR} Slashing', '<b>Nick</b> · Light, Finesse']
+  - [Tohåndssværd <em>Greatsword</em>, '{+STR+PB}', '2d6{+STR} Slashing', <b>Graze</b> · to hænder]
+  - [Dolk <em>Dagger</em>, '{+STR+PB}', '1d4{+STR} Piercing', kast 20/60 ft]
+  - [Slangebøsse <em>Sling</em>, '{+DEX+PB}', '1d4{+DEX} Bludgeoning', <b>Slow</b> · 30/120 ft]
+  - [Ubevæbnet <em>Unarmed Strike</em>, '{+STR+PB}', '{1+STR} Bludgeoning', '']
   traek:
   - navn: Second Wind [][]
     tag: Long Rest
@@ -108,13 +108,13 @@ udstyrsark:
   - titel: Våben <i>Weapons</i>
     punkter:
     - 'Dual sværd: 2 sabler <i>Scimitar</i>'
-    - Great sword
+    - Tohåndssværd <i>Greatsword</i>
     - Dolk <i>Dagger</i>
     - Slangebøsse <i>Sling</i> + sten
     tomme: 2
   - titel: Udstyr <i>Equipment</i>
     punkter:
-    - Reb, 5 m, med gribekrog
+    - Reb, 25 ft, med gribekrog
     - Sovegrej <i>Bedroll</i>
     - Førstehjælpssæt <i>Healer's Kit</i> · healing til små sår
     - Kogegrej til opvarmning af rationer

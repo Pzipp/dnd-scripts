@@ -23,8 +23,8 @@ faelles:
     INT: [Brewer's Supplies]
   sprog: 'Common + 2 sprog efter eget valg: ________ · ________'
   kan_bruge:
-    Rustning: let, medium og skjold
-    Våben: simple og krigsvåben <i>(Martial)</i>
+    Rustning: Light, Medium, Shield
+    Våben: Simple, Martial
     Værktøj: Carpenter's Tools · Woodcarver's Tools · Brewer's Supplies · Monster Harvesting Tools <i>(ikke PHB, aftal med DM)</i>
   masteries:
   - [Cleave, Greataxe]
@@ -50,14 +50,14 @@ versioner:
   - [Insight, '{10+WIS}']
   - [Investigation, '{10+INT}']
   angreb:
-  - [Greataxe, '{+STR+PB}', '1d12{+STR} hug', '<b>Cleave</b> · to hænder · Raseri: +2 skade']
-  - [Handaxe ×4, '{+STR+PB}', '1d6{+STR} hug', '<b>Vex</b> · Light · kast 20/60 fod · Raseri: +2']
-  - [Ubevæbnet, '{+STR+PB}', '{1+STR} slag', <em>Unarmed Strike</em>]
+  - [Tohåndsøkse <em>Greataxe</em>, '{+STR+PB}', '1d12{+STR} Slashing', '<b>Cleave</b> · to hænder · Raseri: +2 skade']
+  - [Håndøkse ×4 <em>Handaxe</em>, '{+STR+PB}', '1d6{+STR} Slashing', '<b>Vex</b> · Light · kast 20/60 ft · Raseri: +2']
+  - [Ubevæbnet <em>Unarmed Strike</em>, '{+STR+PB}', '{1+STR} Bludgeoning', '']
   regler:
   - titel: Raseri
     undertitel: Rage · 2 gange · 1 tilbage ved Short Rest, alle ved Long Rest
     punkter:
-    - '<b>Start</b>: Bonus Action. Ikke i tung rustning.'
+    - '<b>Start</b>: Bonus Action. Ikke i Heavy armor.'
     - <b>Halv skade</b> fra slag, stik og hug <em>(Bludgeoning, Piercing, Slashing)</em>.
     - <b>+2 skade</b> på angreb med STR (begge økser, også kastet). <b>Fordel</b> på STR checks og STR saves.
     - <b>Varer</b> til slutningen af din næste tur. Det fortsætter, hvis du angriber en fjende, tvinger en fjende til et save eller bruger en Bonus Action på det. Højst 10 minutter.
@@ -67,7 +67,7 @@ versioner:
     tag: Long Rest
     tekst: Se kassen ovenfor. Start det i første tur af kampen.
   - navn: Unarmored Defense
-    tekst: 'Uden rustning: AC = 10 + DEX + CON. Du må gerne bære skjold.'
+    tekst: 'Uden rustning: AC = 10 + DEX + CON. Du må gerne bære Shield.'
   - navn: Weapon Mastery
     tekst: Greataxe (<em>Cleave</em>) og Handaxe (<em>Vex</em>). Kan byttes ved Long Rest.
   - {navn: Tough, tag: Feat, tekst: +2 HP pr. level (regnet med).}
@@ -90,7 +90,7 @@ versioner:
   - undertitel: afstand
     titel: Kast øksen
     punkter:
-    - '<b>Attack</b>: kast en Handaxe, op til 20 fod (60 med ulempe).'
+    - '<b>Attack</b>: kast en Handaxe, op til 20 ft (60 med ulempe).'
     - 'Rammer du: <b>Vex</b> giver fordel på dit næste angreb mod samme fjende.'
     - Saml øksen op igen efter kampen.
   fod: D&amp;D 2024 · PHB 2024 kap. 3 (Barbarian), kap. 4 (Human, Farmer), kap. 5 (Tough, Crafter), kap. 6 (Greataxe, Handaxe).
@@ -107,7 +107,7 @@ handlingsark:
     punkter:
     - '<b>Raseri</b> [][]: Bonus Action. Halv skade fra våben, +2 skade med økserne, fordel på STR checks og saves.'
     - '<b>Unarmored Defense</b>: AC 10 + DEX + CON = {10+DEX+CON}, så længe du ikke har rustning på.'
-    - '<b>Kast en økse</b>: Handaxe kan kastes 20 fod (60 fod med ulempe). Du bruger STR til at ramme.'
+    - '<b>Kast en økse</b>: Handaxe kan kastes 20 ft (60 ft med ulempe). Du bruger STR til at ramme.'
 
 # ── Side 3 · Udstyrsark ──
 udstyrsark:
@@ -117,8 +117,8 @@ udstyrsark:
   venstre:
   - titel: Våben <i>Weapons</i>
     punkter:
-    - Greataxe · 1d12 hug · to hænder · <i>Cleave</i>
-    - Handaxe [][][][] · 1d6 hug · kast 20/60 ft · <i>Vex</i>
+    - Tohåndsøkse <i>Greataxe</i> · 1d12 Slashing · to hænder · <i>Cleave</i>
+    - Håndøkse <i>Handaxe</i> [][][][] · 1d6 Slashing · kast 20/60 ft · <i>Vex</i>
     tomme: 2
   - titel: Udstyr <i>Equipment</i>
     punkter:

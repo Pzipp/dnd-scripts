@@ -30,10 +30,10 @@ faelles:
   - [Perception, '{10+WIS}']
   - [Insight, '{10+WIS+PB}']
   - [Investigation, '{10+INT}']
-  - [Mørkesyn <em>Darkvision</em>, 60 fod]
+  - [Mørkesyn <em>Darkvision</em>, 60 ft]
   bonus:
   - navn: Hex <em>1. grad</em>
-    tekst: Bonus Action, koncentration. +1d6 nekrotisk skade, hver gang du rammer målet. Ulempe for målet på checks med én evne, du vælger.
+    tekst: Bonus Action, koncentration. +1d6 Necrotic-skade, hver gang du rammer målet. Ulempe for målet på checks med én evne, du vælger.
   fod: D&amp;D 2024 · PHB 2024 kap. 3 (Warlock), kap. 4 (Tiefling, Acolyte) og kap. 7 (besværgelser).
 
 # ── Side 1 · Karakterark: én side pr. version ──
@@ -49,13 +49,13 @@ versioner:
   - [Passiv <em>Perc.</em>, '{10+WIS}']
   - [Spell DC, '{8+CHA+PB}']
   angreb:
-  - [Kniv <em>Dagger</em>, '{+DEX+PB}', '1d4{+DEX} stik', kast 20/60 fod]
-  - [Stav <em>Quarterstaff</em>, '{+STR+PB}', '1d6{+STR} slag', 1d8 med to hænder]
-  - [Orksværd, '{+STR}', '1d8{+STR} hug', ikke trænet]
-  - [Eldritch Blast, '{+CHA+PB}', '1d10{+CHA} kraft', 120 fod · Agonizing Blast]
-  - [Fire Bolt, '{+CHA+PB}', 1d10 ild, 120 fod]
-  - [Shocking Grasp, '{+CHA+PB}', 1d8 lyn, berøring · målet får ingen reaction]
-  - [Poison Spray, '{+CHA+PB}', 1d12 gift, 30 fod]
+  - [Kniv <em>Dagger</em>, '{+DEX+PB}', '1d4{+DEX} Piercing', kast 20/60 ft]
+  - [Stav <em>Quarterstaff</em>, '{+STR+PB}', '1d6{+STR} Bludgeoning', 1d8 med to hænder]
+  - [Orksværd, '{+STR}', '1d8{+STR} Slashing', ikke trænet]
+  - [Overjordisk stråle <em>Eldritch Blast</em>, '{+CHA+PB}', '1d10{+CHA} Force', 120 ft · Agonizing Blast]
+  - [Ildpil <em>Fire Bolt</em>, '{+CHA+PB}', 1d10 Fire, 120 ft]
+  - [Elektrisk greb <em>Shocking Grasp</em>, '{+CHA+PB}', 1d8 Lightning, berøring · målet får ingen reaction]
+  - [Giftsprøjt <em>Poison Spray</em>, '{+CHA+PB}', 1d12 Poison, 30 ft]
   magi:
     dc:
     - {navn: Al magi · CHA, slag: '{+CHA+PB}', dc: '{8+CHA+PB}'}
@@ -64,13 +64,13 @@ versioner:
     - - Cantrips
       - Eldritch Blast · Minor Illusion · Fire Bolt · Shocking Grasp · Shape Water · Poison Spray · Thaumaturgy · Guidance · Spare the Dying
     - - 1. grad
-      - <b>Hex</b> · <b>Armor of Agathys</b> 5 midl. HP, 5 kulde til den, der rammer · <b>Witch Bolt</b> 2d12 lyn, så 1d12/tur (konc.)
+      - <b>Hex</b> · <b>Armor of Agathys</b> 5 midl. HP, 5 Cold til den, der rammer · <b>Witch Bolt</b> 2d12 Lightning, så 1d12/tur (konc.)
     - [1. grad · Cleric, '<b>Cure Wounds</b> 2d8{+CHA} HP · gratis 1× pr. lang hvil []']
     - [Ritualer, Detect Magic · Comprehend Languages]
   traek:
   - navn: Mørkesyn <em>Darkvision</em>
-    tekst: 60 fod. Mørke ses som svagt lys, kun i gråtoner.
-  - {navn: Modstand mod gift, tekst: Halv skade fra gift (<em>Poison resistance</em>).}
+    tekst: 60 ft. Mørke ses som svagt lys, kun i gråtoner.
+  - {navn: Modstand mod gift, tekst: Halv skade fra gift (Poison).}
   - {navn: Pagtmagi <em>Pact Magic</em>, tekst: Spell slots kommer igen ved kort hvil.}
   - navn: Magical Cunning []
     tag: 1× Long Rest
@@ -87,7 +87,7 @@ handlingsark:
   ekstra:
   - titel: Tiefling og magi
     punkter:
-    - '<b>Mørkesyn</b> 60 ft. <b>Modstand mod gift</b>: halv giftskade.'
+    - '<b>Mørkesyn</b> 60 ft. <b>Modstand mod gift</b>: halv Poison-skade.'
     - '<b>Koncentration</b>: tager du skade, slår du CON-save mod DC 10 eller halvdelen af skaden (det højeste), ellers slutter besværgelsen.'
 
 # ── Side 3 · Udstyrsark ──
@@ -97,9 +97,9 @@ udstyrsark:
   venstre:
   - titel: Våben <i>Weapons</i>
     punkter:
-    - Stav <i>Quarterstaff</i> · 1d6 slag, 1d8 tohånds
-    - Orksværd · 1d8 hug · ikke trænet
-    - Kniv <i>Dagger</i> · 1d4 stik · kan kastes 20/60 ft
+    - Stav <i>Quarterstaff</i> · 1d6 Bludgeoning, 1d8 tohånds
+    - Orksværd · 1d8 Slashing · ikke trænet
+    - Kniv <i>Dagger</i> · 1d4 Piercing · kan kastes 20/60 ft
     tomme: 2
   - titel: Udstyr <i>Equipment</i>
     punkter:

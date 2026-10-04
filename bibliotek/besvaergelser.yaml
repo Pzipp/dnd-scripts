@@ -8,13 +8,13 @@ eldritch-blast:
   skole: Evocation
   skole_da: Fremkaldelse
   tid: Action
-  afstand: 120 fod
+  afstand: 120 ft
   varighed: Øjeblikkelig
   komp: V, S
   effekt: En stråle af knitrende energi skyder mod et væsen inden for rækkevidde.
   slag:
   - [Angreb, d20 + spellangreb, afstand]
-  - [Skade, 1d10, kraft <i>force</i> pr. stråle]
+  - [Skade, 1d10, Force pr. stråle]
   skala:
   - [Level 1, 1 stråle]
   - ['5', '2']
@@ -22,12 +22,12 @@ eldritch-blast:
   - ['17', '4']
   bag:
   - titel: Sådan virker det
-    tekst: Slå et afstands-spellangreb mod målet. Rammer du, tager det 1d10 kraftskade.
+    tekst: Slå et afstands-spellangreb mod målet. Rammer du, tager det 1d10 Force-skade.
   - titel: Flere stråler
     tekst: Fra level 5 skyder du flere stråler. Hver stråle er sit eget angreb med sit eget slag og sin egen skade. De kan ramme samme mål eller forskellige mål.
   - titel: Godt at vide
     punkter:
-    - Kraftskade <i>force</i> er der næsten ingen væsner, der modstår.
+    - Force-skade er der næsten ingen væsner, der modstår.
     - <i>Agonizing Blast</i> lægger din magi-modifier til skaden fra hver stråle.
     - <i>Hex</i> giver +1d6 for hver stråle, der rammer.
 fire-bolt:
@@ -37,13 +37,13 @@ fire-bolt:
   skole: Evocation
   skole_da: Fremkaldelse
   tid: Action
-  afstand: 120 fod
+  afstand: 120 ft
   varighed: Øjeblikkelig
   komp: V, S
   effekt: Du kaster en plet ild mod et væsen eller en genstand inden for rækkevidde.
   slag:
   - [Angreb, d20 + spellangreb, afstand]
-  - [Skade, 1d10, ild <i>fire</i>]
+  - [Skade, 1d10, Fire]
   skala:
   - [Level 1, 1d10]
   - ['5', 2d10]
@@ -51,13 +51,13 @@ fire-bolt:
   - ['17', 4d10]
   bag:
   - titel: Sådan virker det
-    tekst: Slå et afstands-spellangreb mod målet. Rammer du, tager det 1d10 ildskade.
+    tekst: Slå et afstands-spellangreb mod målet. Rammer du, tager det 1d10 Fire-skade.
   - titel: Ild antænder
     tekst: En brændbar genstand, som ingen bærer eller holder, bryder i brand, når den bliver ramt.
   - titel: Godt at vide
     punkter:
     - Kan bruges til at tænde bål, fakler og lunter på afstand.
-    - Nogle væsner er immune over for ild, fx ildelementarer og røde drager.
+    - Nogle væsner er immune over for Fire-skade, fx ildelementarer og røde drager.
 shocking-grasp:
   navn: Shocking Grasp
   dansk: Elektrisk greb
@@ -71,7 +71,7 @@ shocking-grasp:
   effekt: Lyn springer fra din hånd og giver et væsen, du prøver at røre, et stød.
   slag:
   - [Angreb, d20 + spellangreb, nærkamp]
-  - [Skade, 1d8, lyn <i>lightning</i>]
+  - [Skade, 1d8, Lightning]
   skala:
   - [Level 1, 1d8]
   - ['5', 2d8]
@@ -79,7 +79,7 @@ shocking-grasp:
   - ['17', 4d8]
   bag:
   - titel: Sådan virker det
-    tekst: Slå et nærkamps-spellangreb mod målet. Rammer du, tager det 1d8 lynskade.
+    tekst: Slå et nærkamps-spellangreb mod målet. Rammer du, tager det 1d8 Lightning-skade.
   - titel: Ingen modangreb
     tekst: Et ramt mål kan ikke lave <i>Opportunity Attacks</i> før starten af sin næste tur.
   - titel: Godt at vide
@@ -93,13 +93,13 @@ poison-spray:
   skole: Necromancy
   skole_da: Nekromanti
   tid: Action
-  afstand: 30 fod
+  afstand: 30 ft
   varighed: Øjeblikkelig
   komp: V, S
   effekt: Du sprøjter en giftig tåge mod et væsen inden for rækkevidde.
   slag:
   - [Angreb, d20 + spellangreb, afstand]
-  - [Skade, 1d12, gift <i>poison</i>]
+  - [Skade, 1d12, Poison]
   skala:
   - [Level 1, 1d12]
   - ['5', 2d12]
@@ -107,11 +107,11 @@ poison-spray:
   - ['17', 4d12]
   bag:
   - titel: Sådan virker det
-    tekst: Slå et afstands-spellangreb mod målet. Rammer du, tager det 1d12 giftskade.
+    tekst: Slå et afstands-spellangreb mod målet. Rammer du, tager det 1d12 Poison-skade.
   - titel: Godt at vide
     punkter:
     - Højeste skadeterning blandt cantrips, men kort rækkevidde.
-    - 'Mange væsner er immune over for gift: udøde, konstruktioner, mange dæmoner og djævle. Skift til en anden besværgelse, hvis skaden ikke virker.'
+    - 'Mange væsner er immune over for Poison-skade: udøde, konstruktioner, mange dæmoner og djævle. Skift til en anden besværgelse, hvis skaden ikke virker.'
     - I 2024-reglerne er det et angrebsslag, ikke et redningskast.
 minor-illusion:
   navn: Minor Illusion
@@ -120,10 +120,10 @@ minor-illusion:
   skole: Illusion
   skole_da: Illusion
   tid: Action
-  afstand: 30 fod
+  afstand: 30 ft
   varighed: 1 minut
   komp: S, M
-  effekt: Skab <b>enten</b> en lyd <b>eller</b> et stillestående billede af en genstand, højst en terning på 5 fod.
+  effekt: Skab <b>enten</b> en lyd <b>eller</b> et stillestående billede af en genstand, højst en terning på 5 ft.
   slag:
   - [Afslør, Study, 'handling: INT <i>Investigation</i> mod din spell DC']
   bag:
@@ -142,17 +142,17 @@ shape-water:
   skole: Transmutation
   skole_da: Forvandling
   tid: Action
-  afstand: 30 fod
+  afstand: 30 ft
   varighed: Øjeblikkelig eller 1 time
   komp: S
-  effekt: Du styrer vand, der kan være i en terning på 5 fod. Vælg én af fire effekter, se bagsiden.
+  effekt: Du styrer vand, der kan være i en terning på 5 ft. Vælg én af fire effekter, se bagsiden.
   slag:
   - [Slag, Intet, virker automatisk]
   - [Aktive, Højst 2, 1-times effekter ad gangen]
   bag:
   - titel: Vælg én effekt
     punkter:
-    - <b>Flyt:</b> Flyt vandet eller ændr strømmen op til 5 fod. Ikke nok kraft til at skade. <i>Øjeblikkelig.</i>
+    - <b>Flyt:</b> Flyt vandet eller ændr strømmen op til 5 ft. Ikke nok kraft til at skade. <i>Øjeblikkelig.</i>
     - <b>Former:</b> Vandet laver simple former, der bevæger sig. <i>1 time.</i>
     - <b>Farve:</b> Skift vandets farve eller gennemsigtighed. <i>1 time.</i>
     - <b>Frys:</b> Frys vandet, hvis der ikke er væsner i det. <i>1 time.</i>
@@ -165,7 +165,7 @@ thaumaturgy:
   skole: Transmutation
   skole_da: Forvandling
   tid: Action
-  afstand: 30 fod
+  afstand: 30 ft
   varighed: Op til 1 minut
   komp: V
   effekt: Du skaber et lille under, et tegn på overnaturlig kraft. Vælg én af seks effekter, se bagsiden.
@@ -212,14 +212,14 @@ spare-the-dying:
   skole: Necromancy
   skole_da: Nekromanti
   tid: Action
-  afstand: 15 fod
+  afstand: 15 ft
   varighed: Øjeblikkelig
   komp: V, S
   effekt: Vælg et væsen inden for rækkevidde, der har 0 HP og ikke er dødt. Væsnet bliver <b>stabilt</b> <i>Stable</i>.
   slag:
   - [Slag, Intet, virker automatisk]
   skala:
-  - [Level 1, 15 fod]
+  - [Level 1, 15 ft]
   - ['5', '30']
   - ['11', '60']
   - ['17', '120']
@@ -239,13 +239,13 @@ hex:
   skole: Enchantment
   skole_da: Fortryllelse
   tid: Bonus Action
-  afstand: 90 fod
+  afstand: 90 ft
   varighed: Koncentration, op til 1 time
   komp: V, S, M
   konc: true
   effekt: Forband et væsen, du kan se. Du giver ekstra skade, når du rammer det.
   slag:
-  - [Ekstra, +1d6, nekrotisk <i>necrotic</i> hver gang du rammer]
+  - [Ekstra, +1d6, Necrotic hver gang du rammer]
   - [Ulempe, Checks, med den valgte evne]
   skala:
   - [1. grad, 1 time]
@@ -272,19 +272,19 @@ armor-of-agathys:
   afstand: Dig selv
   varighed: 1 time
   komp: V, S, M
-  effekt: Frost dækker dig. Du får midlertidige HP. Rammer et væsen dig med et nærkampsangreb, tager det kuldeskade.
+  effekt: Frost dækker dig. Du får midlertidige HP. Rammer et væsen dig med et nærkampsangreb, tager det Cold-skade.
   slag:
   - [Midl. HP, '5', midlertidige HP]
-  - [Kulde, '5', 'til den, der rammer dig i nærkamp']
+  - [Cold, '5', 'til den, der rammer dig i nærkamp']
   skala:
   - [1. grad, '5']
   - ['2.', '10']
   - ['3.', '15']
   - ['4.', '20']
-  skala_titel: HP og kulde
+  skala_titel: HP og Cold
   bag:
   - titel: Sådan virker det
-    tekst: Kulden virker kun, så længe du stadig har nogle af de midlertidige HP tilbage.
+    tekst: Cold-skaden virker kun, så længe du stadig har nogle af de midlertidige HP tilbage.
   - titel: Godt at vide
     punkter:
     - Midlertidige HP lægges ikke sammen med andre midlertidige HP. Du beholder den største pulje.
@@ -298,14 +298,14 @@ witch-bolt:
   skole: Evocation
   skole_da: Fremkaldelse
   tid: Action
-  afstand: 60 fod
+  afstand: 60 ft
   varighed: Koncentration, op til 1 minut
   komp: V, S, M
   konc: true
   effekt: En lynbue binder dig til målet. Du kan give det stød igen og igen.
   slag:
   - [Angreb, d20 + spellangreb, afstand]
-  - [Skade, 2d12, 'lyn · senere ture: 1d12 (Bonus Action)']
+  - [Skade, 2d12, 'Lightning · senere ture: 1d12 (Bonus Action)']
   skala:
   - [1. grad, 2d12]
   - ['2.', 3d12]
@@ -314,10 +314,10 @@ witch-bolt:
   skala_titel: Første skade
   bag:
   - titel: Sådan virker det
-    tekst: Slå et afstands-spellangreb. Rammer du, tager målet 2d12 lynskade. På hver af dine senere ture kan du bruge en Bonus Action til at give 1d12 lynskade automatisk, <b>også selvom det første angreb missede</b>.
+    tekst: Slå et afstands-spellangreb. Rammer du, tager målet 2d12 Lightning-skade. På hver af dine senere ture kan du bruge en Bonus Action til at give 1d12 Lightning-skade automatisk, <b>også selvom det første angreb missede</b>.
   - titel: Slutter når
     punkter:
-    - målet er længere væk end 60 fod,
+    - målet er længere væk end 60 ft,
     - målet har fuld dækning <i>Total Cover</i> fra dig,
     - eller du mister koncentrationen.
   - {titel: Materiale, tekst: 'En kvist, der er ramt af lyn.'}
@@ -360,15 +360,15 @@ detect-magic:
   komp: V, S
   konc: true
   ritual: true
-  effekt: Du mærker, om der er magi inden for 30 fod af dig.
+  effekt: Du mærker, om der er magi inden for 30 ft af dig.
   slag:
-  - [Område, 30 fod, omkring dig]
+  - [Område, 30 ft, omkring dig]
   - [Ritual, +10 min, intet spell slot]
   bag:
   - titel: Se auraen
     tekst: Mærker du magi, kan du bruge en <i>Magic</i>-handling til at se en svag aura omkring et synligt væsen eller en genstand med magi. Er det en besværgelse, lærer du dens skole.
   - titel: Blokeres af
-    tekst: 1 fod sten, jord eller træ, 1 tomme metal, eller et tyndt lag bly.
+    tekst: 1 ft sten, jord eller træ, 1 tomme metal, eller et tyndt lag bly.
   - titel: Ritual
     tekst: Tager 10 minutter længere at kaste, men bruger intet spell slot. Godt til at undersøge genstande, døre og kister.
 comprehend-languages:

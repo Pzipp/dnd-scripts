@@ -130,6 +130,21 @@ def formula(text, roll=None):
     return re.sub(r"\s+(stik|slag|hug|skade|ild|gift|kraft|lyn|kulde|nekrotisk)\b.*$", "", out).strip()
 
 
+EN_SIDST = re.compile(r"^(.*?)\s*<(?:em|i)>([^<]*)</(?:em|i)>$")
+
+def dansk_engelsk(tekst, env, box='<span class="cbx"></span>'):
+    """Dansk navn øverst, engelsk navn i lille skrift under. Kun når engelsk står sidst i navnefeltet."""
+    m = EN_SIDST.match(tekst)
+    if not m:
+        return fmt(tekst, env, box)
+    return fmt(m.group(1), env, box) + f'<small class="en">{m.group(2)}</small>'
+
+
+def gear(tekst, env, box):
+    hoved, sep, rest = tekst.partition(" · ")
+    return dansk_engelsk(hoved, env, box) + (sep + fmt(rest, env, box) if sep else "")
+
+
 def fcell(text, env, roll=None):
     f = formula(text, roll)
     return fmt(text, env) + (f'<small class="f">{f}</small>' if f else "")
@@ -263,7 +278,7 @@ def side1(v):
     o.append('</div><div class="grid" style="align-content:start">')
     o.append('<div class="box"><h2>Angreb <em>· Attacks</em></h2><table><tr><th>Våben</th><th>Ramme</th><th>Skade</th><th>Noter</th></tr>')
     for n, hit, dmg, note in v.get("angreb", []):
-        o.append(f'<tr><td class="n">{fmt(n, env)}</td><td>{fcell(hit, env, roll=True)}</td>'
+        o.append(f'<tr><td class="n">{dansk_engelsk(n, env)}</td><td>{fcell(hit, env, roll=True)}</td>'
                  f'<td class="nw">{fcell(dmg, env, roll=False)}</td><td>{fmt(note, env)}</td></tr>')
     o.append("</table></div>")
     mg = v.get("magi")
@@ -356,7 +371,7 @@ def side2(v, h):
     high_j = max(0, 3 + env["STR"])
     o.append('<h2>Bevægelse <i>Movement</i></h2><ul class="feat">'
              f'<li><b>Fart</b> {speed} ft. Du kan dele bevægelsen før og efter din handling.</li>'
-             '<li><b>Klatre, svømme, kravle, svært terræn</b>: hver fod koster 1 ekstra fod.</li>'
+             '<li><b>Klatre, svømme, kravle, svært terræn</b>: hver ft koster 1 ekstra ft.</li>'
              f'<li><b>Rejse dig fra <i>Prone</i></b>: koster halv fart ({speed // 2} ft).</li>'
              f'<li><b>Længdespring</b>: {long_j} ft med 10 ft tilløb, {long_j // 2} ft uden. <b>Højdespring</b>: {high_j} ft med tilløb, {high_j // 2} ft uden. <b>Fald</b>: 1d6 pr. 10 ft, og du lander <i>Prone</i>.</li>'
              "</ul>")
@@ -408,7 +423,7 @@ def sections(secs, env):
             out.append('<dl class="facts">' + "".join(
                 f"<div><dt>{a}</dt><dd>{fmt(b, env, box) if b else '&nbsp;'}</dd></div>" for a, b in sec.get("felter", [])) + "</dl>")
             continue
-        items = "".join(f"<li>{fmt(p, env, box)}</li>" for p in sec.get("punkter", []))
+        items = "".join(f"<li>{gear(p, env, box)}</li>" for p in sec.get("punkter", []))
         items += '<li class="blank"></li>' * sec.get("tomme", 0)
         if items:
             out.append(f'<ul class="gear ruled">{items}</ul>')

@@ -49,21 +49,21 @@ versioner:
   - [Insight, '{10+WIS+PB}']
   - [Investigation, '{10+INT+PB}']
   angreb:
-  - [Shortsword, '{+DEX+PB}', '1d6{+DEX} stik', '<b>Vex</b> · Finesse, Light']
-  - [Dagger, '{+DEX+PB}', '1d4{+DEX} stik', <b>Nick</b> · kast 20/60 fod]
-  - [Dagger <em>(ekstra)</em>, '{+DEX+PB}', 1d4 stik, 'Light-ekstraangreb: ingen DEX til skaden']
-  - - Light Crossbow
+  - [Kortsværd <em>Shortsword</em>, '{+DEX+PB}', '1d6{+DEX} Piercing', '<b>Vex</b> · Finesse, Light']
+  - [Dolk <em>Dagger</em>, '{+DEX+PB}', '1d4{+DEX} Piercing', <b>Nick</b> · kast 20/60 ft]
+  - [Dolk (ekstra) <em>Dagger</em>, '{+DEX+PB}', 1d4 Piercing, 'Light-ekstraangreb: ingen DEX til skaden']
+  - - Let armbrøst <em>Light Crossbow</em>
     - '{+DEX+PB}'
-    - 1d8{+DEX} stik
-    - 80/320 fod · <em>Loading</em>, to hænder · 20 bolts
-  - [Blowgun, '{+DEX}', '{1+DEX} stik', 25/100 fod · ikke trænet · 50 nåle]
-  - [Ubevæbnet, '{+STR+PB}', '{1+STR} slag', <em>Unarmed Strike</em>]
+    - 1d8{+DEX} Piercing
+    - 80/320 ft · <em>Loading</em>, to hænder · 20 bolts
+  - [Blæserør <em>Blowgun</em>, '{+DEX}', '{1+DEX} Piercing', 25/100 ft · ikke trænet · 50 nåle]
+  - [Ubevæbnet <em>Unarmed Strike</em>, '{+STR+PB}', '{1+STR} Bludgeoning', '']
   regler:
   - titel: Snigangreb
     undertitel: Sneak Attack +1d6, én gang pr. tur
     punkter:
     - Kræver <em>Finesse</em>- eller afstandsvåben (alle dine våben undtagen ubevæbnet).
-    - Og <b>enten</b> <em>Advantage</em> på angrebet, <b>eller</b> en allieret inden for 5 fod af målet (ikke <em>Incapacitated</em>), og du har ikke <em>Disadvantage</em>.
+    - Og <b>enten</b> <em>Advantage</em> på angrebet, <b>eller</b> en allieret inden for 5 ft af målet (ikke <em>Incapacitated</em>), og du har ikke <em>Disadvantage</em>.
     - Kan bruges på et af de to nærkampsangreb. Ram med det første, så du ikke spilder chancen.
   traek:
   - navn: Held <em>Luck</em>
@@ -81,7 +81,7 @@ versioner:
   - {navn: Thieves' Cant, tekst: Tyvenes hemmelige sprog og tegn.}
   bonus:
   - navn: Cunning Action
-    tekst: <em>Dash</em> (60 fod i alt), <em>Disengage</em> eller <em>Hide</em>.
+    tekst: <em>Dash</em> (60 ft i alt), <em>Disengage</em> eller <em>Hide</em>.
   - navn: Hide
     tekst: 'Stealth {+DEX+2*PB} mod DC 15. Kræver <em>Heavily Obscured</em> eller ¾ dækning – eller bare en større allieret (<em>Naturligt snigende</em>). Lykkes det: <em>Invisible</em> → fordel → Sneak Attack.'
   ture:
@@ -121,11 +121,11 @@ udstyrsark:
   - titel: Våben og rustning
     punkter:
     - Leather Armor · AC 11 + DEX
-    - Shortsword · 1d6 stik · <i>Vex</i>
-    - Dagger ×5 · 1d4 stik · kast 20/60 ft · <i>Nick</i>
-    - Light Crossbow · 1d8 stik · 80/320 ft
+    - Kortsværd <i>Shortsword</i> · 1d6 Piercing · <i>Vex</i>
+    - Dolk ×5 <i>Dagger</i> · 1d4 Piercing · kast 20/60 ft · <i>Nick</i>
+    - Let armbrøst <i>Light Crossbow</i> · 1d8 Piercing · 80/320 ft
     - Bolts [][][][][] [][][][][] [][][][][] [][][][][]
-    - Blowgun · 50 nåle
+    - Blæserør <i>Blowgun</i> · 50 nåle
     tomme: 1
   - titel: Udstyr <i>Equipment</i>
     punkter:

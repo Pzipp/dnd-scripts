@@ -25,7 +25,7 @@ sneak-attack:
   - titel: Du skal opfylde én af to
     punkter:
     - Du har <b>fordel</b> <i>Advantage</i> på angrebet.
-    - '<b>Eller</b>: en anden fjende af målet står inden for 5 fod af det, er ikke <i>Incapacitated</i>, og du har ikke ulempe.'
+    - '<b>Eller</b>: en anden fjende af målet står inden for 5 ft af det, er ikke <i>Incapacitated</i>, og du har ikke ulempe.'
   - titel: Våbnet
     tekst: Skal have <i>Finesse</i> (fx dolk, kortsværd) eller være et afstandsvåben (fx bue, armbrøst). Ikke ubevæbnet.
   - titel: Godt at vide
@@ -170,12 +170,12 @@ slow:
   - [Brug, Hvert træf]
   - [Kræver, Du gør skade]
   - [Varighed, Til start af din næste tur]
-  effekt: Rammer du et væsen og gør skade, falder dets fart med <b>10 fod</b>.
+  effekt: Rammer du et væsen og gør skade, falder dets fart med <b>10 ft</b>.
   slag:
-  - [Fart, −10 fod, til starten af din næste tur]
+  - [Fart, −10 ft, til starten af din næste tur]
   bag:
   - titel: Sådan virker det
-    tekst: Rammer du det flere gange, falder farten stadig kun 10 fod i alt.
+    tekst: Rammer du det flere gange, falder farten stadig kun 10 ft i alt.
   - titel: Godt at vide
     punkter:
     - God mod fjender, der vil løbe hen til jeres svageste, eller som prøver at flygte.
@@ -196,7 +196,7 @@ cleave:
   - [Skade, Våbnets terning, uden evne-modifier]
   bag:
   - titel: Sådan virker det
-    tekst: Fjende nr. 2 skal stå inden for 5 fod af den første og inden for din rækkevidde. Slå et nyt angreb. Rammer du, gør du våbnets skade, men lægger ikke din evne-modifier til.
+    tekst: Fjende nr. 2 skal stå inden for 5 ft af den første og inden for din rækkevidde. Slå et nyt angreb. Rammer du, gør du våbnets skade, men lægger ikke din evne-modifier til.
   - titel: Godt at vide
     punkter: [<i>Rage</i>-bonussen (+2) gælder stadig på det ekstra hug., Kun én gang pr. tur.]
 second-wind:
@@ -379,16 +379,16 @@ darkvision:
   kicker: Art · <i>fx Tiefling, Felis</i>
   felter:
   - [Tid, Altid]
-  - [Rækkevidde, 60 fod]
+  - [Rækkevidde, 60 ft]
   - [Kræver, Intet]
   - [Varighed, Altid]
-  effekt: Du ser i mørke op til 60 fod, som var det svagt lys, og i svagt lys, som var det fuldt lys.
+  effekt: Du ser i mørke op til 60 ft, som var det svagt lys, og i svagt lys, som var det fuldt lys.
   slag:
   - [Mørke, Svagt lys, kun i gråtoner]
   bag:
   - titel: Sådan virker det
     punkter:
-    - Mørke inden for 60 fod er for dig som svagt lys (<i>Lightly Obscured</i>).
+    - Mørke inden for 60 ft er for dig som svagt lys (<i>Lightly Obscured</i>).
     - Du kan ikke se farver i mørke, kun gråtoner.
     - Magisk mørke kan du ikke se igennem.
   - titel: Godt at vide
@@ -523,13 +523,13 @@ lige-paa-alle-fire:
   - [Brug, Hver gang]
   - [Gælder, Fald og Prone]
   - [Varighed, Altid]
-  effekt: Du har <b>fordel</b> på redningskast mod at blive væltet <i>Prone</i>. Falder du højst 20 fod, lander du på benene.
+  effekt: Du har <b>fordel</b> på redningskast mod at blive væltet <i>Prone</i>. Falder du højst 20 ft, lander du på benene.
   slag:
-  - [Fald ≤ 20 fod, 1d6, tæller som 10 fod]
+  - [Fald ≤ 20 ft, 1d6, tæller som 10 ft]
   - [Mod Prone, Fordel, på redningskast]
   bag:
   - titel: Fald
-    tekst: Normalt giver et fald 1d6 skade pr. 10 fod, og man lander <i>Prone</i>. Et fald på op til 20 fod tæller for dig som 10 fod (1d6), og du lander på benene.
+    tekst: Normalt giver et fald 1d6 skade pr. 10 ft, og man lander <i>Prone</i>. Et fald på op til 20 ft tæller for dig som 10 ft (1d6), og du lander på benene.
   - titel: Godt at vide
     tekst: Godt mod metalkugler, fælder og fjender, der skubber (<i>Shove</i>, <i>Topple</i>).
 rage:
@@ -542,7 +542,7 @@ rage:
   - [Brug, Se tabel]
   - [Tilbage, 'Kort hvil: 1 · langt: alle']
   - [Varighed, Til slut på næste tur]
-  effekt: Du tager <b>halv skade</b> fra slag, stik og hug.
+  effekt: Du tager <b>halv skade</b> fra slag, stik og hug (Bludgeoning, Piercing, Slashing).
   slag:
   - [Skade, '+2', på angreb med STR]
   - [STR, Fordel, tjek og redningskast]
@@ -562,7 +562,7 @@ rage:
   - titel: Mens du raser
     punkter:
     - Du kan ikke kaste besværgelser eller holde koncentration.
-    - Ikke i tung rustning.
+    - Ikke i Heavy armor.
     - Det slutter, hvis du bliver <i>Incapacitated</i>.
   - titel: Godt at vide
     tekst: 'Start raseriet i din første tur. Level 16: +4 skade · level 17: 6 brug.'
@@ -575,13 +575,13 @@ unarmored-defense:
   - [Tid, Altid]
   - [Brug, Altid]
   - [Kræver, Ingen rustning]
-  - [Skjold, Må gerne]
+  - [Shield, Må gerne]
   effekt: Når du ikke har rustning på, er din AC 10 + DEX + CON.
   slag:
-  - [AC, 10 + DEX + CON, +2 med skjold]
+  - [AC, 10 + DEX + CON, +2 med Shield]
   bag:
   - titel: Sådan virker det
-    tekst: Din seje krop og dine hurtige reflekser beskytter dig. Du kan stadig bruge skjold og få +2 AC.
+    tekst: Din seje krop og dine hurtige reflekser beskytter dig. Du kan stadig bruge Shield og få +2 AC.
   - titel: Godt at vide
     punkter:
     - Stiger din DEX eller CON, stiger din AC.
