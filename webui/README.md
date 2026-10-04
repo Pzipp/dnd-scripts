@@ -49,16 +49,29 @@ PORT=8081 python webui/app.py
 
 ## Kør i Docker
 
-Repoet har en `Dockerfile` (Python 3.12, kun Flask og PyYAML, uden PDF). Fra projektets rod:
+Repoet har en `Dockerfile` (Python 3.12, kun Flask og PyYAML, uden PDF) og en `docker-compose.yml`. Fra projektets rod:
+
+```bash
+cp .env.example .env     # ret efter behov (se nedenfor)
+docker compose up -d --build
+```
+
+Åbn derefter `http://localhost:<DND_PORT>` (standard `8080`).
+
+**Vil du have andre på netværket til at åbne den**, så sæt `DND_BIND_IP=0.0.0.0` i `.env`, og åbn `http://<din-maskines-IP>:<DND_PORT>`. Standarden er `127.0.0.1`, så ingen på netværket kan nå den. **Webui'en har ingen login**, så alle der kan nå porten, kan ændre karakterne. Brug kun `0.0.0.0` på et netværk, du stoler på.
+
+`.env` indeholder kun din lokale konfiguration (port, bind-adresse, UID/GID) og er gitignoreret. Standardværdierne virker uden `.env`.
+
+Compose-filen bind-mounter hele repoet, så `karakterer/` og `udskrifter/` ligger på din maskine. `DND_UID`/`DND_GID` (standard 1000) sørger for, at genererede filer ejes af dig og ikke af root. Find dine værdier med `id -u` og `id -g`.
+
+Uden compose kan du køre containeren direkte:
 
 ```bash
 docker build -t dnd-webui .
 docker run --rm -p 8080:8080 --user "$(id -u):$(id -g)" -v "$PWD":/app dnd-webui
 ```
 
-`-v "$PWD":/app` er vigtig: karakterer, `bibliotek/` og `udskrifter/` ligger på værten, og containeren skriver til dem. `--user` sørger for, at genererede filer ejes af dig og ikke af root.
-
-Compose-stacken på homelab-serveren ligger i `stacks/games/dnd/`, og den bygger fra denne mappe.
+På homelab-serveren ligger en tynd stack i `stacks/games/dnd/`, der inkluderer denne compose-fil og læser sin egen `.env`. Den bruges kun til lokal test; den udefra-adgang kommer via nginx.
 
 ## Stop
 
