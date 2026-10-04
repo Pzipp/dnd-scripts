@@ -1,5 +1,5 @@
-# Genererede HTML-filer. PDF'er i udskrifter/ committes, så alle kan printe uden Python.
-karakterer/*/udskrifter/*.html
+# Alt genereret (HTML og PDF) laves på ny med dnd.py og committes ikke.
+karakterer/*/udskrifter/
 *.tmp.html
 
 __pycache__/

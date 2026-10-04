@@ -6,7 +6,7 @@ Bruges af både mennesker og AI-assistenter (Claude, Gemini, ChatGPT/Codex m.fl.
 
 ## Kom i gang
 
-Hent PDF'erne i `karakterer/<navn>/udskrifter/`, hvis du bare vil printe. Skal du lave eller rette noget:
+Arkene og kortene ligger ikke i repoet, men laves af scripts ud fra YAML-filerne. Vil du printe, så lav dem først:
 
 ```bash
 pip install -r requirements.txt     # PyYAML. Playwright er kun nødvendig til PDF
@@ -35,7 +35,7 @@ karakterer/
   <navn>/               én mappe pr. karakter
     karakter.yaml       karakterarket (4 sider)
     kort.yaml           kortbunken (id'er fra bibliotek/, evt. egne kort)
-    udskrifter/         genererede HTML og PDF
+    udskrifter/         genererede HTML og PDF (ikke i git)
   _skabelon/            kommenteret skabelon: kopiér den til en ny karakter
 bibliotek/              kort, som gruppen deler (besværgelser, evner, udstyr), som YAML
 scripts/                generatorerne (se scripts/README.md)
