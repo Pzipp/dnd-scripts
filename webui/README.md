@@ -13,7 +13,8 @@ Et lille valgfrit overlay til projektets eksisterende D&D-scripts.
 - **Generer** bruger derefter det eksisterende `dnd.py`/generator-script.
 - Output gemmes automatisk i karakterens eksisterende:
   - `karakterer/<karakter>/udskrifter/`
-- Farvevælgeren ændrer accentfarven i det genererede HTML.
+- Under vælgerne ligger links til den valgte karakters filer: `karakter.yaml` og `kort.yaml`, og de genererede filer i `udskrifter/`.
+- Stil-vælgeren vælger mellem **Farve** og **Sort/hvid**, og det samme tema som `dnd.py --stil` bruger. Outputtet er `karakterark-<stil>.html` eller `kort-<stil>.html`.
 - WebUI ændrer ikke de eksisterende generator-scripts.
 
 ## Overlay – ikke en separat parallel version
@@ -49,7 +50,7 @@ PORT=8081 python webui/app.py
 
 ## Kør i Docker
 
-Repoet har en `Dockerfile` (Python 3.12, kun Flask og PyYAML, uden PDF) og en `docker-compose.yml`. Fra projektets rod:
+Repoet har en `Dockerfile` (Python 3.12, Flask, PyYAML og Playwright med Chromium til PDF) og en `docker-compose.yml`. Imaget er stort (Chromium), så den første build tager et stykke tid. Fra projektets rod:
 
 ```bash
 cp .env.example .env     # ret efter behov (se nedenfor)

@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import html
 import os
-import re
 import subprocess
 import sys
 from pathlib import Path
@@ -64,43 +62,32 @@ def save_yaml(character: str, kind: str, yaml_text: str) -> None:
     path.write_text(yaml_text.rstrip() + "\n", encoding="utf-8")
 
 
-def check_color(color: str) -> str:
-    if not isinstance(color, str) or not re.fullmatch(r"#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})", color):
-        raise ValueError("Ugyldig farve.")
-    return color
+STILE = {"farve", "sorthvid"}
 
 
-def inject_color(source_html: str, color: str) -> str:
-    check_color(color)
-    safe = html.escape(color, quote=True)
-    override = (
-        "<style id=\"webui-color\">"
-        f":root{{--accent:{safe}!important;--accent-color:{safe}!important;}}"
-        f".s1,.sx,.card{{--accent:{safe}!important;--acc:{safe}!important;}}"
-        "</style>"
-    )
-    # Karakterarkene er hele HTML-dokumenter. Kortene er kun et fragment uden <head>,
-    # så der sættes stilen forrest i stedet.
-    if "</head>" in source_html:
-        return source_html.replace("</head>", override + "</head>", 1)
-    return override + source_html
+def check_stil(stil: str) -> str:
+    if stil not in STILE:
+        raise ValueError("Ukendt stil. Vælg farve eller sorthvid.")
+    return stil
 
 
-def generate(character: str, kind: str, color: str) -> str:
-    check_color(color)  # før generatoren kører, så en ugyldig farve ikke efterlader en ufarvet fil
+def generate(character: str, kind: str, stil: str, pdf: bool = False) -> dict:
+    check_stil(stil)  # før generatoren kører, så en ugyldig stil ikke giver en halv fil
     source = data_path(character, kind)
     target = output_dir(character)
 
     command = [
         sys.executable, str(DND), kind, str(source),
-        "--stil", "farve", "--ud", str(target),
+        "--stil", stil, "--ud", str(target),
     ]
+    if pdf:
+        command.append("--pdf")
     result = subprocess.run(
         command,
         cwd=ROOT,
         capture_output=True,
         text=True,
-        timeout=120,
+        timeout=600,  # PDF med Chromium er langsom på gammel hardware
         check=False,
     )
 
@@ -110,16 +97,20 @@ def generate(character: str, kind: str, color: str) -> str:
         )
 
     expected = target / (
-        "karakterark-farve.html" if kind == "karakterark" else "kort-farve.html"
+        f"{'karakterark' if kind == 'karakterark' else 'kort'}-{stil}.html"
     )
     if not expected.is_file():
         raise RuntimeError(
             "Generatoren afsluttede uden at lave den forventede HTML-fil."
         )
 
-    content = expected.read_text(encoding="utf-8")
-    expected.write_text(inject_color(content, color), encoding="utf-8")
-    return f"/output/{character}/{expected.name}"
+    result_files = {"url": f"/output/{character}/{expected.name}", "pdf": None}
+    if pdf:
+        pdf_file = expected.with_suffix(".pdf")
+        if not pdf_file.is_file():
+            raise RuntimeError("PDF blev ikke lavet. Se serverens log for detaljer.")
+        result_files["pdf"] = f"/download/{character}/udskrifter/{pdf_file.name}"
+    return result_files
 
 
 @app.get("/")
@@ -158,13 +149,12 @@ def api_save():
 def api_generate():
     payload = request.get_json(silent=True) or {}
     try:
-        return jsonify({
-            "url": generate(
-                payload.get("character", ""),
-                payload.get("kind", ""),
-                payload.get("color", "#6e2a12"),
-            )
-        })
+        return jsonify(generate(
+            payload.get("character", ""),
+            payload.get("kind", ""),
+            payload.get("stil", "farve"),
+            pdf=bool(payload.get("pdf", False)),
+        ))
     except (ValueError, RuntimeError) as exc:
         return jsonify({"error": str(exc)}), 400
 
@@ -175,6 +165,40 @@ def output_file(character: str, filename: str):
         return jsonify({"error": "Ukendt karakter."}), 404
     directory = output_dir(character)
     return send_from_directory(directory, filename)
+
+
+DATA_FILES = ("karakter.yaml", "kort.yaml")
+
+
+@app.get("/api/files")
+def api_files():
+    character = request.args.get("character", "")
+    if character not in character_dirs():
+        return jsonify({"error": "Ukendt karakter."}), 400
+    base = CHARACTERS / character
+    files = [
+        {"name": name, "group": "Data", "url": f"/download/{character}/{name}"}
+        for name in DATA_FILES if (base / name).is_file()
+    ]
+    out = base / "udskrifter"
+    if out.is_dir():
+        files += [
+            {"name": p.name, "group": "Udskrift", "url": f"/download/{character}/udskrifter/{p.name}"}
+            for p in sorted(out.iterdir()) if p.is_file()
+        ]
+    return jsonify({"files": files})
+
+
+@app.get("/download/<character>/<path:filename>")
+def download(character: str, filename: str):
+    if character not in character_dirs():
+        return jsonify({"error": "Ukendt karakter."}), 404
+    base = CHARACTERS / character
+    if filename in DATA_FILES:
+        return send_from_directory(base, filename, as_attachment=True)
+    if filename.startswith("udskrifter/"):
+        return send_from_directory(base / "udskrifter", filename.split("/", 1)[1], as_attachment=True)
+    return jsonify({"error": "Ukendt fil."}), 404
 
 
 if __name__ == "__main__":

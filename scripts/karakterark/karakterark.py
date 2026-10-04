@@ -459,6 +459,14 @@ section.pg.s1,section.pg.sx{background:#fff}
 .s1 > .page{padding-top:34px}
 .sx > .page{max-width:none;width:923px;height:1306px;zoom:.86;border:0;border-radius:0;box-shadow:none;margin:0}
 @page{size:A4;margin:0}
+@media screen and (max-width:820px){
+  .sheets{padding:8px}
+  section.pg{width:100%;height:auto;overflow:visible}
+  .s1 > .page{width:auto;margin:0 auto}
+  .s1 .top{grid-template-columns:repeat(4,1fr)}
+  .s1 .main,.s1 .two{grid-template-columns:1fr}
+  .sx > .page{width:auto;height:auto;zoom:1}
+}
 @media print{
   body{background:#fff}
   .sheets{display:block;padding:0}

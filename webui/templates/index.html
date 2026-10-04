@@ -23,11 +23,16 @@
         <option value="kort">Kort</option>
       </select>
     </label>
-    <label>Farve
-      <input id="color" type="color" value="#6e2a12" title="Vælg accentfarve">
+    <label>Stil
+      <select id="stil">
+        <option value="farve">Farve</option>
+        <option value="sorthvid">Sort/hvid</option>
+      </select>
     </label>
+    <label class="check"><input id="pdf" type="checkbox" checked> PDF</label>
     <button id="save" type="button">Gem</button>
     <button id="generate" type="button">Generer</button>
+    <div id="downloads" class="downloads"></div>
   </div>
 </header>
 
@@ -55,19 +60,49 @@
 const character = document.querySelector("#character");
 const kind = document.querySelector("#kind");
 const yamlBox = document.querySelector("#yaml");
-const color = document.querySelector("#color");
+const stil = document.querySelector("#stil");
+const pdf = document.querySelector("#pdf");
 const saveButton = document.querySelector("#save");
 const generateButton = document.querySelector("#generate");
 const statusBox = document.querySelector("#status");
 const output = document.querySelector("#output");
 const empty = document.querySelector("#empty");
 const openOutput = document.querySelector("#open-output");
+const downloads = document.querySelector("#downloads");
 
 let savedYaml = "";
 
 function setStatus(text, error = false) {
   statusBox.textContent = text;
   statusBox.className = error ? "status error" : "status";
+}
+
+async function loadFiles() {
+  downloads.replaceChildren();
+  try {
+    const response = await fetch(`/api/files?character=${encodeURIComponent(character.value)}`);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Kunne ikke hente filer.");
+    for (const group of ["Data", "Udskrift"]) {
+      const files = data.files.filter((f) => f.group === group);
+      if (!files.length) continue;
+      const box = document.createElement("span");
+      box.className = "group";
+      const label = document.createElement("strong");
+      label.textContent = group === "Data" ? "Karakterfiler:" : "Udskrifter:";
+      box.append(label);
+      for (const f of files) {
+        const link = document.createElement("a");
+        link.href = f.url;
+        link.textContent = f.name;
+        link.download = f.name;
+        box.append(link);
+      }
+      downloads.append(box);
+    }
+  } catch (error) {
+    setStatus(error.message, true);
+  }
 }
 
 async function loadYaml() {
@@ -141,7 +176,8 @@ async function generate() {
       body: JSON.stringify({
         character: character.value,
         kind: kind.value,
-        color: color.value
+        stil: stil.value,
+        pdf: pdf.checked
       })
     });
     const data = await response.json();
@@ -151,7 +187,8 @@ async function generate() {
     empty.hidden = true;
     openOutput.href = data.url;
     openOutput.hidden = false;
-    setStatus("Færdig – output gemt i karakterens udskrifter.");
+    setStatus(data.pdf ? "Færdig – HTML og PDF er gemt i karakterens udskrifter." : "Færdig – output gemt i karakterens udskrifter.");
+    loadFiles();
   } catch (error) {
     setStatus(error.message, true);
   } finally {
@@ -160,11 +197,12 @@ async function generate() {
   }
 }
 
-character.addEventListener("change", loadYaml);
+character.addEventListener("change", () => { loadYaml(); loadFiles(); });
 kind.addEventListener("change", loadYaml);
 saveButton.addEventListener("click", save);
 generateButton.addEventListener("click", generate);
 loadYaml();
+loadFiles();
 </script>
 </body>
 </html>
