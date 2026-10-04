@@ -29,6 +29,7 @@
         <option value="sorthvid">Sort/hvid</option>
       </select>
     </label>
+    <label class="check"><input id="pdf" type="checkbox" checked> PDF</label>
     <button id="save" type="button">Gem</button>
     <button id="generate" type="button">Generer</button>
     <div id="downloads" class="downloads"></div>
@@ -60,6 +61,7 @@ const character = document.querySelector("#character");
 const kind = document.querySelector("#kind");
 const yamlBox = document.querySelector("#yaml");
 const stil = document.querySelector("#stil");
+const pdf = document.querySelector("#pdf");
 const saveButton = document.querySelector("#save");
 const generateButton = document.querySelector("#generate");
 const statusBox = document.querySelector("#status");
@@ -174,7 +176,8 @@ async function generate() {
       body: JSON.stringify({
         character: character.value,
         kind: kind.value,
-        stil: stil.value
+        stil: stil.value,
+        pdf: pdf.checked
       })
     });
     const data = await response.json();
@@ -184,7 +187,7 @@ async function generate() {
     empty.hidden = true;
     openOutput.href = data.url;
     openOutput.hidden = false;
-    setStatus("Færdig – output gemt i karakterens udskrifter.");
+    setStatus(data.pdf ? "Færdig – HTML og PDF er gemt i karakterens udskrifter." : "Færdig – output gemt i karakterens udskrifter.");
     loadFiles();
   } catch (error) {
     setStatus(error.message, true);

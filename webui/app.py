@@ -71,7 +71,7 @@ def check_stil(stil: str) -> str:
     return stil
 
 
-def generate(character: str, kind: str, stil: str) -> str:
+def generate(character: str, kind: str, stil: str, pdf: bool = False) -> dict:
     check_stil(stil)  # før generatoren kører, så en ugyldig stil ikke giver en halv fil
     source = data_path(character, kind)
     target = output_dir(character)
@@ -80,12 +80,14 @@ def generate(character: str, kind: str, stil: str) -> str:
         sys.executable, str(DND), kind, str(source),
         "--stil", stil, "--ud", str(target),
     ]
+    if pdf:
+        command.append("--pdf")
     result = subprocess.run(
         command,
         cwd=ROOT,
         capture_output=True,
         text=True,
-        timeout=120,
+        timeout=600,  # PDF med Chromium er langsom på gammel hardware
         check=False,
     )
 
@@ -102,7 +104,13 @@ def generate(character: str, kind: str, stil: str) -> str:
             "Generatoren afsluttede uden at lave den forventede HTML-fil."
         )
 
-    return f"/output/{character}/{expected.name}"
+    result_files = {"url": f"/output/{character}/{expected.name}", "pdf": None}
+    if pdf:
+        pdf_file = expected.with_suffix(".pdf")
+        if not pdf_file.is_file():
+            raise RuntimeError("PDF blev ikke lavet. Se serverens log for detaljer.")
+        result_files["pdf"] = f"/download/{character}/udskrifter/{pdf_file.name}"
+    return result_files
 
 
 @app.get("/")
@@ -141,13 +149,12 @@ def api_save():
 def api_generate():
     payload = request.get_json(silent=True) or {}
     try:
-        return jsonify({
-            "url": generate(
-                payload.get("character", ""),
-                payload.get("kind", ""),
-                payload.get("stil", "farve"),
-            )
-        })
+        return jsonify(generate(
+            payload.get("character", ""),
+            payload.get("kind", ""),
+            payload.get("stil", "farve"),
+            pdf=bool(payload.get("pdf", False)),
+        ))
     except (ValueError, RuntimeError) as exc:
         return jsonify({"error": str(exc)}), 400
 

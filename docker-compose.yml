@@ -22,6 +22,9 @@ services:
     volumes:
       - .:/app
 
+    # Chromium (PDF) crasher med Dockers standard på 64 MB delt hukommelse.
+    shm_size: "512m"
+
     ports:
       - "${DND_BIND_IP:-127.0.0.1}:${DND_PORT:-8080}:8080"
 

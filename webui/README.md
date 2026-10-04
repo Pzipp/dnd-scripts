@@ -50,7 +50,7 @@ PORT=8081 python webui/app.py
 
 ## Kør i Docker
 
-Repoet har en `Dockerfile` (Python 3.12, kun Flask og PyYAML, uden PDF) og en `docker-compose.yml`. Fra projektets rod:
+Repoet har en `Dockerfile` (Python 3.12, Flask, PyYAML og Playwright med Chromium til PDF) og en `docker-compose.yml`. Imaget er stort (Chromium), så den første build tager et stykke tid. Fra projektets rod:
 
 ```bash
 cp .env.example .env     # ret efter behov (se nedenfor)

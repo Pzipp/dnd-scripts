@@ -48,6 +48,7 @@ button:disabled { opacity: .55; cursor: wait; }
 .empty { display: grid; flex: 1; place-items: center; color: #756c62; }
 iframe { width: 100%; flex: 1; min-height: 70vh; border: 0; background: #ddd; }
 a { color: #5d321c; font-size: .82rem; }
+.check { display: flex; align-items: center; gap: .35rem; height: 2.35rem; font-size: .85rem; font-weight: 600; }
 .controls .downloads { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: .4rem .9rem; font-size: .82rem; }
 .downloads strong { font-size: .78rem; color: #675e54; }
 .downloads .group { display: flex; flex-wrap: wrap; gap: .3rem .6rem; align-items: center; }
