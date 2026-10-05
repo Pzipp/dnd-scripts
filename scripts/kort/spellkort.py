@@ -56,7 +56,7 @@ def scale(k):
 def dice(k):
     rows = "".join(
         f'<div class="drow"><span class="dl">{a}</span><span class="dv">{b}</span><span class="ds">{c}</span></div>'
-        for a, b, c in k.get("slag", []))
+        for a, b, c in k.get("terningboks", []))
     return f'<div class="dice">{rows}</div>' if rows else ""
 
 

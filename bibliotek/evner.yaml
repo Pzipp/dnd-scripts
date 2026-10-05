@@ -12,7 +12,7 @@ sneak-attack:
   - [Våben, Finesse eller afstand]
   - [Kræver, Fordel eller en ven ved målet]
   effekt: Rammer du et væsen med et angreb, giver du ekstra skade. Du skal have <b>fordel</b>, <b>eller</b> en ven skal stå ved siden af målet.
-  slag:
+  terningboks:
   - [Ekstra skade, +1d6, samme type som våbnet]
   skala:
   - [Level 1, 1d6]
@@ -44,7 +44,7 @@ cunning-action:
   - [Kræver, Intet]
   - [Varighed, Øjeblikkelig]
   effekt: 'Brug din Bonus Action på én af tre handlinger: <b>Dash</b>, <b>Disengage</b> eller <b>Hide</b>.'
-  slag:
+  terningboks:
   - [Dash, +fart, ekstra bevægelse lig din fart]
   - [Disengage, Fri, ingen modangreb resten af turen]
   - [Hide, Stealth, mod DC 15]
@@ -67,8 +67,8 @@ thieves-cant:
   - [Hvem, 'Rogues, tyvebander']
   - [Type, Sprog]
   effekt: 'Du kender tyvenes hemmelige sprog: en blanding af slang, koder og tegn, som andre ikke forstår.'
-  slag:
-  - [Slag, Intet, du kan det bare]
+  terningboks:
+  - [D20 Test, Intet, du kan det bare]
   bag:
   - titel: Sådan bruges det
     punkter:
@@ -109,7 +109,7 @@ vex:
   - [Kræver, Du gør skade]
   - [Varighed, Til slut på din næste tur]
   effekt: Rammer du et væsen og gør skade, får du <b>fordel</b> på dit næste angreb mod <b>samme</b> væsen.
-  slag:
+  terningboks:
   - [Næste angreb, Fordel, '2 d20, tag den højeste']
   bag:
   - titel: Sådan virker det
@@ -131,7 +131,7 @@ nick:
   - [Kræver, To Light-våben]
   - [Varighed, Øjeblikkelig]
   effekt: Det ekstra angreb fra <i>Light</i>-reglen laves som en del af din <b>Attack</b>-handling i stedet for som Bonus Action.
-  slag:
+  terningboks:
   - [Ekstra angreb, d20 + angreb, skade uden evne-modifier]
   bag:
   - titel: Sådan virker det
@@ -151,7 +151,7 @@ graze:
   - [Kræver, Nærkamp med våbnet]
   - [Varighed, Øjeblikkelig]
   effekt: Misser du et væsen, tager det alligevel skade lig den evne-modifier, du angreb med.
-  slag:
+  terningboks:
   - [Skade ved miss, evne-mod, samme skadetype som våbnet]
   bag:
   - titel: Sådan virker det
@@ -171,7 +171,7 @@ slow:
   - [Kræver, Du gør skade]
   - [Varighed, Til start af din næste tur]
   effekt: Rammer du et væsen og gør skade, falder dets fart med <b>10 ft</b>.
-  slag:
+  terningboks:
   - [Fart, −10 ft, til starten af din næste tur]
   bag:
   - titel: Sådan virker det
@@ -191,7 +191,7 @@ cleave:
   - [Kræver, En fjende mere tæt på]
   - [Varighed, Øjeblikkelig]
   effekt: Rammer du en fjende i nærkamp, må du hugge én gang mere mod en <b>anden</b> fjende lige ved siden af den første.
-  slag:
+  terningboks:
   - [Ekstra hug, d20 + angreb, mod fjende nr. 2]
   - [Skade, Våbnets terning, uden evne-modifier]
   bag:
@@ -210,7 +210,7 @@ second-wind:
   - [Tilbage, '1 ved kort hvil, alle ved langt']
   - [Varighed, Øjeblikkelig]
   effekt: Du tager en dyb indånding og får HP tilbage.
-  slag:
+  terningboks:
   - [Helbredelse, 1d10 + level, Fighter-level]
   skala:
   - [Level 1, '2']
@@ -235,7 +235,7 @@ action-surge:
   - [Tilbage, Kort eller langt hvil]
   - [Varighed, Øjeblikkelig]
   effekt: Du får <b>én ekstra handling</b> på din tur.
-  slag:
+  terningboks:
   - [Ekstra, 1 handling, ikke Magic-handlingen]
   skala:
   - [Level 2, 1 brug]
@@ -260,7 +260,7 @@ tactical-mind:
   - [Kræver, Et brug tilbage]
   - [Varighed, Øjeblikkelig]
   effekt: Fejler du et evnetjek, kan du bruge et <b>Second Wind</b> til at lægge <b>1d10</b> til slaget i stedet for at hele.
-  slag:
+  terningboks:
   - [Bonus, +1d10, på det mislykkede tjek]
   bag:
   - titel: Sådan virker det
@@ -279,7 +279,7 @@ two-weapon-fighting:
   - [Kræver, To Light-våben]
   - [Varighed, Altid]
   effekt: Når du laver det ekstra angreb fra <i>Light</i>-reglen, lægger du din evne-modifier til skaden.
-  slag:
+  terningboks:
   - [Ekstra angreb, + evne-mod, på skaden]
   bag:
   - titel: Sådan virker det
@@ -297,7 +297,7 @@ savage-attacker:
   - [Kræver, Et våben]
   - [Varighed, Øjeblikkelig]
   effekt: Rammer du med et våben, må du slå våbnets skadeterninger <b>to gange</b> og bruge det bedste.
-  slag:
+  terningboks:
   - [Skade, 2 × slag, brug det højeste]
   bag:
   - titel: Sådan virker det
@@ -317,7 +317,7 @@ alert:
   - [Kræver, Intet]
   - [Varighed, Altid]
   effekt: Du lægger din <b>proficiency bonus</b> til initiativ. Lige efter initiativ må du <b>bytte</b> initiativ med en villig ven.
-  slag:
+  terningboks:
   - [Initiativ, d20 + DEX + PB, PB er allerede regnet med på arket]
   bag:
   - titel: Byt initiativ
@@ -337,8 +337,8 @@ lucky:
   - [Tilbage, Langt hvil]
   - [Varighed, Øjeblikkelig]
   effekt: Du har lykkepoint lig din proficiency bonus. Brug ét til at give dig selv <b>fordel</b> eller en fjende <b>ulempe</b>.
-  slag:
-  - [Dig selv, Fordel, på et d20-slag]
+  terningboks:
+  - [Dig selv, Fordel, på et D20 Test]
   - [Fjende, Ulempe, på et angreb mod dig]
   skala:
   - [Level 1, '2']
@@ -383,7 +383,7 @@ darkvision:
   - [Kræver, Intet]
   - [Varighed, Altid]
   effekt: Du ser i mørke op til 60 ft, som var det svagt lys, og i svagt lys, som var det fuldt lys.
-  slag:
+  terningboks:
   - [Mørke, Svagt lys, kun i gråtoner]
   bag:
   - titel: Sådan virker det
@@ -401,10 +401,10 @@ halfling-luck:
   felter:
   - [Tid, Når du slår 1]
   - [Brug, Hver gang]
-  - [Gælder, d20-slag]
+  - [Gælder, D20 Test]
   - [Varighed, Altid]
   effekt: Slår du <b>1</b> på en d20 til angreb, evnetjek eller redningskast, må du slå om. Du skal bruge det nye slag.
-  slag:
+  terningboks:
   - [Natur-1, Slå om, brug det nye slag]
   bag:
   - titel: Gælder
@@ -422,7 +422,7 @@ brave:
   - [Gælder, Frightened]
   - [Varighed, Altid]
   effekt: Du har <b>fordel</b> på redningskast mod at blive bange <i>Frightened</i> eller for at slippe fri af det.
-  slag:
+  terningboks:
   - [Mod frygt, Fordel, '2 d20, tag den højeste']
   bag:
   - titel: Frightened betyder
@@ -442,7 +442,7 @@ halfling-nimbleness:
   - [Gælder, Større væsner]
   - [Varighed, Altid]
   effekt: Du kan bevæge dig <b>gennem</b> pladsen af ethvert væsen, der er mindst én størrelse større end dig.
-  slag:
+  terningboks:
   - [Bevægelse, Igennem, men du må ikke stoppe der]
   bag:
   - titel: Sådan virker det
@@ -460,7 +460,7 @@ naturally-stealthy:
   - [Kræver, Et større væsen]
   - [Varighed, Altid]
   effekt: Du må gemme dig <i>Hide</i>, selv når du kun er dækket af et væsen, der er mindst én størrelse større end dig.
-  slag:
+  terningboks:
   - [Gem dig, Stealth, mod DC 15]
   bag:
   - titel: Sådan virker det
@@ -477,9 +477,9 @@ kattens-held:
   - [Tid, Når du slår 1]
   - [Brug, 1 gang]
   - [Tilbage, Langt hvil]
-  - [Gælder, d20-slag]
+  - [Gælder, D20 Test]
   effekt: Slår du <b>1</b> på en d20 til angreb, evnetjek eller redningskast, må du slå om. Du skal bruge det nye slag.
-  slag:
+  terningboks:
   - [Natur-1, Slå om, 1 gang pr. langt hvil]
   bag:
   - titel: Sådan virker det
@@ -497,7 +497,7 @@ staedig-uvilje:
   - [Tilbage, Langt hvil]
   - [Gælder, 'Charmed, Frightened']
   effekt: Du har <b>fordel</b> på redningskast mod at blive <i>Charmed</i> eller <i>Frightened</i>, eller for at slippe fri af det.
-  slag:
+  terningboks:
   - [Mod charme og frygt, Fordel, '2 d20, tag den højeste']
   skala:
   - [Level 1, '2']
@@ -524,7 +524,7 @@ lige-paa-alle-fire:
   - [Gælder, Fald og Prone]
   - [Varighed, Altid]
   effekt: Du har <b>fordel</b> på redningskast mod at blive væltet <i>Prone</i>. Falder du højst 20 ft, lander du på benene.
-  slag:
+  terningboks:
   - [Fald ≤ 20 ft, 1d6, tæller som 10 ft]
   - [Mod Prone, Fordel, på redningskast]
   bag:
@@ -543,7 +543,7 @@ rage:
   - [Tilbage, 'Kort hvil: 1 · langt: alle']
   - [Varighed, Til slut på næste tur]
   effekt: Du tager <b>halv skade</b> fra slag, stik og hug (Bludgeoning, Piercing, Slashing).
-  slag:
+  terningboks:
   - [Skade, '+2', på angreb med STR]
   - [STR, Fordel, tjek og redningskast]
   skala:
@@ -577,7 +577,7 @@ unarmored-defense:
   - [Kræver, Ingen rustning]
   - [Shield, Må gerne]
   effekt: Når du ikke har rustning på, er din AC 10 + DEX + CON.
-  slag:
+  terningboks:
   - [AC, 10 + DEX + CON, +2 med Shield]
   bag:
   - titel: Sådan virker det
@@ -597,7 +597,7 @@ tough:
   - [Kræver, Intet]
   - [Varighed, Altid]
   effekt: Dit maksimale HP stiger med <b>2 for hvert level</b>, du har.
-  slag:
+  terningboks:
   - [Max HP, +2 × level, også når du stiger i level]
   skala:
   - [Level 1, '+2']
@@ -622,7 +622,7 @@ crafter:
   - [Kræver, Håndværksværktøj]
   - [Varighed, Til næste lange hvil]
   effekt: Du kan bruge 3 håndværksværktøjer, får rabat på udstyr og kan lave simple ting, når du hviler.
-  slag:
+  terningboks:
   - [Rabat, 20 %, på ikke-magisk udstyr]
   bag:
   - titel: Tre dele

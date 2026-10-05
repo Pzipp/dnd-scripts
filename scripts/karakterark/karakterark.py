@@ -73,7 +73,7 @@ TILSTANDE = [
     ("Prone", "Kun kravle, eller rejs dig for halv fart. Ulempe på dine angreb. Angreb mod dig: fordel inden for 5 ft, ellers ulempe."),
     ("Restrained", "Fart 0. Ulempe på dine angreb og DEX saves. Angreb mod dig har fordel."),
     ("Unconscious", "Prone og Incapacitated. Angreb mod dig har fordel; træf inden for 5 ft er kritiske. Fejler STR/DEX saves."),
-    ("Exhaustion", "Pr. niveau: −2 på alle d20-slag og −5 ft fart. Niveau 6: død. Long Rest fjerner ét."),
+    ("Exhaustion", "Pr. niveau: −2 på alle D20 Tests og −5 ft fart. Niveau 6: død. Long Rest fjerner ét."),
 ]
 
 NYTTIGE_TING = [

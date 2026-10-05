@@ -12,7 +12,7 @@ eldritch-blast:
   varighed: Øjeblikkelig
   komp: V, S
   effekt: En stråle af knitrende energi skyder mod et væsen inden for rækkevidde.
-  slag:
+  terningboks:
   - [Angreb, d20 + spellangreb, afstand]
   - [Skade, 1d10, Force pr. stråle]
   skala:
@@ -41,7 +41,7 @@ fire-bolt:
   varighed: Øjeblikkelig
   komp: V, S
   effekt: Du kaster en plet ild mod et væsen eller en genstand inden for rækkevidde.
-  slag:
+  terningboks:
   - [Angreb, d20 + spellangreb, afstand]
   - [Skade, 1d10, Fire]
   skala:
@@ -69,7 +69,7 @@ shocking-grasp:
   varighed: Øjeblikkelig
   komp: V, S
   effekt: Lyn springer fra din hånd og giver et væsen, du prøver at røre, et stød.
-  slag:
+  terningboks:
   - [Angreb, d20 + spellangreb, nærkamp]
   - [Skade, 1d8, Lightning]
   skala:
@@ -97,7 +97,7 @@ poison-spray:
   varighed: Øjeblikkelig
   komp: V, S
   effekt: Du sprøjter en giftig tåge mod et væsen inden for rækkevidde.
-  slag:
+  terningboks:
   - [Angreb, d20 + spellangreb, afstand]
   - [Skade, 1d12, Poison]
   skala:
@@ -124,7 +124,7 @@ minor-illusion:
   varighed: 1 minut
   komp: S, M
   effekt: Skab <b>enten</b> en lyd <b>eller</b> et stillestående billede af en genstand, højst en terning på 5 ft.
-  slag:
+  terningboks:
   - [Afslør, Study, 'handling: INT <i>Investigation</i> mod din spell DC']
   bag:
   - titel: Lyd
@@ -146,8 +146,8 @@ shape-water:
   varighed: Øjeblikkelig eller 1 time
   komp: S
   effekt: Du styrer vand, der kan være i en terning på 5 ft. Vælg én af fire effekter, se bagsiden.
-  slag:
-  - [Slag, Intet, virker automatisk]
+  terningboks:
+  - [D20 Test, Intet, virker automatisk]
   - [Aktive, Højst 2, 1-times effekter ad gangen]
   bag:
   - titel: Vælg én effekt
@@ -169,8 +169,8 @@ thaumaturgy:
   varighed: Op til 1 minut
   komp: V
   effekt: Du skaber et lille under, et tegn på overnaturlig kraft. Vælg én af seks effekter, se bagsiden.
-  slag:
-  - [Slag, Intet, virker automatisk]
+  terningboks:
+  - [D20 Test, Intet, virker automatisk]
   - [Aktive, Højst 3, 1-minuts effekter ad gangen]
   bag:
   - titel: Vælg én effekt
@@ -195,7 +195,7 @@ guidance:
   komp: V, S
   konc: true
   effekt: Rør et villigt væsen, og vælg en skill. Indtil besværgelsen slutter, lægger væsnet <b>1d4</b> til sine checks med den skill.
-  slag:
+  terningboks:
   - [Bonus, +1d4, på checks med den valgte skill]
   bag:
   - titel: Sådan virker det
@@ -216,8 +216,8 @@ spare-the-dying:
   varighed: Øjeblikkelig
   komp: V, S
   effekt: Vælg et væsen inden for rækkevidde, der har 0 HP og ikke er dødt. Væsnet bliver <b>stabilt</b> <i>Stable</i>.
-  slag:
-  - [Slag, Intet, virker automatisk]
+  terningboks:
+  - [D20 Test, Intet, virker automatisk]
   skala:
   - [Level 1, 15 ft]
   - ['5', '30']
@@ -244,7 +244,7 @@ hex:
   komp: V, S, M
   konc: true
   effekt: Forband et væsen, du kan se. Du giver ekstra skade, når du rammer det.
-  slag:
+  terningboks:
   - [Ekstra, +1d6, Necrotic hver gang du rammer]
   - [Ulempe, Checks, med den valgte evne]
   skala:
@@ -273,7 +273,7 @@ armor-of-agathys:
   varighed: 1 time
   komp: V, S, M
   effekt: Frost dækker dig. Du får midlertidige HP. Rammer et væsen dig med et nærkampsangreb, tager det Cold-skade.
-  slag:
+  terningboks:
   - [Midl. HP, '5', midlertidige HP]
   - [Cold, '5', 'til den, der rammer dig i nærkamp']
   skala:
@@ -303,7 +303,7 @@ witch-bolt:
   komp: V, S, M
   konc: true
   effekt: En lynbue binder dig til målet. Du kan give det stød igen og igen.
-  slag:
+  terningboks:
   - [Angreb, d20 + spellangreb, afstand]
   - [Skade, 2d12, 'Lightning · senere ture: 1d12 (Bonus Action)']
   skala:
@@ -332,7 +332,7 @@ cure-wounds:
   varighed: Øjeblikkelig
   komp: V, S
   effekt: Et væsen, du rører, får HP tilbage.
-  slag:
+  terningboks:
   - [Heler, 2d8 + magi-mod, HP tilbage]
   skala:
   - [1. grad, 2d8]
@@ -361,7 +361,7 @@ detect-magic:
   konc: true
   ritual: true
   effekt: Du mærker, om der er magi inden for 30 ft af dig.
-  slag:
+  terningboks:
   - [Område, 30 ft, omkring dig]
   - [Ritual, +10 min, intet spell slot]
   bag:
@@ -383,7 +383,7 @@ comprehend-languages:
   komp: V, S, M
   ritual: true
   effekt: Du forstår den bogstavelige betydning af ethvert sprog, du hører eller ser tegnet.
-  slag:
+  terningboks:
   - [Læse, 1 side / min., du skal røre skriften]
   - [Ritual, +10 min, intet spell slot]
   bag:

@@ -67,7 +67,7 @@ navn-id:
   konc: true                    # valgfri: koncentration
   ritual: true                  # valgfri
   effekt: Kort tekst til forsiden (2–4 linjer).
-  slag:                         # terningboksen, højst 3 rækker [etiket, værdi, undertekst]
+  terningboks:                         # terningboksen, højst 3 rækker [etiket, værdi, undertekst]
     - [Angreb, d20 + spellangreb, afstand]
   skala:                        # valgfri: [[etiket, værdi], ...]
     - [Level 1, 1 stråle]
@@ -91,7 +91,7 @@ sneak-attack:
   kicker: Klasseevne · Rogue <i>level 1</i>
   felter: [[Tid, Når du rammer], [Brug, 1 gang pr. tur], [Våben, Finesse eller afstand], [Kræver, Fordel eller en ven ved målet]]
   effekt: ...
-  slag: [[Ekstra skade, +1d6, samme type som våbnet]]
+  terningboks: [[Ekstra skade, +1d6, samme type som våbnet]]
   skala: [[Level 1, 1d6], ['3', 2d6]]
   skala_titel: Ekstra skade efter level
   bag: [...]
