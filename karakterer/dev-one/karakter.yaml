@@ -136,29 +136,32 @@ karakterark:
 
 # ── Side 2 · Handlingsark ──
 handlingsark:
-  # Layout som side 1. type = boksens navn (CSS-klasse), form = hvordan boksen vises.
+  # Handlingstabellen øverst er fast. bonus_handlinger kobler Bonus Action-tags på tabellen.
+  bonus_handlinger: {Dash: Cunning Action, Disengage: Cunning Action, Hide: Cunning Action}
   layout:
   - kolonner:
 
     - bredde: 1
       indhold:
-      - type: bonus-handlinger
-        titel: Bonus actions
-        bonus_handlinger: {Dash: Cunning Action, Disengage: Cunning Action, Hide: Cunning Action}
-      - type: vaerktoej
-        titel: Værktøj
-        punkter:
-        - {navn: Thieves' Tools, evne: DEX, brug: 'Dirke en lås, desarmere en fælde'}
-        - {navn: Alchemist's Supplies, evne: INT, brug: 'Blande, analysere stoffer'}
-
-    - bredde: 1
-      indhold:
-      - type: halfling
+      - type: ubevaebnet
+      - type: bevaegelse
+      - type: ekstra
         titel: Halfling
         punkter:
         - '<b>Naturligt snigende</b>: du må gemme dig, når du kun er dækket af en skabning, der er mindst én størrelse større end dig.'
         - '<b>Smidighed</b>: du kan bevæge dig gennem en større skabnings felt, men ikke stoppe der.'
         - '<b>Held</b>: slår du 1 på en d20, slår du om og bruger det nye.'
+      - type: livsredning
+      - type: mastery
+      - type: nyttige
+
+    - bredde: 1.25
+      indhold:
+      - type: situationer
+        vaerktoej:
+        - {navn: Thieves' Tools, evne: DEX, brug: 'Dirke en lås, desarmere en fælde'}
+        - {navn: Alchemist's Supplies, evne: INT, brug: 'Blande, analysere stoffer'}
+      - type: tilstande
 
 # ── Side 3 · Udstyrsark ──
 udstyrsark:
