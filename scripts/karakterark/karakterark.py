@@ -38,7 +38,6 @@ SKILLS = {
     "CHA": ["Deception", "Intimidation", "Performance", "Persuasion"],
 }
 SKILL_ABIL = {s: k for k, lst in SKILLS.items() for s in lst}
-SHORT = {"Animal Handling": "Animal H.", "Intimidation": "Intim.", "Performance": "Perf."}
 
 # Weapon Mastery (PHB 2024 kap. 6). Teksten vises på handlingsarket for de valgte.
 MASTERY = {
@@ -74,7 +73,7 @@ TILSTANDE = [
     ("Prone", "Kun kravle, eller rejs dig for halv fart. Ulempe på dine angreb. Angreb mod dig: fordel inden for 5 ft, ellers ulempe."),
     ("Restrained", "Fart 0. Ulempe på dine angreb og DEX saves. Angreb mod dig har fordel."),
     ("Unconscious", "Prone og Incapacitated. Angreb mod dig har fordel; træf inden for 5 ft er kritiske. Fejler STR/DEX saves."),
-    ("Exhaustion", "Pr. niveau: −2 på alle d20-slag og −5 ft fart. Niveau 6: død. Long Rest fjerner ét."),
+    ("Exhaustion", "Pr. niveau: −2 på alle D20 Tests og −5 ft fart. Niveau 6: død. Long Rest fjerner ét."),
 ]
 
 NYTTIGE_TING = [
@@ -128,6 +127,23 @@ def formula(text, roll=None):
         return ("d20 + " if is_roll else "") + pretty(expr)
     out = re.sub(r"\{([^{}]+)\}", lambda m: (" + " if m.group(1).startswith("+") else "") + pretty(m.group(1)), text)
     return re.sub(r"\s+(stik|slag|hug|skade|ild|gift|kraft|lyn|kulde|nekrotisk)\b.*$", "", out).strip()
+
+
+EN_SIDST = re.compile(r"^(.+?)\s*<(?:em|i)>([^<]*)</(?:em|i)>(.*)$")
+
+
+def dansk_engelsk(tekst, env, box='<span class="cbx"></span>'):
+    """Dansk navn øverst, engelsk navn i lille skrift under. Engelsk navn skal stå lige efter det danske."""
+    m = EN_SIDST.match(tekst)
+    if not m:
+        return fmt(tekst, env, box)
+    return (f'<span class="ge">{fmt(m.group(1), env, box)}<small class="en">{m.group(2)}</small></span>'
+            + fmt(m.group(3), env, box))
+
+
+def gear(tekst, env, box):
+    """Udstyrslinje: hvert punkt adskilt af ' · ' får sit eget dansk/engelsk-par."""
+    return " · ".join(dansk_engelsk(d, env, box) for d in tekst.split(" · "))
 
 
 def fcell(text, env, roll=None):
@@ -194,15 +210,9 @@ def s1_abilities(v, env):
                 f'<span><span class="sf">{k}{"+PB" if k in saves else ""}</span>{sgn(m + (pb if k in saves else 0))}</span></li>']
         run = []
 
-        def flush():
-            grp = []                                 # utrænede skills slås sammen, så længe linjen er kort
-            for s in run + [None]:
-                if s is not None and (not grp or len(" · ".join(SHORT.get(x, x) for x in grp + [s])) <= 22):
-                    grp.append(s)
-                    continue
-                if grp:
-                    rows.append(s1_li("", " · ".join(SHORT.get(x, x) if len(grp) > 1 else x for x in grp), sgn(m), f=k))
-                grp = [s] if s is not None else []
+        def flush():                                 # utrænede skills: én række pr. skill
+            for s in run:
+                rows.append(s1_li("", s, sgn(m), f=k))
             run.clear()
         for s in SKILLS[k]:
             if s in expert:
@@ -263,7 +273,7 @@ def side1(v):
     o.append('</div><div class="grid" style="align-content:start">')
     o.append('<div class="box"><h2>Angreb <em>· Attacks</em></h2><table><tr><th>Våben</th><th>Ramme</th><th>Skade</th><th>Noter</th></tr>')
     for n, hit, dmg, note in v.get("angreb", []):
-        o.append(f'<tr><td class="n">{fmt(n, env)}</td><td>{fcell(hit, env, roll=True)}</td>'
+        o.append(f'<tr><td class="n">{dansk_engelsk(n, env)}</td><td>{fcell(hit, env, roll=True)}</td>'
                  f'<td class="nw">{fcell(dmg, env, roll=False)}</td><td>{fmt(note, env)}</td></tr>')
     o.append("</table></div>")
     mg = v.get("magi")
@@ -311,7 +321,7 @@ def side2(v, h):
 
     def skt(e):
         mark = "◆" if e in expert else "●" if e in prof else ""
-        return f'<span class="sk">{mark}{SHORT.get(e, e) if e == "Animal Handling" else e} <b>{sgn(sk(e))}</b></span>'
+        return f'<span class="sk">{mark}{e} <b>{sgn(sk(e))}</b></span>'
 
     def tag(name):
         return f' <span class="tg">også Bonus Action · {bonus[name]}</span>' if name in bonus else ""
@@ -356,7 +366,7 @@ def side2(v, h):
     high_j = max(0, 3 + env["STR"])
     o.append('<h2>Bevægelse <i>Movement</i></h2><ul class="feat">'
              f'<li><b>Fart</b> {speed} ft. Du kan dele bevægelsen før og efter din handling.</li>'
-             '<li><b>Klatre, svømme, kravle, svært terræn</b>: hver fod koster 1 ekstra fod.</li>'
+             '<li><b>Klatre, svømme, kravle, svært terræn</b>: hver ft koster 1 ekstra ft.</li>'
              f'<li><b>Rejse dig fra <i>Prone</i></b>: koster halv fart ({speed // 2} ft).</li>'
              f'<li><b>Længdespring</b>: {long_j} ft med 10 ft tilløb, {long_j // 2} ft uden. <b>Højdespring</b>: {high_j} ft med tilløb, {high_j // 2} ft uden. <b>Fald</b>: 1d6 pr. 10 ft, og du lander <i>Prone</i>.</li>'
              "</ul>")
@@ -408,7 +418,7 @@ def sections(secs, env):
             out.append('<dl class="facts">' + "".join(
                 f"<div><dt>{a}</dt><dd>{fmt(b, env, box) if b else '&nbsp;'}</dd></div>" for a, b in sec.get("felter", [])) + "</dl>")
             continue
-        items = "".join(f"<li>{fmt(p, env, box)}</li>" for p in sec.get("punkter", []))
+        items = "".join(f"<li>{gear(p, env, box)}</li>" for p in sec.get("punkter", []))
         items += '<li class="blank"></li>' * sec.get("tomme", 0)
         if items:
             out.append(f'<ul class="gear ruled">{items}</ul>')

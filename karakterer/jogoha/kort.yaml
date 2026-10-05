@@ -1,0 +1,49 @@
+titel: Jogoha kort
+
+# Kort-id'er fra bibliotek/
+kort:
+  - sneak-attack
+  - cunning-action
+  - thieves-cant
+  - light-to-vaaben
+  - vex
+  - nick
+  - brave
+  - halfling-nimbleness
+  - halfling-luck
+  - naturally-stealthy
+  - alert
+  - thieves-tools
+  - steady-aim
+  - fast-hands
+
+# Egne kort, kun til Jogoha
+egne:
+  steady-aim:
+    type: klasse
+    navn: Steady Aim
+    dansk: Sigte mod målet
+    kicker: Klasseevne · Rogue <i>level 3</i>
+    kilde: PHB 2024
+    felter:
+      - [Tid, Bonus Action]
+      - [Brug, Ubegrænset]
+      - [Bevægelse, 0 ft denne tur]
+      - [Effekt, Advantage på næste angreb]
+    effekt: Giv dig selv Advantage på dit næste angreb i denne tur. Du kan ikke bevæge dig samme tur.
+    bag:
+      - {titel: Sådan virker det, tekst: 'Brug den før et angreb, når du har tid til at sigte.'}
+  fast-hands:
+    type: klasse
+    navn: Fast Hands
+    dansk: Hurtige hænder
+    kicker: Thief <i>Rogue level 3</i>
+    kilde: PHB 2024
+    felter:
+      - [Tid, Bonus Action]
+      - [Brug, Ubegrænset]
+      - [Værktøj, Thieves' Tools]
+      - [Kræver, Sleight of Hand]
+    effekt: Sleight of Hand til at åbne lås, afvæbne fælder eller lommetyveri. Eller Utilize-handling.
+    bag:
+      - {titel: Sådan virker det, tekst: 'Brug den til at åbne lås eller afvæbne fælder, fra en Bonus Action.'}

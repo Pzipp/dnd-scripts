@@ -44,10 +44,10 @@ python3 dnd.py tjek                           # byg alt; meld fejl i data. KØR 
 
 ## Faste regler
 
-* **Engelske regelnavne oversættes ikke.** Stats, ting, evner, besværgelser, handlinger og tilstande står på engelsk. En dansk oversættelse står evt. i parentes efter: `Dexterity (Smidighed)`. Forklarende tekst er dansk. Se `docs/navnekonvention.md`, også for kendte afvigelser, der skal rettes.
-* **Slå op, opfind ikke.** Regler og navne tages fra PHB 2024. Angiv kapitel (og side, hvis du kender den) i `fod` eller på kortet. Er du usikker, så sig det i stedet for at gætte.
+* **Engelske regelnavne står alene.** Stats, ting, evner, besværgelser, handlinger, tilstande, skadetyper og våbenkategorier skrives kun på engelsk, uden dansk oversættelse i parentes (`Dexterity`, `Fire`, `Simple`, ikke `Smidighed`, `ild`, `Simple (enkle)`). Forklarende tekst er dansk, og den engelske term kan stå i parentes efter et dansk ord: `Halv skade fra slag, stik og hug (Bludgeoning, Piercing, Slashing)`. I angrebstabellen og udstyrslisten står det danske navn øverst og det engelske i lille skrift under (`Dolk <em>Dagger</em>` i data). Homebrew kan kun have dansk navn, og det markeres med `<i>Hjemmelavet</i>` under navnet. Overskrifter som "Angreb · Attacks" er uændrede. Baggrundsarket (side 4) er fritekst til rollespillet: noter, udsagn og gentagelser af navne oversættes, rettes eller tolkes ikke. Undtagelsen gælder kun fritekst. Sektionen "Træning og valg" er regler og følger navnereglerne. Se `docs/navnekonvention.md`.
+* **Slå op, opfind ikke.** Regler og navne tages fra PHB 2024. Angiv kapitel (og side, hvis du kender den) i sidefoden (`fod`-feltet) eller på kortet (`ref:`). Er du usikker, så sig det i stedet for at gætte.
 * **Farve og sort/hvid.** Alt printbart skal kunne laves i begge. Nye print-scripts skal have `--stil farve|sorthvid|begge` og bruge `faelles.stile()`.
-* **Afstande i fod** (ft), som i reglerne.
+* **Afstande i ft** (foot), som i reglerne.
 * **Vis formlen.** Tal på arket har formlen under sig (`d20 + DEX + PB`). Det klarer generatoren, hvis du bruger `{...}`-udtryk.
 * **Ingen skrivefelter** på ark. Gruppen skriver ikke på printet; noter tages på papir. Afkrydsningsfelter (`[]`) til ressourcer er i orden.
 * **Ingen DC-tabel** og ingen "næste level"-info på karakterark.

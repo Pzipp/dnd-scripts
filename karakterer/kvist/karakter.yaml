@@ -48,19 +48,19 @@ versioner:
   - [Perception, '{10+WIS+PB}']
   - [Insight, '{10+WIS+PB}']
   - [Investigation, '{10+INT}']
-  - [Mørkesyn <em>Darkvision</em>, 60 fod]
+  - [Mørkesyn <em>Darkvision</em>, 60 ft]
   angreb:
-  - [Shortsword, '{+DEX+PB}', '1d6{+DEX} stik', 'Finesse, Light · ingen mastery']
-  - [Dagger ×2, '{+DEX+PB}', '1d4{+DEX} stik', <b>Nick</b> · kast 20/60 fod]
-  - [Dagger <em>(ekstra)</em>, '{+DEX+PB}', 1d4 stik, 'Light-ekstraangreb: ingen DEX til skaden']
-  - [Shortbow, '{+DEX+PB}', '1d6{+DEX} stik', <b>Vex</b> · 80/320 fod · to hænder · 20 pile]
-  - [Ubevæbnet, '{+STR+PB}', '{1+STR} slag', <em>Unarmed Strike</em>]
+  - [Kortsværd <em>Shortsword</em>, '{+DEX+PB}', '1d6{+DEX} Piercing', 'Finesse, Light · ingen mastery']
+  - [Dolk ×2 <em>Dagger</em>, '{+DEX+PB}', '1d4{+DEX} Piercing', <b>Nick</b> · kast 20/60 ft]
+  - [Dolk (ekstra) <em>Dagger</em>, '{+DEX+PB}', 1d4 Piercing, 'Light-ekstraangreb: ingen DEX til skaden']
+  - [Kortbue <em>Shortbow</em>, '{+DEX+PB}', '1d6{+DEX} Piercing', <b>Vex</b> · 80/320 ft · to hænder · 20 pile]
+  - [Ubevæbnet <em>Unarmed Strike</em>, '{+STR+PB}', '{1+STR} Bludgeoning', '']
   regler:
   - titel: Snigangreb
     undertitel: Sneak Attack +1d6, én gang pr. tur
     punkter:
     - Kræver <em>Finesse</em>- eller afstandsvåben (alle dine våben undtagen ubevæbnet).
-    - Og <b>enten</b> <em>Advantage</em> på angrebet, <b>eller</b> en allieret inden for 5 fod af målet (ikke <em>Incapacitated</em>), og du har ikke <em>Disadvantage</em>.
+    - Og <b>enten</b> <em>Advantage</em> på angrebet, <b>eller</b> en allieret inden for 5 ft af målet (ikke <em>Incapacitated</em>), og du har ikke <em>Disadvantage</em>.
     - Kan bruges på et af de to nærkampsangreb. Ram med det første, så du ikke spilder chancen.
   traek:
   - navn: Kattens Held []
@@ -70,13 +70,13 @@ versioner:
     tag: Long Rest
     tekst: <em>Advantage</em> på saves mod at blive / slippe fri af <em>Charmed</em> eller <em>Frightened</em>. Antal = PB (3 fra level 5).
   - navn: Lige på Alle Fire
-    tekst: <em>Advantage</em> på saves mod <em>Prone</em>. Fald ≤ 20 fod tæller som 10 fod (1d6), og du lander på benene.
+    tekst: <em>Advantage</em> på saves mod <em>Prone</em>. Fald ≤ 20 ft tæller som 10 ft (1d6), og du lander på benene.
   - navn: Mørkesyn <em>Darkvision</em>
-    tekst: 60 fod. Mørke ses som svagt lys, kun i gråtoner.
+    tekst: 60 ft. Mørke ses som svagt lys, kun i gråtoner.
   - {navn: Thieves' Cant, tekst: Tyvenes hemmelige sprog og tegn.}
   bonus:
   - navn: Cunning Action
-    tekst: <em>Dash</em> (60 fod i alt), <em>Disengage</em> eller <em>Hide</em>.
+    tekst: <em>Dash</em> (60 ft i alt), <em>Disengage</em> eller <em>Hide</em>.
   - navn: Hide
     tekst: 'Stealth {+DEX+2*PB} mod DC 15. Kræver <em>Heavily Obscured</em> eller ¾ dækning. Lykkes det: <em>Invisible</em> → fordel → Sneak Attack.'
   ture:
@@ -114,21 +114,21 @@ udstyrsark:
   venstre:
   - titel: Våben og rustning
     punkter:
-    - Leather Armor · AC 11 + DEX
-    - Shortsword · 1d6 stik
-    - Dagger ×2 · 1d4 stik · kast 20/60 ft · <i>Nick</i>
-    - Shortbow · 1d6 stik · 80/320 ft · <i>Vex</i>
-    - Pile [][][][][] [][][][][] [][][][][] [][][][][]
+    - Læderrustning <i>Leather Armor</i> · AC 11 + DEX
+    - Kortsværd <i>Shortsword</i> · 1d6 Piercing
+    - Dolk ×2 <i>Dagger</i> · 1d4 Piercing · kast 20/60 ft · <i>Nick</i>
+    - Kortbue <i>Shortbow</i> · 1d6 Piercing · 80/320 ft · <i>Vex</i>
+    - Pile <i>Arrows</i> [][][][][] [][][][][] [][][][][] [][][][][]
     tomme: 1
   - titel: Udstyr <i>Equipment</i>
     punkter:
-    - Thieves' Tools
-    - Rygsæk · soverulle · rejsetøj · 2 punge · kogger · spillekort
-    - Reb · brækjern · blændlygte · klokke · fyrtøj · vandsæk
+    - Tyveværktøj <i>Thieves' Tools</i>
+    - Rygsæk <i>Backpack</i> · Soverulle <i>Bedroll</i> · Rejsetøj <i>Traveler's Clothes</i> · Punge <i>Pouch</i> ×2 · Kogegrej <i>Cook's Utensils</i> · Spillekort <i>Playing Cards</i>
+    - Reb <i>Rope</i> · Brækjern <i>Crowbar</i> · Blændlygte <i>Bullseye Lantern</i> · Klokke <i>Bell</i> · Fyrtøj <i>Tinderbox</i> · Vandsæk <i>Waterskin</i>
     - Metalkugler <i>Ball Bearings</i> (1.000)
-    - Olie [][][][][][][]
-    - Lys [][][][][][][][][][]
-    - Rationer [][][][][]
+    - Olie <i>Oil</i> [][][][][][][]
+    - Lys <i>Candle</i> [][][][][][][][][][]
+    - Rationer <i>Rations</i> [][][][][]
     tomme: 6
   - titel: Mad og fund
     punkter:

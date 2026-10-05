@@ -78,3 +78,6 @@ small.f{display:block;font-size:6.4pt;line-height:1.05;color:var(--muted);font-s
 .spells dt{font-weight:700}
 .spells dd{margin:0}
 .slots{font-size:8.8pt;margin-bottom:.8mm}
+
+td.n small.en{display:block;font-size:7.5pt;font-style:italic;font-weight:400;color:var(--muted);white-space:nowrap}
+.ge{display:inline-block;vertical-align:top}

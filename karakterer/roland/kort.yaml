@@ -1,0 +1,148 @@
+titel: Roland kort                  # titel på HTML/PDF
+
+# Kort-id'er. Alle kort ligger under `egne` nedenfor (ingen kort fra bibliotek/).
+kort:
+  - roland-focus
+  - roland-flurry
+  - roland-stunning
+  - roland-deflect
+  - roland-slow-fall
+  - roland-wholeness
+  - roland-stonecunning
+  - roland-lucky
+  - roland-healer
+
+egne:
+  roland-focus:
+    type: regel
+    navn: Monk's Focus
+    dansk: Focus Points
+    kicker: Klasseregel · <i>Monk level 2</i>
+    foran:
+      - {titel: Pulje, tekst: 'Lig Monk level. Gendannes ved Short Rest eller Long Rest.'}
+      - {titel: Brug, punkter: ['Flurry of Blows: 1 FP', 'Patient Defense: 1 FP', 'Step of the Wind: 1 FP', 'Stunning Strike: 1 FP', 'Deflect Attacks: 1 FP']}
+    bag:
+      - {titel: Sådan virker det, tekst: 'Focus Points er Monkens energi. Der er ingen separat Ki-pulje i 2024-reglerne.'}
+      - titel: Godt at vide
+        punkter:
+          - 'Initiative: gendan alle Focus Points og heal Martial Arts-terningen + level (kun én gang pr. Long Rest).'
+
+  roland-flurry:
+    type: klasse
+    navn: Flurry of Blows
+    dansk: Hurtige slag
+    kicker: Klasseevne · Monk <i>level 2</i>
+    felter:
+      - [Tid, Bonus Action]
+      - [Brug, 1 FP efter Attack]
+      - [Effekt, 2 Unarmed Strikes]
+      - [Level 10+, 3 Unarmed Strikes]
+    effekt: Efter at have taget Attack-handlingen kan du bruge en Bonus Action til to Unarmed Strikes. Fra level 10 er det tre.
+    terningboks: [[Slag, '1d10{+DEX}', Martial Arts]]
+    bag:
+      - {titel: Sådan virker det, tekst: 'Hver Unarmed Strike bruger DEX (Dexterous Attacks) og Martial Arts-terningen.'}
+
+  roland-stunning:
+    type: klasse
+    navn: Stunning Strike
+    dansk: Bedøvende slag
+    kicker: Klasseevne · Monk <i>level 5</i>
+    felter:
+      - [Tid, Når du rammer]
+      - [Brug, 1 FP · 1 gang pr. tur]
+      - [Redning, CON-DC]
+      - [Ved fejl, Stunned]
+    effekt: "Ved træf med Monk-våben eller Unarmed Strike: målet laver et CON-redningskast. Fejl = Stunned til din næste tur. Succes = halv fart og næste angreb mod målet har Advantage."
+    terningboks: [[Redning, 8 + PB + WIS, CON-DC]]
+    bag:
+      - {titel: Sådan virker det, tekst: 'DC = 8 + PB + WIS.'}
+
+  roland-deflect:
+    type: klasse
+    navn: Deflect Attacks
+    dansk: Afvis angreb
+    kicker: Klasseevne · Monk <i>level 3</i>
+    felter:
+      - [Tid, Reaction]
+      - [Brug, Når du bliver ramt]
+      - [Reduktion, 1d10 + DEX + Monk level]
+      - [Level 13, Alle skadetyper]
+    effekt: Reducér skaden fra et slag, stik eller hug med 1d10 + DEX + Monk-level. Bliver skaden nul, kan du bruge 1 FP til at sende skade tilbage (Deflect Energy fra level 13).
+    terningboks: [['Reduktion', '1d10{+DEX}', '+Monk level']]
+    bag:
+      - {titel: Sådan virker det, tekst: 'Reduktionen gælder kun Bludgeoning, Piercing og Slashing, indtil level 13.'}
+
+  roland-slow-fall:
+    type: klasse
+    navn: Slow Fall
+    dansk: Langsomt fald
+    kicker: Klasseevne · Monk <i>level 4</i>
+    felter:
+      - [Tid, Reaction]
+      - [Brug, Når du falder]
+      - [Reduktion, 5 × Monk level]
+      - [Gælder, Faldskade]
+    effekt: Når du falder, reducerer du faldskaden med 5 gange din Monk-level.
+    terningboks: [[Reduktion, 5 × Monk level, faldskade]]
+    bag:
+      - {titel: Sådan virker det, tekst: 'Du kan bruge Reaction til at sænke faldet, selv når du falder fra stor højde.'}
+
+  roland-wholeness:
+    type: klasse
+    navn: Wholeness of Body
+    dansk: Kroppens helhed
+    kicker: Klasseevne · Warrior of the Open Hand <i>level 6</i>
+    felter:
+      - [Tid, Bonus Action]
+      - [Brug, WIS-mod gange pr. Long Rest]
+      - [Heal, Martial Arts + WIS]
+      - [Minimum, 1 HP]
+    effekt: Slå Martial Arts-terningen og heal HP lig det slåede tal + WIS-modifier (minimum 1).
+    terningboks: [[Heal, '1d10{+WIS}', Martial Arts + WIS], [Brug, WIS-mod gange, Long Rest]]
+    bag:
+      - {titel: Sådan virker det, tekst: 'Antal brug = WIS-modifier (minimum 1). Genoprettes ved Long Rest.'}
+
+  roland-stonecunning:
+    type: art
+    navn: Stonecunning
+    dansk: Stenkendskab
+    kicker: Art-træk · Dwarf
+    felter:
+      - [Tid, Bonus Action]
+      - [Varighed, 10 min]
+      - [Brug, PB gange pr. Long Rest]
+      - [Krav, Stenoverflade]
+    effekt: Du får Tremorsense i 60 ft, mens du står på eller rører ved sten (naturlig eller bearbejdet).
+    terningboks: [[Brug, PB gange, Long Rest]]
+    bag:
+      - {titel: Sådan virker det, tekst: 'Tremorsense gælder kun, mens du står på eller rører ved sten.'}
+
+  roland-lucky:
+    type: feat
+    navn: Lucky
+    dansk: Heldig
+    kicker: Feat · Level 12
+    felter:
+      - [Tid, Efter Long Rest]
+      - [Luck Points, PB]
+      - [Brug, Advantage på D20 Test]
+      - [Pulje, Lig PB]
+    effekt: Efter en Long Rest har du Luck Points lig din Proficiency Bonus. Brug ét til at give dig selv Advantage på et D20 Test.
+    terningboks: [[Luck Points, PB, Long Rest]]
+    bag:
+      - {titel: Sådan virker det, tekst: 'Luck Points gendannes ved Long Rest.'}
+
+  roland-healer:
+    type: feat
+    navn: Healer
+    dansk: Lægen
+    kicker: Origin feat · Hermit
+    felter:
+      - [Tid, Handling]
+      - [Kit, Healer's Kit]
+      - [Heal, 1 HP Die + PB]
+      - [Reroll, Ved 1 på healing]
+    effekt: Brug et Healer's Kit som handling. Et væsen kan bruge en af sine Hit Point Dice til at blive healet, og din Proficiency Bonus lægges til.
+    terningboks: [[Heal, 1 Hit Die + PB, Healer's Kit]]
+    bag:
+      - {titel: Sådan virker det, tekst: 'Du kan rulle om, hvis healingen giver 1 på terningen, men du skal bruge det nye slag.'}

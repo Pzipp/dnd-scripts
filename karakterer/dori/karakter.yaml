@@ -1,0 +1,157 @@
+# Dori karakterark (D&D 2024).
+# Felt-reference: docs/karakterark-yaml.md · kommenteret skabelon: karakterer/_skabelon/karakter.yaml
+# Lav ark:  python3 dnd.py karakterark dori
+
+titel: Dori karakterark
+
+# ── Fælles felter: gælder alle versioner ──
+faelles:
+  navn: Dori
+  ident:
+  - [Klasse, Cleric 3 · Life]
+  - [Art, Dwarf]
+  - [Baggrund, Hermit]
+  pb: 2
+  fart: 30
+  hit_die: 8
+  saves: [WIS, CHA]
+  skills: [History, Insight, Medicine, Religion]
+  vaerktoej:
+    WIS: ["Herbalism Kit"]
+  sprog: Common og Dwarvish
+  kan_bruge:
+    Rustning: Light, Medium, Shield
+    Våben: Simple
+    Værktøj: Herbalism Kit
+  masteries:
+  - [Sap, Mace]
+  - [Slow, Light Crossbow]
+  feats:
+  - "Healer fra Hermit: Battle Medic (Healer's Kit, Hit Dice + PB). Enere i healing må slås om"
+  passiv:
+  - [Perception, '{10+WIS}']
+  - [Insight, '{10+WIS+PB}']
+  - [Investigation, '{10+INT}']
+  - [Darkvision, 120 ft]
+  fod: D&amp;D 2024 · PHB 2024 kap. 3 (Cleric, Life Domain), kap. 4 (Dwarf, Hermit, Healer)
+
+# ── Side 1 · Karakterark ──
+versioner:
+- version: Version A · level 3
+  evner: {STR: 10, DEX: 13, CON: 15, INT: 8, WIS: 17, CHA: 12}
+  stats:
+  - [<em>AC</em>, '17', Scale Mail (DEX maks +2) · Shield]
+  - [Max HP, '27', 8+CON+1 + 2×(5+CON+1)]
+  - [<em>Hit Dice</em>, 3d8, 1 d8 pr. level]
+  - [<em>Initiative</em>, '{+DEX}']
+  - [<em>Speed</em>, '30', 'Dash: 60']
+  - [<em>Proficiency Bonus</em>, '{+PB}', level 1–4]
+  - [Passive <em>Perception</em>, '{10+WIS}']
+  - [Spell DC, '{8+WIS+PB}']
+
+  angreb:
+  - [Stridsklub <em>Mace</em>, '{+STR+PB}', '1d6{+STR} Bludgeoning', '<b>Sap</b>']
+  - [Lette armbrøst <em>Light Crossbow</em>, '{+DEX+PB}', '1d8{+DEX} Piercing', '<b>Slow</b> · 80/320 ft · Loading']
+  - [Ubevæbnet <em>Unarmed Strike</em>, '{+STR+PB}', '{1+STR} Bludgeoning', '']
+
+  magi:
+    dc:
+    - {navn: Spellcasting · WIS, slag: '{+WIS+PB}', dc: '{8+WIS+PB}'}
+    slots: '<b>Spell slots</b> 1. grad [][][][] · 2. grad [][]'
+    liste:
+    - - Cantrips
+      - Sacred Flame · Guidance · Spare the Dying · Thaumaturgy
+    - - 1. grad
+      - '<b>Bless</b> · <b>Cure Wounds</b> 2d8{+WIS} HP · Healing Word · Shield of Faith'
+    - - 2. grad (domæne)
+      - '<b>Aid</b> · <b>Lesser Restoration</b>'
+    - - Ritualer
+      - Detect Magic
+
+  traek:
+  - {navn: Divine Order · Thaumaturge, tekst: 'Én ekstra cantrip. WIS-modifier (min. +1) til Intelligence-checks i Arcana eller Religion.'}
+  - {navn: Channel Divinity, tag: 2× · kort/lang hvil, tekst: 'Divine Spark: 1d8 + WIS til healing, eller Con-redning for Necrotic/Radiant-skade (halv ved succes). Turn Undead.'}
+  - {navn: Dwarven Resilience, tekst: 'Resistance mod Poison-skade. Advantage på saves mod at blive Poisoned.'}
+  - {navn: Dwarven Toughness, tekst: 'Din HP-maksimum stiger med 1 pr. level.'}
+  - {navn: Darkvision, tekst: '120 ft. Mørke ses som svagt lys, kun i gråtoner.'}
+  - {navn: Disciple of Life, tekst: 'Når du helbreder med en besværgelse, får modtageren ekstra HP lig med 2 + besværgelsens grad.'}
+  - {navn: Preserve Life, tag: Channel Divinity, tekst: 'Heal HP lig med 5× din cleric-level, fordelt blandt sårede væsner inden for 30 ft.'}
+
+  bonus:
+  - {navn: Stonecunning, tekst: 'Tremorsense 60 ft i 10 min, når du står på eller rører sten.'}
+
+  ture:
+  - undertitel: hjælp
+    titel: BEVAR LIV!
+    punkter:
+    - '<b>Preserve Life</b> (Action): heal de sårede inden for 30 ft.'
+    - '<b>Cure Wounds</b> eller <b>Healing Word</b> til den, der står værst.'
+  - undertitel: nærkamp
+    titel: STRID!
+    punkter:
+    - '<b>Attack</b>: Mace, d20{+STR+PB}. Rammer du: 1d6{+STR}.'
+    - '<b>Sacred Flame</b> eller <b>Guidance</b> hvis du ikke kan nå fjenden.'
+
+  fod: D&amp;D 2024 · PHB 2024 kap. 3 (Cleric, Life Domain), kap. 4 (Dwarf, Hermit, Healer).
+
+# ── Side 2 · Handlingsark ──
+handlingsark:
+  bonus_handlinger: {Stonecunning: Stonecunning}
+  vaerktoej:
+  - {navn: "Herbalism Kit", evne: WIS, brug: 'Lave helbredende urter, identificere planter'}
+  ekstra:
+  - titel: Cleric
+    punkter:
+    - '<b>Channel Divinity</b> [][]: Divine Spark eller Turn Undead. 1 use kommer igen ved kort hvil, alle ved lang hvil.'
+    - '<b>Preserve Life</b> [][]: heal 5× cleric-level HP fordelt på sårede væsner inden for 30 ft.'
+
+# ── Side 3 · Udstyrsark ──
+udstyrsark:
+  ident:
+  - [Klasse, Cleric 3 · Life]
+  - [Opdateres, Løbende i spillet]
+  venstre:
+  - titel: Våben <i>Weapons</i>
+    punkter:
+    - Stridsklub <i>Mace</i> · 1d6 Bludgeoning · <i>Sap</i>
+    - Lette armbrøst <i>Light Crossbow</i> · 1d8 Piercing · <i>Slow</i> · bolte [][][][][][][][][][]
+    tomme: 2
+  - titel: Udstyr <i>Equipment</i>
+    punkter:
+    - Skjold <i>Shield</i> · Skalrustning <i>Scale Mail</i>
+    - Helligsymbol <i>Holy Symbol</i>
+    - Urtekasse <i>Herbalism Kit</i>
+    - Rygsæk <i>Backpack</i> · Reb <i>Rope</i>
+    - Rationer <i>Rations</i> [][][]
+    tomme: 8
+  - titel: Særlige genstande
+    punkter: []
+    tomme: 5
+  - {titel: Penge <i>Coins</i>, type: penge}
+  hoejre:
+  - {titel: Kampagne og mission, punkter: [], tomme: 16}
+  - {titel: Steder, punkter: [], tomme: 8}
+  - {titel: Personer og væsner, punkter: [], tomme: 12}
+
+# ── Side 4 · Baggrundsark ──
+baggrundsark:
+  ident:
+  - [Art, Dwarf]
+  - [Baggrund, Hermit]
+  venstre:
+  - titel: Udseende <i>Appearance</i>
+    type: fakta
+    felter: [[Alder, ''], [Højde, ''], [Vægt, ''], [Øjne, ''], [Hår, ''], [Skæg, '']]
+  - titel: Historie <i>Backstory</i>
+    type: tekst
+    afsnit:
+    - Dori voksede op i en bjergby, hvor helbredere var sjældne, og de få, der fandtes, boede langt oppe i bjergene.
+    - Hun drog ned i dalen for at lære, men vendte aldrig helt tilbage til sine lærere. Nu går hun fra landsby til landsby og hjælper dem, der ingen andre har.
+    tomme: 3
+  - {titel: Træning og valg <i>Proficiencies</i>, type: traening}
+  hoejre:
+  - {titel: Personlighed, punkter: [Rolig, Tålmodig], tomme: 2}
+  - {titel: Familie og venner, punkter: [], tomme: 4}
+  - {titel: Fjender og rivaler, punkter: [], tomme: 5}
+  - {titel: Mål og drømme, punkter: [], tomme: 4}
+  - {titel: Hemmeligheder, punkter: [], tomme: 5}

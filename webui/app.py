@@ -13,6 +13,12 @@ WEBUI = Path(__file__).resolve().parent
 CHARACTERS = ROOT / "karakterer"
 DND = ROOT / "dnd.py"
 
+# Samme importsti som dnd.py, så forhåndsvisningen kan kalde generatorerne direkte.
+for _mappe in ("scripts", "scripts/karakterark", "scripts/kort"):
+    sys.path.insert(0, str(ROOT / _mappe))
+import karakterark  # noqa: E402
+import spellkort  # noqa: E402
+
 app = Flask(__name__)
 
 
@@ -69,6 +75,26 @@ def check_stil(stil: str) -> str:
     if stil not in STILE:
         raise ValueError("Ukendt stil. Vælg farve eller sorthvid.")
     return stil
+
+
+def preview(character: str, kind: str, stil: str, yaml_text: str) -> str:
+    """HTML ud fra den YAML, der står i editoren, også når den ikke er gemt. Skriver ingen filer."""
+    check_stil(stil)
+    data_path(character, kind)  # karakteren og siden skal findes, ellers er forhåndsvisningen løs
+    try:
+        parsed = yaml.safe_load(yaml_text)
+    except yaml.YAMLError as exc:
+        raise ValueError(f"YAML-fejl: {exc}") from exc
+    if not isinstance(parsed, dict):
+        raise ValueError("YAML skal indeholde et objekt/mappe øverst.")
+    try:
+        if kind == "karakterark":
+            return karakterark.build(parsed, stil)
+        return spellkort.build(parsed, stil)
+    except SystemExit as exc:  # faelles.fejl() afslutter med en forklarende tekst
+        raise ValueError(str(exc.code).removeprefix("FEJL: ")) from exc
+    except Exception as exc:  # fx et manglende felt i data
+        raise ValueError(f"Fejl i data: {type(exc).__name__}: {exc}") from exc
 
 
 def generate(character: str, kind: str, stil: str, pdf: bool = False) -> dict:
@@ -141,6 +167,20 @@ def api_save():
             payload.get("yaml", ""),
         )
         return jsonify({"saved": True})
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+
+@app.post("/api/preview")
+def api_preview():
+    payload = request.get_json(silent=True) or {}
+    try:
+        return jsonify({"html": preview(
+            payload.get("character", ""),
+            payload.get("kind", ""),
+            payload.get("stil", "farve"),
+            payload.get("yaml", ""),
+        )})
     except ValueError as exc:
         return jsonify({"error": str(exc)}), 400
 

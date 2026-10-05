@@ -1,0 +1,37 @@
+titel: Dori kort
+
+# Kort-id'er fra bibliotek/
+kort:
+  - sacred-flame
+  - guidance
+  - spare-the-dying
+  - thaumaturgy
+  - bless
+  - healing-word
+  - shield-of-faith
+  - cure-wounds
+  - aid
+  - lesser-restoration
+  - detect-magic
+  - darkvision
+  - healers-kit
+  - regel-slots
+  - regel-konc
+  - preserve-life
+
+# Egne kort, kun til Dori
+egne:
+  preserve-life:
+    type: klasse
+    navn: Preserve Life
+    dansk: Bevar liv
+    kicker: Life Domain · Cleric <i>level 3</i>
+    kilde: PHB 2024
+    felter:
+      - [Tid, Action]
+      - [Brug, Channel Divinity]
+      - [Afstand, 30 ft]
+      - [Kræver, Helligsymbol]
+    effekt: Heal HP lig med 5× din cleric-level, fordelt blandt sårede væsner inden for 30 ft (inkl. dig selv).
+    bag:
+      - {titel: Sådan virker det, tekst: 'Fordel healingen som du vil. Kun væsner med halvdelen eller mindre af deres HP (Bloodied) tæller.'}

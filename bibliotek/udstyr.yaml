@@ -8,11 +8,11 @@ ball-bearings:
   kicker: Udstyr · <i>pose med 1.000 stk.</i>
   felter:
   - [Tid, Utilize-handling]
-  - [Område, 10 × 10 fod]
-  - [Afstand, Inden for 10 fod]
+  - [Område, 10 × 10 ft]
+  - [Afstand, Inden for 10 ft]
   - [Varighed, Til de samles op]
   effekt: Strø kuglerne ud på jorden. Fjender, der går ind på dem, kan falde.
-  slag:
+  terningboks:
   - [Redning, DEX DC 10, ellers Prone (væltet)]
   bag:
   - titel: Sådan virker det
@@ -21,7 +21,7 @@ ball-bearings:
     punkter:
     - Læg dem i en dør eller smal gang, når I flygter.
     - Det tager 10 minutter at samle dem op igen.
-    - 'Prone: angreb inden for 5 fod mod væsnet har fordel.'
+    - 'Prone: angreb inden for 5 ft mod væsnet har fordel.'
 oil:
   type: udstyr
   navn: Oil
@@ -29,18 +29,18 @@ oil:
   kicker: Udstyr · <i>flaske</i>
   felter:
   - [Kast, I stedet for et angreb]
-  - [Afstand, Op til 20 fod]
-  - [Hæld, 'Utilize, 5 × 5 fod']
+  - [Afstand, Op til 20 ft]
+  - [Hæld, 'Utilize, 5 × 5 ft']
   - [Varighed, 1 minut]
-  effekt: Kast olie på et væsen. Tager det ildskade, mens det er dækket af olie, tager det <b>5 ekstra</b> ildskade.
-  slag:
+  effekt: Kast olie på et væsen. Tager det Fire-skade, mens det er dækket af olie, tager det <b>5 ekstra</b> Fire-skade.
+  terningboks:
   - [Redning, DEX, DC 8 + DEX + PB (din)]
-  - [Ekstra ild, '+5', første gang det tager ildskade]
+  - [Ekstra Fire, '+5', første gang det tager Fire-skade]
   bag:
   - titel: Kast på et væsen
-    tekst: Når du tager Attack-handlingen, kan du kaste flasken i stedet for ét angreb. Mål inden for 20 fod slår DEX-redningskast. Fejler det, er det dækket af olie i 1 minut. Rammes det af ild i den tid, tager det 5 ekstra ildskade.
+    tekst: Når du tager Attack-handlingen, kan du kaste flasken i stedet for ét angreb. Mål inden for 20 ft slår DEX-redningskast. Fejler det, er det dækket af olie i 1 minut. Rammes det af Fire i den tid, tager det 5 ekstra Fire-skade.
   - titel: Hæld på jorden
-    tekst: 'Utilize-handling: hæld olien ud på et felt på 5 × 5 fod lige ved dig. Tænder du den, brænder den i 2 runder og giver 5 ildskade til væsner, der går ind i feltet eller slutter deres tur der (én gang pr. tur).'
+    tekst: 'Utilize-handling: hæld olien ud på et felt på 5 × 5 ft lige ved dig. Tænder du den, brænder den i 2 runder og giver 5 Fire-skade til væsner, der går ind i feltet eller slutter deres tur der (én gang pr. tur).'
   - {titel: Lampeolie, tekst: Én flaske holder en lygte tændt i 6 timer.}
 healers-kit:
   type: udstyr
@@ -53,7 +53,7 @@ healers-kit:
   - [Brug, '10']
   - [Kræver, Intet slag]
   effekt: Stabiliser et bevidstløst væsen på 0 HP, uden at du skal slå Medicine.
-  slag:
+  terningboks:
   - [Stabil, Automatisk, koster 1 brug]
   bag:
   - titel: Stabil betyder
@@ -74,7 +74,7 @@ thieves-tools:
   - [Kræver, 'Trænet: + PB']
   - [Varighed, Øjeblikkelig]
   effekt: Dirk låse op og desarmer fælder.
-  slag:
+  terningboks:
   - [Lås, DEX DC 15, dirk en lås]
   - [Fælde, DEX DC 15, desarmer en fælde]
   bag:
@@ -91,14 +91,14 @@ bullseye-lantern:
   dansk: Blændlygte
   kicker: Udstyr · <i>lys</i>
   felter:
-  - [Lys, Kegle 60 fod]
-  - [Svagt lys, 60 fod mere]
+  - [Lys, Kegle 60 ft]
+  - [Svagt lys, 60 ft mere]
   - [Brænder, 6 timer pr. olie]
   - [Tid, Utilize]
-  effekt: Lyser kraftigt i en kegle på 60 fod og svagt 60 fod længere ud.
-  slag:
-  - [Kraftigt lys, 60 fod, kegle]
-  - [Svagt lys, +60 fod, ud over keglen]
+  effekt: Lyser kraftigt i en kegle på 60 ft og svagt 60 ft længere ud.
+  terningboks:
+  - [Kraftigt lys, 60 ft, kegle]
+  - [Svagt lys, +60 ft, ud over keglen]
   bag:
   - titel: Sådan virker det
     tekst: Lyset peger kun én vej, så du kan lyse ned ad en gang uden at lyse dig selv op fra alle sider.
@@ -110,16 +110,16 @@ torch:
   dansk: Fakkel
   kicker: Udstyr · <i>lys</i>
   felter:
-  - [Lys, 20 fod]
-  - [Svagt lys, 20 fod mere]
+  - [Lys, 20 ft]
+  - [Svagt lys, 20 ft mere]
   - [Brænder, 1 time]
   - [Tid, Utilize]
-  effekt: Lyser kraftigt 20 fod rundt om dig og svagt 20 fod længere ud.
-  slag:
-  - [Som våben, '1', 'ildskade, simpelt nærkampsvåben']
+  effekt: Lyser kraftigt 20 ft rundt om dig og svagt 20 ft længere ud.
+  terningboks:
+  - [Som våben, '1', 'Fire-skade, Simple Melee Weapon']
   bag:
   - titel: Sådan virker det
-    tekst: En fakkel brænder i 1 time. Du kan slå med den som et simpelt nærkampsvåben og give 1 ildskade.
+    tekst: En fakkel brænder i 1 time. Du kan slå med den som et Simple Melee Weapon og give 1 Fire-skade.
   - titel: Godt at vide
     punkter: [Brug den til at tænde olie., 'Den lyser til alle sider, så fjender kan se dig.']
 grappling-hook:
@@ -129,14 +129,14 @@ grappling-hook:
   kicker: Udstyr · <i>bindes til reb</i>
   felter:
   - [Tid, Utilize-handling]
-  - [Afstand, Op til 50 fod]
+  - [Afstand, Op til 50 ft]
   - [Evne, DEX]
   - [Kræver, Reb]
   effekt: Kast krogen op på en kant, et rækværk eller lignende. Sidder den fast, kan du klatre op ad rebet.
-  slag:
+  terningboks:
   - [Kast, DEX DC 13, Acrobatics]
   bag:
   - titel: Sådan virker det
-    tekst: Kast krogen mod noget, den kan hægte sig fast i, inden for 50 fod. Slå DEX (Acrobatics) mod DC 13. Lykkes det, sidder den fast.
+    tekst: Kast krogen mod noget, den kan hægte sig fast i, inden for 50 ft. Slå DEX (Acrobatics) mod DC 13. Lykkes det, sidder den fast.
   - titel: Godt at vide
-    punkter: [At klatre koster 1 ekstra fod pr. fod., 'Bind rebet til krogen, før du kaster.']
+    punkter: [At klatre koster 1 ekstra ft pr. ft., 'Bind rebet til krogen, før du kaster.']
