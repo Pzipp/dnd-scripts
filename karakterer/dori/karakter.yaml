@@ -20,14 +20,14 @@ faelles:
     WIS: ["Herbalism Kit"]
   sprog: Common og Dwarvish
   kan_bruge:
-    Rustning: Light, Medium, Heavy, Shield
+    Rustning: Light, Medium, Shield
     Våben: Simple
     Værktøj: Herbalism Kit
   masteries:
   - [Sap, Mace]
   - [Slow, Light Crossbow]
   feats:
-  - "Healer fra Hermit: Healer's Kit-healing (slå op i PHB 2024 kap. 5)"
+  - "Healer fra Hermit: Battle Medic (Healer's Kit, Hit Dice + PB). Enere i healing må slås om"
   passiv:
   - [Perception, '{10+WIS}']
   - [Insight, '{10+WIS+PB}']
@@ -69,14 +69,13 @@ versioner:
       - Detect Magic
 
   traek:
-  - {navn: Divine Order · Thaumaturge, tekst: 'Én ekstra cantrip. WIS-modifier til Arcana- og Religion-checks.'}
-  - {navn: Channel Divinity, tag: 1× pr. kort hvil, tekst: 'Divine Spark: 1d8 + WIS skade (Radiant eller Necrotic) eller healing. Turn Undead.'}
+  - {navn: Divine Order · Thaumaturge, tekst: 'Én ekstra cantrip. WIS-modifier (min. +1) til Intelligence-checks i Arcana eller Religion.'}
+  - {navn: Channel Divinity, tag: 2× · kort/lang hvil, tekst: 'Divine Spark: 1d8 + WIS til healing, eller Con-redning for Necrotic/Radiant-skade (halv ved succes). Turn Undead.'}
   - {navn: Dwarven Resilience, tekst: 'Resistance mod Poison-skade. Advantage på saves mod at blive Poisoned.'}
   - {navn: Dwarven Toughness, tekst: 'Din HP-maksimum stiger med 1 pr. level.'}
   - {navn: Darkvision, tekst: '120 ft. Mørke ses som svagt lys, kun i gråtoner.'}
   - {navn: Disciple of Life, tekst: 'Når du helbreder med en besværgelse, får modtageren ekstra HP lig med 2 + besværgelsens grad.'}
   - {navn: Preserve Life, tag: Channel Divinity, tekst: 'Heal HP lig med 5× din cleric-level, fordelt blandt sårede væsner inden for 30 ft.'}
-  - {navn: Life Domain · Heavy armor, tekst: 'Proficiency med tung rustning.'}
 
   bonus:
   - {navn: Stonecunning, tekst: 'Tremorsense 60 ft i 10 min, når du står på eller rører sten.'}
@@ -103,7 +102,7 @@ handlingsark:
   ekstra:
   - titel: Cleric
     punkter:
-    - '<b>Channel Divinity</b> [][]: Divine Spark eller Turn Undead. Kommer igen ved kort hvil.'
+    - '<b>Channel Divinity</b> [][]: Divine Spark eller Turn Undead. 1 use kommer igen ved kort hvil, alle ved lang hvil.'
     - '<b>Preserve Life</b> [][]: heal 5× cleric-level HP fordelt på sårede væsner inden for 30 ft.'
 
 # ── Side 3 · Udstyrsark ──

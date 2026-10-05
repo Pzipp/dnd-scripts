@@ -34,4 +34,4 @@ egne:
       - [Kræver, Helligsymbol]
     effekt: Heal HP lig med 5× din cleric-level, fordelt blandt sårede væsner inden for 30 ft (inkl. dig selv).
     bag:
-      - {titel: Sådan virker det, tekst: 'Fordel healingen som du vil. Kun væsner, der er under halvdelen af deres HP, tæller.'}
+      - {titel: Sådan virker det, tekst: 'Fordel healingen som du vil. Kun væsner med halvdelen eller mindre af deres HP (Bloodied) tæller.'}
