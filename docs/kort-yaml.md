@@ -49,7 +49,7 @@ egne:                            # valgfri: kort kun til denne karakter
 | `art` | ◆ | Art-træk (species) |
 | `udstyr` | ⚒ | Nyttigt udstyr |
 
-`kilde: Hjemmelavet` markerer homebrew (fx Felis) og ændrer sidefoden. Nederst på bagsiden står kildehenvisningen: `Hjemmelavet`, eller `ref:` hvis kortet har en (fx `ref: "PHB 2024 s. 129"`). Uden `ref` står der `PHB 2024 kap. 7` for besværgelser og `PHB 2024` for andre kort. Sidetal skrives kun, når de er kontrolleret i PHB.
+`kilde: Hjemmelavet` markerer homebrew (fx Felis) og ændrer sidefoden på både forside og bagside. Nederst på bagsiden står kildehenvisningen: `Hjemmelavet`, eller `ref:` hvis kortet har en (fx `ref: "PHB 2024 s. 129"`). Uden `ref` står der `PHB 2024 kap. 7` for besværgelser og `PHB 2024` for andre kort. Sidetal skrives kun, når de er kontrolleret i PHB.
 
 ## Nyt kort: besværgelse
 

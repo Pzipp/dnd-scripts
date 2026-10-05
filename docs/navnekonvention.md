@@ -42,7 +42,7 @@ Her står det danske navn øverst og det engelske i lille skrift under. Dataen s
 6. **Danske etiketter og engelske navne.** Etiketter som Rustning, Våben, Værktøj, Træk og Udstyr står på dansk. Navnene inde i felterne står på engelsk, præcis som i PHB. Eksempel: `Rustning: Light, Medium, Heavy, Shield` og ikke `Rustning: let, tynd, mellem, tung, tyk`. Oversæt aldrig et engelsk navn til dansk, og ret ikke et engelsk navn, der allerede er korrekt, til en dansk variant.
 7. **Måleenheder** er ft (foot), som i reglerne. Afstande skrives med ft, fx `25 ft` eller `120 ft`.
 8. **Baggrundsarket (side 4)** er fritekst til rollespillet, fx personlighed, historie, familie og mål. Teksten er ikke regler, så den oversættes, rettes og tolkes ikke, og navne og udsagn må gentages som skrevet. Sektionen "Træning og valg" undtages ikke, fordi den er regelindhold.
-9. **Homebrew** (egne ting uden engelsk regelnavn, fx Felis-artens træk) får ét dansk navn og markeres med `Hjemmelavet`. På kort står `kilde: Hjemmelavet`, og bagsiden viser `Hjemmelavet` nederst. På ark står `<i>Hjemmelavet</i>` lige under navnet i angrebstabel og udstyrsliste, fx `Orksværd <i>Hjemmelavet</i>`.
+9. **Homebrew** (egne ting uden engelsk regelnavn, fx Felis-artens træk) får ét dansk navn og markeres med `Hjemmelavet`. På kort står `kilde: Hjemmelavet`, og både forside og bagside viser `Hjemmelavet` nederst. På ark står `<i>Hjemmelavet</i>` lige under navnet i angrebstabel og udstyrsliste, fx `Orksværd <i>Hjemmelavet</i>`.
 
 ## I filerne
 
