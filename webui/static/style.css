@@ -43,9 +43,11 @@ button:disabled { opacity: .55; cursor: wait; }
   font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 .status { min-height: 1.5rem; padding: .35rem .9rem .55rem; }
-.status.error { color: #9a2020; }
+.status.error, .panel-head .error { color: #9a2020; }
+#preview-info { margin-left: auto; }
 .preview { min-width: 0; }
 .empty { display: grid; flex: 1; place-items: center; color: #756c62; }
+.empty[hidden] { display: none; }
 iframe { width: 100%; flex: 1; min-height: 70vh; border: 0; background: #ddd; }
 a { color: #5d321c; font-size: .82rem; }
 .check { display: flex; align-items: center; gap: .35rem; height: 2.35rem; font-size: .85rem; font-weight: 600; }

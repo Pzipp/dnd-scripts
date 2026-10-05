@@ -49,9 +49,10 @@
   <section class="panel preview">
     <div class="panel-head">
       <h2>Output</h2>
+      <span id="preview-info"></span>
       <a id="open-output" href="#" target="_blank" rel="noopener" hidden>Åbn i ny fane</a>
     </div>
-    <div id="empty" class="empty">Gem og generer for at opdatere output.</div>
+    <div id="empty" class="empty">Forhåndsvisningen opdateres, mens du skriver.</div>
     <iframe id="output" title="Genereret D&D output" hidden></iframe>
   </section>
 </main>
@@ -70,11 +71,51 @@ const empty = document.querySelector("#empty");
 const openOutput = document.querySelector("#open-output");
 const downloads = document.querySelector("#downloads");
 
+const previewInfo = document.querySelector("#preview-info");
+
 let savedYaml = "";
+let previewTimer = null;
+let previewSeq = 0;
 
 function setStatus(text, error = false) {
   statusBox.textContent = text;
   statusBox.className = error ? "status error" : "status";
+}
+
+// Forhåndsvisningen bygges af den YAML, der står i editoren (også ugemt). Ældre svar ignoreres.
+function schedulePreview(delay = 600) {
+  clearTimeout(previewTimer);
+  previewTimer = setTimeout(updatePreview, delay);
+}
+
+async function updatePreview() {
+  const seq = ++previewSeq;
+  previewInfo.className = "";
+  previewInfo.textContent = "Opdaterer…";
+  try {
+    const response = await fetch("/api/preview", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        character: character.value,
+        kind: kind.value,
+        stil: stil.value,
+        yaml: yamlBox.value
+      })
+    });
+    const data = await response.json();
+    if (seq !== previewSeq) return;
+    if (!response.ok) throw new Error(data.error || "Forhåndsvisning fejlede.");
+    output.srcdoc = data.html;
+    output.hidden = false;
+    empty.hidden = true;
+    previewInfo.textContent = yamlBox.value === savedYaml ? "Gemt" : "Ugemt – viser dine rettelser";
+  } catch (error) {
+    if (seq !== previewSeq) return;
+    // Den sidste gyldige forhåndsvisning bliver stående, så layoutet ikke hopper.
+    previewInfo.className = "error";
+    previewInfo.textContent = error.message;
+  }
 }
 
 async function loadFiles() {
@@ -118,6 +159,7 @@ async function loadYaml() {
     yamlBox.value = data.yaml;
     savedYaml = data.yaml;
     setStatus("");
+    updatePreview();
   } catch (error) {
     setStatus(error.message, true);
   } finally {
@@ -132,7 +174,9 @@ yamlBox.addEventListener("input", () => {
   } else {
     setStatus("");
   }
+  schedulePreview();
 });
+stil.addEventListener("change", () => schedulePreview(0));
 
 async function save() {
   saveButton.disabled = true;
@@ -182,7 +226,10 @@ async function generate() {
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Generering fejlede.");
-    output.src = data.url + "?t=" + Date.now();
+    // Samme vej som forhåndsvisningen: HTML'en hentes og vises som srcdoc. Fejler hentningen, står fejlen i statuslinjen.
+    const htmlResponse = await fetch(data.url + "?t=" + Date.now(), {cache: "no-store"});
+    if (!htmlResponse.ok) throw new Error(`Output kunne ikke hentes (HTTP ${htmlResponse.status}).`);
+    output.srcdoc = await htmlResponse.text();
     output.hidden = false;
     empty.hidden = true;
     openOutput.href = data.url;
