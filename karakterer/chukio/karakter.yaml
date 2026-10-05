@@ -36,11 +36,9 @@ faelles:
   - titel: Særlige kort
     undertitel: se de separate kort
     punkter:
-    - <b>Hunter's Mark</b> [] · 1 brug pr. Long Rest.
     - <b>Heldkrystallen</b> [][][] · 3 ladninger pr. Long Rest.
   bonus:
   - {navn: Second Wind, tekst: Hel dig selv 1d10 + 2 HP.}
-  - {navn: Hunter's Mark, tekst: Se kortet.}
   ture:
   - undertitel: nærkamp
     titel: To sabler
