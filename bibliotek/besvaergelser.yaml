@@ -440,3 +440,159 @@ regel-konc:
     - '<b>M</b> materiale: en lille ting, se bagsiden af kortet. En fokus eller komponentpose kan erstatte den, hvis den ikke har en pris.'
   - titel: Hvilke kan være ritual?
     tekst: Kun ritualer, der står med Ⓡ, kan kastes som ritual.
+
+sacred-flame:
+  navn: Sacred Flame
+  dansk: Hellig ild
+  grad: 0
+  skole: Evocation
+  skole_da: Fremkaldelse
+  tid: Action
+  afstand: 60 ft
+  varighed: Øjeblikkelig
+  komp: V, S
+  effekt: Et væsen, du kan se inden for 60 ft, laver en DEX-redningskast. Fejler det, tager det 1d8 Radiant-skade.
+  terningboks:
+  - [Skade, 1d8, Radiant]
+  - [Redning, DEX, mod målet]
+  skala:
+  - [Level 1, 1d8]
+  - ['5', 2d8]
+  - ['11', 3d8]
+  - ['17', 4d8]
+  skala_titel: Skade efter level
+  bag:
+  - titel: Sådan virker det
+    tekst: Målet laver en DEX-redningskast. Fejler det, tager det 1d8 Radiant-skade. Dæksel giver ikke bonus på redningskastet.
+  - titel: Godt at vide
+    punkter:
+    - Intet angrebsslag, så den rammer også gennem dæksel.
+    - Skaden stiger ved level 5, 11 og 17.
+
+bless:
+  navn: Bless
+  dansk: Velsignelse
+  grad: 1
+  skole: Enchantment
+  skole_da: Fortryllelse
+  tid: Action
+  afstand: 30 ft
+  varighed: Koncentration, op til 1 minut
+  komp: V, S, M
+  konc: true
+  effekt: Op til tre væsner du vælger lægger 1d4 til deres angrebsslag og redningskast.
+  terningboks:
+  - [Bonus, +1d4, angreb og redningskast]
+  - [Mål, 3, væsner]
+  skala:
+  - [1. grad, 3 væsner]
+  - ['2.', 4 væsner]
+  - ['3.', 5 væsner]
+  skala_titel: Væsner efter grad
+  bag:
+  - titel: Sådan virker det
+    tekst: Hvert valgt væsen lægger 1d4 til hvert angrebsslag og hvert redningskast, så længe besværgelsen varer.
+  - titel: Godt at vide
+    punkter:
+    - Materiale: en hellig symbol til mindst 5 gp.
+    - Kræver koncentration. Du kan vælge dig selv.
+    - Hver grad over 1. giver ét væsen mere.
+
+healing-word:
+  navn: Healing Word
+  dansk: Helende ord
+  grad: 1
+  skole: Evocation
+  skole_da: Fremkaldelse
+  tid: Bonus Action
+  afstand: 60 ft
+  varighed: Øjeblikkelig
+  komp: V
+  effekt: Et væsen, du kan se inden for 60 ft, får HP tilbage. Helbredelsen er 2d4 + magi-mod.
+  terningboks:
+  - [Heler, 2d4 + magi-mod, HP tilbage]
+  - [Mål, 60 ft, væsen du kan se]
+  skala:
+  - [1. grad, 2d4]
+  - ['2.', 4d4]
+  - ['3.', 6d4]
+  - ['4.', 8d4]
+  skala_titel: Helbredelse
+  bag:
+  - titel: Sådan virker det
+    tekst: Væsnet får 2d4 + din magi-modifier HP tilbage. Det kan ikke få flere HP end sit maksimum.
+  - titel: Godt at vide
+    punkter:
+    - Bonus Action, så du kan heale i en kamp uden at bruge din Action.
+    - Hver grad over 1. giver +2d4 HP.
+    - Du skal kunne se det væsen, du heler.
+
+shield-of-faith:
+  navn: Shield of Faith
+  dansk: Trosskjold
+  grad: 1
+  skole: Abjuration
+  skole_da: Beskyttelse
+  tid: Bonus Action
+  afstand: 60 ft
+  varighed: Koncentration, op til 10 minutter
+  komp: V, S, M
+  konc: true
+  effekt: Et væsen inden for 60 ft får +2 til AC, så længe besværgelsen varer.
+  terningboks:
+  - [AC, +2, til målet]
+  bag:
+  - titel: Sådan virker det
+    tekst: Målet får +2 til AC. Du kan vælge dig selv.
+  - titel: Godt at vide
+    punkter:
+    - Kræver koncentration. Slutter den, forsvinder bonussen.
+    - Materiale: et lille pergament med en bøn.
+
+aid:
+  navn: Aid
+  dansk: Hjælp
+  grad: 2
+  skole: Abjuration
+  skole_da: Beskyttelse
+  tid: Action
+  afstand: 30 ft
+  varighed: 8 timer
+  komp: V, S, M
+  effekt: Op til tre væsner inden for 30 ft får +5 til deres maksimale og nuværende HP.
+  terningboks:
+  - [HP, +5, maks og nuværende]
+  - [Mål, 3, væsner]
+  skala:
+  - [2. grad, +5 HP]
+  - ['3.', +10 HP]
+  - ['4.', +15 HP]
+  skala_titel: HP-bonus efter grad
+  bag:
+  - titel: Sådan virker det
+    tekst: Hvert valgt væsen får +5 til sit maksimale og nuværende HP i 8 timer. Hver grad over 2. giver +5 mere.
+  - titel: Godt at vide
+    punkter:
+    - Den ekstra HP forsvinder, når varigheden slutter, og er ikke healing.
+    - Materiale: et lille stykke hvidt stof.
+
+lesser-restoration:
+  navn: Lesser Restoration
+  dansk: Mindre genoprettelse
+  grad: 2
+  skole: Abjuration
+  skole_da: Beskyttelse
+  tid: Bonus Action
+  afstand: Berøring
+  varighed: Øjeblikkelig
+  komp: V, S
+  effekt: Du afslutter én af tilstandene Blinded, Deafened, Paralyzed eller Poisoned på et væsen, du rører.
+  terningboks:
+  - [Afslut, 1 tilstand, Blinded · Deafened · Paralyzed · Poisoned]
+  bag:
+  - titel: Sådan virker det
+    tekst: Vælg én af de fire tilstande. Den ophører med det samme.
+  - titel: Godt at vide
+    punkter:
+    - Virker ikke på andre tilstande, fx Frightened eller Charmed.
+    - Bonus Action i 2024-reglerne.
