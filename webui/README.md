@@ -6,7 +6,7 @@ Et lille valgfrit overlay til projektets eksisterende D&D-scripts.
 
 - Vælg karakter.
 - Vælg **Karakterark** eller **Kort**.
-- Rediger den rigtige YAML-fil direkte i WebUI.
+- Rediger den rigtige YAML-fil direkte i WebUI. Editoren har syntaksfarver, linjenumre, foldning, søgning (Ctrl+F) og fortryd. **Ctrl+S** gemmer, og Tab indrykker.
 - **Forhåndsvisning**: output-feltet opdateres, mens du skriver (ca. 0,6 sek. efter du stopper). Det viser også ugemte rettelser, og der skrives ingen filer. Er YAML'en ugyldig, vises fejlen øverst i output-feltet, og den sidste gyldige forhåndsvisning bliver stående.
 - **Gem** skriver ændringerne tilbage til:
   - `karakterer/<karakter>/karakter.yaml`

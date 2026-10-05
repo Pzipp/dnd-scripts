@@ -5,6 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>D&D WebUI</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <!-- CodeMirror 6 hentes fra esm.sh. Versionerne er låst, og import map'et sikrer, at hver pakke kun findes én gang. -->
+  <script type="importmap">
+  {
+    "imports": {
+      "@codemirror/state": "https://esm.sh/@codemirror/state@6.7.6",
+      "@codemirror/view": "https://esm.sh/@codemirror/view@6.43.13",
+      "@codemirror/language": "https://esm.sh/@codemirror/language@6.12.4",
+      "@codemirror/commands": "https://esm.sh/@codemirror/commands@6.11.1",
+      "@codemirror/search": "https://esm.sh/@codemirror/search@6.7.2",
+      "@codemirror/lang-yaml": "https://esm.sh/@codemirror/lang-yaml@6.1.3",
+      "@lezer/common": "https://esm.sh/@lezer/common@1.5.3",
+      "@lezer/highlight": "https://esm.sh/@lezer/highlight@1.2.5",
+      "@lezer/lr": "https://esm.sh/@lezer/lr@1.4.10"
+    }
+  }
+  </script>
 </head>
 <body>
 <header class="topbar">
@@ -42,7 +58,7 @@
       <h2>YAML</h2>
       <span>Rediger den rigtige karakterfil</span>
     </div>
-    <textarea id="yaml" spellcheck="false"></textarea>
+    <div id="yaml" class="yaml-editor"></div>
     <div id="status" class="status"></div>
   </section>
 
@@ -57,10 +73,20 @@
   </section>
 </main>
 
-<script>
+<script type="module">
+import {
+  EditorView, keymap, lineNumbers, highlightActiveLine, highlightActiveLineGutter, drawSelection,
+} from "@codemirror/view";
+import {EditorState} from "@codemirror/state";
+import {defaultKeymap, history, historyKeymap, indentWithTab} from "@codemirror/commands";
+import {
+  bracketMatching, defaultHighlightStyle, foldGutter, foldKeymap, indentUnit, syntaxHighlighting,
+} from "@codemirror/language";
+import {search, searchKeymap} from "@codemirror/search";
+import {yaml} from "@codemirror/lang-yaml";
+
 const character = document.querySelector("#character");
 const kind = document.querySelector("#kind");
-const yamlBox = document.querySelector("#yaml");
 const stil = document.querySelector("#stil");
 const pdf = document.querySelector("#pdf");
 const saveButton = document.querySelector("#save");
@@ -76,6 +102,53 @@ const previewInfo = document.querySelector("#preview-info");
 let savedYaml = "";
 let previewTimer = null;
 let previewSeq = 0;
+let loadingYaml = false;
+
+// Editoren: linjenumre, YAML-farver, foldning, søgning (Ctrl+F) og fortryd. Ctrl+S gemmer.
+const editor = new EditorView({
+  parent: document.querySelector("#yaml"),
+  state: EditorState.create({
+    doc: "",
+    extensions: [
+      lineNumbers(),
+      highlightActiveLineGutter(),
+      highlightActiveLine(),
+      drawSelection(),
+      history(),
+      foldGutter(),
+      bracketMatching(),
+      syntaxHighlighting(defaultHighlightStyle, {fallback: true}),
+      search({top: true}),
+      indentUnit.of("  "),
+      EditorState.tabSize.of(2),
+      EditorView.lineWrapping,
+      yaml(),
+      keymap.of([
+        {key: "Mod-s", preventDefault: true, run: () => { save(); return true; }},
+        indentWithTab,
+        ...defaultKeymap,
+        ...historyKeymap,
+        ...foldKeymap,
+        ...searchKeymap,
+      ]),
+      EditorView.updateListener.of((update) => {
+        if (update.docChanged && !loadingYaml) onYamlInput();
+      }),
+    ],
+  }),
+});
+
+// Samme grænseflade som før (textarea.value), så resten af scriptet ikke skal ændres.
+const yamlBox = {
+  get value() {
+    return editor.state.doc.toString();
+  },
+  set value(text) {
+    loadingYaml = true;
+    editor.dispatch({changes: {from: 0, to: editor.state.doc.length, insert: text}});
+    loadingYaml = false;
+  },
+};
 
 function setStatus(text, error = false) {
   statusBox.textContent = text;
@@ -168,14 +241,14 @@ async function loadYaml() {
   }
 }
 
-yamlBox.addEventListener("input", () => {
+function onYamlInput() {
   if (yamlBox.value !== savedYaml) {
     setStatus("Ikke gemt.");
   } else {
     setStatus("");
   }
   schedulePreview();
-});
+}
 stil.addEventListener("change", () => schedulePreview(0));
 
 async function save() {
