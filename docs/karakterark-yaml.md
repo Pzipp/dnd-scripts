@@ -51,7 +51,7 @@ Udtryk kan bruge `STR DEX CON INT WIS CHA` (modifiers, regnet ud fra scoren) og 
 | `evner` | `{STR: 16, DEX: 14, ...}` | De seks scores. Modifier regnes ud |
 | `mod` | `{STR: 4}` | Tving en modifier (kun til "som skrevet"-versioner med papirets tal) |
 | `pb` | tal | Proficiency Bonus (standard 2) |
-| `fart` | tal | Speed i fod (standard 30) |
+| `fart` | tal | Speed i ft (standard 30) |
 | `hit_die` | tal | 8, 10, 12 … (standard 8) |
 | `saves` | liste | Trænede saving throws, fx `[STR, CON]` |
 | `skills` | liste | Trænede skills, engelske navne som i PHB |

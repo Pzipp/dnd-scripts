@@ -33,7 +33,7 @@ egne:
     felter:                           # præcis 4 kasser [etiket, værdi]
       - [Tid, Bonus Action]
       - [Brug, 1 gang pr. kamp]
-      - [Afstand, 30 fod]
+      - [Afstand, 30 ft]
       - [Kræver, Intet]
     effekt: Kort tekst til forsiden, 2–4 linjer.
     bag:                              # bagsiden: titel + tekst eller punkter

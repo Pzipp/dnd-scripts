@@ -141,9 +141,9 @@ udstyrsark:
       tomme: 2
     - titel: Udstyr <i>Equipment</i>
       punkter:
-        - Rygsæk · soverulle · reb
-        - Fakler [][][][][]
-        - Rationer [][][][][]
+        - Rygsæk <i>Backpack</i> · Soverulle <i>Bedroll</i> · Reb <i>Rope</i>
+        - Fakler <i>Torch</i> [][][][][]
+        - Rationer <i>Rations</i> [][][][][]
       tomme: 8
     - titel: Særlige genstande
       punkter: []

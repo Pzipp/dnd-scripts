@@ -114,21 +114,21 @@ udstyrsark:
   venstre:
   - titel: Våben og rustning
     punkter:
-    - Leather Armor · AC 11 + DEX
+    - Læderrustning <i>Leather Armor</i> · AC 11 + DEX
     - Kortsværd <i>Shortsword</i> · 1d6 Piercing
     - Dolk ×2 <i>Dagger</i> · 1d4 Piercing · kast 20/60 ft · <i>Nick</i>
     - Kortbue <i>Shortbow</i> · 1d6 Piercing · 80/320 ft · <i>Vex</i>
-    - Pile [][][][][] [][][][][] [][][][][] [][][][][]
+    - Pile <i>Arrows</i> [][][][][] [][][][][] [][][][][] [][][][][]
     tomme: 1
   - titel: Udstyr <i>Equipment</i>
     punkter:
-    - Thieves' Tools
-    - Rygsæk · soverulle · rejsetøj · 2 punge · kogger · spillekort
-    - Reb · brækjern · blændlygte · klokke · fyrtøj · vandsæk
+    - Tyveværktøj <i>Thieves' Tools</i>
+    - Rygsæk <i>Backpack</i> · Soverulle <i>Bedroll</i> · Rejsetøj <i>Traveler's Clothes</i> · Punge <i>Pouch</i> ×2 · Kogegrej <i>Cook's Utensils</i> · Spillekort <i>Playing Cards</i>
+    - Reb <i>Rope</i> · Brækjern <i>Crowbar</i> · Blændlygte <i>Bullseye Lantern</i> · Klokke <i>Bell</i> · Fyrtøj <i>Tinderbox</i> · Vandsæk <i>Waterskin</i>
     - Metalkugler <i>Ball Bearings</i> (1.000)
-    - Olie [][][][][][][]
-    - Lys [][][][][][][][][][]
-    - Rationer [][][][][]
+    - Olie <i>Oil</i> [][][][][][][]
+    - Lys <i>Candle</i> [][][][][][][][][][]
+    - Rationer <i>Rations</i> [][][][][]
     tomme: 6
   - titel: Mad og fund
     punkter:

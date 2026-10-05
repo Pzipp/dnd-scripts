@@ -49,7 +49,7 @@ egne:                            # valgfri: kort kun til denne karakter
 | `art` | ◆ | Art-træk (species) |
 | `udstyr` | ⚒ | Nyttigt udstyr |
 
-`kilde: Hjemmelavet` markerer homebrew (fx Felis) og ændrer sidefoden.
+`kilde: Hjemmelavet` markerer homebrew (fx Felis) og ændrer sidefoden. Nederst på bagsiden står kildehenvisningen: `Hjemmelavet`, eller `ref:` hvis kortet har en (fx `ref: "PHB 2024 s. 129"`). Uden `ref` står der `PHB 2024 kap. 7` for besværgelser og `PHB 2024` for andre kort. Sidetal skrives kun, når de er kontrolleret i PHB.
 
 ## Nyt kort: besværgelse
 
@@ -104,7 +104,7 @@ sneak-attack:
 ## Regler for indholdet
 
 * 2024-regler (Player's Handbook 2024, kap. 7 for besværgelser). Skriv kilden, når du er i tvivl.
-* Afstande i fod. Ingen karaktertal.
+* Afstande i ft. Ingen karaktertal.
 * Hold forsidens effekt på 2–4 linjer. Detaljer hører til på bagsiden.
 * Generatoren tjekker ikke selv, om teksten passer. Dele, der ikke kan skrumpe (terningboks, skala), har forrang, og en for lang effekttekst bliver skåret af. Kig på kortet, før du printer.
 * HTML `<b>`, `<i>` er tilladt. Skriv `&` som `&amp;`.

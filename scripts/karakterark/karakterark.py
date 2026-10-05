@@ -38,7 +38,6 @@ SKILLS = {
     "CHA": ["Deception", "Intimidation", "Performance", "Persuasion"],
 }
 SKILL_ABIL = {s: k for k, lst in SKILLS.items() for s in lst}
-SHORT = {"Animal Handling": "Animal H.", "Intimidation": "Intim.", "Performance": "Perf."}
 
 # Weapon Mastery (PHB 2024 kap. 6). Teksten vises på handlingsarket for de valgte.
 MASTERY = {
@@ -130,19 +129,21 @@ def formula(text, roll=None):
     return re.sub(r"\s+(stik|slag|hug|skade|ild|gift|kraft|lyn|kulde|nekrotisk)\b.*$", "", out).strip()
 
 
-EN_SIDST = re.compile(r"^(.*?)\s*<(?:em|i)>([^<]*)</(?:em|i)>$")
+EN_SIDST = re.compile(r"^(.+?)\s*<(?:em|i)>([^<]*)</(?:em|i)>(.*)$")
+
 
 def dansk_engelsk(tekst, env, box='<span class="cbx"></span>'):
-    """Dansk navn øverst, engelsk navn i lille skrift under. Kun når engelsk står sidst i navnefeltet."""
+    """Dansk navn øverst, engelsk navn i lille skrift under. Engelsk navn skal stå lige efter det danske."""
     m = EN_SIDST.match(tekst)
     if not m:
         return fmt(tekst, env, box)
-    return fmt(m.group(1), env, box) + f'<small class="en">{m.group(2)}</small>'
+    return (f'<span class="ge">{fmt(m.group(1), env, box)}<small class="en">{m.group(2)}</small></span>'
+            + fmt(m.group(3), env, box))
 
 
 def gear(tekst, env, box):
-    hoved, sep, rest = tekst.partition(" · ")
-    return dansk_engelsk(hoved, env, box) + (sep + fmt(rest, env, box) if sep else "")
+    """Udstyrslinje: hvert punkt adskilt af ' · ' får sit eget dansk/engelsk-par."""
+    return " · ".join(dansk_engelsk(d, env, box) for d in tekst.split(" · "))
 
 
 def fcell(text, env, roll=None):
@@ -209,15 +210,9 @@ def s1_abilities(v, env):
                 f'<span><span class="sf">{k}{"+PB" if k in saves else ""}</span>{sgn(m + (pb if k in saves else 0))}</span></li>']
         run = []
 
-        def flush():
-            grp = []                                 # utrænede skills slås sammen, så længe linjen er kort
-            for s in run + [None]:
-                if s is not None and (not grp or len(" · ".join(SHORT.get(x, x) for x in grp + [s])) <= 22):
-                    grp.append(s)
-                    continue
-                if grp:
-                    rows.append(s1_li("", " · ".join(SHORT.get(x, x) if len(grp) > 1 else x for x in grp), sgn(m), f=k))
-                grp = [s] if s is not None else []
+        def flush():                                 # utrænede skills: én række pr. skill
+            for s in run:
+                rows.append(s1_li("", s, sgn(m), f=k))
             run.clear()
         for s in SKILLS[k]:
             if s in expert:
@@ -326,7 +321,7 @@ def side2(v, h):
 
     def skt(e):
         mark = "◆" if e in expert else "●" if e in prof else ""
-        return f'<span class="sk">{mark}{SHORT.get(e, e) if e == "Animal Handling" else e} <b>{sgn(sk(e))}</b></span>'
+        return f'<span class="sk">{mark}{e} <b>{sgn(sk(e))}</b></span>'
 
     def tag(name):
         return f' <span class="tg">også Bonus Action · {bonus[name]}</span>' if name in bonus else ""

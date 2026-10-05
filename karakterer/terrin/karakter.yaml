@@ -120,7 +120,7 @@ udstyrsark:
   venstre:
   - titel: Våben og rustning
     punkter:
-    - Leather Armor · AC 11 + DEX
+    - Læderrustning <i>Leather Armor</i> · AC 11 + DEX
     - Kortsværd <i>Shortsword</i> · 1d6 Piercing · <i>Vex</i>
     - Dolk ×5 <i>Dagger</i> · 1d4 Piercing · kast 20/60 ft · <i>Nick</i>
     - Let armbrøst <i>Light Crossbow</i> · 1d8 Piercing · 80/320 ft
@@ -129,19 +129,19 @@ udstyrsark:
     tomme: 1
   - titel: Udstyr <i>Equipment</i>
     punkter:
-    - Thieves' Tools · Alchemist's Supplies
-    - Rygsæk · soverulle · madkit · rejsetøj · 2 punge · kogger
-    - Entrehage <i>Grappling Hook</i> · 3 reb · brækjern
-    - Blændlygte · spejl · klokke · 2 fyrtøj · 2 vandsække · terninger
+    - Tyveværktøj <i>Thieves' Tools</i> · Alkymistudstyr <i>Alchemist's Supplies</i>
+    - Rygsæk <i>Backpack</i> · Soverulle <i>Bedroll</i> · Madkit <i>Mess Kit</i> · Rejsetøj <i>Traveler's Clothes</i> · Punge <i>Pouch</i> ×2 · Kogegrej <i>Cook's Utensils</i>
+    - Entrehage <i>Grappling Hook</i> · Reb <i>Rope</i> ×3 · Brækjern <i>Crowbar</i>
+    - Blændlygte <i>Bullseye Lantern</i> · Spejl <i>Mirror</i> · Klokke <i>Bell</i> · Fyrtøj <i>Tinderbox</i> ×2 · Vandsæk <i>Waterskin</i> ×2 · Terninger <i>Dice Set</i>
     - Metalkugler <i>Ball Bearings</i> (1.000)
-    - Olie [][][][][][][][]
-    - Fakler [][][][][][][][][][]
-    - Lys [][][][][][][][][][]
-    - Rationer [][][][][][][][][][][][][][][]
+    - Olie <i>Oil</i> [][][][][][][][]
+    - Fakler <i>Torch</i> [][][][][][][][][][]
+    - Lys <i>Candle</i> [][][][][][][][][][]
+    - Rationer <i>Rations</i> [][][][][][][][][][][][][][][]
     tomme: 6
   - titel: Særlige genstande
     punkter:
-    - <b>Morrens Favn</b> · amulet af messing- og sølvtråd med knust glas. „Så længe du bærer den, finder natten dig ikke først.“
+    - <b>Morrens Favn</b> <i>Hjemmelavet</i> · amulet af messing- og sølvtråd med knust glas. „Så længe du bærer den, finder natten dig ikke først.“
     tomme: 3
   - {titel: Penge <i>Coins</i>, type: penge}
   hoejre:

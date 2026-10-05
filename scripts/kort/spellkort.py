@@ -116,11 +116,20 @@ def front(k, farve=False):
 <footer><span>Forside</span><span class="orn">✦</span><span>{"Hjemmelavet" if k.get("kilde") == "Hjemmelavet" else "D&amp;D 2024"}</span></footer></div></div>'''
 
 
+def kilde(k):
+    """Kildehenvisning nederst på bagsiden: Hjemmelavet, eller PHB 2024 med kapitel/side når kortet har det."""
+    if k.get("kilde") == "Hjemmelavet":
+        return "Hjemmelavet"
+    if k.get("ref"):
+        return k["ref"]
+    return "PHB 2024 kap. 7" if "skole" in k else "PHB 2024"
+
+
 def back(k, farve=False):
     return f'''<div class="card back"{kategori(k, farve)}><div class="frame">
 <header class="bh"><h3>{k["navn"]}</h3>{badge(k)}</header>
 <div class="rules">{sections(k.get("bag", []))}</div>
-<footer><span>Bagside</span><span class="orn">✦</span><span>{k.get("kilde", "PHB 2024") if k.get("type") not in (None, "") and "skole" not in k else k["dansk"]}</span></footer></div></div>'''
+<footer><span>Bagside</span><span class="orn">✦</span><span>{kilde(k)}</span></footer></div></div>'''
 
 
 def blank():
@@ -171,7 +180,8 @@ def build(deck, stil="sorthvid"):
         sheets.append(f'<section class="sheet"><div class="sheet-l"><b>{deck["titel"]} · Ark {n} · bagsider</b><span>Samme placering som forsiderne</span></div><div class="grid">{b}</div><div class="sheet-f">Læg for- og bagside ryg mod ryg i samme kortlomme</div></section>')
     titel = deck["titel"] + (" (farve)" if farve else "")
     print_i = "farve" if farve else "sort/hvid"
-    return f'''<title>{titel}</title>
+    return f'''<meta charset="UTF-8">
+<title>{titel}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=IM+Fell+English:ital@0;1&family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&display=swap">
 <style>

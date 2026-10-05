@@ -114,23 +114,23 @@ udstyrsark:
     tomme: 2
   - titel: Udstyr <i>Equipment</i>
     punkter:
-    - Reb, 25 ft, med gribekrog
+    - Reb <i>Rope</i> · 25 ft, med gribekrog
     - Sovegrej <i>Bedroll</i>
     - Førstehjælpssæt <i>Healer's Kit</i> · healing til små sår
-    - Kogegrej til opvarmning af rationer
+    - Kogegrej <i>Cook's Utensils</i> til opvarmning af rationer
     - Kort over skoven
     tomme: 6
   - titel: Forbrug
     punkter:
-    - Rationer (4 = 3 dage) [][][][][][]
-    - Gule æblestykker · 1/3 æble = heling som et kort hvil [][]
+    - Rationer <i>Rations</i> (4 = 3 dage) [][][][][][]
+    - Gule æblestykker <i>Hjemmelavet</i> · 1/3 æble = heling som et kort hvil [][]
     tomme: 2
   - {titel: Penge <i>Coins</i>, type: penge}
   hoejre:
   - titel: Særlige genstande
     punkter:
-    - <b>Heldkrystallen</b> · se kortet
-    - <b>Søsterring</b> · viser hvor jeg er (?)
+    - <b>Heldkrystallen</b> <i>Hjemmelavet</i> · se kortet
+    - <b>Søsterring</b> <i>Hjemmelavet</i> · viser hvor jeg er (?)
     - <b>Medaljon</b> · alle orker ser os som venner
     - <b>Medaljon</b> · viser vi den i Nordland, er vi velkomne
     - <b>Medaljon</b> med egeskjold og soldater på

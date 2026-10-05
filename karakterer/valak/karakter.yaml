@@ -12,7 +12,7 @@ faelles:
   - [Klasse, Warlock 2]
   - [Art, 'Tiefling, Abyssal']
   - [Baggrund, Acolyte]
-  - [Pagt, Enhjørning]
+  - [Pagt, Enhjørning <i>Hjemmelavet</i>]
   pb: 2
   fart: 30
   hit_die: 8
@@ -51,7 +51,7 @@ versioner:
   angreb:
   - [Kniv <em>Dagger</em>, '{+DEX+PB}', '1d4{+DEX} Piercing', kast 20/60 ft]
   - [Stav <em>Quarterstaff</em>, '{+STR+PB}', '1d6{+STR} Bludgeoning', 1d8 med to hænder]
-  - [Orksværd, '{+STR}', '1d8{+STR} Slashing', ikke trænet]
+  - [Orksværd <em>Hjemmelavet</em>, '{+STR}', '1d8{+STR} Slashing', ikke trænet]
   - [Overjordisk stråle <em>Eldritch Blast</em>, '{+CHA+PB}', '1d10{+CHA} Force', 120 ft · Agonizing Blast]
   - [Ildpil <em>Fire Bolt</em>, '{+CHA+PB}', 1d10 Fire, 120 ft]
   - [Elektrisk greb <em>Shocking Grasp</em>, '{+CHA+PB}', 1d8 Lightning, berøring · målet får ingen reaction]
@@ -98,16 +98,16 @@ udstyrsark:
   - titel: Våben <i>Weapons</i>
     punkter:
     - Stav <i>Quarterstaff</i> · 1d6 Bludgeoning, 1d8 tohånds
-    - Orksværd · 1d8 Slashing · ikke trænet
+    - Orksværd <i>Hjemmelavet</i> · 1d8 Slashing · ikke trænet
     - Kniv <i>Dagger</i> · 1d4 Piercing · kan kastes 20/60 ft
     tomme: 2
   - titel: Udstyr <i>Equipment</i>
     punkter:
-    - Reb (15 ft)
+    - Reb <i>Rope</i> · 15 ft
     - Sovegrej <i>Bedroll</i>
     - Førstehjælp <i>Healer's Kit</i> · stabiliserer uden slag [][][][][][][][][][]
-    - Gyldne æbler · healing ved kort hvil [][][]
-    - Madrationer <i>Rations</i> [][][]
+    - Gyldne æbler <i>Hjemmelavet</i> · healing ved kort hvil [][][]
+    - Rationer <i>Rations</i> [][][]
     - Skyggebog <i>Book of Shadows</i>
     tomme: 14
   - titel: Særlige genstande
@@ -138,7 +138,7 @@ baggrundsark:
   ident:
   - [Art, Tiefling]
   - [Baggrund, Acolyte]
-  - [Pagt, Enhjørning]
+  - [Pagt, Enhjørning <i>Hjemmelavet</i>]
   venstre:
   - titel: Udseende <i>Appearance</i>
     type: fakta

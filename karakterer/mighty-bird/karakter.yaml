@@ -123,12 +123,12 @@ udstyrsark:
   - titel: Udstyr <i>Equipment</i>
     punkter:
     - 'Tøj: gammelt landmandstøj og ting fundet på vejen'
-    - Rygsæk · soverulle · reb · fyrtøj · vandsæk
-    - Fakler [][][][][][][][][][]
-    - Olie [][]
-    - Rationer [][][][][][][][][][]
-    - Carpenter's Tools · Woodcarver's Tools · Brewer's Supplies
-    - Monster Harvesting Tools
+    - Rygsæk <i>Backpack</i> · Soverulle <i>Bedroll</i> · Reb <i>Rope</i> · Fyrtøj <i>Tinderbox</i> · Vandsæk <i>Waterskin</i>
+    - Fakler <i>Torch</i> [][][][][][][][][][]
+    - Olie <i>Oil</i> [][]
+    - Rationer <i>Rations</i> [][][][][][][][][][]
+    - Tømrerværktøj <i>Carpenter's Tools</i> · Træskærerværktøj <i>Woodcarver's Tools</i> · Bryggerudstyr <i>Brewer's Supplies</i>
+    - Monsterhøstværktøj <i>Monster Harvesting Tools</i>
     tomme: 8
   - titel: Særlige genstande
     punkter: []
