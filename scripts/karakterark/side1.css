@@ -81,3 +81,10 @@ small.f{display:block;font-size:6.4pt;line-height:1.05;color:var(--muted);font-s
 
 td.n small.en{display:block;font-size:7.5pt;font-style:italic;font-weight:400;color:var(--muted);white-space:nowrap}
 .ge{display:inline-block;vertical-align:top}
+
+/* layout-træ: kolonner side om side (bredde = flex-grow), rækker stables lodret */
+.layout{display:flex;flex-direction:column;gap:2.5mm}
+.kolonner{display:flex;align-items:flex-start;gap:2.5mm;min-width:0}
+.kol{display:flex;flex-direction:column;gap:2.5mm;min-width:0}
+.raekker{display:flex;flex-direction:column;gap:2.5mm;min-width:0}
+.abil .ab:last-of-type{margin-bottom:0}

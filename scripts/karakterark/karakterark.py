@@ -6,7 +6,7 @@ Brug:  python3 karakterark.py <karakter|mappe|karakter.yaml> [--stil farve|sorth
   (standard: karakterer/<navn>/udskrifter/). Datafilen er YAML (JSON virker også).
 
 Én HTML-fil med alle sider. Print de sider, du har brug for:
-  side 1   Karakterark      (én pr. version i "versioner")
+  side 1   Karakterark      ("karakterark", bygget af "layout")
   side 2   Handlingsark     ("handlingsark", bruger den sidste version)
   side 3   Udstyrsark       ("udstyrsark")
   side 4   Baggrundsark     ("baggrundsark")
@@ -248,6 +248,70 @@ def s1_feats(title, items, env):
     return "".join(o)
 
 
+def box_evner(sec, v, env):
+    legend = ('<div class="legend"><span class="dot p"></span>trænet <em>(proficient)</em> &nbsp; <span class="dot e"></span>&nbsp;<em>Expertise</em> (dobbelt bonus)'
+              f'<br>Slag = <b>d20 + formlen</b>. Modifier = (score − 10) ÷ 2, rundet ned. PB = {sgn(env["PB"])}.</div>')
+    return f'<div class="abil">{s1_abilities(v, env)}{legend}</div>'
+
+
+def box_passiv(sec, v, env):
+    rows = []
+    for a, b in sec.get("punkter", []):
+        fl = formula(b)
+        flag = f' <small class="sf">{fl}</small>' if fl else ""
+        rows.append(f"<span>{a}{flag}</span><b>{fmt(b, env)}</b>")
+    return f'<div class="box"><h2>{sec["titel"]}</h2><div class="kv">{"".join(rows)}</div></div>'
+
+
+def box_sprog(sec, v, env):
+    return f'<div class="box small"><h2>{sec["titel"]}</h2>{fmt(sec["tekst"], env)}</div>'
+
+
+def box_angreb(sec, v, env):
+    o = [f'<div class="box"><h2>{sec["titel"]}</h2><table><tr><th>Våben</th><th>Ramme</th><th>Skade</th><th>Noter</th></tr>']
+    for n, hit, dmg, note in sec.get("angreb", []):
+        o.append(f'<tr><td class="n">{dansk_engelsk(n, env)}</td><td>{fcell(hit, env, roll=True)}</td>'
+                 f'<td class="nw">{fcell(dmg, env, roll=False)}</td><td>{fmt(note, env)}</td></tr>')
+    o.append("</table></div>")
+    return "".join(o)
+
+
+def box_tur(sec, v, env):
+    return (f'<div class="box turn small"><h2>Din tur <em>· {sec["undertitel"]}</em></h2><h3>{sec["titel"]}</h3><ol>'
+            + "".join(f"<li>{fmt(p, env)}</li>" for p in sec.get("punkter", [])) + "</ol></div>")
+
+
+BOKSE = {
+    "evner": box_evner,
+    "passiv": box_passiv,
+    "sprog": box_sprog,
+    "angreb": box_angreb,
+    "regler": lambda sec, v, env: s1_box(sec, env),
+    "traek": lambda sec, v, env: s1_feats(sec["titel"], sec.get("punkter", []), env),
+    "bonus": lambda sec, v, env: s1_feats(sec["titel"], sec.get("punkter", []), env),
+    "tur": box_tur,
+}
+
+
+def layout_node(node, v, env):
+    """Én node i layout-træet: en kolonne-gruppe, en række-stak eller en boks."""
+    if "kolonner" in node:
+        cols = "".join(
+            f'<div class="kol" style="flex-grow:{k.get("bredde", 1)};flex-basis:0">{layout_stack(k.get("indhold", []), v, env)}</div>'
+            for k in node["kolonner"])
+        return f'<div class="kolonner">{cols}</div>'
+    if "raekker" in node:
+        return f'<div class="raekker">{layout_stack(node["raekker"], v, env)}</div>'
+    typ = node.get("type")
+    if typ not in BOKSE:
+        raise ValueError(f"Ukendt boks-type i layout: {typ!r}. Kendte typer: {', '.join(BOKSE)}.")
+    return BOKSE[typ](node, v, env)
+
+
+def layout_stack(nodes, v, env):
+    return "".join(layout_node(n, v, env) for n in nodes)
+
+
 def side1(v):
     env = make_env(v)
     o = ['<section class="pg s1"><div class="page">']
@@ -257,50 +321,7 @@ def side1(v):
         f'<div class="box stat"><div class="lbl">{st[0]}</div><div class="big">{fmt(st[1], env)}</div>'
         + (lambda fl: f'<small class="f">{fl}</small>' if fl else "")(st[2] if len(st) > 2 else formula(st[1]))
         + "</div>" for st in v["stats"]) + "</div>")
-    o.append('<div class="grid main"><div>')
-    o.append(s1_abilities(v, env))
-    o.append(f'<div class="legend"><span class="dot p"></span>trænet <em>(proficient)</em> &nbsp; <span class="dot e"></span>&nbsp;<em>Expertise</em> (dobbelt bonus)'
-             f'<br>Slag = <b>d20 + formlen</b>. Modifier = (score − 10) ÷ 2, rundet ned. PB = {sgn(env["PB"])}.</div>')
-    if v.get("passiv"):
-        rækker = []
-        for a, b in v["passiv"]:
-            fl = formula(b)
-            flag = f' <small class="sf">{fl}</small>' if fl else ""
-            rækker.append(f"<span>{a}{flag}</span><b>{fmt(b, env)}</b>")
-        o.append('<div class="box"><h2>Passive sanser</h2><div class="kv">' + "".join(rækker) + "</div></div>")
-    if v.get("sprog"):
-        o.append(f'<div class="box small" style="margin-top:2mm"><h2>Sprog <em>Languages</em></h2>{v["sprog"]}</div>')
-    o.append('</div><div class="grid" style="align-content:start">')
-    o.append('<div class="box"><h2>Angreb <em>· Attacks</em></h2><table><tr><th>Våben</th><th>Ramme</th><th>Skade</th><th>Noter</th></tr>')
-    for n, hit, dmg, note in v.get("angreb", []):
-        o.append(f'<tr><td class="n">{dansk_engelsk(n, env)}</td><td>{fcell(hit, env, roll=True)}</td>'
-                 f'<td class="nw">{fcell(dmg, env, roll=False)}</td><td>{fmt(note, env)}</td></tr>')
-    o.append("</table></div>")
-    mg = v.get("magi")
-    if mg:
-        o.append(f'<div class="box small"><h2>{mg.get("titel", "Magi <em>· Spellcasting</em>")}</h2><div class="dcs">')
-        for d in mg.get("dc", []):
-            wide = " wide" if len(mg["dc"]) == 1 else ""
-            o.append(f'<div class="dc{wide}"><span>{d["navn"]}</span><b>{fmt(d["slag"], env)}</b> slag · <b>DC {fmt(d["dc"], env)}</b>'
-                     f'<small class="f">{formula(d["slag"], roll=True)} · DC = {formula(d["dc"], roll=False)}</small></div>')
-        o.append("</div>")
-        if mg.get("slots"):
-            o.append(f'<div class="slots">{fmt(mg["slots"], env)}</div>')
-        o.append('<dl class="spells">' + "".join(f"<dt>{fmt(a, env)}</dt><dd>{fmt(b, env)}</dd>" for a, b in mg.get("liste", [])) + "</dl></div>")
-    for r in v.get("regler", []):
-        o.append(s1_box(r, env))
-    stack = []
-    if v.get("bonus"):
-        stack.append(s1_feats("Bonus actions", v["bonus"], env))
-    for t in v.get("ture", []):
-        stack.append(f'<div class="box turn small"><h2>Din tur <em>· {t["undertitel"]}</em></h2><h3>{t["titel"]}</h3><ol>'
-                     + "".join(f"<li>{fmt(p, env)}</li>" for p in t["punkter"]) + "</ol></div>")
-    feats = s1_feats("Evner &amp; træk <em>· Features</em>", v.get("traek", []), env)
-    if stack:
-        o.append(f'<div class="grid two">{feats}<div class="grid" style="align-content:start">{"".join(stack)}</div></div>')
-    else:
-        o.append(feats)
-    o.append("</div></div>")
+    o.append(f'<div class="layout">{layout_stack(v.get("layout", []), v, env)}</div>')
     o.append(f'<div class="foot">{v.get("fod", "")}</div></div></section>')
     return "\n".join(o)
 
@@ -497,9 +518,8 @@ def build(data, stil=None):
         return s
     stil = stil or data.get("stil")
     base = data.get("faelles", {})
-    vers = [{**base, **v} for v in data["versioner"]]
-    last = vers[-1]
-    pages = [side1(v) for v in vers]
+    last = {**base, **data["karakterark"]}
+    pages = [side1(last)]
     if "handlingsark" in data:
         pages.append(side2(last, data["handlingsark"]))
     if data.get("udstyrsark"):

@@ -34,6 +34,7 @@ faelles:
 
 # ── Side 1 · Karakterark: én side pr. version ──
 karakterark:
+  evner: {STR: 14, DEX: 18, CON: 12, INT: 14, WIS: 13, CHA: 9}
   stats:
   - [<em>AC</em> · Leather, '{11+DEX}']
   - [Max HP, '15', 8+CON + 5+CON]
@@ -53,7 +54,6 @@ karakterark:
       indhold:
       - type: evner
         titel: Evner
-        scores: {STR: 14, DEX: 18, CON: 12, INT: 14, WIS: 13, CHA: 9}
       - type: passiv
         titel: Passive sanser
         punkter:
