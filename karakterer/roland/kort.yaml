@@ -38,7 +38,7 @@ egne:
       - [Effekt, 2 Unarmed Strikes]
       - [Level 10+, 3 Unarmed Strikes]
     effekt: Efter at have taget Attack-handlingen kan du bruge en Bonus Action til to Unarmed Strikes. Fra level 10 er det tre.
-    terningboks: [[Slag, 1d10{+DEX}, Martial Arts]]
+    terningboks: [[Slag, '1d10{+DEX}', Martial Arts]]
     bag:
       - {titel: Sådan virker det, tekst: 'Hver Unarmed Strike bruger DEX (Dexterous Attacks) og Martial Arts-terningen.'}
 
@@ -52,7 +52,7 @@ egne:
       - [Brug, 1 FP · 1 gang pr. tur]
       - [Redning, CON-DC]
       - [Ved fejl, Stunned]
-    effekt: Ved træf med Monk-våben eller Unarmed Strike: målet laver et CON-redningskast. Fejl = Stunned til din næste tur. Succes = halv fart og næste angreb mod målet har Advantage.
+    effekt: "Ved træf med Monk-våben eller Unarmed Strike: målet laver et CON-redningskast. Fejl = Stunned til din næste tur. Succes = halv fart og næste angreb mod målet har Advantage."
     terningboks: [[Redning, 8 + PB + WIS, CON-DC]]
     bag:
       - {titel: Sådan virker det, tekst: 'DC = 8 + PB + WIS.'}
@@ -68,7 +68,7 @@ egne:
       - [Reduktion, 1d10 + DEX + Monk level]
       - [Level 13, Alle skadetyper]
     effekt: Reducér skaden fra et slag, stik eller hug med 1d10 + DEX + Monk-level. Bliver skaden nul, kan du bruge 1 FP til at sende skade tilbage (Deflect Energy fra level 13).
-    terningboks: [[Reduktion, 1d10{+DEX}, +Monk level]]
+    terningboks: [['Reduktion', '1d10{+DEX}', '+Monk level']]
     bag:
       - {titel: Sådan virker det, tekst: 'Reduktionen gælder kun Bludgeoning, Piercing og Slashing, indtil level 13.'}
 
@@ -98,7 +98,7 @@ egne:
       - [Heal, Martial Arts + WIS]
       - [Minimum, 1 HP]
     effekt: Slå Martial Arts-terningen og heal HP lig det slåede tal + WIS-modifier (minimum 1).
-    terningboks: [[Heal, 1d10{+WIS}, Martial Arts + WIS], [Brug, WIS-mod gange, Long Rest]]
+    terningboks: [[Heal, '1d10{+WIS}', Martial Arts + WIS], [Brug, WIS-mod gange, Long Rest]]
     bag:
       - {titel: Sådan virker det, tekst: 'Antal brug = WIS-modifier (minimum 1). Genoprettes ved Long Rest.'}
 

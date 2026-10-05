@@ -12,19 +12,21 @@ faelles:
   hit_die: 8                          # Monk: d8
   saves: [STR, DEX]
   skills: [Acrobatics, Insight, Medicine, Religion]
+  vaerktoej:
+    INT: [Herbalism Kit]
   sprog: Common, Dwarvish
   kan_bruge:
     Rustning: None
     Våben: Simple Melee, Shortsword
-    Værktøj: Herbalism Kit, Healer's Kit, Brewer's Supplies
+    Værktøj: Herbalism Kit
   feats:
-    - 'Healer (origin feat): Healer's Kit som handling, med PB på healingen'
+    - "Healer (origin feat): Healer's Kit som handling, med PB på healingen"
     - 'Lucky (level 12): Luck Points lig PB efter Long Rest'
   fod: D&amp;D 2024 · PHB 2024 (Dwarf, Hermit, Monk, Healer, Lucky)
 
 # ── Side 1 · Karakterark ──
 versioner:
-  - version: "Ability Score Improvement: level 4 DEX +2 · level 8 WIS +2 · level 12 Lucky"
+  - version: ""
     evner: {STR: 10, DEX: 17, CON: 14, INT: 12, WIS: 18, CHA: 8}
 
     stats:
@@ -126,7 +128,7 @@ udstyrsark:
         - Healer's Kit <i>Healer's Kit</i> · Healer
         - Bedroll <i>Bedroll</i> · Lamp <i>Lamp</i> · Oil <i>Oil</i> [][][]
         - Traveler's Clothes <i>Traveler's Clothes</i>
-        - Brewer's Supplies <i>Brewer's Supplies</i>
+        - Book <i>Book (philosophy)</i>
       tomme: 5
     - {titel: Penge <i>Coins</i>, type: penge}
   hoejre:
