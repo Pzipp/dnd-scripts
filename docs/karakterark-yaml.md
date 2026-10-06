@@ -37,7 +37,7 @@ Layoutet er et træ af tre slags noder:
 | Node | Betydning |
 |---|---|
 | `type: <navn>` | En boks. Typen bestemmer indholdet (se tabellen) |
-| `kolonner: [{bredde, indhold}, ...]` | Kolonner side om side. `bredde` er relativ: `1` og `2` giver 1/3 og 2/3 |
+| `kolonner: [{bredde, indhold, samlet}, ...]` | Kolonner side om side. `bredde` er relativ: `1` og `2` giver 1/3 og 2/3. `samlet: true` lægger hele kolonnen i én kasse. Boksene i den har så ingen egen ramme, kun overskrift |
 | `raekker: [...]` | Rækker, der stables lodret |
 
 Kolonner kan indeholde rækker og omvendt. Hver boks får sin egen ramme med `data-type`, så CSS kan ramme den.

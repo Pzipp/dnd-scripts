@@ -529,29 +529,36 @@ REGISTRY = {
 }
 
 
-def layout_node(node, v, env):
-    """Én node i layout-træet: en kolonne-gruppe, en række-stak eller en boks."""
+def layout_node(node, v, env, flat=False):
+    """Én node i layout-træet: en kolonne-gruppe, en række-stak eller en boks.
+
+    flat=True: boksene får ingen egen ramme (de ligger i en samlet kasse, se "samlet" under kolonner).
+    """
     if "kolonner" in node:
-        cols = "".join(
-            f'<div class="kol" style="--bredde:{k.get("bredde", 1)}">{layout_stack(k.get("indhold", []), v, env)}</div>'
-            for k in node["kolonner"])
-        return f'<div class="kolonner">{cols}</div>'
+        cols = []
+        for k in node["kolonner"]:
+            samlet = bool(k.get("samlet")) and not flat
+            inner = layout_stack(k.get("indhold", []), v, env, flat or samlet)
+            if samlet:
+                inner = f'<div class="box samlet" data-type="samlet">{inner}</div>'
+            cols.append(f'<div class="kol" style="--bredde:{k.get("bredde", 1)}">{inner}</div>')
+        return f'<div class="kolonner">{"".join(cols)}</div>'
     if "raekker" in node:
-        return f'<div class="raekker">{layout_stack(node["raekker"], v, env)}</div>'
+        return f'<div class="raekker">{layout_stack(node["raekker"], v, env, flat)}</div>'
     typ = node.get("type")
     if typ not in REGISTRY:
         raise ValueError(f"Ukendt boks-type i layout: {typ!r}. Kendte typer: {', '.join(REGISTRY)}.")
     reg = REGISTRY[typ]
     data = node if reg["titel"] is None else {"titel": reg["titel"], **node}
     inner = reg["fn"](data, v, env)
-    if not inner or not reg["card"]:
+    if not inner or flat or not reg["card"]:
         return inner
     cls = "box small" if reg["small"] else "box"
     return f'<div class="{cls}" data-type="{typ}">{inner}</div>'
 
 
-def layout_stack(nodes, v, env):
-    return "".join(layout_node(n, v, env) for n in nodes)
+def layout_stack(nodes, v, env, flat=False):
+    return "".join(layout_node(n, v, env, flat) for n in nodes)
 
 
 def page(p, v, env):
