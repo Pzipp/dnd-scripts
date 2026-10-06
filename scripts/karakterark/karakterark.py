@@ -132,7 +132,8 @@ def dansk_engelsk(tekst, env, box='<span class="cbx"></span>'):
     m = EN_SIDST.match(tekst)
     if not m:
         return fmt(tekst, env, box)
-    return (f'<span class="ge">{fmt(m.group(1), env, box)} <small class="en">{m.group(2)}</small></span>'
+    mellem = "" if m.group(1).endswith("(") else " "   # ingen mellemrum efter en parentes: Shortsword (Vex)
+    return (f'<span class="ge">{fmt(m.group(1), env, box)}{mellem}<small class="en">{m.group(2)}</small></span>'
             + fmt(m.group(3), env, box))
 
 
