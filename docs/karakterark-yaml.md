@@ -48,7 +48,7 @@ På smal skærm (fx en telefon) stables kolonnerne under hinanden i YAML-rækkef
 
 ## Bokstyper
 
-Typerne ligger i `REGISTRY` i `karakterark.py`. Tjek `python3 dnd.py tjek` fanger tastefejl og viser forslag.
+Typerne ligger i `REGISTRY` i `karakterark.py`. Tjek `python3 dnd.py tjek` fanger tastefejl og viser forslag. Den finder også bokse, der mangler et påkrævet felt (fx `titel` eller `undertitel` på `tur`), og peger på boksens linje i YAML'en. Ukendte nøgler, fx `punkt` i stedet for `punkter`, bliver ikke markeret endnu.
 
 | Type | Felter | Indhold |
 |---|---|---|

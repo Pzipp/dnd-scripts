@@ -9,6 +9,7 @@ import difflib
 import yaml
 from yaml.nodes import MappingNode, ScalarNode, SequenceNode
 
+import karakterark
 from karakterark import REGISTRY
 
 
@@ -64,6 +65,41 @@ def _tjek_layout(seq):
     return out
 
 
+def _kort(node, obj, kort):
+    """Kobler hver dict/liste i de indlæste data til sin YAML-node, så fejl kan få linjenumre."""
+    if isinstance(node, MappingNode) and isinstance(obj, dict):
+        kort[id(obj)] = node
+        for k, n in node.value:
+            if isinstance(k, ScalarNode) and k.value in obj:
+                _kort(n, obj[k.value], kort)
+    elif isinstance(node, SequenceNode) and isinstance(obj, list):
+        for n, o in zip(node.value, obj):
+            _kort(n, o, kort)
+
+
+def _felt_fejl(root, data):
+    """Kører generatoren og samler fejl i bokse. Hver fejl peger på 'type'-linjen i boksen."""
+    kort = {}
+    _kort(root, data, kort)
+    out = []
+    karakterark.FEJLLISTE = []
+    try:
+        karakterark.build(data)
+    except Exception as exc:  # fejl uden for bokse, fx et manglende faelles-felt
+        out.append({"linje": 1, "kolonne": 1, "besked": f"Fejl i data: {type(exc).__name__}: {exc}"})
+    finally:
+        fejl = karakterark.FEJLLISTE
+        karakterark.FEJLLISTE = None
+    for node, besked in fejl:
+        mn = kort.get(id(node))
+        if mn is None:
+            continue
+        ved = next((k for k, _ in mn.value if isinstance(k, ScalarNode) and k.value == "type"), None)
+        mark = (ved or mn).start_mark
+        out.append({"linje": mark.line + 1, "kolonne": mark.column + 1, "besked": besked})
+    return out
+
+
 def tjek(text, layout=True):
     """Liste af fejl. Tom liste betyder, at teksten er ren. layout=False tjekker kun YAML-syntaksen (kort)."""
     try:
@@ -92,4 +128,7 @@ def tjek(text, layout=True):
         f = _felter(side)
         if "layout" in f:
             out += _tjek_layout(f["layout"])
-    return out
+    if out:
+        return out  # strukturfejl først. Byg ikke arket, før de er rettet
+    data = yaml.safe_load(text)
+    return _felt_fejl(root, data)
