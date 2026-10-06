@@ -48,11 +48,11 @@ sider:
   top: {}                    # sidehoved med faelles.navn og faelles.ident. Udelad hele top, hvis der ikke skal være sidehoved
   layout:                    # bokse, kolonner og rækker. Rækkefølgen er læse- og placeringsrækkefølgen
   - type: stats              # stat-rækken øverst. Uden "felter" bruges standarden (AC, HP, Hit Dice, Initiativ, Fart, Prof. bonus, Passiv Perception)
-  - type: evner              # de seks evner med saves, skills og værktøj. Hentes fra faelles
   - kolonner:                # kolonner står side om side. Bredden er relativ: 1 og 2 giver 1/3 og 2/3
 
     - bredde: 1              # kolonnens relative bredde. Standard: 1
       indhold:
+      - type: evner          # de seks evner med saves, skills og værktøj. Hentes fra faelles. Står i en kolonne, så den ikke fylder hele bredden
       - type: sprog         # sprog. Standard titel: "Sprog"
         titel: Sprog
         tekst: Common
