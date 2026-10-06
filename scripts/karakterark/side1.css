@@ -94,8 +94,7 @@ td.n small.en{display:block;font-size:7.5pt;font-style:italic;font-weight:400;co
 table.act{font-size:7.5pt}
 table.act td{padding:.2mm .6mm}
 table.act td.an{width:34mm}
-table.act td.an b,table.act td.an i{display:block}
-table.act td.an i{font-size:7.5pt}
+table.act td.an i{font-size:7.5pt;margin-left:1mm}
 table.act td.ar{width:52mm;font-size:8.2pt}
 .sk{white-space:nowrap;margin-right:1.5mm}
 .tg{font-size:6.6pt;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);font-weight:600;white-space:nowrap}
