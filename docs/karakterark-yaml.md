@@ -116,7 +116,15 @@ Udtryk kan bruge `STR DEX CON INT WIS CHA` (modifiers, regnet ud fra scoren) og 
 
 ## Plads
 
-Hver side er én A4-side, og alt, der går ud over siden, klippes af. I webui'en står der en advarsel i forhåndsvisningen, med boksens titel og hvor mange pixels den går ud over siden. Flyt boksen til en anden kolonne eller side, eller forkort teksten. Kig altid på siden, efter du har ændret meget.
+Hver side er én A4-side, og alt, der går ud over siden, klippes af. Forhåndsvisningen i webui'en måler det og viser en advarsel med boksens titel og hvor mange pixels den går ud over siden.
+
+Hjælpemidler, når en side er for lang:
+* `samlet: true` eller `samlet: tæt` på en kolonne (tæt er mindst)
+* `margin: small` på siden
+* flyt en boks til en anden kolonne eller side
+* forkort teksten, eller fjern tomme linjer (`tomme`)
+
+Kig altid på siden, efter du har ændret meget.
 
 ## YAML-faldgruber
 

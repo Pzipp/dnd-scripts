@@ -26,12 +26,9 @@ python3 scripts/karakterark/karakterark.py valak [--stil farve|sorthvid|begge] [
 
 ## Sider
 
-| Side | Indhold |
-|---|---|
-| 1 · Karakterark | Header, 8 tal, evner med saves/skills/værktøj, passive sanser, sprog, angreb, magi, regler, evner & træk, Bonus actions, turplaner. Én side pr. version |
-| 2 · Handlingsark | Handlinger og hvad man slår, ubevæbnet, bevægelse, hvil, Weapon Mastery, nyttige ting, skill-situationer, tilstande |
-| 3 · Udstyrsark | Våben, udstyr, forbrug med afkrydsning, penge, genstande, kampagne, steder, personer |
-| 4 · Baggrundsark | Udseende, historie, Træning og valg, personlighed, familie, fjender, mål, hemmeligheder |
+Sider og bokse bestemmes af YAML-filen (`sider:`), ikke af generatoren. Der er ingen fast opdeling i Karakterark, Handlingsark osv. Hvilke bokse der findes, står i `REGISTRY` i `karakterark.py`, og hvordan de vises, står i [`docs/karakterark-yaml.md`](../../docs/karakterark-yaml.md).
+
+Dev-one har fem sider: karakterark, handlinger, udstyr, baggrund og regler/ting.
 
 ## Filer
 
