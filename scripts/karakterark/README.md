@@ -26,26 +26,25 @@ python3 scripts/karakterark/karakterark.py valak [--stil farve|sorthvid|begge] [
 
 ## Sider
 
-| Side | Indhold |
-|---|---|
-| 1 · Karakterark | Header, 8 tal, evner med saves/skills/værktøj, passive sanser, sprog, angreb, magi, regler, evner & træk, Bonus actions, turplaner. Én side pr. version |
-| 2 · Handlingsark | Handlinger og hvad man slår, ubevæbnet, bevægelse, hvil, Weapon Mastery, nyttige ting, skill-situationer, tilstande |
-| 3 · Udstyrsark | Våben, udstyr, forbrug med afkrydsning, penge, genstande, kampagne, steder, personer |
-| 4 · Baggrundsark | Udseende, historie, Træning og valg, personlighed, familie, fjender, mål, hemmeligheder |
+Sider og bokse bestemmes af YAML-filen (`sider:`), ikke af generatoren. Der er ingen fast opdeling i Karakterark, Handlingsark osv. Hvilke bokse der findes, står i `REGISTRY` i `karakterark.py`, og hvordan de vises, står i [`docs/karakterark-yaml.md`](../../docs/karakterark-yaml.md).
+
+Dev-one har fem sider: karakterark, handlinger, udstyr, baggrund og regler/ting.
 
 ## Filer
 
 | Fil | Indhold |
 |---|---|
 | `karakterark.py` | Generatoren |
-| `side1.css` | Stil til side 1. **Farve** |
+| `side1.css` | Den fælles stil for alle sider. **Farve** |
 | `side1-sorthvid.css` | Lægges oven på `side1.css` i sort/hvid |
-| `karakterark.css` | Stil til side 2–4. **Farve** |
-| `karakterark-sorthvid.css` | Lægges oven på `karakterark.css` i sort/hvid |
+| `tjek.py` | Fejlkontrol af YAML til webui'en (linje og kolonne). Bruger `REGISTRY` |
 
-Hver sides CSS gælder kun for den side (generatoren sætter et scope foran reglerne), så siderne kan bo i samme HTML-fil.
+Alle sider bruger den samme stil. CSS'en scopes under `.s1`, så den kun gælder arket.
 
 ## Design
+
+* Hver side er en post under `sider:`. Bokse vælges med `type` og placeres frit i `kolonner` og `raekker`. Se [`docs/karakterark-yaml.md`](../../docs/karakterark-yaml.md).
+* Alle bokstyper ligger i `REGISTRY` i `karakterark.py`. Her står også standardtitel, og om boksen har ramme.
 
 * Farve: pergament og en farve pr. evne (STR rød, DEX grøn, CON brun, INT blå, WIS lilla, CHA magenta). Sort/hvid: kun sort blæk, ingen farveflader. Layoutet er ens i begge.
 * Kasser har runde hjørner (2 mm). Trænet = ● , Expertise = ◆, utrænet = ○.

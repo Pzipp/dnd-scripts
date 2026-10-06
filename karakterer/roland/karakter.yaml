@@ -1,159 +1,333 @@
-titel: Roland karakterark          # sidetitel i HTML/PDF
-
-# ── Fælles felter ──
+titel: Roland karakterark
 faelles:
   navn: Roland
   ident:
-    - [Klasse, Monk 12 · Warrior of the Open Hand]
-    - [Art, Dwarf]
-    - [Baggrund, Hermit]
-  pb: 4                               # level 9–12
-  fart: 50                            # 30 (Dwarf) + 20 (Unarmored Movement, level 10–13)
-  hit_die: 8                          # Monk: d8
-  saves: [STR, DEX]
-  skills: [Acrobatics, Insight, Medicine, Religion]
+  - - Klasse
+    - Monk 12 · Warrior of the Open Hand
+  - - Art
+    - Dwarf
+  - - Baggrund
+    - Hermit
+  pb: 4
+  fart: 50
+  hit_die: 8
+  saves:
+  - STR
+  - DEX
+  skills:
+  - Acrobatics
+  - Insight
+  - Medicine
+  - Religion
   vaerktoej:
-    INT: [Herbalism Kit]
+    INT:
+    - Herbalism Kit
   sprog: Common, Dwarvish
   kan_bruge:
     Rustning: None
     Våben: Simple Melee, Shortsword
     Værktøj: Herbalism Kit
   feats:
-    - "Healer (origin feat): Healer's Kit som handling, med PB på healingen"
-    - 'Lucky (level 12): Luck Points lig PB efter Long Rest'
-  fod: D&amp;D 2024 · PHB 2024 (Dwarf, Hermit, Monk, Healer, Lucky)
-
-# ── Side 1 · Karakterark ──
-versioner:
-  - version: ""
-    evner: {STR: 10, DEX: 17, CON: 14, INT: 12, WIS: 18, CHA: 8}
-
-    stats:
-      - [<em>AC</em>, '{10+DEX+WIS}', Unarmored Defense]
-      - [Max HP, '99', 'd8+CON pr. level, +12 Toughness']
-      - [<em>Hit Dice</em>, 12d8, 1 d8 pr. level]
-      - [<em>Initiative</em>, '{+DEX}']
-      - [<em>Speed</em>, '50', 'Dash: 100']
-      - [<em>Proficiency Bonus</em>, '{+PB}', level 9–12]
-      - [Passive <em>Perception</em>, '{10+WIS}']
-      - [Focus Points, 12, Monk's Focus]
-
-    passiv:
-      - [Perception, '{10+WIS}']
-      - [Insight, '{10+WIS+PB}']
-      - [Investigation, '{10+INT}']
-
-    angreb:                           # [våben, ramme, skade, noter]
-      - [Ubevæbnet <em>Unarmed Strike</em>, '{+DEX+PB}', '1d10{+DEX} Bludgeoning', <b>Bonus Action</b> efter Attack · Dexterous Attacks]
-      - [Stav <em>Quarterstaff</em>, '{+DEX+PB}', '1d10{+DEX} Bludgeoning', Monk-våben · Martial Arts-terning]
-      - [Kortsværd <em>Shortsword</em>, '{+DEX+PB}', '1d10{+DEX} Piercing', Finesse · Light · Monk-våben]
-
-    regler:
-      - titel: Monk's Focus <em>Focus Points</em>
+  - 'Healer (origin feat): Healer''s Kit som handling, med PB på healingen'
+  - 'Lucky (level 12): Luck Points lig PB efter Long Rest'
+  evner:
+    STR: 10
+    DEX: 17
+    CON: 14
+    INT: 12
+    WIS: 18
+    CHA: 8
+sider:
+- margin: small
+  top: {}
+  layout:
+  - type: stats
+    felter:
+    - - <em>AC</em>
+      - '{10+DEX+WIS}'
+      - Unarmored Defense
+    - - Max HP
+      - '99'
+      - d8+CON pr. level, +12 Toughness
+    - - <em>Hit Dice</em>
+      - 12d8
+      - 1 d8 pr. level
+    - - <em>Initiative</em>
+      - '{+DEX}'
+    - - <em>Speed</em>
+      - '50'
+      - 'Dash: 100'
+    - - <em>Proficiency Bonus</em>
+      - '{+PB}'
+      - level 9–12
+    - - Passive <em>Perception</em>
+      - '{10+WIS}'
+    - - Focus Points
+      - 12
+      - Monk's Focus
+  - kolonner:
+    - bredde: 52
+      indhold:
+      - type: evner
+      - type: passiv
+        titel: Passive sanser
+        punkter:
+        - - Perception
+          - '{10+WIS}'
+        - - Insight
+          - '{10+WIS+PB}'
+        - - Investigation
+          - '{10+INT}'
+      - type: sprog
+        titel: Sprog <em>Languages</em>
+        tekst: Common, Dwarvish
+    - bredde: 140
+      indhold:
+      - type: angreb
+        titel: Angreb <em>· Attacks</em>
+        angreb:
+        - - Ubevæbnet <em>Unarmed Strike</em>
+          - '{+DEX+PB}'
+          - 1d10{+DEX} Bludgeoning
+          - <b>Bonus Action</b> efter Attack · Dexterous Attacks
+        - - Stav <em>Quarterstaff</em>
+          - '{+DEX+PB}'
+          - 1d10{+DEX} Bludgeoning
+          - Monk-våben · Martial Arts-terning
+        - - Kortsværd <em>Shortsword</em>
+          - '{+DEX+PB}'
+          - 1d10{+DEX} Piercing
+          - Finesse · Light · Monk-våben
+      - type: regler
+        titel: Monk's Focus <em>Focus Points</em>
         undertitel: 12 Focus Points · gendannes ved Short Rest eller Long Rest
         punkter:
-          - '<b>Flurry of Blows</b> (1 FP): efter Attack-handlingen to Unarmed Strikes som Bonus Action. Level 10: tre.'
-          - '<b>Patient Defense</b> (1 FP): Dodge som Bonus Action.'
-          - '<b>Step of the Wind</b> (1 FP): Dash eller Disengage som Bonus Action.'
-          - '<b>Stunning Strike</b> (1 FP): se kort.'
-          - '<b>Deflect Attacks</b> (1 FP): reflektér skade, når reduktionen går til nul.'
-
-    traek:
-      - {navn: 'Martial Arts', tag: Monk, tekst: 'Unarmed Strike og Monk-våben: Martial Arts-terning (d10 på level 11–16). DEX i stedet for STR på angreb og skade.'}
-      - {navn: 'Unarmored Defense', tekst: 'AC = 10 + DEX + WIS, når du ikke bærer rustning eller skjold.'}
-      - {navn: 'Deflect Attacks', tag: Reaction, tekst: 'Reducér skade med 1d10 + DEX + Monk-level (level 13: alle skadetyper).'}
-      - {navn: 'Slow Fall', tag: Reaction, tekst: 'Reducér faldskade med 5 × Monk-level (60 ved level 12).'}
-      - {navn: 'Extra Attack', tekst: 'Angrib to gange, når du tager Attack-handlingen.'}
-      - {navn: 'Stunning Strike', tag: 'Focus 1', tekst: 'Ét gang pr. tur ved træf: CON-redningskast mod DC 16. Fejl: Stunned til din næste tur.'}
-      - {navn: 'Empowered Strikes', tekst: 'Unarmed Strikes kan lave Force-skade.'}
-      - {navn: 'Wholeness of Body', tag: 'Bonus Action', tekst: 'Slå Martial Arts-terningen og heal terningen + WIS-modifier. [][][][] pr. Long Rest.'}
-      - {navn: 'Evasion', tekst: 'Ved DEX-redning for halv skade: ingen skade ved succes, halv ved fejl.'}
-      - {navn: 'Stillness of Mind', tag: Action, tekst: 'Afslut én effekt, der gør dig Charmed eller Frightened.'}
-      - {navn: 'Acrobatic Movement', tekst: 'Bevæg dig op og ned ad vægge og over væsker, mens du er uden rustning.'}
-      - {navn: 'Heightened Focus', tekst: 'Flurry of Blows giver tre slag. Patient Defense giver midlertidige HP. Step of the Wind kan flytte allierede.'}
-      - {navn: 'Self-Restoration', tag: 'End of Turn', tekst: 'Fjern Charmed, Frightened eller Poisoned fra dig selv ved turens slutning.'}
-      - {navn: 'Tranquility', tag: 'Open Hand · 11', tekst: 'Efter Long Rest: effekten af sanctuary. DC 8 + WIS + PB.'}
-      - {navn: 'Darkvision', tag: Dwarf, tekst: '120 ft.'}
-      - {navn: 'Dwarven Resilience', tag: Dwarf, tekst: 'Resistance mod Poison. Advantage på redninger mod Poisoned.'}
-      - {navn: 'Dwarven Toughness', tag: Dwarf, tekst: 'HP-max +1 pr. level (+12 ved level 12).'}
-      - {navn: 'Stonecunning', tag: 'Dwarf · [][][][]', tekst: 'Bonus Action: Tremorsense 60 ft i 10 min. på sten. PB gange pr. Long Rest.'}
-      - {navn: 'Healer', tag: Origin feat, tekst: 'Utilize Healer''s Kit som handling: én Hit Die + PB healing.'}
-      - {navn: 'Lucky', tag: 'Feat · Long Rest', tekst: 'Luck Points = PB (4). Brug én til Advantage på et D20 Test.'}
-
+        - '<b>Flurry of Blows</b> (1 FP): efter Attack-handlingen to Unarmed Strikes som Bonus Action. Level 10: tre.'
+        - '<b>Patient Defense</b> (1 FP): Dodge som Bonus Action.'
+        - '<b>Step of the Wind</b> (1 FP): Dash eller Disengage som Bonus Action.'
+        - '<b>Stunning Strike</b> (1 FP): se kort.'
+        - '<b>Deflect Attacks</b> (1 FP): reflektér skade, når reduktionen går til nul.'
+      - kolonner:
+        - bredde: 1
+          indhold:
+          - type: traek
+            titel: Evner &amp; træk <em>· Features</em>
+            punkter:
+            - navn: Martial Arts
+              tag: Monk
+              tekst: 'Unarmed Strike og Monk-våben: Martial Arts-terning (d10 på level 11–16). DEX i stedet for STR på angreb og skade.'
+            - navn: Unarmored Defense
+              tekst: AC = 10 + DEX + WIS, når du ikke bærer rustning eller skjold.
+            - navn: Deflect Attacks
+              tag: Reaction
+              tekst: 'Reducér skade med 1d10 + DEX + Monk-level (level 13: alle skadetyper).'
+            - navn: Slow Fall
+              tag: Reaction
+              tekst: Reducér faldskade med 5 × Monk-level (60 ved level 12).
+            - navn: Extra Attack
+              tekst: Angrib to gange, når du tager Attack-handlingen.
+            - navn: Stunning Strike
+              tag: Focus 1
+              tekst: 'Ét gang pr. tur ved træf: CON-redningskast mod DC 16. Fejl: Stunned til din næste tur.'
+            - navn: Empowered Strikes
+              tekst: Unarmed Strikes kan lave Force-skade.
+            - navn: Wholeness of Body
+              tag: Bonus Action
+              tekst: Slå Martial Arts-terningen og heal terningen + WIS-modifier. [][][][] pr. Long Rest.
+            - navn: Evasion
+              tekst: 'Ved DEX-redning for halv skade: ingen skade ved succes, halv ved fejl.'
+            - navn: Stillness of Mind
+              tag: Action
+              tekst: Afslut én effekt, der gør dig Charmed eller Frightened.
+            - navn: Acrobatic Movement
+              tekst: Bevæg dig op og ned ad vægge og over væsker, mens du er uden rustning.
+            - navn: Heightened Focus
+              tekst: Flurry of Blows giver tre slag. Patient Defense giver midlertidige HP. Step of the Wind kan flytte allierede.
+            - navn: Self-Restoration
+              tag: End of Turn
+              tekst: Fjern Charmed, Frightened eller Poisoned fra dig selv ved turens slutning.
+            - navn: Tranquility
+              tag: Open Hand · 11
+              tekst: 'Efter Long Rest: effekten af sanctuary. DC 8 + WIS + PB.'
+            - navn: Darkvision
+              tag: Dwarf
+              tekst: 120 ft.
+            - navn: Dwarven Resilience
+              tag: Dwarf
+              tekst: Resistance mod Poison. Advantage på redninger mod Poisoned.
+            - navn: Dwarven Toughness
+              tag: Dwarf
+              tekst: HP-max +1 pr. level (+12 ved level 12).
+            - navn: Stonecunning
+              tag: Dwarf · [][][][]
+              tekst: 'Bonus Action: Tremorsense 60 ft i 10 min. på sten. PB gange pr. Long Rest.'
+            - navn: Healer
+              tag: Origin feat
+              tekst: 'Utilize Healer''s Kit som handling: én Hit Die + PB healing.'
+            - navn: Lucky
+              tag: Feat · Long Rest
+              tekst: Luck Points = PB (4). Brug én til Advantage på et D20 Test.
+        - bredde: 1
+          indhold:
+          - type: bonus
+            titel: Bonus actions
+            punkter:
+            - navn: Flurry of Blows
+              tekst: 1 Focus Point, efter Attack-handlingen.
+            - navn: Patient Defense
+              tekst: '1 Focus Point: Dodge.'
+            - navn: Step of the Wind
+              tekst: '1 Focus Point: Dash eller Disengage.'
+            - navn: Stonecunning
+              tekst: Tremorsense på sten (PB gange pr. Long Rest).
+          - type: tur
+            undertitel: nærkamp
+            titel: HUG!
+            punkter:
+            - '<b>Attack</b>: Unarmed Strike, d20{+DEX+PB}. Rammer du: 1d10{+DEX}.'
+            - <b>Flurry of Blows</b> (1 FP) som Bonus Action.
+            - <b>Stunning Strike</b> (1 FP) på første træf.
+          - type: tur
+            undertitel: fare
+            titel: UNDVIG!
+            punkter:
+            - <b>Deflect Attacks</b> (Reaction) mod slag og stik.
+            - <b>Patient Defense</b> (1 FP) som Bonus Action.
+  foot: D&amp;D 2024 · PHB 2024 (Monk, Dwarf, Hermit, Healer, Lucky). Kapitler og sider ikke verificeret.
+- margin: small
+  top:
+    undertitel: Hvad kan jeg gøre?
+    ident:
+    - - Slag
+      - d20 + tallet
+    - - Fordel
+      - 2 d20, tag højeste
+    - - Ulempe
+      - 2 d20, tag laveste
+  layout:
+  - type: handlinger
     bonus:
-      - {navn: 'Flurry of Blows', tekst: '1 Focus Point, efter Attack-handlingen.'}
-      - {navn: 'Patient Defense', tekst: '1 Focus Point: Dodge.'}
-      - {navn: 'Step of the Wind', tekst: '1 Focus Point: Dash eller Disengage.'}
-      - {navn: 'Stonecunning', tekst: 'Tremorsense på sten (PB gange pr. Long Rest).'}
-
-    ture:
-      - undertitel: nærkamp
-        titel: HUG!
+      Flurry of Blows: Unarmed Strike
+  - kolonner:
+    - bredde: 1
+      indhold:
+      - type: ubevaebnet
+      - type: bevaegelse
+      - type: ekstra
+        titel: Monk
         punkter:
-          - '<b>Attack</b>: Unarmed Strike, d20{+DEX+PB}. Rammer du: 1d10{+DEX}.'
-          - '<b>Flurry of Blows</b> (1 FP) som Bonus Action.'
-          - '<b>Stunning Strike</b> (1 FP) på første træf.'
-      - undertitel: fare
-        titel: UNDVIG!
-        punkter:
-          - '<b>Deflect Attacks</b> (Reaction) mod slag og stik.'
-          - '<b>Patient Defense</b> (1 FP) som Bonus Action.'
-
-    fod: D&amp;D 2024 · PHB 2024 (Monk, Dwarf, Hermit, Healer, Lucky). Kapitler og sider ikke verificeret.
-
-# ── Side 2 · Handlingsark ──
-handlingsark:
-  bonus_handlinger: {Flurry of Blows: Unarmed Strike}
-  ekstra:
-    - titel: Monk
-      punkter:
         - '<b>Focus Points</b> [][][][][][][][][][][][]: 12 pr. level 12.'
         - '<b>Ability Score Improvement</b>: DEX 17 · WIS 18 · Lucky ved level 12.'
-
-# ── Side 3 · Udstyrsark ──
-udstyrsark:
-  ident:
-    - [Klasse, Monk 12]
-    - [Opdateres, Løbende i spillet]
-  venstre:
-    - titel: Våben <i>Weapons</i>
-      punkter:
+      - type: livsredning
+      - type: mastery
+      - type: nyttige
+      samlet: tæt
+    - bredde: 1.25
+      indhold:
+      - type: situationer
+        vaerktoej: []
+      - type: tilstande
+      samlet: tæt
+  foot: 'Roland · Handlinger og slag · Kilde: Player''s Handbook 2024 · kap. 1 (handlinger), kap. 6 (Weapon Mastery) og Rules Glossary'
+  bokstype: none
+- margin: small
+  top:
+    undertitel: Udstyr
+    ident:
+    - - Klasse
+      - Monk 12
+    - - Opdateres
+      - Løbende i spillet
+  layout:
+  - kolonner:
+    - bredde: 1
+      indhold:
+      - type: liste
+        titel: Våben <i>Weapons</i>
+        punkter:
         - Stav <i>Quarterstaff</i> · Martial Arts-terning
         - Kortsværd <i>Shortsword</i> · Martial Arts-terning · <i>Finesse, Light</i>
-      tomme: 2
-    - titel: Udstyr <i>Equipment</i>
-      punkter:
+        tomme: 2
+      - type: liste
+        titel: Udstyr <i>Equipment</i>
+        punkter:
         - Herbalism Kit <i>Herbalism Kit</i> · Hermit
         - Healer's Kit <i>Healer's Kit</i> · Healer
         - Bedroll <i>Bedroll</i> · Lamp <i>Lamp</i> · Oil <i>Oil</i> [][][]
         - Traveler's Clothes <i>Traveler's Clothes</i>
         - Book <i>Book (philosophy)</i>
-      tomme: 5
-    - {titel: Penge <i>Coins</i>, type: penge}
-  hoejre:
-    - {titel: Kampagne og mission, punkter: [], tomme: 12}
-    - {titel: Steder, punkter: [], tomme: 6}
-    - {titel: Personer og væsner, punkter: [], tomme: 8}
-
-# ── Side 4 · Baggrundsark ──
-baggrundsark:
-  ident:
-    - [Art, Dwarf]
-    - [Baggrund, Hermit]
-  venstre:
-    - titel: Udseende <i>Appearance</i>
-      type: fakta
-      felter: [[Alder, ''], [Højde, ''], [Vægt, ''], [Øjne, ''], [Hår, ''], [Tøj, '']]
-    - titel: Historie <i>Backstory</i>
-      type: tekst
-      afsnit:
+        tomme: 5
+      - type: penge
+        titel: Penge <i>Coins</i>
+    - bredde: 1
+      indhold:
+      - type: kampagne
+        titel: Kampagne og mission
+        punkter: []
+        tomme: 12
+      - type: steder
+        titel: Steder
+        punkter: []
+        tomme: 6
+      - type: personer
+        titel: Personer og væsner
+        punkter: []
+        tomme: 8
+  foot: Roland · Udstyr
+- margin: small
+  top:
+    undertitel: Baggrund og personlighed
+    ident:
+    - - Art
+      - Dwarf
+    - - Baggrund
+      - Hermit
+  layout:
+  - kolonner:
+    - bredde: 1
+      indhold:
+      - type: udseende
+        titel: Udseende <i>Appearance</i>
+        felter:
+        - - Alder
+          - ''
+        - - Højde
+          - ''
+        - - Vægt
+          - ''
+        - - Øjne
+          - ''
+        - - Hår
+          - ''
+        - - Tøj
+          - ''
+      - type: historie
+        titel: Historie <i>Backstory</i>
+        afsnit:
         - ''
-      tomme: 6
-    - {titel: Træning og valg <i>Proficiencies</i>, type: traening}
-  hoejre:
-    - {titel: Personlighed, punkter: [], tomme: 3}
-    - {titel: Familie og venner, punkter: [], tomme: 4}
-    - {titel: Fjender og rivaler, punkter: [], tomme: 4}
-    - {titel: Mål og drømme, punkter: [], tomme: 4}
-    - {titel: Hemmeligheder, punkter: [], tomme: 4}
+        tomme: 6
+      - type: traening
+        titel: Træning og valg <i>Proficiencies</i>
+    - bredde: 1
+      indhold:
+      - type: personlighed
+        titel: Personlighed
+        punkter: []
+        tomme: 3
+      - type: familie
+        titel: Familie og venner
+        punkter: []
+        tomme: 4
+      - type: fjender
+        titel: Fjender og rivaler
+        punkter: []
+        tomme: 4
+      - type: maal
+        titel: Mål og drømme
+        punkter: []
+        tomme: 4
+      - type: hemmeligheder
+        titel: Hemmeligheder
+        punkter: []
+        tomme: 4
+  foot: Roland · Baggrund og personlighed

@@ -5,7 +5,7 @@
 # Titel på HTML/PDF-filen.
 titel: Dev One karakterark
 
-# ── Fælles felter: gælder alle versioner (hver version kan overskrive dem) ──
+# ── Fælles felter: gælder alle sider ──
 faelles:
   navn: Dev One
   ident:
@@ -13,7 +13,11 @@ faelles:
   - [Art, Halfling <i>(Small)</i>]
   - [Baggrund, Criminal]
   - [Spiller, Sebastian]
+  evner: {STR: 14, DEX: 18, CON: 12, INT: 14, WIS: 13, CHA: 9}
   pb: 2
+  level: 2
+  hp: 15
+  ac: '{11+DEX}'
   fart: 30
   hit_die: 8
   saves: [DEX, INT]
@@ -32,171 +36,238 @@ faelles:
   - [Nick, Dagger]
   feats: [Alert (fra Criminal)]
 
-# ── Side 1 · Karakterark: én side pr. version ──
-versioner: #versions systemet fjernes.
-- evner: {STR: 14, DEX: 18, CON: 12, INT: 14, WIS: 13, CHA: 9}
-  stats:
-  - [<em>AC</em> · Leather, '{11+DEX}']
-  - [Max HP, '15', 8+CON + 5+CON]
-  - [<em>Hit Dice</em>, 2d8, 1 d8 pr. level]
-  - [Initiativ, '{+DEX+PB}', d20 + DEX + PB (Alert)]
-  - [Fart · <em>Speed</em>, '30', 'Dash: 60']
-  - [<em>Prof. bonus</em>, '{+PB}', level 1–4]
-  - [Passiv <em>Perc.</em>, '{10+WIS+2*PB}']
-  - [<em>Sneak Attack</em>, 1d6, Rogue lvl 1–2]
-  passiv:
-  - [Perception, '{10+WIS+2*PB}']
-  - [Insight, '{10+WIS+PB}']
-  - [Investigation, '{10+INT+PB}']
-  angreb:
-  - [Kortsværd <em>Shortsword</em>, '{+DEX+PB}', '1d6{+DEX} Piercing', '<b>Vex</b> · Finesse, Light']
-  - [Dolk <em>Dagger</em>, '{+DEX+PB}', '1d4{+DEX} Piercing', <b>Nick</b> · kast 20/60 ft]
-  - [Dolk (ekstra) <em>Dagger</em>, '{+DEX+PB}', 1d4 Piercing, 'Light-ekstraangreb: ingen DEX til skaden']
-  - - Let armbrøst <em>Light Crossbow</em>
-    - '{+DEX+PB}'
-    - 1d8{+DEX} Piercing
-    - 80/320 ft · <em>Loading</em>, to hænder · 20 bolts
-  - [Blæserør <em>Blowgun</em>, '{+DEX}', '{1+DEX} Piercing', 25/100 ft · ikke trænet · 50 nåle]
-  - [Ubevæbnet <em>Unarmed Strike</em>, '{+STR+PB}', '{1+STR} Bludgeoning', '']
-  regler:
-  - titel: Snigangreb
-    undertitel: Sneak Attack +1d6, én gang pr. tur
-    punkter:
-    - Kræver <em>Finesse</em>- eller afstandsvåben (alle dine våben undtagen ubevæbnet).
-    - Og <b>enten</b> <em>Advantage</em> på angrebet, <b>eller</b> en allieret inden for 5 ft af målet (ikke <em>Incapacitated</em>), og du har ikke <em>Disadvantage</em>.
-    - Kan bruges på et af de to nærkampsangreb. Ram med det første, så du ikke spilder chancen.
-  traek:
-  - navn: Held <em>Luck</em>
-    tag: Passiv
-    tekst: 'Slår du 1 på en d20 (angreb, save, check): slå om, du skal bruge det nye slag.'
-  - navn: Modig <em>Brave</em>
-    tekst: <em>Advantage</em> på saves mod at blive / slippe fri af <em>Frightened</em>.
-  - navn: Halfling-smidighed <em>Nimbleness</em>
-    tekst: Gå gennem pladsen af en større skabning, men ikke stoppe der.
-  - navn: Naturligt snigende
-    tekst: Må <em>Hide</em>, når du kun er skjult bag en større skabning.
-  - navn: Alert
-    tag: Feat
-    tekst: +PB på initiativ (allerede regnet med). Lige efter initiativ må du <b>bytte</b> initiativ med en villig allieret.
-  - {navn: Thieves' Cant, tekst: Tyvenes hemmelige sprog og tegn.}
-  bonus:
-  - navn: Cunning Action
-    tekst: <em>Dash</em> (60 ft i alt), <em>Disengage</em> eller <em>Hide</em>.
-  - navn: Hide
-    tekst: 'Stealth {+DEX+2*PB} mod DC 15. Kræver <em>Heavily Obscured</em> eller ¾ dækning – eller bare en større allieret (<em>Naturligt snigende</em>). Lykkes det: <em>Invisible</em> → fordel → Sneak Attack.'
-  ture:
-  - undertitel: nærkamp
-    titel: Sværd + dolk
-    punkter:
-    - '<b>Attack</b>: Shortsword. Rammer du → <b>Vex</b> giver <em>Advantage</em> på næste angreb mod samme mål.'
-    - 'Samme <b>Attack</b>-handling: dolk-ekstraangreb via <b>Nick</b> (bruger ikke din <em>Bonus Action</em>).'
-    - '<b>Bonus Action</b>: <em>Disengage</em> og gå væk, eller <em>Hide</em>.'
-  - undertitel: afstand
-    titel: Skjul og skyd
-    punkter:
-    - '<b>Bonus Action</b>: <em>Hide</em> bag en Medium allieret.'
-    - Lykkes det → <em>Invisible</em> → <em>Advantage</em> → <b>Sneak Attack</b>.
-    - '<b>Attack</b>: Light Crossbow, 1d8{+DEX} + 1d6.'
-  fod: 'D&amp;D 2024 · PHB 2024 s. 129–130 (Rogue), 193 (Halfling), 200 (Alert). Light-reglen: ekstraangrebet skal være med et <b>andet</b> Light-våben.'
+# ── Sider: én post pr. side. top, layout og foot er valgfrie. ──
+# Stats-rækken uden felter bruger standarden ud fra faelles. Boksenes standardtitler gælder,
+# hvis titel ikke står. Hver boks har type; typerne ligger i scripts/karakterark/karakterark.py (REGISTRY).
+sider:
+
+# ── Side 1 · Karakterark ──
+- margin: small
+  top: {}
+  layout:
+  - type: stats
+  - kolonner:
+
+    - bredde: 0.7
+      indhold:
+      - type: evner
+      - type: passiv
+        titel: Passive sanser
+        punkter:
+        - [Perception, '{10+WIS+2*PB}']
+        - [Insight, '{10+WIS+PB}']
+        - [Investigation, '{10+INT+PB}']
+      - type: sprog
+        titel: Sprog
+        tekst: Common, Dwarvish, Halfling, Orc, <em>Thieves' Cant</em>
+
+    - bredde: 2
+      indhold:
+      - type: angreb
+        titel: Angreb <em>· Attacks</em>
+        angreb:
+        - [Kortsværd <em>Shortsword</em>, '{+DEX+PB}', '1d6{+DEX} Piercing', '<b>Vex</b> · Finesse, Light']
+        - [Dolk <em>Dagger</em>, '{+DEX+PB}', '1d4{+DEX} Piercing', <b>Nick</b> · kast 20/60 ft]
+        - [Dolk (ekstra) <em>Dagger</em>, '{+DEX+PB}', 1d4 Piercing, 'Light-ekstraangreb: ingen DEX til skaden']
+        - - Let armbrøst <em>Light Crossbow</em>
+          - '{+DEX+PB}'
+          - 1d8{+DEX} Piercing
+          - 80/320 ft · <em>Loading</em>, to hænder · 20 bolts
+        - [Blæserør <em>Blowgun</em>, '{+DEX}', '{1+DEX} Piercing', 25/100 ft · ikke trænet · 50 nåle]
+        - [Ubevæbnet <em>Unarmed Strike</em>, '{+STR+PB}', '{1+STR} Bludgeoning', '']
+
+      - type: regler
+        titel: Snigangreb
+        undertitel: Sneak Attack +1d6, én gang pr. tur
+        punkter:
+        - Kræver <em>Finesse</em>- eller afstandsvåben (alle dine våben undtagen ubevæbnet).
+        - Og <b>enten</b> <em>Advantage</em> på angrebet, <b>eller</b> en allieret inden for 5 ft af målet (ikke <em>Incapacitated</em>), og du har ikke <em>Disadvantage</em>.
+        - Kan bruges på et af de to nærkampsangreb. Ram med det første, så du ikke spilder chancen.
+
+      - kolonner:
+
+        - bredde: 1
+          indhold:
+          - type: traek
+            titel: Evner &amp; træk <em>· Features</em>
+            punkter:
+            - navn: Held <em>Luck</em>
+              tag: Passiv
+              tekst: 'Slår du 1 på en d20 (angreb, save, check): slå om, du skal bruge det nye slag.'
+            - navn: Modig <em>Brave</em>
+              tekst: <em>Advantage</em> på saves mod at blive / slippe fri af <em>Frightened</em>.
+            - navn: Halfling-smidighed <em>Nimbleness</em>
+              tekst: Gå gennem pladsen af en større skabning, men ikke stoppe der.
+            - navn: Naturligt snigende
+              tekst: Må <em>Hide</em>, når du kun er skjult bag en større skabning.
+            - navn: Alert
+              tag: Feat
+              tekst: +PB på initiativ (allerede regnet med). Lige efter initiativ må du <b>bytte</b> initiativ med en villig allieret.
+            - {navn: Thieves' Cant, tekst: Tyvenes hemmelige sprog og tegn.}
+
+        - bredde: 1
+          indhold:
+          - type: bonus
+            titel: Bonus actions
+            punkter:
+            - navn: Cunning Action
+              tekst: <em>Dash</em> (60 ft i alt), <em>Disengage</em> eller <em>Hide</em>.
+            - navn: Hide
+              tekst: 'Stealth {+DEX+2*PB} mod DC 15. Kræver <em>Heavily Obscured</em> eller ¾ dækning – eller bare en større allieret (<em>Naturligt snigende</em>). Lykkes det: <em>Invisible</em> → fordel → Sneak Attack.'
+          - type: tur
+            undertitel: nærkamp
+            titel: Sværd + dolk
+            punkter:
+            - '<b>Attack</b>: Shortsword. Rammer du → <b>Vex</b> giver <em>Advantage</em> på næste angreb mod samme mål.'
+            - 'Samme <b>Attack</b>-handling: dolk-ekstraangreb via <b>Nick</b> (bruger ikke din <em>Bonus Action</em>).'
+            - '<b>Bonus Action</b>: <em>Disengage</em> og gå væk, eller <em>Hide</em>.'
+          - type: tur
+            undertitel: afstand
+            titel: Skjul og skyd
+            punkter:
+            - '<b>Bonus Action</b>: <em>Hide</em> bag en Medium allieret.'
+            - Lykkes det → <em>Invisible</em> → <em>Advantage</em> → <b>Sneak Attack</b>.
+            - '<b>Attack</b>: Light Crossbow, 1d8{+DEX} + 1d6.'
+
+  foot: 'D&amp;D 2024 · PHB 2024 s. 129–130 (Rogue), 193 (Halfling), 200 (Alert). Light-reglen: ekstraangrebet skal være med et <b>andet</b> Light-våben.'
 
 # ── Side 2 · Handlingsark ──
-handlingsark:
-  bonus_handlinger: {Dash: Cunning Action, Disengage: Cunning Action, Hide: Cunning Action}
-  vaerktoej:
-  - {navn: Thieves' Tools, evne: DEX, brug: 'Dirke en lås, desarmere en fælde'}
-  - {navn: Alchemist's Supplies, evne: INT, brug: 'Blande, analysere stoffer'}
-  ekstra:
-  - titel: Halfling
-    punkter:
-    - '<b>Naturligt snigende</b>: du må gemme dig, når du kun er dækket af en skabning, der er mindst én størrelse større end dig.'
-    - '<b>Smidighed</b>: du kan bevæge dig gennem en større skabnings felt, men ikke stoppe der.'
-    - '<b>Held</b>: slår du 1 på en d20, slår du om og bruger det nye.'
+- margin: small
+  bokstype: none
+  top:
+    undertitel: Hvad kan jeg gøre?
+    ident:
+    - [Slag, d20 + tallet]
+    - [Fordel, "2 d20, tag højeste"]
+    - [Ulempe, "2 d20, tag laveste"]
+  layout:
+  # Handlingstabellen er fast. bonus kobler Bonus Action-tags på tabellen.
+  - type: handlinger
+    bonus: {Dash: Cunning Action, Disengage: Cunning Action, Hide: Cunning Action}
+  - kolonner:
+
+    - bredde: 1
+      samlet: tæt
+      indhold:
+      - type: ubevaebnet
+      - type: bevaegelse
+      - type: ekstra
+        titel: Halfling
+        punkter:
+        - '<b>Naturligt snigende</b>: du må gemme dig, når du kun er dækket af en skabning, der er mindst én størrelse større end dig.'
+        - '<b>Smidighed</b>: du kan bevæge dig gennem en større skabnings felt, men ikke stoppe der.'
+        - '<b>Held</b>: slår du 1 på en d20, slår du om og bruger det nye.'
+      - type: livsredning
+      - type: mastery
+      - type: nyttige
+
+    - bredde: 1
+      samlet: tæt
+      indhold:
+      - type: situationer
+        vaerktoej:
+        - {navn: Thieves' Tools, evne: DEX, brug: 'Dirke en lås, desarmere en fælde'}
+        - {navn: Alchemist's Supplies, evne: INT, brug: 'Blande, analysere stoffer'}
+      - type: tilstande
+  foot: "Kilde: Player's Handbook 2024 · kap. 1 (handlinger), kap. 6 (Weapon Mastery) og Rules Glossary"
 
 # ── Side 3 · Udstyrsark ──
-udstyrsark:
-  ident:
-  - [Klasse, Rogue 2]
-  - [Opdateres, Løbende i spillet]
-  venstre:
-  - titel: Våben og rustning
-    punkter:
-    - Læderrustning <i>Leather Armor</i> · AC 11 + DEX
-    - Kortsværd <i>Shortsword</i> · 1d6 Piercing · <i>Vex</i>
-    - Dolk ×5 <i>Dagger</i> · 1d4 Piercing · kast 20/60 ft · <i>Nick</i>
-    - Let armbrøst <i>Light Crossbow</i> · 1d8 Piercing · 80/320 ft
-    - Bolts [][][][][] [][][][][] [][][][][] [][][][][]
-    - Blæserør <i>Blowgun</i> · 50 nåle
-    tomme: 1
-  - titel: Udstyr <i>Equipment</i>
-    punkter:
-    - Tyveværktøj <i>Thieves' Tools</i> · Alkymistudstyr <i>Alchemist's Supplies</i>
-    - Rygsæk <i>Backpack</i> · Soverulle <i>Bedroll</i> · Madkit <i>Mess Kit</i> · Rejsetøj <i>Traveler's Clothes</i> · Punge <i>Pouch</i> ×2 · Kogegrej <i>Cook's Utensils</i>
-    - Entrehage <i>Grappling Hook</i> · Reb <i>Rope</i> ×3 · Brækjern <i>Crowbar</i>
-    - Blændlygte <i>Bullseye Lantern</i> · Spejl <i>Mirror</i> · Klokke <i>Bell</i> · Fyrtøj <i>Tinderbox</i> ×2 · Vandsæk <i>Waterskin</i> ×2 · Terninger <i>Dice Set</i>
-    - Metalkugler <i>Ball Bearings</i> (1.000)
-    - Olie <i>Oil</i> [][][][][][][][]
-    - Fakler <i>Torch</i> [][][][][][][][][][]
-    - Lys <i>Candle</i> [][][][][][][][][][]
-    - Rationer <i>Rations</i> [][][][][][][][][][][][][][][]
-    tomme: 6
-  - titel: Særlige genstande
-    punkter:
-    - <b>Morrens Favn</b> <i>Hjemmelavet</i> · amulet af messing- og sølvtråd med knust glas. „Så længe du bærer den, finder natten dig ikke først.“
-    tomme: 3
-  - {titel: Penge <i>Coins</i>, type: penge}
-  hoejre:
-  - titel: Kampagne og mission
-    punkter: []
-    tomme: 18
-  - titel: Steder
-    punkter: []
-    tomme: 9
-  - titel: Personer og væsner
-    punkter: []
-    tomme: 13
+- margin: small
+  top:
+    ident:
+    - [Klasse, Rogue 2]
+    - [Opdateres, Løbende i spillet]
+  layout:
+  - kolonner:
+
+    - bredde: 1
+      indhold:
+      - type: vaaben
+        punkter:
+        - Læderrustning <i>Leather Armor</i> · AC 11 + DEX
+        - Kortsværd <i>Shortsword</i> · 1d6 Piercing · <i>Vex</i>
+        - Dolk ×5 <i>Dagger</i> · 1d4 Piercing · kast 20/60 ft · <i>Nick</i>
+        - Let armbrøst <i>Light Crossbow</i> · 1d8 Piercing · 80/320 ft
+        - Bolts [][][][][] [][][][][] [][][][][] [][][][][]
+        - Blæserør <i>Blowgun</i> · 50 nåle
+        tomme: 1
+      - type: udstyr
+        punkter:
+        - Tyveværktøj <i>Thieves' Tools</i> · Alkymistudstyr <i>Alchemist's Supplies</i>
+        - Rygsæk <i>Backpack</i> · Soverulle <i>Bedroll</i> · Madkit <i>Mess Kit</i> · Rejsetøj <i>Traveler's Clothes</i> · Punge <i>Pouch</i> ×2 · Kogegrej <i>Cook's Utensils</i>
+        - Entrehage <i>Grappling Hook</i> · Reb <i>Rope</i> ×3 · Brækjern <i>Crowbar</i>
+        - Blændlygte <i>Bullseye Lantern</i> · Spejl <i>Mirror</i> · Klokke <i>Bell</i> · Fyrtøj <i>Tinderbox</i> ×2 · Vandsæk <i>Waterskin</i> ×2 · Terninger <i>Dice Set</i>
+        - Metalkugler <i>Ball Bearings</i> (1.000)
+        - Olie <i>Oil</i> [][][][][][][][]
+        - Fakler <i>Torch</i> [][][][][][][][][][]
+        - Lys <i>Candle</i> [][][][][][][][][][]
+        - Rationer <i>Rations</i> [][][][][][][][][][][][][][][]
+        tomme: 6
+      - type: sarlige
+        punkter:
+        - <b>Morrens Favn</b> <i>Hjemmelavet</i> · amulet af messing- og sølvtråd med knust glas. „Så længe du bærer den, finder natten dig ikke først.“
+        tomme: 3
+      - type: penge
+
+    - bredde: 1
+      indhold:
+      - type: kampagne
+        punkter: []
+        tomme: 18
+      - type: steder
+        punkter: []
+        tomme: 9
+      - type: personer
+        punkter: []
+        tomme: 13
 
 # ── Side 4 · Baggrundsark ──
-baggrundsark:
-  ident:
-  - [Art, Halfling]
-  - [Baggrund, Criminal]
-  - [Holdning, Neutral]
-  venstre:
-  - titel: Udseende <i>Appearance</i>
-    type: fakta
-    felter:
-    - [Alder, '']
-    - [Højde, '']
-    - [Vægt, '']
-    - [Øjne, '']
-    - [Hår, '']
-    - [Hud, '']
-  - titel: Kendetegn
-    punkter: [Hænderne er altid i gang.]
-    tomme: 3
-  - titel: Historie <i>Backstory</i>
-    type: tekst
-    afsnit:
-    - Voksede op hos sin mor <b>Elira</b>, der var alkymist.
-    - Har en lillesøster, <b>Talla</b>, som han ikke har set siden.
-    tomme: 6
-  - {titel: Træning og valg <i>Proficiencies</i>, type: traening}
-  hoejre:
-  - titel: Personlighed
-    punkter:
-    - '<b>Træk</b>: roligt ydre, men hurtigt temperament, når nogen udnytter ham.'
-    - '<b>Idealer</b>: overlevelse og frihed. Ingen skal have magt over hans liv.'
-    - '<b>Bånd</b>: minderne om moren Elira og hendes alkymi · lillesøsteren Talla.'
-    - '<b>Brister</b>: ser vold som en praktisk løsning · forventer altid forræderi · tager den nemmeste vej, også når den er blodig.'
-  - titel: Familie og venner
-    punkter: [<b>Elira</b> · mor · alkymist, <b>Talla</b> · lillesøster]
-    tomme: 6
-  - titel: Fjender og rivaler
-    punkter: []
-    tomme: 6
-  - titel: Mål og drømme
-    punkter: []
-    tomme: 6
-  - titel: Hemmeligheder
-    punkter: []
-    tomme: 6
+- margin: small
+  top:
+    ident:
+    - [Art, Halfling]
+    - [Baggrund, Criminal]
+    - [Holdning, Neutral]
+  layout:
+  - kolonner:
+
+    - bredde: 1
+      indhold:
+      - type: udseende
+        felter:
+        - [Alder, '']
+        - [Højde, '']
+        - [Vægt, '']
+        - [Øjne, '']
+        - [Hår, '']
+        - [Hud, '']
+      - type: kendetegn
+        punkter: [Hænderne er altid i gang.]
+        tomme: 3
+      - type: historie
+        afsnit:
+        - Voksede op hos sin mor <b>Elira</b>, der var alkymist.
+        - Har en lillesøster, <b>Talla</b>, som han ikke har set siden.
+        tomme: 6
+      - type: traening
+
+    - bredde: 1
+      indhold:
+      - type: personlighed
+        punkter:
+        - '<b>Træk</b>: roligt ydre, men hurtigt temperament, når nogen udnytter ham.'
+        - '<b>Idealer</b>: overlevelse og frihed. Ingen skal have magt over hans liv.'
+        - '<b>Bånd</b>: minderne om moren Elira og hendes alkymi · lillesøsteren Talla.'
+        - '<b>Brister</b>: ser vold som en praktisk løsning · forventer altid forræderi · tager den nemmeste vej, også når den er blodig.'
+      - type: familie
+        punkter: [<b>Elira</b> · mor · alkymist, <b>Talla</b> · lillesøster]
+        tomme: 6
+      - type: fjender
+        punkter: []
+        tomme: 6
+      - type: maal
+        punkter: []
+        tomme: 6
+      - type: hemmeligheder
+        punkter: []
+        tomme: 6

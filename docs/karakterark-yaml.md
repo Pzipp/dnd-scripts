@@ -6,31 +6,106 @@
 python3 dnd.py karakterark <navn> [--stil farve|sorthvid|begge] [--pdf]
 ```
 
-## Sider i arket
-
-| Side | Indhold | Nøgle i filen |
-|---|---|---|
-| 1 · Karakterark | Navn, klasse, art, baggrund, 8 tal, evner med saves/skills/værktøj, passive sanser, sprog, angreb, magi, regler, evner & træk, Bonus actions, turplaner | `versioner` (én side pr. version) |
-| 2 · Handlingsark | Handlinger og hvad man slår, ubevæbnet (Grapple/Shove), bevægelse, livsredning og hvil, valgte Weapon Mastery, nyttige ting, skill-situationer, tilstande | `handlingsark` |
-| 3 · Udstyrsark | Våben, udstyr, forbrug med afkrydsning, penge, særlige genstande, kampagne, steder, personer | `udstyrsark` |
-| 4 · Baggrundsark | Udseende, historie, Træning og valg, personlighed, familie, fjender, mål, hemmeligheder | `baggrundsark` |
-
-Der er ingen DC-tabel (DM'ens værktøj), ingen "næste level"-info og ingen skrivefelter ud over afkrydsningsfelter.
-
-## Øverste niveau
+## Opbygning
 
 ```yaml
-titel: Valak karakterark      # sidetitel i HTML/PDF
-faelles: {...}                # felter, der gælder alle versioner
-versioner: [...]              # mindst én. Hver version er én side 1 og kan overskrive felter fra faelles
-handlingsark: {...}           # valgfri
-udstyrsark: {...}             # valgfri
-baggrundsark: {...}           # valgfri
+titel: Valak karakterark     # titel på HTML/PDF
+faelles: {...}               # alle fælles felter: navn, evner, pb, ac, hp, skills, ...
+sider:                       # én post pr. side, i udskriftsrækkefølge
+- top: {...}                 # valgfri: sidehoved
+  layout: [...]              # bokse, kolonner og rækker
+  foot: '...'                # valgfri: sidefod
+- layout: [...]
 ```
 
-`faelles` flettes ind i hver version, og versionens egne felter vinder. Side 2–4 bruger den **sidste** version. Flere versioner bruges fx til "som skrevet på papir" og "optimeret".
+Hver side er en post under `sider:`. En side kan have hvad som helst af de bokse, der findes (se tabellen nedenfor). Der er ingen låsning til bestemte sider.
 
-## Tekstregler (gælder alle tekstfelter)
+## Sidehoved (`top`)
+
+| Felt | Standard | Betydning |
+|---|---|---|
+| `titel` | `faelles.navn` | Stor titel |
+| `bokstype` | (ramme) | `none` fjerner boksrammerne på alle bokse på siden. Kan også stå på en enkelt boks, så fjernes rammen kun der |
+| `margin` | `normal` | `small`: 198 mm bredde i stedet for 192 mm. `none`: hele A4-bredden (210 mm) og ingen margen oven for |
+| `undertitel` | (tom) | Lille kursiv tekst ved titlen, fx `Hvad kan jeg gøre?` |
+| `ident` | `faelles.ident` | Liste af `[etiket, værdi]`, højst 4. Brug `"…"` når værdien har komma: `[Fordel, "2 d20, tag højeste"]` |
+
+`top: {}` giver et sidehoved med standardværdierne. Udelades `top`, er der intet sidehoved.
+
+## Layout
+
+Layoutet er et træ af tre slags noder:
+
+| Node | Betydning |
+|---|---|
+| `type: <navn>` | En boks. Typen bestemmer indholdet (se tabellen) |
+| `kolonner: [{bredde, indhold, samlet}, ...]` | Kolonner side om side. `bredde` er relativ: `1` og `2` giver 1/3 og 2/3. `samlet: true` lægger hele kolonnen i én kasse. Boksene i den har så ingen egen ramme, kun overskrift. `samlet: tæt` gør det samme med mindre skrift og tættere mellemrum |
+| `raekker: [...]` | Rækker, der stables lodret |
+
+Kolonner kan indeholde rækker og omvendt. Hver boks får sin egen ramme med `data-type`, så CSS kan ramme den.
+
+På smal skærm (fx en telefon) stables kolonnerne under hinanden i YAML-rækkefølge. Udskriften er altid side om side.
+
+## Bokstyper
+
+Typerne ligger i `REGISTRY` i `karakterark.py`. Tjek `python3 dnd.py tjek` fanger tastefejl og viser forslag. Den finder også bokse, der mangler et påkrævet felt (fx `titel` eller `undertitel` på `tur`), og peger på boksens linje i YAML'en. Ukendte nøgler, fx `punkt` i stedet for `punkter`, bliver ikke markeret endnu.
+
+| Type | Felter | Indhold |
+|---|---|---|
+| `stats` | `felter` (valgfri) | Stat-rækken. Uden `felter`: AC, Max HP, Hit Dice, Initiativ, Fart, Prof. bonus og Passiv Perception, udregnet ud fra `faelles` |
+| `evner` | — | De seks evner med saves, skills og værktøj. Udregnes ud fra `faelles` |
+| `passiv` | `titel`, `punkter: [[etiket, værdi]]` | Passive sanser |
+| `sprog` | `titel`, `tekst` | Sprog |
+| `angreb` | `titel`, `angreb: [[våben, ramme, skade, noter]]` | Angrebstabel |
+| `regler` | `titel`, `undertitel`, `punkter: [tekst]` | Punktliste, fx Sneak Attack |
+| `traek` | `titel`, `punkter: [{navn, tag, tekst}]` | Evner og træk. `tag` er en lille etiket |
+| `bonus` | samme som `traek` | Bonus actions |
+| `tur` | `titel`, `undertitel`, `punkter: [tekst]` | "Din tur"-plan |
+| `handlinger` | `bonus: {Handling: Tag}` | Handlingstabellen. `bonus` sætter en Bonus Action-tag på handlingen |
+| `ubevaebnet` | (titel) | Slag, Grapple og Shove, udregnet ud fra `faelles` |
+| `bevaegelse` | (titel) | Fart, klatring, spring og fald |
+| `ekstra` | `titel`, `punkter: [tekst]` | Egne punkter, fx racetræk |
+| `livsredning` | (titel) | Death saves og hvil |
+| `mastery` | (titel) | Valgte Weapon Mastery, hentet fra `masteries` |
+| `nyttige` | (titel) | Nyttige ting (faste tekster) |
+| `situationer` | (titel), `vaerktoej: [{navn, evne, brug, niveau}]` | Skill checks, med værktøj. `niveau`: `p` (trænet, standard) eller `e` (expertise) |
+| `tilstande` | (titel) | Conditions |
+| `magi` | `titel`, `dc: [{navn, slag, dc}]`, `liste: [[etiket, tekst]]`, `slots` | Besværgelser: DC-celler, besværgelseslister og afkrydsning af slots. Standardtitel: "Magi <i>Spellcasting</i>". Bruges kun af kastere |
+| `penge` | (titel) | Møntfelter PP, GP, EP, SP, CP |
+| `tekst` | `titel`, `undertitel`, `punkter`, `tomme` | Synonym for `liste`. Har ingen standardtitel |
+| `fakta` | `titel`, `felter: [[etiket, værdi]]` | Nøgle/værdi-felter |
+| `liste` | `titel`, `undertitel`, `punkter: [tekst]`, `tomme` | Punktliste med linjer til at skrive på. `tomme` er antal tomme linjer. Har ingen standardtitel |
+| `traening` | (titel), `punkter`, `tomme` | Træning og valg. Bygges automatisk ud fra `kan_bruge`, `sprog`, `skills`, `expertise`, `masteries` og `feats`. `punkter` tilføjes til sidst |
+
+Standardtitlen står i `REGISTRY`. Den bruges, når boksen ikke har `titel`. Skriv `titel` for at ændre den. `titel: false` fjerner overskriften helt. `undertitel` vises i lille kursiv efter titlen, også på bokse med standardtitel.
+
+Notetyperne (`vaaben`, `udstyr`, `sarlige`, `penge`, `kampagne`, `steder`, `personer`, `udseende`, `kendetegn`, `historie`, `traening`, `personlighed`, `familie`, `fjender`, `maal`, `hemmeligheder`) har hver en fast standardtitel og en fast form. De er registrerede, så de kan stå flere steder og CSS kan ramme dem. `liste`, `tekst` og `fakta` er frie typer, der bruges, når der ikke findes en passende.
+
+## Fælles felter (`faelles`)
+
+| Felt | Type | Betydning |
+|---|---|---|
+| `navn` | tekst | Karakterens navn |
+| `ident` | liste af `[etiket, værdi]` | Standard-sidehoved |
+| `evner` | `{STR: 16, DEX: 14, ...}` | De seks scores. Modifier regnes ud |
+| `mod` | `{STR: 4}` | Tving en modifier, hvis papirets tal afviger |
+| `pb` | tal | Proficiency Bonus (standard 2) |
+| `level` | tal | Level (bruges til Hit Dice i stat-rækken) |
+| `hp` | tal | Max HP |
+| `ac` | tekst/formel | AC, fx `'{11+DEX}'` |
+| `fart` | tal | Speed i ft (standard 30) |
+| `hit_die` | tal | 8, 10, 12 … (standard 8) |
+| `saves` | liste | Trænede saving throws, fx `[STR, CON]` |
+| `skills` | liste | Trænede skills, engelske navne som i PHB |
+| `expertise` | liste | Skills med dobbelt bonus (vises ◆) |
+| `vaerktoej` | `{DEX: ["Thieves' Tools"]}` | Værktøj under evnen. `["navn", "e"]` = expertise |
+| `sprog` | tekst | Sprog |
+| `kan_bruge` | `{Rustning: …, Våben: …, Værktøj: …}` | Vises under Træning og valg |
+| `masteries` | liste af `[mastery, våben]` | Weapon Mastery. Teksten hentes automatisk |
+| `feats` | liste | Feats |
+| `traening_ekstra` | liste | Ekstra linjer under Træning og valg |
+
+## Tekstregler
 
 | Skriv | Bliver til |
 |---|---|
@@ -41,95 +116,24 @@ baggrundsark: {...}           # valgfri
 
 Udtryk kan bruge `STR DEX CON INT WIS CHA` (modifiers, regnet ud fra scoren) og `PB`. Formlen bag et tal vises automatisk i lille skrift under tallet, fx `d20 + DEX + PB`.
 
-## Karakterfelter (i `faelles` eller i en version)
-
-| Felt | Type | Betydning |
-|---|---|---|
-| `navn` | tekst | Karakterens navn |
-| `version` | tekst | Lille tekst ved navnet, fx `Version A · som skrevet` |
-| `ident` | liste af `[etiket, værdi]` | Sidehoved, højst 4 par: Klasse, Art, Baggrund, Spiller |
-| `evner` | `{STR: 16, DEX: 14, ...}` | De seks scores. Modifier regnes ud |
-| `mod` | `{STR: 4}` | Tving en modifier (kun til "som skrevet"-versioner med papirets tal) |
-| `pb` | tal | Proficiency Bonus (standard 2) |
-| `fart` | tal | Speed i ft (standard 30) |
-| `hit_die` | tal | 8, 10, 12 … (standard 8) |
-| `saves` | liste | Trænede saving throws, fx `[STR, CON]` |
-| `skills` | liste | Trænede skills, engelske navne som i PHB |
-| `expertise` | liste | Skills med dobbelt bonus (vises ◆) |
-| `vaerktoej` | `{DEX: ["Thieves' Tools"]}` | Værktøj under evnen. `["navn", "e"]` = expertise |
-| `sprog` | tekst | Sprog |
-| `kan_bruge` | `{Rustning: …, Våben: …, Værktøj: …}` | Vises under Træning og valg |
-| `masteries` | liste af `[mastery, våben]` | Weapon Mastery. Teksten hentes automatisk (Cleave, Graze, Nick, Push, Sap, Slow, Topple, Vex) |
-| `feats` | liste | Feats |
-| `traening_ekstra` | liste | Ekstra linjer under Træning og valg |
-| `stats` | 8 × `[etiket, værdi, (formel)]` | Øverste række. Udelades formlen, regnes den ud fra værdien |
-| `passiv` | liste af `[etiket, værdi]` | Passive sanser |
-| `angreb` | liste af `[våben, ramme, skade, noter]` | Angrebstabellen |
-| `magi` | se nedenfor | Kun for kastere |
-| `regler` | liste af `{titel, undertitel, punkter}` | Fulde bredde-bokse, fx Sneak Attack eller Rage |
-| `traek` | liste af `{navn, tag, tekst}` | "Evner & træk". `tag` er en lille etiket, fx `Long Rest` |
-| `bonus` | liste af `{navn, tekst}` | Bonus actions |
-| `ture` | liste af `{undertitel, titel, punkter}` | "Din tur"-bokse, én kort plan pr. situation |
-| `fod` | tekst | Sidefod (kilder) |
-
-`magi`:
-
-```yaml
-magi:
-  titel: "Magi <em>· Spellcasting</em>"      # valgfri
-  dc:                                         # 1–2 bokse
-    - {navn: Warlock-magi · CHA, slag: '{+CHA+PB}', dc: '{8+CHA+PB}'}
-  slots: '<b>Spell slots</b> 1. grad [][]'
-  liste:                                      # [overskrift, besværgelser]
-    - [Cantrips, Eldritch Blast · Fire Bolt]
-```
-
-## `handlingsark`
-
-```yaml
-handlingsark:
-  bonus_handlinger: {Hide: Cunning Action}    # markerer en handling som også Bonus Action
-  vaerktoej:                                  # tilføjes under "Hvad slår jeg?"
-    - {navn: Thieves' Tools, evne: DEX, niveau: p, brug: Dirke låse op}   # niveau: p (trænet, standard) | e (expertise)
-  ekstra:                                     # egne bokse
-    - {titel: Fighter, punkter: ['<b>Second Wind</b> [][]: …']}
-  ident: [[Slag, d20 + tallet]]               # valgfri, overskriver sidehovedet
-  fod: …                                      # valgfri
-```
-
-Handlinger, ubevæbnet, bevægelse, hvile, tilstande og skill-situationer bygges automatisk ud fra karakterens tal.
-
-## `udstyrsark` og `baggrundsark`
-
-```yaml
-udstyrsark:
-  ident: [[Klasse, Barbarian 1]]
-  venstre: [sektion, ...]
-  hoejre: [sektion, ...]
-```
-
-En sektion er en af:
-
-| Form | Indhold |
-|---|---|
-| `{titel, punkter: [...], tomme: 5}` | Liste. `tomme` er antal tomme linjer efter punkterne |
-| `{titel, type: penge}` | Møntfelter |
-| `{titel, type: fakta, felter: [[etiket, værdi], ...]}` | Nøgle/værdi-liste, fx Udseende |
-| `{titel, type: tekst, afsnit: [...], tomme: 3}` | Løbende tekst, fx Historie |
-| `{titel, type: traening}` | Træning og valg, bygget automatisk af karakterdata |
-
-Valgfrit: `navn`, `undertitel`, `fod`.
-
 ## Plads
 
-Bliver en side for lang, klippes den ved A4-kanten. Forkort tekster, eller fjern tomme linjer (`tomme`). Kig altid på siden, efter du har ændret meget.
+Hver side er én A4-side, og alt, der går ud over siden, klippes af. Forhåndsvisningen i webui'en måler det og viser en advarsel med boksens titel og hvor mange pixels den går ud over siden.
+
+Hjælpemidler, når en side er for lang:
+* `samlet: true` eller `samlet: tæt` på en kolonne (tæt er mindst)
+* `margin: small` på siden
+* flyt en boks til en anden kolonne eller side
+* forkort teksten, eller fjern tomme linjer (`tomme`)
+
+Kig altid på siden, efter du har ændret meget.
 
 ## YAML-faldgruber
 
 * En tekst, der starter med `{` eller `[`, skal i citationstegn: `'{+DEX+PB}'`.
 * En tekst med `: ` (kolon og mellemrum) skal i citationstegn.
+* En liste med komma i et element skal i citationstegn: `[Fordel, "2 d20, tag højeste"]`.
 * `Ja`, `Nej`, `on`, `off` uden citationstegn bliver sandt/falsk.
-* Tal i `stats` kan være tekst eller tal. Skriv `'17'` hvis det skal stå som tekst.
 * Indryk med mellemrum (ikke tabulator).
 * Kør `python3 dnd.py tjek` efter hver ændring.
 
