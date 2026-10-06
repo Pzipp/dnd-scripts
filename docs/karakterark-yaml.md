@@ -71,12 +71,12 @@ Typerne ligger i `REGISTRY` i `karakterark.py`. Tjek `python3 dnd.py tjek` fange
 | `situationer` | (titel), `vaerktoej: [{navn, evne, brug, niveau}]` | Skill checks, med værktøj. `niveau`: `p` (trænet, standard) eller `e` (expertise) |
 | `tilstande` | (titel) | Conditions |
 | `penge` | (titel) | Møntfelter PP, GP, EP, SP, CP |
-| `tekst` | `titel`, `afsnit: [tekst]`, `tomme` | Løbende tekst |
+| `tekst` | `titel`, `undertitel`, `punkter`, `tomme` | Synonym for `liste`. Har ingen standardtitel |
 | `fakta` | `titel`, `felter: [[etiket, værdi]]` | Nøgle/værdi-felter |
-| `liste` | `titel`, `punkter: [tekst]`, `tomme` | Punktliste med linjer til at skrive på. `tomme` er antal tomme linjer |
+| `liste` | `titel`, `undertitel`, `punkter: [tekst]`, `tomme` | Punktliste med linjer til at skrive på. `tomme` er antal tomme linjer. Har ingen standardtitel |
 | `traening` | (titel), `punkter`, `tomme` | Træning og valg. Bygges automatisk ud fra `kan_bruge`, `sprog`, `skills`, `expertise`, `masteries` og `feats`. `punkter` tilføjes til sidst |
 
-Standardtitlen står i `REGISTRY`. Den bruges, når boksen ikke har `titel`. Skriv `titel` for at ændre den.
+Standardtitlen står i `REGISTRY`. Den bruges, når boksen ikke har `titel`. Skriv `titel` for at ændre den. `titel: false` fjerner overskriften helt. `undertitel` vises i lille kursiv efter titlen, også på bokse med standardtitel.
 
 Notetyperne (`vaaben`, `udstyr`, `sarlige`, `penge`, `kampagne`, `steder`, `personer`, `udseende`, `kendetegn`, `historie`, `traening`, `personlighed`, `familie`, `fjender`, `maal`, `hemmeligheder`) har hver en fast standardtitel og en fast form. De er registrerede, så de kan stå flere steder og CSS kan ramme dem. `liste`, `tekst` og `fakta` er frie typer, der bruges, når der ikke findes en passende.
 

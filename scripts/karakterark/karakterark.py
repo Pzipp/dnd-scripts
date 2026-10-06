@@ -448,7 +448,12 @@ CBX = '<span class="cbx"></span>'
 
 
 def _h2(node):
-    return f'<h2>{node["titel"]}</h2>' if node.get("titel") else ""
+    """Overskrift med valgfri undertitel. titel: false fjerner overskriften helt."""
+    titel = node.get("titel")
+    if titel is False or not titel:
+        return ""
+    under = f' <em>· {node["undertitel"]}</em>' if node.get("undertitel") else ""
+    return f'<h2>{titel}{under}</h2>'
 
 
 def _liste(punkter, tomme, env):
@@ -524,7 +529,7 @@ REGISTRY = {
     "hemmeligheder": _reg(box_liste, "Hemmeligheder"),
     # frie typer: titlen skrives i YAML
     "liste": _reg(box_liste),
-    "tekst": _reg(box_tekst),
+    "tekst": _reg(box_liste),      # synonym for liste, uden standardtitel og undertitel
     "fakta": _reg(box_fakta),
 }
 
