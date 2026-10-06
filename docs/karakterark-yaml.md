@@ -25,6 +25,7 @@ Hver side er en post under `sider:`. En side kan have hvad som helst af de bokse
 | Felt | Standard | Betydning |
 |---|---|---|
 | `titel` | `faelles.navn` | Stor titel |
+| `margin` | `normal` | `small` giver siden mindre margen til højre, venstre og oven (198 mm bredde i stedet for 192 mm) |
 | `undertitel` | (tom) | Lille kursiv tekst ved titlen, fx `Hvad kan jeg gøre?` |
 | `ident` | `faelles.ident` | Liste af `[etiket, værdi]`, højst 4. Brug `"…"` når værdien har komma: `[Fordel, "2 d20, tag højeste"]` |
 
@@ -37,7 +38,7 @@ Layoutet er et træ af tre slags noder:
 | Node | Betydning |
 |---|---|
 | `type: <navn>` | En boks. Typen bestemmer indholdet (se tabellen) |
-| `kolonner: [{bredde, indhold, samlet}, ...]` | Kolonner side om side. `bredde` er relativ: `1` og `2` giver 1/3 og 2/3. `samlet: true` lægger hele kolonnen i én kasse. Boksene i den har så ingen egen ramme, kun overskrift |
+| `kolonner: [{bredde, indhold, samlet}, ...]` | Kolonner side om side. `bredde` er relativ: `1` og `2` giver 1/3 og 2/3. `samlet: true` lægger hele kolonnen i én kasse. Boksene i den har så ingen egen ramme, kun overskrift. `samlet: tæt` gør det samme med mindre skrift og tættere mellemrum |
 | `raekker: [...]` | Rækker, der stables lodret |
 
 Kolonner kan indeholde rækker og omvendt. Hver boks får sin egen ramme med `data-type`, så CSS kan ramme den.

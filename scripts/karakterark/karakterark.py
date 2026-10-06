@@ -540,7 +540,8 @@ def layout_node(node, v, env, flat=False):
             samlet = bool(k.get("samlet")) and not flat
             inner = layout_stack(k.get("indhold", []), v, env, flat or samlet)
             if samlet:
-                inner = f'<div class="box samlet" data-type="samlet">{inner}</div>'
+                tæt = " taet" if k.get("samlet") == "tæt" else ""
+                inner = f'<div class="box samlet{tæt}" data-type="samlet">{inner}</div>'
             cols.append(f'<div class="kol" style="--bredde:{k.get("bredde", 1)}">{inner}</div>')
         return f'<div class="kolonner">{"".join(cols)}</div>'
     if "raekker" in node:
@@ -571,7 +572,8 @@ def page(p, v, env):
                 f'{ident(top.get("ident", v.get("ident", [])))}</header>')
     body = f'<div class="layout">{layout_stack(p.get("layout", []), v, env)}</div>'
     foot = f'<div class="foot">{p.get("foot", "")}</div>' if p.get("foot") else ""
-    return f'<section class="pg s1"><div class="page">{head}{body}{foot}</div></section>'
+    marg = " margin-small" if p.get("margin") == "small" else ""
+    return f'<section class="pg s1{marg}"><div class="page">{head}{body}{foot}</div></section>'
 
 
 # ---------------------------------------------------------------- samlet fil
@@ -582,10 +584,11 @@ body{margin:0;background:#ddd}
 section.pg{width:794px;height:1123px;overflow:hidden;flex:none;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.2)}
 .s1 > .page{padding-top:34px}
 @page{size:A4;margin:0}
+section.pg.margin-small > .page{width:198mm;padding-top:23px}
 @media screen and (max-width:820px){
   .sheets{padding:8px}
   section.pg{width:100%;height:auto;overflow:visible}
-  .s1 > .page{width:auto;margin:0 auto}
+  .s1 > .page, section.pg.margin-small > .page{width:auto;margin:0 auto}
 }
 @media print{
   body{background:#fff}
