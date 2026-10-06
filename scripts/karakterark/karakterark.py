@@ -297,7 +297,7 @@ def layout_node(node, v, env, leaf):
     """Én node i layout-træet: en kolonne-gruppe, en række-stak eller en boks (leaf)."""
     if "kolonner" in node:
         cols = "".join(
-            f'<div class="kol" style="flex-grow:{k.get("bredde", 1)};flex-basis:0">{layout_stack(k.get("indhold", []), v, env, leaf)}</div>'
+            f'<div class="kol" style="--bredde:{k.get("bredde", 1)}">{layout_stack(k.get("indhold", []), v, env, leaf)}</div>'
             for k in node["kolonner"])
         return f'<div class="kolonner">{cols}</div>'
     if "raekker" in node:

@@ -50,7 +50,7 @@ karakterark:
   layout:
   - kolonner:
 
-    - bredde: 1
+    - bredde: 0.7
       indhold:
       - type: evner
         titel: Evner
@@ -64,7 +64,7 @@ karakterark:
         titel: Sprog
         tekst: Common, Dwarvish, Halfling, Orc, <em>Thieves' Cant</em>
 
-    - bredde: 1.25
+    - bredde: 2
       indhold:
       - type: angreb
         titel: Angreb <em>· Attacks</em>

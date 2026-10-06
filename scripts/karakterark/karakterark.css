@@ -178,5 +178,6 @@ small.f { display: block; font-size: 9.5px; line-height: 1.1; color: var(--ink-s
 /* layout-træ (side 2–4): kolonner side om side (bredde = flex-grow), rækker stables lodret */
 .layout { display: flex; flex-direction: column; gap: 8px; flex: 1; }
 .kolonner { display: flex; align-items: flex-start; gap: 14px; min-width: 0; }
-.kol { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.kol { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex-grow: var(--bredde, 1); flex-basis: 0; }
 .raekker { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+@media screen and (max-width: 720px) { .kolonner { flex-direction: column; } .kol { flex-grow: 0; flex-basis: auto; width: 100%; } }

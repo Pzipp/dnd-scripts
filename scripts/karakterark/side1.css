@@ -85,6 +85,7 @@ td.n small.en{display:block;font-size:7.5pt;font-style:italic;font-weight:400;co
 /* layout-træ: kolonner side om side (bredde = flex-grow), rækker stables lodret */
 .layout{display:flex;flex-direction:column;gap:2.5mm}
 .kolonner{display:flex;align-items:flex-start;gap:2.5mm;min-width:0}
-.kol{display:flex;flex-direction:column;gap:2.5mm;min-width:0}
+.kol{display:flex;flex-direction:column;gap:2.5mm;min-width:0;flex-grow:var(--bredde,1);flex-basis:0}
+@media screen and (max-width:760px){.kolonner{flex-direction:column}.kol{flex-grow:0;flex-basis:auto;width:100%}}
 .raekker{display:flex;flex-direction:column;gap:2.5mm;min-width:0}
 .abil .ab:last-of-type{margin-bottom:0}
