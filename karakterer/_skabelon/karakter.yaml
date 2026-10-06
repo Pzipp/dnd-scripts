@@ -53,6 +53,9 @@ sider:
 
     - bredde: 1              # kolonnens relative bredde. Standard: 1
       indhold:
+      - type: sprog         # sprog. Standard titel: "Sprog"
+        titel: Sprog
+        tekst: Common
       - type: passiv         # passive sanser
         titel: Passive sanser    # valgfri. Standard: "Passive sanser"
         punkter:
@@ -78,6 +81,13 @@ sider:
             - navn: Eksempel <em>Example</em>
               tag: Passiv    # valgfri lille etiket
               tekst: Skriv teksten her.
+        - bredde: 1
+          indhold:
+          - type: tur        # "Din tur"-plan. Kort, én pr. situation
+            titel: Nærkamp
+            undertitel: nærkamp
+            punkter:
+            - '<b>Attack</b>: skriv planen her.'
   foot: 'Kilde: PHB 2024'    # sidefod. Valgfri. Standard: ingen
 
 # ── Side 2 · Handlinger ──────────────────────────────────────────────────────────
