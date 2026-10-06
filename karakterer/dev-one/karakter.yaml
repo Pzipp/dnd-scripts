@@ -133,6 +133,7 @@ sider:
 
 # ── Side 2 · Handlingsark ──
 - margin: small
+  bokstype: none
   top:
     undertitel: Hvad kan jeg gøre?
     ident:
