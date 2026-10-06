@@ -70,6 +70,7 @@ Typerne ligger i `REGISTRY` i `karakterark.py`. Tjek `python3 dnd.py tjek` fange
 | `nyttige` | (titel) | Nyttige ting (faste tekster) |
 | `situationer` | (titel), `vaerktoej: [{navn, evne, brug, niveau}]` | Skill checks, med værktøj. `niveau`: `p` (trænet, standard) eller `e` (expertise) |
 | `tilstande` | (titel) | Conditions |
+| `magi` | `titel`, `dc: [{navn, slag, dc}]`, `liste: [[etiket, tekst]]`, `slots` | Besværgelser: DC-celler, besværgelseslister og afkrydsning af slots. Standardtitel: "Magi <i>Spellcasting</i>". Bruges kun af kastere |
 | `penge` | (titel) | Møntfelter PP, GP, EP, SP, CP |
 | `tekst` | `titel`, `undertitel`, `punkter`, `tomme` | Synonym for `liste`. Har ingen standardtitel |
 | `fakta` | `titel`, `felter: [[etiket, værdi]]` | Nøgle/værdi-felter |

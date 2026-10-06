@@ -484,6 +484,27 @@ def box_fakta(node, v, env):
         f"<div><dt>{a}</dt><dd>{fmt(b, env) if b else '&nbsp;'}</dd></div>" for a, b in node.get("felter", [])) + "</dl>")
 
 
+def box_magi(node, v, env):
+    """Besværgelser: DC-celler, besværgelseslister (etiket og tekst) og slots (afkrydsning)."""
+    dc = "".join(
+        f'<div class="stat magi-celle"><div class="lbl">{c.get("navn", "")}</div>'
+        f'<div class="big">{fmt(c.get("slag", ""), env)}</div>'
+        f'<small class="f">DC {fmt(c.get("dc", ""), env)}</small></div>'
+        for c in node.get("dc", []))
+    liste = "".join(f"<div><dt>{a}</dt><dd>{fmt(b, env)}</dd></div>" for a, b in node.get("liste", []))
+    slots = fmt(node["slots"], env) if node.get("slots") else ""
+    if not (dc or liste or slots):
+        return ""
+    o = _h2(node)
+    if dc:
+        o += f'<div class="magi-dc">{dc}</div>'
+    if liste:
+        o += f'<dl class="magi-liste">{liste}</dl>'
+    if slots:
+        o += f'<p class="magi-slots">{slots}</p>'
+    return o
+
+
 def _reg(fn, titel=None, card=True, small=False):
     return {"fn": fn, "titel": titel, "card": card, "small": small}
 
@@ -496,6 +517,7 @@ REGISTRY = {
     "stats": _reg(box_stats, card=False),
     "passiv": _reg(box_passiv),
     "sprog": _reg(box_sprog, small=True),
+    "magi": _reg(box_magi, "Magi <i>Spellcasting</i>"),
     "angreb": _reg(box_angreb),
     "regler": _reg(box_regler, small=True),
     "traek": _reg(box_traek, small=True),
