@@ -75,5 +75,5 @@ python3 dnd.py tjek                           # byg alt; meld fejl i data. KØR 
 ## Når du ændrer generatorerne
 
 * Layoutkode er skrøbelig: sider er præcis én A4. Efter en ændring skal du bygge alle karakterer og sammenligne med før (`python3 dnd.py tjek`, og kig på mindst ét ark og ét kort i hver stil).
-* CSS: `side1.css`/`karakterark.css` er farve-stilen for karakterark og `*-sorthvid.css` lægges ovenpå. `spellkort.css` er sort/hvid, og `spellkort-farve.css` lægges ovenpå. Skal begge stile ændres, så ret begge.
+* CSS: `side1.css` er farve-stilen for karakterark (alle sider) og `side1-sorthvid.css` lægges ovenpå. `spellkort.css` er sort/hvid, og `spellkort-farve.css` lægges ovenpå. Skal begge stile ændres, så ret begge.
 * Opdatér den README og det `docs/`-dokument, der beskriver det, du har ændret.

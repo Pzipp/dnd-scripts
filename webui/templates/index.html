@@ -215,6 +215,7 @@ async function updatePreview() {
     output.srcdoc = data.html;
     output.hidden = false;
     empty.hidden = true;
+    output.onload = showOverflow;
     previewInfo.textContent = yamlBox.value === savedYaml ? "Gemt" : "Ugemt – viser dine rettelser";
   } catch (error) {
     if (seq !== previewSeq) return;
@@ -222,6 +223,37 @@ async function updatePreview() {
     previewInfo.className = "error";
     previewInfo.textContent = error.message;
   }
+}
+
+// Højdekontrol: måler i forhåndsvisningen, om en boks går ud over siden. Siden har fast højde og klipper overløb.
+const A4_HOJDE = 1123;
+
+function showOverflow() {
+  const doc = output.contentDocument;
+  if (!doc) return;
+  // Måles i udskriftens layout. Er forhåndsvisningen smal, stables kolonnerne, og så er højden ikke den rigtige.
+  // Rammen gøres midlertidigt bred i samme kørsel, og bredden sættes tilbage før der tegnes noget.
+  const bredde = output.style.width;
+  output.style.width = "900px";
+  const problems = [];
+  doc.querySelectorAll("section.pg").forEach((sec, i) => {
+    // A4 er 1123 px høj i forhåndsvisningen. Også når siden vises smal (telefon), måles der mod den højde.
+    const limit = sec.getBoundingClientRect().top + A4_HOJDE;
+    let worst = null;
+    sec.querySelectorAll(".box[data-type]").forEach((box) => {
+      const over = Math.round(box.getBoundingClientRect().bottom - limit);
+      if (over > 0 && (!worst || over > worst.over)) worst = {box, over};
+    });
+    if (worst) {
+      const type = worst.box.dataset.type;
+      const titel = worst.box.querySelector("h2")?.textContent.trim() || type;
+      problems.push(`Side ${i + 1}: «${titel}» går ${worst.over} px ud over siden`);
+    }
+  });
+  output.style.width = bredde;
+  const base = yamlBox.value === savedYaml ? "Gemt" : "Ugemt – viser dine rettelser";
+  previewInfo.className = problems.length ? "error" : "";
+  previewInfo.textContent = problems.length ? `${base} · ${problems.join(" · ")}` : base;
 }
 
 async function loadFiles() {

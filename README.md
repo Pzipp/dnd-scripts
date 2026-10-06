@@ -21,7 +21,7 @@ Output lægges i `karakterer/<navn>/udskrifter/`:
 
 | Fil | Indhold |
 |---|---|
-| `karakterark-farve` / `karakterark-sorthvid` | 4 sider A4: Karakterark, Handlingsark, Udstyrsark, Baggrundsark |
+| `karakterark-farve` / `karakterark-sorthvid` | A4-sider efter karakterens `sider:` (fx Karakterark, Handlinger, Udstyr, Baggrund) |
 | `kort-farve` / `kort-sorthvid` | Spell-/evnekort, 63 × 88 mm, 9 pr. A4, forsider og bagsider |
 
 `.html` åbnes i en browser. `.pdf` laves med `--pdf` og er klar til print (A4, margin 0, 100 %). Alle printbare ting findes i både **farve** og **sort/hvid**. Vælg med `--stil farve`, `--stil sorthvid` eller (standard) `--stil begge`.

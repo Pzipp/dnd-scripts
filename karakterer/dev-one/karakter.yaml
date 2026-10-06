@@ -5,7 +5,7 @@
 # Titel på HTML/PDF-filen.
 titel: Dev One karakterark
 
-# ── Fælles felter: gælder hele karakteren ──
+# ── Fælles felter: gælder alle sider ──
 faelles:
   navn: Dev One
   ident:
@@ -13,7 +13,11 @@ faelles:
   - [Art, Halfling <i>(Small)</i>]
   - [Baggrund, Criminal]
   - [Spiller, Sebastian]
+  evner: {STR: 14, DEX: 18, CON: 12, INT: 14, WIS: 13, CHA: 9}
   pb: 2
+  level: 2
+  hp: 15
+  ac: '{11+DEX}'
   fart: 30
   hit_die: 8
   saves: [DEX, INT]
@@ -32,28 +36,20 @@ faelles:
   - [Nick, Dagger]
   feats: [Alert (fra Criminal)]
 
-# ── Side 1 · Karakterark: én side pr. version ──
-karakterark:
-  evner: {STR: 14, DEX: 18, CON: 12, INT: 14, WIS: 13, CHA: 9}
-  stats:
-  - [<em>AC</em> · Leather, '{11+DEX}']
-  - [Max HP, '15', 8+CON + 5+CON]
-  - [<em>Hit Dice</em>, 2d8, 1 d8 pr. level]
-  - [Initiativ, '{+DEX+PB}', d20 + DEX + PB (Alert)]
-  - [Fart · <em>Speed</em>, '30', 'Dash: 60']
-  - [<em>Prof. bonus</em>, '{+PB}', level 1–4]
-  - [Passiv <em>Perc.</em>, '{10+WIS+2*PB}']
-  - [<em>Sneak Attack</em>, 1d6, Rogue lvl 1–2]
+# ── Sider: én post pr. side. top, layout og foot er valgfrie. ──
+# Stats-rækken uden felter bruger standarden ud fra faelles. Boksenes standardtitler gælder,
+# hvis titel ikke står. Hver boks har type; typerne ligger i scripts/karakterark/karakterark.py (REGISTRY).
+sider:
 
-  # Layout: rækker stables lodret, kolonner står side om side.
-  # Hver boks har en type, som generatoren bruger som CSS-klasse.
+# ── Side 1 · Karakterark ──
+- top: {}
   layout:
+  - type: stats
   - kolonner:
 
     - bredde: 0.7
       indhold:
       - type: evner
-        titel: Evner
       - type: passiv
         titel: Passive sanser
         punkter:
@@ -132,28 +128,25 @@ karakterark:
             - Lykkes det → <em>Invisible</em> → <em>Advantage</em> → <b>Sneak Attack</b>.
             - '<b>Attack</b>: Light Crossbow, 1d8{+DEX} + 1d6.'
 
-  fod: 'D&amp;D 2024 · PHB 2024 s. 129–130 (Rogue), 193 (Halfling), 200 (Alert). Light-reglen: ekstraangrebet skal være med et <b>andet</b> Light-våben.'
+  foot: 'D&amp;D 2024 · PHB 2024 s. 129–130 (Rogue), 193 (Halfling), 200 (Alert). Light-reglen: ekstraangrebet skal være med et <b>andet</b> Light-våben.'
 
 # ── Side 2 · Handlingsark ──
-handlingsark:
-  # Handlingstabellen øverst er fast. bonus_handlinger kobler Bonus Action-tags på tabellen.
-  bonus_handlinger: {Dash: Cunning Action, Disengage: Cunning Action, Hide: Cunning Action}
+- top:
+    undertitel: Hvad kan jeg gøre?
+    ident:
+    - [Slag, d20 + tallet]
+    - [Fordel, "2 d20, tag højeste"]
+    - [Ulempe, "2 d20, tag laveste"]
   layout:
+  # Handlingstabellen er fast. bonus kobler Bonus Action-tags på tabellen.
+  - type: handlinger
+    bonus: {Dash: Cunning Action, Disengage: Cunning Action, Hide: Cunning Action}
   - kolonner:
 
     - bredde: 1
       indhold:
       - type: ubevaebnet
       - type: bevaegelse
-      - type: ekstra
-        titel: Halfling
-        punkter:
-        - '<b>Naturligt snigende</b>: du må gemme dig, når du kun er dækket af en skabning, der er mindst én størrelse større end dig.'
-        - '<b>Smidighed</b>: du kan bevæge dig gennem en større skabnings felt, men ikke stoppe der.'
-        - '<b>Held</b>: slår du 1 på en d20, slår du om og bruger det nye.'
-      - type: livsredning
-      - type: mastery
-      - type: nyttige
 
     - bredde: 1.25
       indhold:
@@ -161,20 +154,19 @@ handlingsark:
         vaerktoej:
         - {navn: Thieves' Tools, evne: DEX, brug: 'Dirke en lås, desarmere en fælde'}
         - {navn: Alchemist's Supplies, evne: INT, brug: 'Blande, analysere stoffer'}
-      - type: tilstande
+  foot: "Kilde: Player's Handbook 2024 · kap. 1 (handlinger) og Rules Glossary"
 
 # ── Side 3 · Udstyrsark ──
-udstyrsark:
-  ident:
-  - [Klasse, Rogue 2]
-  - [Opdateres, Løbende i spillet]
+- top:
+    ident:
+    - [Klasse, Rogue 2]
+    - [Opdateres, Løbende i spillet]
   layout:
   - kolonner:
 
     - bredde: 1
       indhold:
       - type: vaaben
-        titel: Våben og rustning
         punkter:
         - Læderrustning <i>Leather Armor</i> · AC 11 + DEX
         - Kortsværd <i>Shortsword</i> · 1d6 Piercing · <i>Vex</i>
@@ -184,7 +176,6 @@ udstyrsark:
         - Blæserør <i>Blowgun</i> · 50 nåle
         tomme: 1
       - type: udstyr
-        titel: Udstyr <i>Equipment</i>
         punkter:
         - Tyveværktøj <i>Thieves' Tools</i> · Alkymistudstyr <i>Alchemist's Supplies</i>
         - Rygsæk <i>Backpack</i> · Soverulle <i>Bedroll</i> · Madkit <i>Mess Kit</i> · Rejsetøj <i>Traveler's Clothes</i> · Punge <i>Pouch</i> ×2 · Kogegrej <i>Cook's Utensils</i>
@@ -197,43 +188,35 @@ udstyrsark:
         - Rationer <i>Rations</i> [][][][][][][][][][][][][][][]
         tomme: 6
       - type: sarlige
-        titel: Særlige genstande
         punkter:
         - <b>Morrens Favn</b> <i>Hjemmelavet</i> · amulet af messing- og sølvtråd med knust glas. „Så længe du bærer den, finder natten dig ikke først.“
         tomme: 3
       - type: penge
-        titel: Penge <i>Coins</i>
-        form: penge
 
     - bredde: 1
       indhold:
       - type: kampagne
-        titel: Kampagne og mission
         punkter: []
         tomme: 18
       - type: steder
-        titel: Steder
         punkter: []
         tomme: 9
       - type: personer
-        titel: Personer og væsner
         punkter: []
         tomme: 13
 
 # ── Side 4 · Baggrundsark ──
-baggrundsark:
-  ident:
-  - [Art, Halfling]
-  - [Baggrund, Criminal]
-  - [Holdning, Neutral]
+- top:
+    ident:
+    - [Art, Halfling]
+    - [Baggrund, Criminal]
+    - [Holdning, Neutral]
   layout:
   - kolonner:
 
     - bredde: 1
       indhold:
       - type: udseende
-        titel: Udseende <i>Appearance</i>
-        form: fakta
         felter:
         - [Alder, '']
         - [Højde, '']
@@ -242,42 +225,55 @@ baggrundsark:
         - [Hår, '']
         - [Hud, '']
       - type: kendetegn
-        titel: Kendetegn
         punkter: [Hænderne er altid i gang.]
         tomme: 3
       - type: historie
-        titel: Historie <i>Backstory</i>
-        form: tekst
         afsnit:
         - Voksede op hos sin mor <b>Elira</b>, der var alkymist.
         - Har en lillesøster, <b>Talla</b>, som han ikke har set siden.
         tomme: 6
       - type: traening
-        titel: Træning og valg <i>Proficiencies</i>
-        form: traening
 
     - bredde: 1
       indhold:
       - type: personlighed
-        titel: Personlighed
         punkter:
         - '<b>Træk</b>: roligt ydre, men hurtigt temperament, når nogen udnytter ham.'
         - '<b>Idealer</b>: overlevelse og frihed. Ingen skal have magt over hans liv.'
         - '<b>Bånd</b>: minderne om moren Elira og hendes alkymi · lillesøsteren Talla.'
         - '<b>Brister</b>: ser vold som en praktisk løsning · forventer altid forræderi · tager den nemmeste vej, også når den er blodig.'
       - type: familie
-        titel: Familie og venner
         punkter: [<b>Elira</b> · mor · alkymist, <b>Talla</b> · lillesøster]
         tomme: 6
       - type: fjender
-        titel: Fjender og rivaler
         punkter: []
         tomme: 6
       - type: maal
-        titel: Mål og drømme
         punkter: []
         tomme: 6
       - type: hemmeligheder
-        titel: Hemmeligheder
         punkter: []
         tomme: 6
+
+# ── Side 5 · Regler og ting (flyttet fra side 2, fordi side 2 blev for høj) ──
+- top:
+    undertitel: Regler og ting
+  layout:
+  - kolonner:
+
+    - bredde: 1
+      indhold:
+      - type: ekstra
+        titel: Halfling
+        punkter:
+        - '<b>Naturligt snigende</b>: du må gemme dig, når du kun er dækket af en skabning, der er mindst én størrelse større end dig.'
+        - '<b>Smidighed</b>: du kan bevæge dig gennem en større skabnings felt, men ikke stoppe der.'
+        - '<b>Held</b>: slår du 1 på en d20, slår du om og bruger det nye.'
+      - type: livsredning
+      - type: mastery
+      - type: nyttige
+
+    - bredde: 1
+      indhold:
+      - type: tilstande
+  foot: "Kilde: Player's Handbook 2024 · kap. 6 (Weapon Mastery) og Rules Glossary"

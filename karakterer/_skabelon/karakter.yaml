@@ -8,171 +8,133 @@
 #   3. Tjek og lav arkene:   python3 dnd.py tjek
 #                            python3 dnd.py karakterark <dit-karakternavn> --pdf
 #
-# Ét ark = én HTML-/PDF-fil med 4 sider: 1 Karakterark · 2 Handlingsark · 3 Udstyrsark · 4 Baggrundsark.
-# Der skrives ikke på arkene (noter tages på papir). Der er kun afkrydsningsfelter til ressourcer.
-#
-# TEKSTREGLER (gælder alle tekstfelter)
-#   []            bliver til et afkrydsningsfelt                      "Rage [][]"  ->  Rage ☐☐
-#   {+DEX+PB}     regnes ud med fortegn                                ->  +5
-#   {10+DEX}      regnes ud uden fortegn                               ->  12
-#                 Udtryk kan bruge STR DEX CON INT WIS CHA (modifiers) og PB (Proficiency Bonus).
-#                 Formlen vises automatisk i lille skrift under tallet (fx "d20 + DEX + PB").
-#   <b> <i> <em>  HTML til fed og kursiv er tilladt. Skriv & som &amp; (fx "D&amp;D").
-#
-# NAVNE: engelske regelnavne (stats, skills, ting, evner, besværgelser) oversættes ALDRIG. Skriv det
-#   engelske navn først og evt. den danske oversættelse i parentes: "Dexterity (Smidighed)".
-#   Se docs/navnekonvention.md.
-#
-# YAML-FALDGRUBER
-#   * En tekst, der starter med { eller [ , skal i citationstegn:   '{+DEX+PB}'   '[]'
-#   * En tekst med kolon efterfulgt af mellemrum skal i citationstegn: 'Mission: find dem'
-#   * Ja/nej/on/off uden citationstegn bliver sandt/falsk. Skriv "Nej" i citationstegn.
-#   * Indrykning er mellemrum (ikke tabulator). Brug 2 mellemrum pr. niveau.
-#   * Et par er en liste med to ting:  [etiket, værdi]
+# Formatet er beskrevet i docs/karakterark-yaml.md. Der skrives ikke på arkene (noter tages på papir).
 # ═══════════════════════════════════════════════════════════════════════════════
 
-titel: Skabelon karakterark          # sidetitel i HTML/PDF
+titel: Mit karakterark        # titel på HTML/PDF-filen
 
-# ── Fælles felter: gælder alle versioner. Hver version kan overskrive dem. ──
+# ── Fælles felter: bruges af alle sider ──
 faelles:
-  navn: Navn Navnesen
-  ident:                              # højst 4 par i sidehovedet
-    - [Klasse, Fighter 1]
-    - [Art, Menneske]
-    - [Baggrund, Soldier]
-    - [Spiller, Dit navn]
-  pb: 2                               # Proficiency Bonus (level 1-4: 2, level 5-8: 3 ...)
-  fart: 30                            # Speed i fod
-  hit_die: 10                         # d10 -> 10
-  saves: [STR, CON]                   # trænede saving throws
-  skills: [Athletics, Perception]     # trænede skills (engelske navne, som i PHB)
-  # expertise: [Stealth]              # dobbelt bonus (vises som ◆)
-  vaerktoej:                          # værktøj under den evne, det bruger
-    DEX: [Thieves' Tools]             # skriv ["Thieves' Tools", e] for expertise
-  sprog: Common og ét sprog efter eget valg
-  kan_bruge:                          # vises på baggrundsarket under "Træning og valg"
-    Rustning: Light, Medium, Heavy, Shield
-    Våben: Simple, Martial
-    Værktøj: Thieves' Tools
-  masteries:                          # Weapon Mastery: [mastery, våben]. Teksten hentes automatisk.
-    - [Sap, Longsword]
-  feats:
-    - 'Navn på feat: kort beskrivelse'
-  fod: D&amp;D 2024 · PHB 2024 kap. X (klasse), kap. Y (art, baggrund) — skriv kilder her
+  navn: Navn
+  ident:                      # højst 4 par: [etiket, værdi]
+  - [Klasse, Fighter 1]
+  - [Art, Human]
+  - [Baggrund, Soldier]
+  - [Spiller, Dit navn]
+  evner: {STR: 10, DEX: 10, CON: 10, INT: 10, WIS: 10, CHA: 10}
+  pb: 2
+  level: 1
+  hp: 10
+  ac: '{10+DEX}'              # tal eller formel, fx '{13+DEX}'
+  fart: 30
+  hit_die: 10
+  saves: []                   # trænede saves, fx [STR, CON]
+  skills: []                  # trænede skills (engelske navne som i PHB)
+  expertise: []               # skills med dobbelt bonus
+  sprog: Common
+  kan_bruge:                  # vises under Træning og valg
+    Rustning: Alle
+    Våben: Simple + Martial
+  masteries: []               # [[mastery, våben]], fx [[Cleave, Greataxe]]
+  feats: []
 
-# ── Side 1 · Karakterark: én side pr. version (flere versioner = fx "som skrevet" og "optimeret") ──
-versioner:
-  - version: ""                       # lille tekst ved navnet, fx "Version A · som skrevet"
-    evner: {STR: 16, DEX: 14, CON: 15, INT: 8, WIS: 12, CHA: 10}
-    # mod: {STR: 4}                   # tving en modifier (kun til "som skrevet"-versioner)
+# ── Sider: én post pr. side, i udskriftsrækkefølge ──
+sider:
 
-    # Øverste række: præcis 8 kasser. [etiket, værdi, (formel-tekst)].
-    # Formlen under tallet regnes ud af værdien, hvis du udelader tredje led.
-    stats:
-      - [<em>AC</em>, '{10+DEX}', erstat med din rustning]
-      - [Max HP, '12', 10+CON]
-      - [<em>Hit Dice</em>, 1d10, 1 d10 pr. level]
-      - [<em>Initiative</em>, '{+DEX}']
-      - [<em>Speed</em>, '30', 'Dash: 60']
-      - [<em>Proficiency Bonus</em>, '{+PB}', level 1–4]
-      - [Passive <em>Perception</em>, '{10+WIS}']
-      - [Ressource, 2×, Long Rest]
+# ── Side 1 · Karakterark ──
+- top: {}                     # sidehoved med faelles.navn og faelles.ident
+  layout:
+  - type: stats               # stat-rækken. Uden felter bruges standarden ud fra faelles
+  - kolonner:
 
-    passiv:                           # Passive sanser: [etiket, værdi]
-      - [Perception, '{10+WIS}']
-      - [Insight, '{10+WIS}']
-      - [Investigation, '{10+INT}']
-
-    angreb:                           # [våben, ramme, skade, noter]
-      - [Langsværd <em>Longsword</em>, '{+STR+PB}', '1d8{+STR} Slashing', <b>Sap</b> · Versatile 1d10]
-      - [Ubevæbnet <em>Unarmed Strike</em>, '{+STR+PB}', '{1+STR} Bludgeoning', '']
-
-    # magi:                           # fjern # for en kaster. Se karakterer/valak/karakter.yaml
-    #   dc:                           # (1-2 bokse med slag og DC)
-    #     - {navn: Spellcasting · CHA, slag: '{+CHA+PB}', dc: '{8+CHA+PB}'}
-    #   slots: '<b>Spell slots</b> 1. grad [][]'
-    #   liste:                        # [overskrift, besværgelser]
-    #     - [Cantrips, Fire Bolt · Guidance]
-    #     - [1. grad, <b>Cure Wounds</b> 2d8{+WIS} HP]
-
-    regler:                           # fulde bredde-bokse til klassens vigtigste regel (valgfri)
-      - titel: Navn på regel
-        undertitel: Hvor mange gange, og hvornår den kommer igen
+    - bredde: 1               # relativ bredde: 1 og 2 giver 1/3 og 2/3
+      indhold:
+      - type: evner
+      - type: passiv
+        titel: Passive sanser
         punkter:
-          - '<b>Start</b>: Bonus Action.'
-          - Beskriv, hvad den gør.
+        - [Perception, '{10+WIS}']
+      - type: sprog
+        titel: Sprog
+        tekst: Common
 
-    traek:                            # "Evner & træk": navn, tag (valgfri lille etiket), tekst
-      - {navn: 'Resource [][]', tag: Long Rest, tekst: Hvad den gør.}
-      - {navn: Weapon Mastery, tekst: 'Longsword (<em>Sap</em>). Kan byttes ved Long Rest.'}
-      - {navn: Navn på feat, tag: Feat, tekst: Hvad den gør.}
-
-    bonus:                            # Bonus actions (valgfri)
-      - {navn: Navn på evne, tekst: Hvad du kan gøre som Bonus Action.}
-
-    ture:                             # "Din tur"-bokse: en kort plan pr. situation (valgfri)
-      - undertitel: nærkamp
-        titel: HUG!
+    - bredde: 2
+      indhold:
+      - type: angreb
+        titel: Angreb <em>· Attacks</em>
+        angreb:
+        - [Kortsværd <em>Shortsword</em>, '{+STR+PB}', '1d6{+STR} Slashing', '']
+      - type: regler
+        titel: Træk
         punkter:
-          - Gå hen til fjenden.
-          - '<b>Attack</b>: Longsword, d20{+STR+PB}. Rammer du: 1d8{+STR}.'
+        - Skriv punkter her.
+  foot: 'Kilde: PHB 2024'     # valgfri sidefod
 
-    fod: D&amp;D 2024 · PHB 2024 kap. X, kap. Y.   # sidefod på side 1
+# ── Side 2 · Handlinger ──
+- top:
+    undertitel: Hvad kan jeg gøre?
+  layout:
+  - type: handlinger          # standard handlingstabel
+  - kolonner:
 
-# ── Side 2 · Handlingsark: handlinger og skill-situationer. Det meste bygges automatisk. ──
-handlingsark:
-  bonus_handlinger: {}                # fx {"Hide": "Cunning Action"} markerer en handling som også Bonus Action
-  vaerktoej:                          # tilføjes til "Hvad slår jeg?"
-    - {navn: Thieves' Tools, evne: DEX, brug: 'Dirke låse op, uskadeliggøre fælder'}
-  ekstra:                             # egne bokse (valgfri)
-    - titel: Fighter
-      punkter:
-        - '<b>Navn på evne</b> [][]: kort forklaring.'
+    - bredde: 1
+      indhold:
+      - type: ubevaebnet
+      - type: bevaegelse
 
-# ── Side 3 · Udstyrsark: løbende liste. [] = afkrydsningsfelt, "tomme" = antal tomme linjer ──
-udstyrsark:
-  ident:
+    - bredde: 1
+      indhold:
+      - type: situationer
+
+# ── Side 3 · Udstyr ──
+- top:
+    ident:
     - [Klasse, Fighter 1]
-    - [Opdateres, Løbende i spillet]
-  venstre:
-    - titel: Våben <i>Weapons</i>
-      punkter:
-        - Langsværd <i>Longsword</i> · 1d8 Slashing · <i>Sap</i>
-      tomme: 2
-    - titel: Udstyr <i>Equipment</i>
-      punkter:
-        - Rygsæk <i>Backpack</i> · Soverulle <i>Bedroll</i> · Reb <i>Rope</i>
-        - Fakler <i>Torch</i> [][][][][]
-        - Rationer <i>Rations</i> [][][][][]
-      tomme: 8
-    - titel: Særlige genstande
-      punkter: []
-      tomme: 5
-    - {titel: Penge <i>Coins</i>, type: penge}
-  hoejre:
-    - {titel: Kampagne og mission, punkter: [], tomme: 16}
-    - {titel: Steder, punkter: [], tomme: 8}
-    - {titel: Personer og væsner, punkter: [], tomme: 12}
+  layout:
+  - kolonner:
 
-# ── Side 4 · Baggrundsark ──
-baggrundsark:
-  ident:
-    - [Art, Menneske]
+    - bredde: 1
+      indhold:
+      - type: vaaben
+        punkter:
+        - Skriv våben her.
+        tomme: 3
+      - type: udstyr
+        punkter: []
+        tomme: 6
+      - type: penge
+
+    - bredde: 1
+      indhold:
+      - type: tilstande
+      - type: kampagne
+        punkter: []
+        tomme: 10
+
+# ── Side 4 · Baggrund ──
+- top:
+    ident:
+    - [Art, Human]
     - [Baggrund, Soldier]
-  venstre:
-    - titel: Udseende <i>Appearance</i>
-      type: fakta                     # fakta = liste af [etiket, værdi]
-      felter: [[Alder, ''], [Højde, ''], [Vægt, ''], [Øjne, ''], [Hår, ''], [Tøj, '']]
-    - titel: Historie <i>Backstory</i>
-      type: tekst                     # tekst = afsnit
-      afsnit:
-        - Første afsnit af historien.
-        - Andet afsnit.
-      tomme: 3
-    - {titel: Træning og valg <i>Proficiencies</i>, type: traening}   # bygges automatisk fra karakterdata
-  hoejre:
-    - {titel: Personlighed, punkter: [Modig, Stædig], tomme: 2}
-    - {titel: Familie og venner, punkter: [], tomme: 4}
-    - {titel: Fjender og rivaler, punkter: [], tomme: 5}
-    - {titel: Mål og drømme, punkter: [], tomme: 4}
-    - {titel: Hemmeligheder, punkter: [], tomme: 5}
+  layout:
+  - kolonner:
+
+    - bredde: 1
+      indhold:
+      - type: udseende
+        felter:
+        - [Alder, '']
+        - [Højde, '']
+      - type: historie
+        afsnit:
+        - Skriv baggrundshistorie her.
+      - type: traening
+
+    - bredde: 1
+      indhold:
+      - type: personlighed
+        punkter: []
+        tomme: 4
+      - type: familie
+        punkter: []
+        tomme: 4
