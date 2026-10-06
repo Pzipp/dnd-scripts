@@ -537,11 +537,12 @@ def layout_node(node, v, env, flat=False):
     if "kolonner" in node:
         cols = []
         for k in node["kolonner"]:
-            samlet = bool(k.get("samlet")) and not flat
+            samlet = bool(k.get("samlet"))
             inner = layout_stack(k.get("indhold", []), v, env, flat or samlet)
             if samlet:
                 tæt = " taet" if k.get("samlet") == "tæt" else ""
-                inner = f'<div class="box samlet{tæt}" data-type="samlet">{inner}</div>'
+                ramme = "" if flat else " box"          # uden ramme (bokstype: none) beholdes skriftindstillingen
+                inner = f'<div class="samlet{ramme}{tæt}" data-type="samlet">{inner}</div>'
             cols.append(f'<div class="kol" style="--bredde:{k.get("bredde", 1)}">{inner}</div>')
         return f'<div class="kolonner">{"".join(cols)}</div>'
     if "raekker" in node:
@@ -552,7 +553,7 @@ def layout_node(node, v, env, flat=False):
     reg = REGISTRY[typ]
     data = node if reg["titel"] is None else {"titel": reg["titel"], **node}
     inner = reg["fn"](data, v, env)
-    if not inner or flat or not reg["card"]:
+    if not inner or flat or node.get("bokstype") == "none" or not reg["card"]:
         return inner
     cls = "box small" if reg["small"] else "box"
     return f'<div class="{cls}" data-type="{typ}">{inner}</div>'
@@ -570,7 +571,8 @@ def page(p, v, env):
         head = (f'<header class="head"><div class="name"><h1>{top.get("titel", v["navn"])}</h1>'
                 f'<span class="epithet">{top.get("undertitel", "")}</span></div>'
                 f'{ident(top.get("ident", v.get("ident", [])))}</header>')
-    body = f'<div class="layout">{layout_stack(p.get("layout", []), v, env)}</div>'
+    uden_ramme = p.get("bokstype") == "none"   # bokstype: none på en side fjerner rammerne på alle bokse på siden
+    body = f'<div class="layout">{layout_stack(p.get("layout", []), v, env, uden_ramme)}</div>'
     foot = f'<div class="foot">{p.get("foot", "")}</div>' if p.get("foot") else ""
     marg = {"small": " margin-small", "none": " margin-none"}.get(p.get("margin"), "")
     return f'<section class="pg s1{marg}"><div class="page">{head}{body}{foot}</div></section>'
