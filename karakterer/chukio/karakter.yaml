@@ -1,189 +1,328 @@
-# Chukio karakterark (D&D 2024).
-# Felt-reference: docs/karakterark-yaml.md · kommenteret skabelon: karakterer/_skabelon/karakter.yaml
-# Lav ark:  python3 dnd.py karakterark chukio
-
-# Titel på HTML/PDF-filen.
 titel: Chukio karakterark
-
-# ── Fælles felter: gælder alle versioner (hver version kan overskrive dem) ──
 faelles:
   navn: Chukio
   ident:
-  - [Klasse, Fighter 2]
-  - [Art, Menneske <i>(Medium)</i>]
-  - [Baggrund, Soldier <i>(Fortrop)</i>]
+  - - Klasse
+    - Fighter 2
+  - - Art
+    - Menneske <i>(Medium)</i>
+  - - Baggrund
+    - Soldier <i>(Fortrop)</i>
   pb: 2
   fart: 30
   hit_die: 10
-  saves: [STR, CON]
-  skills: [Athletics, Intimidation, Perception, Survival, Stealth]
+  saves:
+  - STR
+  - CON
+  skills:
+  - Athletics
+  - Intimidation
+  - Perception
+  - Survival
+  - Stealth
   vaerktoej:
-    WIS: [Spil-sæt <i>Gaming Set</i>]
+    WIS:
+    - Spil-sæt <i>Gaming Set</i>
   kan_bruge:
     Rustning: Light, Medium, Heavy, Shield
     Våben: Simple, Martial
     Værktøj: Gaming Set
   masteries:
-  - [Nick, Sabel <i>Scimitar</i>]
-  - [Graze, Great sword]
-  - [Slow, Slangebøsse]
-  feats: [Savage Attacker (fra Soldier), 'Alert (menneske, <i>Versatile</i>)']
-  passiv:
-  - [Perception, '{10+WIS+PB}']
-  - [Insight, '{10+WIS}']
-  - [Investigation, '{10+INT}']
-  regler:
-  - titel: Særlige kort
-    undertitel: se de separate kort
-    punkter:
-    - <b>Heldkrystallen</b> [][][] · 3 ladninger pr. Long Rest.
-  bonus:
-  - {navn: Second Wind, tekst: Hel dig selv 1d10 + 2 HP.}
-  ture:
-  - undertitel: nærkamp
-    titel: To sabler
-    punkter:
-    - '<b>Attack</b>: sabel. Samme handling: ekstraangreb med den anden sabel via <b>Nick</b> (bruger ikke din <em>Bonus Action</em>).'
-    - '<b>Two-Weapon Fighting</b>: også det ekstra angreb får din modifier på skaden.'
-    - '<b>Savage Attacker</b>: én gang pr. tur, slå skaden to gange og brug den bedste.'
-
-# ── Side 1 · Karakterark: én side pr. version ──
-versioner:
-- evner: {STR: 15, DEX: 15, CON: 12, INT: 14, WIS: 16, CHA: 18}
+  - - Nick
+    - Sabel <i>Scimitar</i>
+  - - Graze
+    - Great sword
+  - - Slow
+    - Slangebøsse
+  feats:
+  - Savage Attacker (fra Soldier)
+  - Alert (menneske, <i>Versatile</i>)
+  evner:
+    STR: 15
+    DEX: 15
+    CON: 12
+    INT: 14
+    WIS: 16
+    CHA: 18
   sprog: Common, elvisk, Sylvan <em>(entisk)</em>
-  stats:
-  - [<em>AC</em>, '{10+DEX}', 10 + DEX · ingen rustning]
-  - [Max HP, '18', 10+CON + 6+CON]
-  - [<em>Hit Dice</em>, 2d10, 1 d10 pr. level]
-  - [Initiativ, '{+DEX+PB}', d20 + DEX + PB (Alert)]
-  - [Fart · <em>Speed</em>, '30', 'Dash: 60']
-  - [<em>Prof. bonus</em>, '{+PB}', level 1–4]
-  - [Passiv <em>Perc.</em>, '{10+WIS+PB}']
-  - [<em>Second Wind</em>, 1d10+2, 1d10 + level]
-  angreb:
-  - [Sabel ×2 <em>Scimitar</em>, '{+STR+PB}', '1d6{+STR} Slashing', '<b>Nick</b> · Light, Finesse']
-  - [Tohåndssværd <em>Greatsword</em>, '{+STR+PB}', '2d6{+STR} Slashing', <b>Graze</b> · to hænder]
-  - [Dolk <em>Dagger</em>, '{+STR+PB}', '1d4{+STR} Piercing', kast 20/60 ft]
-  - [Slangebøsse <em>Sling</em>, '{+DEX+PB}', '1d4{+DEX} Bludgeoning', <b>Slow</b> · 30/120 ft]
-  - [Ubevæbnet <em>Unarmed Strike</em>, '{+STR+PB}', '{1+STR} Bludgeoning', '']
-  traek:
-  - navn: Second Wind [][]
-    tag: Long Rest
-    tekst: 'Bonus Action: hel 1d10+2 HP. 2 brug: 1 kommer igen ved kort hvil, alle ved Long Rest.'
-  - {navn: 'Action Surge []', tag: kort hvil, tekst: 1 ekstra handling på din tur.}
-  - navn: Tactical Mind
-    tekst: Fejler du et evnetjek, kan du bruge Second Wind til at lægge 1d10 til. Fejler det stadig, er Second Wind ikke brugt.
-  - navn: Two-Weapon Fighting
-    tag: Fighting Style
-    tekst: Det ekstra angreb med et Light-våben får din modifier på skaden.
-  - navn: Savage Attacker
-    tag: Feat
-    tekst: '1 gang pr. tur, når du rammer med et våben: slå skaden to gange og brug den bedste.'
-  - navn: Alert
-    tag: Feat
-    tekst: +PB på initiativ (regnet med). Efter initiativ kan du bytte plads med en villig allieret.
-  - navn: Resourceful
-    tag: Menneske
-    tekst: 'Heroic Inspiration efter hvert Long Rest: slå en d20 om.'
-  fod: 'Rettet efter reglerne: STR-modifier følger scoren (+2), CHA er 18 (højeste terningslag), AC 10 + DEX uden rustning. D&amp;D 2024 · PHB 2024 kap. 3–4.'
-
-# ── Side 2 · Handlingsark ──
-handlingsark:
-  vaerktoej:
-  - {navn: Spil-sæt, evne: WIS, brug: 'Spille, snyde i spil'}
-  ekstra:
-  - titel: Menneske og Fighter
-    punkter:
-    - '<b>Resourceful</b>: Heroic Inspiration efter hvert Long Rest.'
-    - '<b>Action Surge</b>: én ekstra handling på din tur (kort hvil). <b>Second Wind</b>: Bonus Action, hel 1d10+2.'
-
-# ── Side 3 · Udstyrsark ──
-udstyrsark:
-  ident:
-  - [Gælder, begge ark]
-  - [Opdateres, Løbende i spillet]
-  venstre:
-  - titel: Våben <i>Weapons</i>
-    punkter:
-    - 'Dual sværd: 2 sabler <i>Scimitar</i>'
-    - Tohåndssværd <i>Greatsword</i>
-    - Dolk <i>Dagger</i>
-    - Slangebøsse <i>Sling</i> + sten
-    tomme: 2
-  - titel: Udstyr <i>Equipment</i>
-    punkter:
-    - Reb <i>Rope</i> · 25 ft, med gribekrog
-    - Sovegrej <i>Bedroll</i>
-    - Førstehjælpssæt <i>Healer's Kit</i> · healing til små sår
-    - Kogegrej <i>Cook's Utensils</i> til opvarmning af rationer
-    - Kort over skoven
-    tomme: 6
-  - titel: Forbrug
-    punkter:
-    - Rationer <i>Rations</i> (4 = 3 dage) [][][][][][]
-    - Gule æblestykker <i>Hjemmelavet</i> · 1/3 æble = heling som et kort hvil [][]
-    tomme: 2
-  - {titel: Penge <i>Coins</i>, type: penge}
-  hoejre:
-  - titel: Særlige genstande
-    punkter:
-    - <b>Heldkrystallen</b> <i>Hjemmelavet</i> · se kortet
-    - <b>Søsterring</b> <i>Hjemmelavet</i> · viser hvor jeg er (?)
-    - <b>Medaljon</b> · alle orker ser os som venner
-    - <b>Medaljon</b> · viser vi den i Nordland, er vi velkomne
-    - <b>Medaljon</b> med egeskjold og soldater på
-    - <b>Hvid krystal</b> med symboler
-    - <b>Dråbe morgendug</b> · lyser i mørke, tørrer aldrig og fordamper ikke
-    - <b>Skriftrulle</b>, som vi ikke kan læse
-    tomme: 2
-  - titel: Kampagne og mission
-    punkter:
-    - Krigen har varet i 2 måneder
-    - '"Rock" i nærheden er fanget (?)'
-    - Drager
-    - 'Skoven nord for floden: <b>Den levende skov</b>. Stien ændrer sig.'
-    tomme: 9
-  - titel: Steder
-    punkter: []
-    tomme: 6
-  - titel: Personer og væsner
-    punkter: []
-    tomme: 8
-
-# ── Side 4 · Baggrundsark ──
-baggrundsark:
-  ident:
-  - [Art, Menneske]
-  - [Baggrund, Soldier]
-  - [Fra, Landet af sand]
-  venstre:
-  - titel: Udseende <i>Appearance</i>
-    type: fakta
+sider:
+- margin: small
+  top: {}
+  layout:
+  - type: stats
     felter:
-    - [Alder, '']
-    - [Højde, '']
-    - [Vægt, '']
-    - [Øjne, '']
-    - [Hår, '']
-    - [Hud, '']
-  - titel: Historie <i>Backstory</i>
-    type: tekst
-    afsnit: [Kommer fra <b>landet af sand</b>. Gik i hærens fortrop.]
-    tomme: 8
-  - {titel: Træning og valg <i>Proficiencies</i>, type: traening}
-  hoejre:
-  - titel: Personlighed
-    punkter: []
-    tomme: 4
-  - titel: Familie og venner
-    punkter: []
-    tomme: 5
-  - titel: Fjender og rivaler
-    punkter: []
-    tomme: 5
-  - titel: Mål og drømme
-    punkter: []
-    tomme: 5
-  - titel: Hemmeligheder
-    punkter: []
-    tomme: 5
+    - - <em>AC</em>
+      - '{10+DEX}'
+      - 10 + DEX · ingen rustning
+    - - Max HP
+      - '18'
+      - 10+CON + 6+CON
+    - - <em>Hit Dice</em>
+      - 2d10
+      - 1 d10 pr. level
+    - - Initiativ
+      - '{+DEX+PB}'
+      - d20 + DEX + PB (Alert)
+    - - Fart · <em>Speed</em>
+      - '30'
+      - 'Dash: 60'
+    - - <em>Prof. bonus</em>
+      - '{+PB}'
+      - level 1–4
+    - - Passiv <em>Perc.</em>
+      - '{10+WIS+PB}'
+    - - <em>Second Wind</em>
+      - 1d10+2
+      - 1d10 + level
+  - kolonner:
+    - bredde: 52
+      indhold:
+      - type: evner
+      - type: passiv
+        titel: Passive sanser
+        punkter:
+        - - Perception
+          - '{10+WIS+PB}'
+        - - Insight
+          - '{10+WIS}'
+        - - Investigation
+          - '{10+INT}'
+      - type: sprog
+        titel: Sprog <em>Languages</em>
+        tekst: Common, elvisk, Sylvan <em>(entisk)</em>
+    - bredde: 140
+      indhold:
+      - type: angreb
+        titel: Angreb <em>· Attacks</em>
+        angreb:
+        - - Sabel ×2 <em>Scimitar</em>
+          - '{+STR+PB}'
+          - 1d6{+STR} Slashing
+          - <b>Nick</b> · Light, Finesse
+        - - Tohåndssværd <em>Greatsword</em>
+          - '{+STR+PB}'
+          - 2d6{+STR} Slashing
+          - <b>Graze</b> · to hænder
+        - - Dolk <em>Dagger</em>
+          - '{+STR+PB}'
+          - 1d4{+STR} Piercing
+          - kast 20/60 ft
+        - - Slangebøsse <em>Sling</em>
+          - '{+DEX+PB}'
+          - 1d4{+DEX} Bludgeoning
+          - <b>Slow</b> · 30/120 ft
+        - - Ubevæbnet <em>Unarmed Strike</em>
+          - '{+STR+PB}'
+          - '{1+STR} Bludgeoning'
+          - ''
+      - type: regler
+        titel: Særlige kort
+        undertitel: se de separate kort
+        punkter:
+        - <b>Heldkrystallen</b> [][][] · 3 ladninger pr. Long Rest.
+      - kolonner:
+        - bredde: 1
+          indhold:
+          - type: traek
+            titel: Evner &amp; træk <em>· Features</em>
+            punkter:
+            - navn: Second Wind [][]
+              tag: Long Rest
+              tekst: 'Bonus Action: hel 1d10+2 HP. 2 brug: 1 kommer igen ved kort hvil, alle ved Long Rest.'
+            - navn: Action Surge []
+              tag: kort hvil
+              tekst: 1 ekstra handling på din tur.
+            - navn: Tactical Mind
+              tekst: Fejler du et evnetjek, kan du bruge Second Wind til at lægge 1d10 til. Fejler det stadig, er Second Wind ikke brugt.
+            - navn: Two-Weapon Fighting
+              tag: Fighting Style
+              tekst: Det ekstra angreb med et Light-våben får din modifier på skaden.
+            - navn: Savage Attacker
+              tag: Feat
+              tekst: '1 gang pr. tur, når du rammer med et våben: slå skaden to gange og brug den bedste.'
+            - navn: Alert
+              tag: Feat
+              tekst: +PB på initiativ (regnet med). Efter initiativ kan du bytte plads med en villig allieret.
+            - navn: Resourceful
+              tag: Menneske
+              tekst: 'Heroic Inspiration efter hvert Long Rest: slå en d20 om.'
+        - bredde: 1
+          indhold:
+          - type: bonus
+            titel: Bonus actions
+            punkter:
+            - navn: Second Wind
+              tekst: Hel dig selv 1d10 + 2 HP.
+          - type: tur
+            undertitel: nærkamp
+            titel: To sabler
+            punkter:
+            - '<b>Attack</b>: sabel. Samme handling: ekstraangreb med den anden sabel via <b>Nick</b> (bruger ikke din <em>Bonus Action</em>).'
+            - '<b>Two-Weapon Fighting</b>: også det ekstra angreb får din modifier på skaden.'
+            - '<b>Savage Attacker</b>: én gang pr. tur, slå skaden to gange og brug den bedste.'
+  foot: 'Rettet efter reglerne: STR-modifier følger scoren (+2), CHA er 18 (højeste terningslag), AC 10 + DEX uden rustning. D&amp;D 2024 · PHB 2024 kap. 3–4.'
+- margin: small
+  top:
+    undertitel: Hvad kan jeg gøre?
+    ident:
+    - - Slag
+      - d20 + tallet
+    - - Fordel
+      - 2 d20, tag højeste
+    - - Ulempe
+      - 2 d20, tag laveste
+  layout:
+  - type: handlinger
+    bonus: {}
+  - kolonner:
+    - bredde: 1
+      indhold:
+      - type: ubevaebnet
+      - type: bevaegelse
+      - type: ekstra
+        titel: Menneske og Fighter
+        punkter:
+        - '<b>Resourceful</b>: Heroic Inspiration efter hvert Long Rest.'
+        - '<b>Action Surge</b>: én ekstra handling på din tur (kort hvil). <b>Second Wind</b>: Bonus Action, hel 1d10+2.'
+      - type: livsredning
+      - type: mastery
+      - type: nyttige
+      samlet: tæt
+    - bredde: 1.25
+      indhold:
+      - type: situationer
+        vaerktoej:
+        - navn: Spil-sæt
+          evne: WIS
+          brug: Spille, snyde i spil
+      - type: tilstande
+      samlet: tæt
+  foot: 'Chukio · Handlinger og slag · Kilde: Player''s Handbook 2024 · kap. 1 (handlinger), kap. 6 (Weapon Mastery) og Rules Glossary'
+  bokstype: none
+- margin: small
+  top:
+    undertitel: Udstyr
+    ident:
+    - - Gælder
+      - begge ark
+    - - Opdateres
+      - Løbende i spillet
+  layout:
+  - kolonner:
+    - bredde: 1
+      indhold:
+      - type: liste
+        titel: Våben <i>Weapons</i>
+        punkter:
+        - 'Dual sværd: 2 sabler <i>Scimitar</i>'
+        - Tohåndssværd <i>Greatsword</i>
+        - Dolk <i>Dagger</i>
+        - Slangebøsse <i>Sling</i> + sten
+        tomme: 2
+      - type: liste
+        titel: Udstyr <i>Equipment</i>
+        punkter:
+        - Reb <i>Rope</i> · 25 ft, med gribekrog
+        - Sovegrej <i>Bedroll</i>
+        - Førstehjælpssæt <i>Healer's Kit</i> · healing til små sår
+        - Kogegrej <i>Cook's Utensils</i> til opvarmning af rationer
+        - Kort over skoven
+        tomme: 6
+      - type: liste
+        titel: Forbrug
+        punkter:
+        - Rationer <i>Rations</i> (4 = 3 dage) [][][][][][]
+        - Gule æblestykker <i>Hjemmelavet</i> · 1/3 æble = heling som et kort hvil [][]
+        tomme: 2
+      - type: penge
+        titel: Penge <i>Coins</i>
+    - bredde: 1
+      indhold:
+      - type: sarlige
+        titel: Særlige genstande
+        punkter:
+        - <b>Heldkrystallen</b> <i>Hjemmelavet</i> · se kortet
+        - <b>Søsterring</b> <i>Hjemmelavet</i> · viser hvor jeg er (?)
+        - <b>Medaljon</b> · alle orker ser os som venner
+        - <b>Medaljon</b> · viser vi den i Nordland, er vi velkomne
+        - <b>Medaljon</b> med egeskjold og soldater på
+        - <b>Hvid krystal</b> med symboler
+        - <b>Dråbe morgendug</b> · lyser i mørke, tørrer aldrig og fordamper ikke
+        - <b>Skriftrulle</b>, som vi ikke kan læse
+        tomme: 2
+      - type: kampagne
+        titel: Kampagne og mission
+        punkter:
+        - Krigen har varet i 2 måneder
+        - '"Rock" i nærheden er fanget (?)'
+        - Drager
+        - 'Skoven nord for floden: <b>Den levende skov</b>. Stien ændrer sig.'
+        tomme: 9
+      - type: steder
+        titel: Steder
+        punkter: []
+        tomme: 6
+      - type: personer
+        titel: Personer og væsner
+        punkter: []
+        tomme: 8
+  foot: Chukio · Udstyr
+- margin: small
+  top:
+    undertitel: Baggrund og personlighed
+    ident:
+    - - Art
+      - Menneske
+    - - Baggrund
+      - Soldier
+    - - Fra
+      - Landet af sand
+  layout:
+  - kolonner:
+    - bredde: 1
+      indhold:
+      - type: udseende
+        titel: Udseende <i>Appearance</i>
+        felter:
+        - - Alder
+          - ''
+        - - Højde
+          - ''
+        - - Vægt
+          - ''
+        - - Øjne
+          - ''
+        - - Hår
+          - ''
+        - - Hud
+          - ''
+      - type: historie
+        titel: Historie <i>Backstory</i>
+        afsnit:
+        - Kommer fra <b>landet af sand</b>. Gik i hærens fortrop.
+        tomme: 8
+      - type: traening
+        titel: Træning og valg <i>Proficiencies</i>
+    - bredde: 1
+      indhold:
+      - type: personlighed
+        titel: Personlighed
+        punkter: []
+        tomme: 4
+      - type: familie
+        titel: Familie og venner
+        punkter: []
+        tomme: 5
+      - type: fjender
+        titel: Fjender og rivaler
+        punkter: []
+        tomme: 5
+      - type: maal
+        titel: Mål og drømme
+        punkter: []
+        tomme: 5
+      - type: hemmeligheder
+        titel: Hemmeligheder
+        punkter: []
+        tomme: 5
+  foot: Chukio · Baggrund og personlighed

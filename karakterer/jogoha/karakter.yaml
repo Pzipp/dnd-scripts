@@ -1,153 +1,318 @@
-# Jogoha karakterark (D&D 2024).
-# Felt-reference: docs/karakterark-yaml.md · kommenteret skabelon: karakterer/_skabelon/karakter.yaml
-# Lav ark:  python3 dnd.py karakterark jogoha
-
 titel: Jogoha karakterark
-
-# ── Fælles felter: gælder alle versioner ──
 faelles:
   navn: Jogoha
   ident:
-  - [Klasse, Rogue 3 · Thief]
-  - [Art, Halfling]
-  - [Baggrund, Criminal]
+  - - Klasse
+    - Rogue 3 · Thief
+  - - Art
+    - Halfling
+  - - Baggrund
+    - Criminal
   pb: 2
   fart: 30
   hit_die: 8
-  saves: [DEX, INT]
-  skills: [Acrobatics, Deception, Investigation, Perception, Sleight of Hand, Stealth]
-  expertise: [Sleight of Hand, Stealth]
+  saves:
+  - DEX
+  - INT
+  skills:
+  - Acrobatics
+  - Deception
+  - Investigation
+  - Perception
+  - Sleight of Hand
+  - Stealth
+  expertise:
+  - Sleight of Hand
+  - Stealth
   vaerktoej:
-    DEX: ["Thieves' Tools"]
+    DEX:
+    - Thieves' Tools
   sprog: Common og Halfling
   kan_bruge:
     Rustning: Light armor
     Våben: Simple, Martial med Finesse eller Light
-    Værktøj: "Thieves' Tools, Gaming Set (Dice)"
+    Værktøj: Thieves' Tools, Gaming Set (Dice)
   masteries:
-  - [Vex, Shortsword]
-  - [Nick, Dagger]
+  - - Vex
+    - Shortsword
+  - - Nick
+    - Dagger
   feats:
   - 'Alert fra Criminal: +PB til initiativ, kan ikke overraskes, angreb fra usete fjender får ikke Advantage'
-  passiv:
-  - [Perception, '{10+WIS+PB}']
-  - [Insight, '{10+WIS}']
-  - [Investigation, '{10+INT+PB}']
-  fod: D&amp;D 2024 · PHB 2024 kap. 3 (Rogue, Thief), kap. 4 (Halfling, Criminal og Alert)
-
-# ── Side 1 · Karakterark ──
-versioner:
-- version: Version A · level 3
-  evner: {STR: 8, DEX: 17, CON: 14, INT: 14, WIS: 12, CHA: 10}
-  stats:
-  - [<em>AC</em>, '{11+DEX}', Leather Armor]
-  - [Max HP, '24', 8+CON + 2×(5+CON)]
-  - [<em>Hit Dice</em>, 3d8, 1 d8 pr. level]
-  - [<em>Initiative</em>, '{+DEX+PB}', DEX + Alert]
-  - [<em>Speed</em>, '30', 'Dash: 60']
-  - [<em>Proficiency Bonus</em>, '{+PB}', level 1–4]
-  - [Passive <em>Perception</em>, '{10+WIS+PB}']
-  - [<em>Sneak Attack</em>, 2d6, 1 gang pr. tur]
-
-  angreb:
-  - [Kortsværd <em>Shortsword</em>, '{+DEX+PB}', '1d6{+DEX} Piercing', '<b>Vex</b> · Finesse, Light']
-  - [Dolk <em>Dagger</em>, '{+DEX+PB}', '1d4{+DEX} Piercing', '<b>Nick</b> · kast 20/60 ft']
-  - [Ubevæbnet <em>Unarmed Strike</em>, '{+STR+PB}', '{1+STR} Bludgeoning', '']
-
-  traek:
-  - {navn: Expertise, tekst: 'Sleight of Hand og Stealth (dobbelt bonus).'}
-  - {navn: Sneak Attack, tag: 1 gang pr. tur, tekst: '2d6 ekstra skade med Finesse- eller afstandsvåben, når du har Advantage, eller når en ven er inden for 5 ft af målet (og du ikke har Disadvantage).'}
-  - {navn: Thieves' Cant, tekst: 'Hemmeligt tyve-sprog, som kan skjule beskeder i almindelig tale.'}
-  - {navn: Weapon Mastery, tekst: 'Shortsword (Vex) og Dagger (Nick). Kan byttes ved Long Rest.'}
-  - {navn: Cunning Action, tekst: 'Bonus Action: Dash, Disengage eller Hide.'}
-  - {navn: Steady Aim, tekst: 'Bonus Action: Advantage på næste angreb i turen. Din bevægelse er 0 den tur.'}
-  - {navn: Thief · Fast Hands, tekst: 'Bonus Action: Sleight of Hand til lås, fælde eller lommetyveri. Eller Utilize-handling, eller Magic-handling med magisk genstand.'}
-  - {navn: Thief · Second-Story Work, tekst: 'Klatrefart lig med din fart. Spring-længde ud fra DEX.'}
-  - {navn: Brave, tekst: 'Advantage på saves mod at blive eller forblive Frightened.'}
-  - {navn: Halfling Nimbleness, tekst: 'Du kan bevæge dig gennem væsners plads, der er én størrelse større end dig.'}
-  - {navn: Luck, tekst: 'Slår du en 1 på d20, må du slå om og bruge det nye resultat.'}
-  - {navn: Naturally Stealthy, tekst: 'Hide-handling, selv når du kun er skjult af et væsen mindst én størrelse større.'}
-
-  bonus:
-  - {navn: Cunning Action, tekst: 'Dash, Disengage eller Hide.'}
-  - {navn: Fast Hands, tekst: 'Sleight of Hand til lås, fælde eller lommetyveri.'}
-  - {navn: Steady Aim, tekst: 'Advantage på næste angreb. Bevægelse 0 denne tur.'}
-
-  ture:
-  - undertitel: nærkamp
-    titel: SNIG OG STIK!
-    punkter:
-    - '<b>Steady Aim</b> (Bonus Action) hvis du har et sikkert mål.'
-    - '<b>Attack</b>: Shortsword, d20{+DEX+PB}. Rammer du: 1d6{+DEX} + Sneak Attack 2d6.'
-    - '<b>Nick</b>: Dagger som ekstra angreb (ingen Bonus Action).'
-  - undertitel: skjult
-    titel: USET
-    punkter:
-    - '<b>Hide</b> (Bonus Action via Cunning Action).'
-    - Næste tur: Attack med Advantage og Sneak Attack.
-
-  fod: D&amp;D 2024 · PHB 2024 kap. 3 (Rogue, Thief), kap. 4 (Halfling, Criminal, Alert).
-
-# ── Side 2 · Handlingsark ──
-handlingsark:
-  bonus_handlinger: {Dash: Cunning Action, Disengage: Cunning Action, Hide: Cunning Action}
-  vaerktoej:
-  - {navn: "Thieves' Tools", evne: DEX, brug: 'Lås, fælder, lommetyveri (Fast Hands)'}
-  ekstra:
-  - titel: Thief
-    punkter:
-    - '<b>Fast Hands</b> (Bonus Action): Sleight of Hand til lås, fælder eller lommetyveri.'
-    - '<b>Second-Story Work</b>: Klatrefart lig med din fart. Spring-længde ud fra DEX.'
-    - '<b>Steady Aim</b> (Bonus Action): Advantage på næste angreb. Bevægelse 0 denne tur.'
-
-# ── Side 3 · Udstyrsark ──
-udstyrsark:
-  ident:
-  - [Klasse, Rogue 3 · Thief]
-  - [Opdateres, Løbende i spillet]
-  venstre:
-  - titel: Våben <i>Weapons</i>
-    punkter:
-    - Kortsværd <i>Shortsword</i> · 1d6 Piercing · <i>Vex</i>
-    - Dolk <i>Dagger</i> · 1d4 Piercing · <i>Nick</i> · kast 20/60 ft
-    tomme: 2
-  - titel: Udstyr <i>Equipment</i>
-    punkter:
-    - Læderrustning <i>Leather Armor</i> · AC 11 + DEX
-    - Tyvenes værktøj <i>Thieves' Tools</i> [][]
-    - Spilleterninger <i>Gaming Set (Dice)</i>
-    - Rygsæk <i>Backpack</i> · Reb <i>Rope</i> · 50 ft
-    - Fakler <i>Torch</i> [][][][][]
-    - Rationer <i>Rations</i> [][][]
-    tomme: 8
-  - titel: Særlige genstande
-    punkter: []
-    tomme: 5
-  - {titel: Penge <i>Coins</i>, type: penge}
-  hoejre:
-  - {titel: Kampagne og mission, punkter: [], tomme: 16}
-  - {titel: Steder, punkter: [], tomme: 8}
-  - {titel: Personer og væsner, punkter: [], tomme: 12}
-
-# ── Side 4 · Baggrundsark ──
-baggrundsark:
-  ident:
-  - [Art, Halfling]
-  - [Baggrund, Criminal]
-  venstre:
-  - titel: Udseende <i>Appearance</i>
-    type: fakta
-    felter: [[Alder, ''], [Højde, ''], [Vægt, ''], [Øjne, ''], [Hår, ''], [Tøj, '']]
-  - titel: Historie <i>Backstory</i>
-    type: tekst
-    afsnit:
-    - Jogoha voksede op i havnekvarteret, hvor man lærer at se, hvem der har penge i lommen, før de selv gør det.
-    - Hun har aldrig ment at stjæle fra folk, der ikke kan undvære det. Derfor fik hun et ry for at være den, man kan gå til, når noget skal væk fra en fed kasse.
-    tomme: 3
-  - {titel: Træning og valg <i>Proficiencies</i>, type: traening}
-  hoejre:
-  - {titel: Personlighed, punkter: [Lun, Nysgerrig], tomme: 2}
-  - {titel: Familie og venner, punkter: [], tomme: 4}
-  - {titel: Fjender og rivaler, punkter: [], tomme: 5}
-  - {titel: Mål og drømme, punkter: [], tomme: 4}
-  - {titel: Hemmeligheder, punkter: [], tomme: 5}
+  evner:
+    STR: 8
+    DEX: 17
+    CON: 14
+    INT: 14
+    WIS: 12
+    CHA: 10
+sider:
+- margin: small
+  top:
+    undertitel: Version A · level 3
+  layout:
+  - type: stats
+    felter:
+    - - <em>AC</em>
+      - '{11+DEX}'
+      - Leather Armor
+    - - Max HP
+      - '24'
+      - 8+CON + 2×(5+CON)
+    - - <em>Hit Dice</em>
+      - 3d8
+      - 1 d8 pr. level
+    - - <em>Initiative</em>
+      - '{+DEX+PB}'
+      - DEX + Alert
+    - - <em>Speed</em>
+      - '30'
+      - 'Dash: 60'
+    - - <em>Proficiency Bonus</em>
+      - '{+PB}'
+      - level 1–4
+    - - Passive <em>Perception</em>
+      - '{10+WIS+PB}'
+    - - <em>Sneak Attack</em>
+      - 2d6
+      - 1 gang pr. tur
+  - kolonner:
+    - bredde: 52
+      indhold:
+      - type: evner
+      - type: passiv
+        titel: Passive sanser
+        punkter:
+        - - Perception
+          - '{10+WIS+PB}'
+        - - Insight
+          - '{10+WIS}'
+        - - Investigation
+          - '{10+INT+PB}'
+      - type: sprog
+        titel: Sprog <em>Languages</em>
+        tekst: Common og Halfling
+    - bredde: 140
+      indhold:
+      - type: angreb
+        titel: Angreb <em>· Attacks</em>
+        angreb:
+        - - Kortsværd <em>Shortsword</em>
+          - '{+DEX+PB}'
+          - 1d6{+DEX} Piercing
+          - <b>Vex</b> · Finesse, Light
+        - - Dolk <em>Dagger</em>
+          - '{+DEX+PB}'
+          - 1d4{+DEX} Piercing
+          - <b>Nick</b> · kast 20/60 ft
+        - - Ubevæbnet <em>Unarmed Strike</em>
+          - '{+STR+PB}'
+          - '{1+STR} Bludgeoning'
+          - ''
+      - kolonner:
+        - bredde: 1
+          indhold:
+          - type: traek
+            titel: Evner &amp; træk <em>· Features</em>
+            punkter:
+            - navn: Expertise
+              tekst: Sleight of Hand og Stealth (dobbelt bonus).
+            - navn: Sneak Attack
+              tag: 1 gang pr. tur
+              tekst: 2d6 ekstra skade med Finesse- eller afstandsvåben, når du har Advantage, eller når en ven er inden for 5 ft af målet (og du ikke har Disadvantage).
+            - navn: Thieves' Cant
+              tekst: Hemmeligt tyve-sprog, som kan skjule beskeder i almindelig tale.
+            - navn: Weapon Mastery
+              tekst: Shortsword (Vex) og Dagger (Nick). Kan byttes ved Long Rest.
+            - navn: Cunning Action
+              tekst: 'Bonus Action: Dash, Disengage eller Hide.'
+            - navn: Steady Aim
+              tekst: 'Bonus Action: Advantage på næste angreb i turen. Din bevægelse er 0 den tur.'
+            - navn: Thief · Fast Hands
+              tekst: 'Bonus Action: Sleight of Hand til lås, fælde eller lommetyveri. Eller Utilize-handling, eller Magic-handling med magisk genstand.'
+            - navn: Thief · Second-Story Work
+              tekst: Klatrefart lig med din fart. Spring-længde ud fra DEX.
+            - navn: Brave
+              tekst: Advantage på saves mod at blive eller forblive Frightened.
+            - navn: Halfling Nimbleness
+              tekst: Du kan bevæge dig gennem væsners plads, der er én størrelse større end dig.
+            - navn: Luck
+              tekst: Slår du en 1 på d20, må du slå om og bruge det nye resultat.
+            - navn: Naturally Stealthy
+              tekst: Hide-handling, selv når du kun er skjult af et væsen mindst én størrelse større.
+        - bredde: 1
+          indhold:
+          - type: bonus
+            titel: Bonus actions
+            punkter:
+            - navn: Cunning Action
+              tekst: Dash, Disengage eller Hide.
+            - navn: Fast Hands
+              tekst: Sleight of Hand til lås, fælde eller lommetyveri.
+            - navn: Steady Aim
+              tekst: Advantage på næste angreb. Bevægelse 0 denne tur.
+          - type: tur
+            undertitel: nærkamp
+            titel: SNIG OG STIK!
+            punkter:
+            - <b>Steady Aim</b> (Bonus Action) hvis du har et sikkert mål.
+            - '<b>Attack</b>: Shortsword, d20{+DEX+PB}. Rammer du: 1d6{+DEX} + Sneak Attack 2d6.'
+            - '<b>Nick</b>: Dagger som ekstra angreb (ingen Bonus Action).'
+          - type: tur
+            undertitel: skjult
+            titel: USET
+            punkter:
+            - <b>Hide</b> (Bonus Action via Cunning Action).
+            - Næste tur: Attack med Advantage og Sneak Attack.
+  foot: D&amp;D 2024 · PHB 2024 kap. 3 (Rogue, Thief), kap. 4 (Halfling, Criminal, Alert).
+- margin: small
+  top:
+    undertitel: Hvad kan jeg gøre?
+    ident:
+    - - Slag
+      - d20 + tallet
+    - - Fordel
+      - 2 d20, tag højeste
+    - - Ulempe
+      - 2 d20, tag laveste
+  layout:
+  - type: handlinger
+    bonus:
+      Dash: Cunning Action
+      Disengage: Cunning Action
+      Hide: Cunning Action
+  - kolonner:
+    - bredde: 1
+      indhold:
+      - type: ubevaebnet
+      - type: bevaegelse
+      - type: ekstra
+        titel: Thief
+        punkter:
+        - '<b>Fast Hands</b> (Bonus Action): Sleight of Hand til lås, fælder eller lommetyveri.'
+        - '<b>Second-Story Work</b>: Klatrefart lig med din fart. Spring-længde ud fra DEX.'
+        - '<b>Steady Aim</b> (Bonus Action): Advantage på næste angreb. Bevægelse 0 denne tur.'
+      - type: livsredning
+      - type: mastery
+      - type: nyttige
+      samlet: tæt
+    - bredde: 1.25
+      indhold:
+      - type: situationer
+        vaerktoej:
+        - navn: Thieves' Tools
+          evne: DEX
+          brug: Lås, fælder, lommetyveri (Fast Hands)
+      - type: tilstande
+      samlet: tæt
+  foot: 'Jogoha · Handlinger og slag · Kilde: Player''s Handbook 2024 · kap. 1 (handlinger), kap. 6 (Weapon Mastery) og Rules Glossary'
+  bokstype: none
+- margin: small
+  top:
+    undertitel: Udstyr
+    ident:
+    - - Klasse
+      - Rogue 3 · Thief
+    - - Opdateres
+      - Løbende i spillet
+  layout:
+  - kolonner:
+    - bredde: 1
+      indhold:
+      - type: liste
+        titel: Våben <i>Weapons</i>
+        punkter:
+        - Kortsværd <i>Shortsword</i> · 1d6 Piercing · <i>Vex</i>
+        - Dolk <i>Dagger</i> · 1d4 Piercing · <i>Nick</i> · kast 20/60 ft
+        tomme: 2
+      - type: liste
+        titel: Udstyr <i>Equipment</i>
+        punkter:
+        - Læderrustning <i>Leather Armor</i> · AC 11 + DEX
+        - Tyvenes værktøj <i>Thieves' Tools</i> [][]
+        - Spilleterninger <i>Gaming Set (Dice)</i>
+        - Rygsæk <i>Backpack</i> · Reb <i>Rope</i> · 50 ft
+        - Fakler <i>Torch</i> [][][][][]
+        - Rationer <i>Rations</i> [][][]
+        tomme: 8
+      - type: sarlige
+        titel: Særlige genstande
+        punkter: []
+        tomme: 5
+      - type: penge
+        titel: Penge <i>Coins</i>
+    - bredde: 1
+      indhold:
+      - type: kampagne
+        titel: Kampagne og mission
+        punkter: []
+        tomme: 16
+      - type: steder
+        titel: Steder
+        punkter: []
+        tomme: 8
+      - type: personer
+        titel: Personer og væsner
+        punkter: []
+        tomme: 12
+  foot: Jogoha · Udstyr
+- margin: small
+  top:
+    undertitel: Baggrund og personlighed
+    ident:
+    - - Art
+      - Halfling
+    - - Baggrund
+      - Criminal
+  layout:
+  - kolonner:
+    - bredde: 1
+      indhold:
+      - type: udseende
+        titel: Udseende <i>Appearance</i>
+        felter:
+        - - Alder
+          - ''
+        - - Højde
+          - ''
+        - - Vægt
+          - ''
+        - - Øjne
+          - ''
+        - - Hår
+          - ''
+        - - Tøj
+          - ''
+      - type: historie
+        titel: Historie <i>Backstory</i>
+        afsnit:
+        - Jogoha voksede op i havnekvarteret, hvor man lærer at se, hvem der har penge i lommen, før de selv gør det.
+        - Hun har aldrig ment at stjæle fra folk, der ikke kan undvære det. Derfor fik hun et ry for at være den, man kan gå til, når noget skal væk fra en fed kasse.
+        tomme: 3
+      - type: traening
+        titel: Træning og valg <i>Proficiencies</i>
+    - bredde: 1
+      indhold:
+      - type: personlighed
+        titel: Personlighed
+        punkter:
+        - Lun
+        - Nysgerrig
+        tomme: 2
+      - type: familie
+        titel: Familie og venner
+        punkter: []
+        tomme: 4
+      - type: fjender
+        titel: Fjender og rivaler
+        punkter: []
+        tomme: 5
+      - type: maal
+        titel: Mål og drømme
+        punkter: []
+        tomme: 4
+      - type: hemmeligheder
+        titel: Hemmeligheder
+        punkter: []
+        tomme: 5
+  foot: Jogoha · Baggrund og personlighed

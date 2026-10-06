@@ -1,174 +1,317 @@
-# Valak karakterark (D&D 2024).
-# Felt-reference: docs/karakterark-yaml.md · kommenteret skabelon: karakterer/_skabelon/karakter.yaml
-# Lav ark:  python3 dnd.py karakterark valak
-
-# Titel på HTML/PDF-filen.
 titel: Valak karakterark
-
-# ── Fælles felter: gælder alle versioner (hver version kan overskrive dem) ──
 faelles:
   navn: Valak
   ident:
-  - [Klasse, Warlock 2]
-  - [Art, 'Tiefling, Abyssal']
-  - [Baggrund, Acolyte]
-  - [Pagt, Enhjørning <i>Hjemmelavet</i>]
+  - - Klasse
+    - Warlock 2
+  - - Art
+    - Tiefling, Abyssal
+  - - Baggrund
+    - Acolyte
+  - - Pagt
+    - Enhjørning <i>Hjemmelavet</i>
   pb: 2
   fart: 30
   hit_die: 8
-  saves: [WIS, CHA]
-  skills: [Arcana, Insight, Intimidation, Religion]
+  saves:
+  - WIS
+  - CHA
+  skills:
+  - Arcana
+  - Insight
+  - Intimidation
+  - Religion
   vaerktoej:
-    DEX: [Calligrapher's Supplies]
+    DEX:
+    - Calligrapher's Supplies
   sprog: Common, Abyssal <em>(dæmon)</em>, Orc, Sylvan <em>(ent)</em>
   kan_bruge:
     Rustning: Light armor
     Våben: Simple weapons (orksværdet er ikke trænet)
     Værktøj: Calligrapher's Supplies
-  feats: ['Magic Initiate (Cleric) fra Acolyte: Guidance, Spare the Dying og Cure Wounds']
-  passiv:
-  - [Perception, '{10+WIS}']
-  - [Insight, '{10+WIS+PB}']
-  - [Investigation, '{10+INT}']
-  - [Mørkesyn <em>Darkvision</em>, 60 ft]
-  bonus:
-  - navn: Hex <em>1. grad</em>
-    tekst: Bonus Action, koncentration. +1d6 Necrotic-skade, hver gang du rammer målet. Ulempe for målet på checks med én evne, du vælger.
-  fod: D&amp;D 2024 · PHB 2024 kap. 3 (Warlock), kap. 4 (Tiefling, Acolyte) og kap. 7 (besværgelser).
-
-# ── Side 1 · Karakterark: én side pr. version ──
-versioner:
-- evner: {STR: 10, DEX: 15, CON: 14, INT: 8, WIS: 9, CHA: 17}
-  stats:
-  - [<em>AC</em> · Armor of Shadows, '{13+DEX}']
-  - [Max HP, 13–20, 8+CON + 1d8+CON]
-  - [<em>Hit Dice</em>, 2d8, 1 d8 pr. level]
-  - [Initiativ, '{+DEX}']
-  - [Fart · <em>Speed</em>, '30', 'Dash: 60']
-  - [<em>Prof. bonus</em>, '{+PB}', level 1–4]
-  - [Passiv <em>Perc.</em>, '{10+WIS}']
-  - [Spell DC, '{8+CHA+PB}']
-  angreb:
-  - [Kniv <em>Dagger</em>, '{+DEX+PB}', '1d4{+DEX} Piercing', kast 20/60 ft]
-  - [Stav <em>Quarterstaff</em>, '{+STR+PB}', '1d6{+STR} Bludgeoning', 1d8 med to hænder]
-  - [Orksværd <em>Hjemmelavet</em>, '{+STR}', '1d8{+STR} Slashing', ikke trænet]
-  - [Overjordisk stråle <em>Eldritch Blast</em>, '{+CHA+PB}', '1d10{+CHA} Force', 120 ft · Agonizing Blast]
-  - [Ildpil <em>Fire Bolt</em>, '{+CHA+PB}', 1d10 Fire, 120 ft]
-  - [Elektrisk greb <em>Shocking Grasp</em>, '{+CHA+PB}', 1d8 Lightning, berøring · målet får ingen reaction]
-  - [Giftsprøjt <em>Poison Spray</em>, '{+CHA+PB}', 1d12 Poison, 30 ft]
-  magi:
-    dc:
-    - {navn: Al magi · CHA, slag: '{+CHA+PB}', dc: '{8+CHA+PB}'}
-    slots: <b>Spell slots</b> 1. grad [][] · kommer igen ved kort hvil
-    liste:
-    - - Cantrips
-      - Eldritch Blast · Minor Illusion · Fire Bolt · Shocking Grasp · Shape Water · Poison Spray · Thaumaturgy · Guidance · Spare the Dying
-    - - 1. grad
-      - <b>Hex</b> · <b>Armor of Agathys</b> 5 midl. HP, 5 Cold til den, der rammer · <b>Witch Bolt</b> 2d12 Lightning, så 1d12/tur (konc.)
-    - [1. grad · Cleric, '<b>Cure Wounds</b> 2d8{+CHA} HP · gratis 1× pr. lang hvil []']
-    - [Ritualer, Detect Magic · Comprehend Languages]
-  traek:
-  - navn: Mørkesyn <em>Darkvision</em>
-    tekst: 60 ft. Mørke ses som svagt lys, kun i gråtoner.
-  - {navn: Modstand mod gift, tekst: Halv skade fra gift (Poison).}
-  - {navn: Pagtmagi <em>Pact Magic</em>, tekst: Spell slots kommer igen ved kort hvil.}
-  - navn: Magical Cunning []
-    tag: 1× Long Rest
-    tekst: 1 minuts meditation giver halvdelen af dine spell slots igen (rund op).
-  - {navn: Pact of the Tome, tekst: Skyggebog med 3 ekstra cantrips og 2 ritualer.}
-  - {navn: Agonizing Blast, tekst: Læg CHA til skaden fra Eldritch Blast.}
-  - navn: Armor of Shadows
-    tekst: Mage Armor på dig selv når som helst, uden slot (AC 13 + DEX).
-
-# ── Side 2 · Handlingsark ──
-handlingsark:
-  vaerktoej:
-  - {navn: Calligrapher's Supplies, evne: DEX, brug: 'Skrive, kopiere, forfalske skrift'}
-  ekstra:
-  - titel: Tiefling og magi
-    punkter:
-    - '<b>Mørkesyn</b> 60 ft. <b>Modstand mod gift</b>: halv Poison-skade.'
-    - '<b>Koncentration</b>: tager du skade, slår du CON-save mod DC 10 eller halvdelen af skaden (det højeste), ellers slutter besværgelsen.'
-
-# ── Side 3 · Udstyrsark ──
-udstyrsark:
-  ident:
-  - [Opdateres, Løbende i spillet]
-  venstre:
-  - titel: Våben <i>Weapons</i>
-    punkter:
-    - Stav <i>Quarterstaff</i> · 1d6 Bludgeoning, 1d8 tohånds
-    - Orksværd <i>Hjemmelavet</i> · 1d8 Slashing · ikke trænet
-    - Kniv <i>Dagger</i> · 1d4 Piercing · kan kastes 20/60 ft
-    tomme: 2
-  - titel: Udstyr <i>Equipment</i>
-    punkter:
-    - Reb <i>Rope</i> · 15 ft
-    - Sovegrej <i>Bedroll</i>
-    - Førstehjælp <i>Healer's Kit</i> · stabiliserer uden slag [][][][][][][][][][]
-    - Gyldne æbler <i>Hjemmelavet</i> · healing ved kort hvil [][][]
-    - Rationer <i>Rations</i> [][][]
-    - Skyggebog <i>Book of Shadows</i>
-    tomme: 14
-  - titel: Særlige genstande
-    punkter: [<b>Medaljon fra Ashe</b> · giver adgang til Nordlandet]
-    tomme: 6
-  - {titel: Penge <i>Coins</i>, type: penge}
-  hoejre:
-  - titel: Kampagne og mission
-    punkter:
-    - 'Leder: <b>Ashe</b>, hvide nordslægt, diplomat'
-    - 'Mission: find sårede overlevende'
-    - Pas på soldaterne
-    - Skyd ikke på nødhjælp
-    - Frygt for flere store monstre
-    - Flodvand kan drikkes, hvis det koges
-    tomme: 12
-  - titel: Steder
-    punkter:
-    - 'Nord for floden: <i>Den levende skov</i> (rent hjerte)'
-    - Nordlandet (kræver Ashes medaljon)
-    tomme: 8
-  - titel: Personer og væsner
-    punkter: [Loft · kobold · corgi · taler langsomt]
-    tomme: 13
-
-# ── Side 4 · Baggrundsark ──
-baggrundsark:
-  ident:
-  - [Art, Tiefling]
-  - [Baggrund, Acolyte]
-  - [Pagt, Enhjørning <i>Hjemmelavet</i>]
-  venstre:
-  - titel: Udseende <i>Appearance</i>
-    type: fakta
+  feats:
+  - 'Magic Initiate (Cleric) fra Acolyte: Guidance, Spare the Dying og Cure Wounds'
+  evner:
+    STR: 10
+    DEX: 15
+    CON: 14
+    INT: 8
+    WIS: 9
+    CHA: 17
+sider:
+- margin: small
+  top: {}
+  layout:
+  - type: stats
     felter:
-    - [Alder, '']
-    - [Højde, '']
-    - [Vægt, '']
-    - [Øjne, '']
-    - [Horn, '']
-    - [Hale, '']
-  - titel: Historie <i>Backstory</i>
-    type: tekst
-    afsnit:
-    - Har en magisk kontrakt med en <b>enhjørning</b>.
-    - Holder sig i midten af kampen og er god til at se, om folk lyver.
-    tomme: 8
-  - {titel: Træning og valg <i>Proficiencies</i>, type: traening}
-  hoejre:
-  - titel: Personlighed
-    punkter: []
-    tomme: 4
-  - titel: Familie og venner
-    punkter: []
-    tomme: 5
-  - titel: Fjender og rivaler
-    punkter: []
-    tomme: 5
-  - titel: Mål og drømme
-    punkter: []
-    tomme: 5
-  - titel: Hemmeligheder
-    punkter: []
-    tomme: 5
+    - - <em>AC</em> · Armor of Shadows
+      - '{13+DEX}'
+    - - Max HP
+      - 13–20
+      - 8+CON + 1d8+CON
+    - - <em>Hit Dice</em>
+      - 2d8
+      - 1 d8 pr. level
+    - - Initiativ
+      - '{+DEX}'
+    - - Fart · <em>Speed</em>
+      - '30'
+      - 'Dash: 60'
+    - - <em>Prof. bonus</em>
+      - '{+PB}'
+      - level 1–4
+    - - Passiv <em>Perc.</em>
+      - '{10+WIS}'
+    - - Spell DC
+      - '{8+CHA+PB}'
+  - kolonner:
+    - bredde: 52
+      indhold:
+      - type: evner
+      - type: passiv
+        titel: Passive sanser
+        punkter:
+        - - Perception
+          - '{10+WIS}'
+        - - Insight
+          - '{10+WIS+PB}'
+        - - Investigation
+          - '{10+INT}'
+        - - Mørkesyn <em>Darkvision</em>
+          - 60 ft
+      - type: sprog
+        titel: Sprog <em>Languages</em>
+        tekst: Common, Abyssal <em>(dæmon)</em>, Orc, Sylvan <em>(ent)</em>
+    - bredde: 140
+      indhold:
+      - type: angreb
+        titel: Angreb <em>· Attacks</em>
+        angreb:
+        - - Kniv <em>Dagger</em>
+          - '{+DEX+PB}'
+          - 1d4{+DEX} Piercing
+          - kast 20/60 ft
+        - - Stav <em>Quarterstaff</em>
+          - '{+STR+PB}'
+          - 1d6{+STR} Bludgeoning
+          - 1d8 med to hænder
+        - - Orksværd <em>Hjemmelavet</em>
+          - '{+STR}'
+          - 1d8{+STR} Slashing
+          - ikke trænet
+        - - Overjordisk stråle <em>Eldritch Blast</em>
+          - '{+CHA+PB}'
+          - 1d10{+CHA} Force
+          - 120 ft · Agonizing Blast
+        - - Ildpil <em>Fire Bolt</em>
+          - '{+CHA+PB}'
+          - 1d10 Fire
+          - 120 ft
+        - - Elektrisk greb <em>Shocking Grasp</em>
+          - '{+CHA+PB}'
+          - 1d8 Lightning
+          - berøring · målet får ingen reaction
+        - - Giftsprøjt <em>Poison Spray</em>
+          - '{+CHA+PB}'
+          - 1d12 Poison
+          - 30 ft
+      - type: magi
+        dc:
+        - navn: Al magi · CHA
+          slag: '{+CHA+PB}'
+          dc: '{8+CHA+PB}'
+        slots: <b>Spell slots</b> 1. grad [][] · kommer igen ved kort hvil
+        liste:
+        - - Cantrips
+          - Eldritch Blast · Minor Illusion · Fire Bolt · Shocking Grasp · Shape Water · Poison Spray · Thaumaturgy · Guidance · Spare the Dying
+        - - 1. grad
+          - <b>Hex</b> · <b>Armor of Agathys</b> 5 midl. HP, 5 Cold til den, der rammer · <b>Witch Bolt</b> 2d12 Lightning, så 1d12/tur (konc.)
+        - - 1. grad · Cleric
+          - <b>Cure Wounds</b> 2d8{+CHA} HP · gratis 1× pr. lang hvil []
+        - - Ritualer
+          - Detect Magic · Comprehend Languages
+      - kolonner:
+        - bredde: 1
+          indhold:
+          - type: traek
+            titel: Evner &amp; træk <em>· Features</em>
+            punkter:
+            - navn: Mørkesyn <em>Darkvision</em>
+              tekst: 60 ft. Mørke ses som svagt lys, kun i gråtoner.
+            - navn: Modstand mod gift
+              tekst: Halv skade fra gift (Poison).
+            - navn: Pagtmagi <em>Pact Magic</em>
+              tekst: Spell slots kommer igen ved kort hvil.
+            - navn: Magical Cunning []
+              tag: 1× Long Rest
+              tekst: 1 minuts meditation giver halvdelen af dine spell slots igen (rund op).
+            - navn: Pact of the Tome
+              tekst: Skyggebog med 3 ekstra cantrips og 2 ritualer.
+            - navn: Agonizing Blast
+              tekst: Læg CHA til skaden fra Eldritch Blast.
+            - navn: Armor of Shadows
+              tekst: Mage Armor på dig selv når som helst, uden slot (AC 13 + DEX).
+        - bredde: 1
+          indhold:
+          - type: bonus
+            titel: Bonus actions
+            punkter:
+            - navn: Hex <em>1. grad</em>
+              tekst: Bonus Action, koncentration. +1d6 Necrotic-skade, hver gang du rammer målet. Ulempe for målet på checks med én evne, du vælger.
+  foot: D&amp;D 2024 · PHB 2024 kap. 3 (Warlock), kap. 4 (Tiefling, Acolyte) og kap. 7 (besværgelser).
+- margin: small
+  top:
+    undertitel: Hvad kan jeg gøre?
+    ident:
+    - - Slag
+      - d20 + tallet
+    - - Fordel
+      - 2 d20, tag højeste
+    - - Ulempe
+      - 2 d20, tag laveste
+  layout:
+  - type: handlinger
+    bonus: {}
+  - kolonner:
+    - bredde: 1
+      indhold:
+      - type: ubevaebnet
+      - type: bevaegelse
+      - type: ekstra
+        titel: Tiefling og magi
+        punkter:
+        - '<b>Mørkesyn</b> 60 ft. <b>Modstand mod gift</b>: halv Poison-skade.'
+        - '<b>Koncentration</b>: tager du skade, slår du CON-save mod DC 10 eller halvdelen af skaden (det højeste), ellers slutter besværgelsen.'
+      - type: livsredning
+      - type: mastery
+      - type: nyttige
+      samlet: tæt
+    - bredde: 1.25
+      indhold:
+      - type: situationer
+        vaerktoej:
+        - navn: Calligrapher's Supplies
+          evne: DEX
+          brug: Skrive, kopiere, forfalske skrift
+      - type: tilstande
+      samlet: tæt
+  foot: 'Valak · Handlinger og slag · Kilde: Player''s Handbook 2024 · kap. 1 (handlinger), kap. 6 (Weapon Mastery) og Rules Glossary'
+  bokstype: none
+- margin: small
+  top:
+    undertitel: Udstyr
+    ident:
+    - - Opdateres
+      - Løbende i spillet
+  layout:
+  - kolonner:
+    - bredde: 1
+      indhold:
+      - type: liste
+        titel: Våben <i>Weapons</i>
+        punkter:
+        - Stav <i>Quarterstaff</i> · 1d6 Bludgeoning, 1d8 tohånds
+        - Orksværd <i>Hjemmelavet</i> · 1d8 Slashing · ikke trænet
+        - Kniv <i>Dagger</i> · 1d4 Piercing · kan kastes 20/60 ft
+        tomme: 2
+      - type: liste
+        titel: Udstyr <i>Equipment</i>
+        punkter:
+        - Reb <i>Rope</i> · 15 ft
+        - Sovegrej <i>Bedroll</i>
+        - Førstehjælp <i>Healer's Kit</i> · stabiliserer uden slag [][][][][][][][][][]
+        - Gyldne æbler <i>Hjemmelavet</i> · healing ved kort hvil [][][]
+        - Rationer <i>Rations</i> [][][]
+        - Skyggebog <i>Book of Shadows</i>
+        tomme: 14
+      - type: sarlige
+        titel: Særlige genstande
+        punkter:
+        - <b>Medaljon fra Ashe</b> · giver adgang til Nordlandet
+        tomme: 6
+      - type: penge
+        titel: Penge <i>Coins</i>
+    - bredde: 1
+      indhold:
+      - type: kampagne
+        titel: Kampagne og mission
+        punkter:
+        - 'Leder: <b>Ashe</b>, hvide nordslægt, diplomat'
+        - 'Mission: find sårede overlevende'
+        - Pas på soldaterne
+        - Skyd ikke på nødhjælp
+        - Frygt for flere store monstre
+        - Flodvand kan drikkes, hvis det koges
+        tomme: 12
+      - type: steder
+        titel: Steder
+        punkter:
+        - 'Nord for floden: <i>Den levende skov</i> (rent hjerte)'
+        - Nordlandet (kræver Ashes medaljon)
+        tomme: 8
+      - type: personer
+        titel: Personer og væsner
+        punkter:
+        - Loft · kobold · corgi · taler langsomt
+        tomme: 13
+  foot: Valak · Udstyr
+- margin: small
+  top:
+    undertitel: Baggrund og personlighed
+    ident:
+    - - Art
+      - Tiefling
+    - - Baggrund
+      - Acolyte
+    - - Pagt
+      - Enhjørning <i>Hjemmelavet</i>
+  layout:
+  - kolonner:
+    - bredde: 1
+      indhold:
+      - type: udseende
+        titel: Udseende <i>Appearance</i>
+        felter:
+        - - Alder
+          - ''
+        - - Højde
+          - ''
+        - - Vægt
+          - ''
+        - - Øjne
+          - ''
+        - - Horn
+          - ''
+        - - Hale
+          - ''
+      - type: historie
+        titel: Historie <i>Backstory</i>
+        afsnit:
+        - Har en magisk kontrakt med en <b>enhjørning</b>.
+        - Holder sig i midten af kampen og er god til at se, om folk lyver.
+        tomme: 8
+      - type: traening
+        titel: Træning og valg <i>Proficiencies</i>
+    - bredde: 1
+      indhold:
+      - type: personlighed
+        titel: Personlighed
+        punkter: []
+        tomme: 4
+      - type: familie
+        titel: Familie og venner
+        punkter: []
+        tomme: 5
+      - type: fjender
+        titel: Fjender og rivaler
+        punkter: []
+        tomme: 5
+      - type: maal
+        titel: Mål og drømme
+        punkter: []
+        tomme: 5
+      - type: hemmeligheder
+        titel: Hemmeligheder
+        punkter: []
+        tomme: 5
+  foot: Valak · Baggrund og personlighed
