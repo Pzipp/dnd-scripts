@@ -83,6 +83,11 @@ sider:
               tekst: Skriv teksten her.
         - bredde: 1
           indhold:
+          - type: bonus          # bonus actions. Standard titel: "Bonus actions"
+            titel: Bonus actions
+            punkter:
+            - navn: Cunning Action
+              tekst: <em>Dash</em> eller <em>Disengage</em>.
           - type: tur        # "Din tur"-plan. Kort, én pr. situation
             titel: Nærkamp
             undertitel: nærkamp
@@ -91,7 +96,8 @@ sider:
   foot: 'Kilde: PHB 2024'    # sidefod. Valgfri. Standard: ingen
 
 # ── Side 2 · Handlinger ──────────────────────────────────────────────────────────
-- top:
+- margin: small
+  top:
     undertitel: Hvad kan jeg gøre?    # lille kursiv tekst ved titlen. Valgfri
     ident:                            # valgfri. Standard: faelles.ident
     - [Slag, d20 + tallet]
@@ -102,7 +108,7 @@ sider:
     bonus: {Dash: Cunning Action}   # valgfri. Handling: Bonus Action-tag. Standard: {}
   - kolonner:
     - bredde: 1
-      samlet: true           # samlet: true = hele kolonnen i én kasse, boksene uden egen ramme. Standard: false
+      samlet: tæt           # samlet: true = hele kolonnen i én kasse, boksene uden egen ramme. tæt = samme, men mindre skrift. Standard: false
       indhold:
       - type: ubevaebnet     # slag, Grapple og Shove. Titel er valgfri
       - type: bevaegelse     # fart, klatring, spring og fald
@@ -110,6 +116,9 @@ sider:
         titel: Egne træk
         punkter:
         - '<b>Navn</b>: teksten.'
+      - type: livsredning    # death saves og hvil. Ingen data nødvendig
+      - type: mastery        # valgte Weapon Mastery. Hentes fra faelles.masteries
+      - type: nyttige        # faste nyttige ting. Ingen data nødvendig
     - bredde: 1.25
       samlet: tæt           # samlet: tæt = samme som true, men mindre skrift og tættere mellemrum
       indhold:
@@ -120,7 +129,7 @@ sider:
   foot: "Kilde: Player's Handbook 2024 · kap. 1 (handlinger)"
 
 # ── Side 3 · Udstyr ──────────────────────────────────────────────────────────────
-- margin: normal
+- margin: small
   top:
     ident:                   # valgfri. Standard: faelles.ident
     - [Klasse, Fighter 1]
@@ -135,16 +144,26 @@ sider:
       - type: udstyr         # udstyr. Standard titel: "Udstyr <i>Equipment</i>"
         punkter: []
         tomme: 6
+      - type: sarlige        # særlige genstande. Standard titel: "Særlige genstande"
+        punkter:
+        - <b>Eksempel</b> <i>Hjemmelavet</i> · en genstand med en effekt.
+        tomme: 2
       - type: penge          # møntfelter PP GP EP SP CP. Ingen data nødvendig
     - bredde: 1
       indhold:
-      - type: tilstande      # kan også stå her, hvis siden har plads
       - type: kampagne       # kampagne og mission. Standard titel: "Kampagne og mission"
         punkter: []
         tomme: 10
+      - type: steder         # steder. Standard titel: "Steder"
+        punkter: []
+        tomme: 6
+      - type: personer       # personer og væsner. Standard titel: "Personer og væsner"
+        punkter: []
+        tomme: 6
 
 # ── Side 4 · Baggrund ────────────────────────────────────────────────────────────
-- top:
+- margin: small
+  top:
     ident:
     - [Art, Human]
     - [Baggrund, Soldier]
