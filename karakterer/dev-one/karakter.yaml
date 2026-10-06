@@ -42,7 +42,8 @@ faelles:
 sider:
 
 # ── Side 1 · Karakterark ──
-- top: {}
+- margin: small
+  top: {}
   layout:
   - type: stats
   - kolonner:
@@ -131,7 +132,8 @@ sider:
   foot: 'D&amp;D 2024 · PHB 2024 s. 129–130 (Rogue), 193 (Halfling), 200 (Alert). Light-reglen: ekstraangrebet skal være med et <b>andet</b> Light-våben.'
 
 # ── Side 2 · Handlingsark ──
-- top:
+- margin: small
+  top:
     undertitel: Hvad kan jeg gøre?
     ident:
     - [Slag, d20 + tallet]
@@ -169,7 +171,8 @@ sider:
   foot: "Kilde: Player's Handbook 2024 · kap. 1 (handlinger), kap. 6 (Weapon Mastery) og Rules Glossary"
 
 # ── Side 3 · Udstyrsark ──
-- top:
+- margin: small
+  top:
     ident:
     - [Klasse, Rogue 2]
     - [Opdateres, Løbende i spillet]
@@ -218,7 +221,8 @@ sider:
         tomme: 13
 
 # ── Side 4 · Baggrundsark ──
-- top:
+- margin: small
+  top:
     ident:
     - [Art, Halfling]
     - [Baggrund, Criminal]
