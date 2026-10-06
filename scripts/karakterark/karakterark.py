@@ -572,7 +572,7 @@ def page(p, v, env):
                 f'{ident(top.get("ident", v.get("ident", [])))}</header>')
     body = f'<div class="layout">{layout_stack(p.get("layout", []), v, env)}</div>'
     foot = f'<div class="foot">{p.get("foot", "")}</div>' if p.get("foot") else ""
-    marg = " margin-small" if p.get("margin") == "small" else ""
+    marg = {"small": " margin-small", "none": " margin-none"}.get(p.get("margin"), "")
     return f'<section class="pg s1{marg}"><div class="page">{head}{body}{foot}</div></section>'
 
 
@@ -585,10 +585,11 @@ section.pg{width:794px;height:1123px;overflow:hidden;flex:none;background:#fff;b
 .s1 > .page{padding-top:34px}
 @page{size:A4;margin:0}
 section.pg.margin-small > .page{width:198mm;padding-top:23px}
+section.pg.margin-none > .page{width:210mm;padding-top:0}
 @media screen and (max-width:820px){
   .sheets{padding:8px}
   section.pg{width:100%;height:auto;overflow:visible}
-  .s1 > .page, section.pg.margin-small > .page{width:auto;margin:0 auto}
+  .s1 > .page, section.pg.margin-small > .page, section.pg.margin-none > .page{width:auto;margin:0 auto}
 }
 @media print{
   body{background:#fff}

@@ -25,7 +25,7 @@ Hver side er en post under `sider:`. En side kan have hvad som helst af de bokse
 | Felt | Standard | Betydning |
 |---|---|---|
 | `titel` | `faelles.navn` | Stor titel |
-| `margin` | `normal` | `small` giver siden mindre margen til højre, venstre og oven (198 mm bredde i stedet for 192 mm) |
+| `margin` | `normal` | `small`: 198 mm bredde i stedet for 192 mm. `none`: hele A4-bredden (210 mm) og ingen margen oven for |
 | `undertitel` | (tom) | Lille kursiv tekst ved titlen, fx `Hvad kan jeg gøre?` |
 | `ident` | `faelles.ident` | Liste af `[etiket, værdi]`, højst 4. Brug `"…"` når værdien har komma: `[Fordel, "2 d20, tag højeste"]` |
 
