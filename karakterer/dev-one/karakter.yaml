@@ -161,7 +161,7 @@ sider:
       - type: mastery
       - type: nyttige
 
-    - bredde: 1.25
+    - bredde: 1
       samlet: tæt
       indhold:
       - type: situationer
