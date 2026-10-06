@@ -1,7 +1,6 @@
 """Tjek af karakter-YAML til editoren: fejl med linje og kolonne, uden at bygge arket.
 
-Layoutets bokse tjekkes mod de samme navne, som karakterark.py bruger (BOKSE for side 1).
-Side 2-typerne ligger lokalt i side2() og er derfor listet her; hold dem i takt med side2().
+Typerne kommer fra REGISTRY i karakterark.py, så tjekket og generatoren altid er enige.
 """
 from __future__ import annotations
 
@@ -10,10 +9,7 @@ import difflib
 import yaml
 from yaml.nodes import MappingNode, ScalarNode, SequenceNode
 
-from karakterark import BOKSE
-
-SIDE1_TYPER = tuple(BOKSE)
-SIDE2_TYPER = ("ubevaebnet", "bevaegelse", "ekstra", "livsredning", "mastery", "nyttige", "situationer", "tilstande")
+from karakterark import REGISTRY
 
 
 def _fejl(node, besked):
@@ -24,14 +20,13 @@ def _felter(node):
     return {k.value: v for k, v in node.value if isinstance(k, ScalarNode)}
 
 
-def _ukendt(value, typer):
-    forslag = difflib.get_close_matches(str(value), typer, n=1)
+def _ukendt(value):
+    forslag = difflib.get_close_matches(str(value), list(REGISTRY), n=1)
     hjælp = f" Mente du {forslag[0]!r}?" if forslag else ""
-    return f"Ukendt boks-type {value!r}.{hjælp} Kendte typer: {', '.join(typer)}."
+    return f"Ukendt boks-type {value!r}.{hjælp} Kendte typer: {', '.join(REGISTRY)}."
 
 
-def _tjek_layout(seq, typer):
-    """typer=None betyder notesider (side 3–4), hvor boksene ikke har type."""
+def _tjek_layout(seq):
     if not isinstance(seq, SequenceNode):
         return [_fejl(seq, "layout skal være en liste.")]
     out = []
@@ -58,13 +53,13 @@ def _tjek_layout(seq, typer):
                     except ValueError:
                         out.append(_fejl(kf["bredde"], "bredde skal være et tal, fx 1 eller 1.25."))
                 if "indhold" in kf:
-                    out += _tjek_layout(kf["indhold"], typer)
+                    out += _tjek_layout(kf["indhold"])
         elif "raekker" in f:
-            out += _tjek_layout(f["raekker"], typer)
+            out += _tjek_layout(f["raekker"])
         elif "type" in f:
-            if typer is not None and f["type"].value not in typer:
-                out.append(_fejl(f["type"], _ukendt(f["type"].value, typer)))
-        elif typer is not None:
+            if f["type"].value not in REGISTRY:
+                out.append(_fejl(f["type"], _ukendt(f["type"].value)))
+        else:
             out.append(_fejl(item, "Boksen mangler type (eller kolonner/raekker)."))
     return out
 
@@ -84,11 +79,17 @@ def tjek(text, layout=True):
         return [{"linje": 1, "kolonne": 1, "besked": "YAML skal indeholde et objekt/mappe øverst."}]
     if not layout:
         return []
+    sider = _felter(root).get("sider")
+    if sider is None:
+        return []
+    if not isinstance(sider, SequenceNode):
+        return [_fejl(sider, "sider skal være en liste med én post pr. side.")]
     out = []
-    for navn, typer in (("karakterark", SIDE1_TYPER), ("handlingsark", SIDE2_TYPER),
-                        ("baggrundsark", None), ("udstyrsark", None)):
-        sek = _felter(root).get(navn)
-        if not isinstance(sek, MappingNode) or "layout" not in _felter(sek):
+    for side in sider.value:
+        if not isinstance(side, MappingNode):
+            out.append(_fejl(side, "Hver side i sider skal være en mappe med top, layout og foot."))
             continue
-        out += _tjek_layout(_felter(sek)["layout"], typer)
+        f = _felter(side)
+        if "layout" in f:
+            out += _tjek_layout(f["layout"])
     return out
