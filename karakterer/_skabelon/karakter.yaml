@@ -1,140 +1,174 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 # SKABELON: karakterark (D&D 2024, dansk, A4)
 #
-# Sådan bruger du den:
-#   1. Kopiér hele mappen:   cp -r karakterer/_skabelon karakterer/<dit-karakternavn>
-#      (små bogstaver og bindestreg, fx "mighty-bird")
-#   2. Ret denne fil (karakter.yaml) og kort.yaml til din karakter.
-#   3. Tjek og lav arkene:   python3 dnd.py tjek
-#                            python3 dnd.py karakterark <dit-karakternavn> --pdf
+# Brug:
+#   1. cp -r karakterer/_skabelon karakterer/<navn>   (små bogstaver og bindestreg)
+#   2. Ret denne fil og kort.yaml.
+#   3. python3 dnd.py tjek   ·   python3 dnd.py karakterark <navn> --pdf
 #
-# Formatet er beskrevet i docs/karakterark-yaml.md. Der skrives ikke på arkene (noter tages på papir).
+# Formatet er beskrevet i docs/karakterark-yaml.md. Ting, der står med "valgfri", må slettes.
+# Hvis en valgfri nøgle mangler, bruger generatoren standarden, som står i kommentaren.
 # ═══════════════════════════════════════════════════════════════════════════════
 
-titel: Mit karakterark        # titel på HTML/PDF-filen
+titel: Mit karakterark        # titel på HTML/PDF-filen. Valgfri. Standard: faelles.navn
 
-# ── Fælles felter: bruges af alle sider ──
+# ── Fælles felter: bruges af alle sider ──────────────────────────────────────────
 faelles:
-  navn: Navn
-  ident:                      # højst 4 par: [etiket, værdi]
-  - [Klasse, Fighter 1]
+  navn: Navn                  # karakterens navn, vises som stor titel på sidehovedet
+  ident:                      # sidehovedets lille tabel. Højst 4 par. Standard: tom
+  - [Klasse, Fighter 1]       # [etiket, værdi]. Skriv "…, …" i citationstegn, hvis værdien har komma
   - [Art, Human]
   - [Baggrund, Soldier]
   - [Spiller, Dit navn]
-  evner: {STR: 10, DEX: 10, CON: 10, INT: 10, WIS: 10, CHA: 10}
-  pb: 2
-  level: 1
-  hp: 10
-  ac: '{10+DEX}'              # tal eller formel, fx '{13+DEX}'
-  fart: 30
-  hit_die: 10
-  saves: []                   # trænede saves, fx [STR, CON]
-  skills: []                  # trænede skills (engelske navne som i PHB)
-  expertise: []               # skills med dobbelt bonus
-  sprog: Common
-  kan_bruge:                  # vises under Træning og valg
+  evner: {STR: 10, DEX: 10, CON: 10, INT: 10, WIS: 10, CHA: 10}   # de seks scores. Modifier regnes ud
+  mod: {}                     # valgfri. Tving en modifier, hvis papirets tal afviger. Standard: {}
+  pb: 2                       # Proficiency Bonus. Standard: 2
+  level: 1                    # bruges til Hit Dice i stat-rækken. Standard: 1
+  hp: 10                      # Max HP, skrevet som tal. Standard: "?"
+  ac: '{10+DEX}'              # AC som formel. Standard: '{10+DEX}'. Ret til fx '{13+DEX}' med rustning
+  fart: 30                    # Speed i ft. Standard: 30
+  hit_die: 10                 # 6, 8, 10 eller 12. Standard: 8
+  saves: []                   # trænede saving throws, fx [STR, CON]. Standard: []
+  skills: []                  # trænede skills med engelske navne som i PHB. Standard: []
+  expertise: []               # skills med dobbelt bonus (vises ◆). Standard: []
+  vaerktoej: {}               # værktøj under en evne, fx {DEX: ["Thieves' Tools"]}. Standard: {}
+  sprog: Common               # sprog som tekst. Standard: tom
+  kan_bruge:                  # vises under "Træning og valg". Standard: tom
     Rustning: Alle
     Våben: Simple + Martial
-  masteries: []               # [[mastery, våben]], fx [[Cleave, Greataxe]]
-  feats: []
+  masteries: []               # Weapon Mastery som [[mastery, våben]], fx [[Cleave, Greataxe]]. Standard: []
+  feats: []                   # feats som tekst. Standard: []
+  traening_ekstra: []         # ekstra linjer under "Træning og valg". Standard: []
 
-# ── Sider: én post pr. side, i udskriftsrækkefølge ──
+# ── Sider: én post pr. side, i den rækkefølge de udskrives ───────────────────────
 sider:
 
-# ── Side 1 · Karakterark ──
-- top: {}                     # sidehoved med faelles.navn og faelles.ident
-  layout:
-  - type: stats               # stat-rækken. Uden felter bruges standarden ud fra faelles
-  - kolonner:
+# ── Side 1 · Karakterark ─────────────────────────────────────────────────────────
+- margin: small              # normal eller small. Small giver ca. 6 mm mere bredde. Standard: normal (her small, fordi siden ellers går ud)
+  top: {}                    # sidehoved med faelles.navn og faelles.ident. Udelad hele top, hvis der ikke skal være sidehoved
+  layout:                    # bokse, kolonner og rækker. Rækkefølgen er læse- og placeringsrækkefølgen
+  - type: stats              # stat-rækken øverst. Uden "felter" bruges standarden (AC, HP, Hit Dice, Initiativ, Fart, Prof. bonus, Passiv Perception)
+  - type: evner              # de seks evner med saves, skills og værktøj. Hentes fra faelles
+  - kolonner:                # kolonner står side om side. Bredden er relativ: 1 og 2 giver 1/3 og 2/3
 
-    - bredde: 1               # relativ bredde: 1 og 2 giver 1/3 og 2/3
+    - bredde: 1              # kolonnens relative bredde. Standard: 1
       indhold:
-      - type: evner
-      - type: passiv
-        titel: Passive sanser
+      - type: passiv         # passive sanser
+        titel: Passive sanser    # valgfri. Standard: "Passive sanser"
         punkter:
-        - [Perception, '{10+WIS}']
-      - type: sprog
-        titel: Sprog
-        tekst: Common
+        - [Perception, '{10+WIS}']    # [etiket, værdi]. Formler i {…} regnes ud
 
     - bredde: 2
       indhold:
-      - type: angreb
+      - type: angreb         # angrebstabel
         titel: Angreb <em>· Attacks</em>
-        angreb:
+        angreb:              # [våben, ramme, skade, noter]. {+STR+PB} = ramme, {+STR} i skade = skadebonus
         - [Kortsværd <em>Shortsword</em>, '{+STR+PB}', '1d6{+STR} Slashing', '']
-      - type: regler
-        titel: Træk
+      - type: regler         # punktliste, fx en særlig evne. "undertitel" er valgfri
+        titel: Snigangreb
+        undertitel: én gang pr. tur
         punkter:
-        - Skriv punkter her.
-  foot: 'Kilde: PHB 2024'     # valgfri sidefod
+        - Skriv en regel her.
+      - kolonner:            # en kolonne inde i en kolonne. Det er tilladt
+        - bredde: 1
+          indhold:
+          - type: traek      # evner og træk. Hvert punkt har navn, tekst og valgfri tag
+            titel: Evner &amp; træk
+            punkter:
+            - navn: Eksempel <em>Example</em>
+              tag: Passiv    # valgfri lille etiket
+              tekst: Skriv teksten her.
+  foot: 'Kilde: PHB 2024'    # sidefod. Valgfri. Standard: ingen
 
-# ── Side 2 · Handlinger ──
+# ── Side 2 · Handlinger ──────────────────────────────────────────────────────────
 - top:
-    undertitel: Hvad kan jeg gøre?
+    undertitel: Hvad kan jeg gøre?    # lille kursiv tekst ved titlen. Valgfri
+    ident:                            # valgfri. Standard: faelles.ident
+    - [Slag, d20 + tallet]
+    - [Fordel, "2 d20, tag højeste"]  # citationstegn, fordi værdien har komma
+    - [Ulempe, "2 d20, tag laveste"]
   layout:
-  - type: handlinger          # standard handlingstabel
+  - type: handlinger         # den faste handlingstabel. Kommer med sin egen kasse
+    bonus: {Dash: Cunning Action}   # valgfri. Handling: Bonus Action-tag. Standard: {}
   - kolonner:
-
     - bredde: 1
+      samlet: true           # samlet: true = hele kolonnen i én kasse, boksene uden egen ramme. Standard: false
       indhold:
-      - type: ubevaebnet
-      - type: bevaegelse
-
-    - bredde: 1
+      - type: ubevaebnet     # slag, Grapple og Shove. Titel er valgfri
+      - type: bevaegelse     # fart, klatring, spring og fald
+      - type: ekstra         # egne punkter, fx racetræk
+        titel: Egne træk
+        punkter:
+        - '<b>Navn</b>: teksten.'
+    - bredde: 1.25
+      samlet: tæt           # samlet: tæt = samme som true, men mindre skrift og tættere mellemrum
       indhold:
-      - type: situationer
+      - type: situationer    # skill checks. Hentes fra faelles.skills og expertise
+        vaerktoej:           # valgfri. Værktøj under "Hvad slår jeg?". Standard: []
+        - {navn: Thieves' Tools, evne: DEX, brug: 'Dirke en lås'}   # niveau: p (standard) eller e
+      - type: tilstande      # tilstande (conditions). Ingen data nødvendig
+  foot: "Kilde: Player's Handbook 2024 · kap. 1 (handlinger)"
 
-# ── Side 3 · Udstyr ──
-- top:
-    ident:
+# ── Side 3 · Udstyr ──────────────────────────────────────────────────────────────
+- margin: normal
+  top:
+    ident:                   # valgfri. Standard: faelles.ident
     - [Klasse, Fighter 1]
   layout:
   - kolonner:
-
     - bredde: 1
       indhold:
-      - type: vaaben
-        punkter:
-        - Skriv våben her.
-        tomme: 3
-      - type: udstyr
+      - type: vaaben         # våben og rustning. Standard titel: "Våben og rustning"
+        punkter:             # punkter kan også være tomme []. Brug · mellem dansk og engelsk navn
+        - Læderrustning <i>Leather Armor</i> · AC 11 + DEX
+        tomme: 2             # antal tomme linjer efter punkterne. Standard: 0
+      - type: udstyr         # udstyr. Standard titel: "Udstyr <i>Equipment</i>"
         punkter: []
         tomme: 6
-      - type: penge
-
+      - type: penge          # møntfelter PP GP EP SP CP. Ingen data nødvendig
     - bredde: 1
       indhold:
-      - type: tilstande
-      - type: kampagne
+      - type: tilstande      # kan også stå her, hvis siden har plads
+      - type: kampagne       # kampagne og mission. Standard titel: "Kampagne og mission"
         punkter: []
         tomme: 10
 
-# ── Side 4 · Baggrund ──
+# ── Side 4 · Baggrund ────────────────────────────────────────────────────────────
 - top:
     ident:
     - [Art, Human]
     - [Baggrund, Soldier]
+    - [Holdning, Neutral]   # valgfri ekstra linje
   layout:
   - kolonner:
-
     - bredde: 1
       indhold:
-      - type: udseende
-        felter:
+      - type: udseende       # nøgle/værdi-felter. Standard titel: "Udseende <i>Appearance</i>"
+        felter:              # [etiket, værdi]. Tom værdi '' giver en skrivelinje
         - [Alder, '']
         - [Højde, '']
-      - type: historie
-        afsnit:
-        - Skriv baggrundshistorie her.
-      - type: traening
-
+      - type: kendetegn      # punktliste med linjer. Standard titel: "Kendetegn"
+        punkter: []
+        tomme: 3
+      - type: historie       # løbende tekst. Standard titel: "Historie <i>Backstory</i>"
+        afsnit:              # hvert element er et afsnit
+        - Skriv baggrundshistorien her.
+        tomme: 4
+      - type: traening       # træning og valg. Bygges automatisk ud fra faelles. Ingen data nødvendig
     - bredde: 1
       indhold:
-      - type: personlighed
+      - type: personlighed   # standard titel: "Personlighed"
         punkter: []
         tomme: 4
-      - type: familie
+      - type: familie        # standard titel: "Familie og venner"
+        punkter: []
+        tomme: 4
+      - type: fjender        # standard titel: "Fjender og rivaler"
+        punkter: []
+        tomme: 4
+      - type: maal           # standard titel: "Mål og drømme"
+        punkter: []
+        tomme: 4
+      - type: hemmeligheder  # standard titel: "Hemmeligheder"
         punkter: []
         tomme: 4
