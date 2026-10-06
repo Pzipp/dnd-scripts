@@ -18,6 +18,7 @@ for _mappe in ("scripts", "scripts/karakterark", "scripts/kort"):
     sys.path.insert(0, str(ROOT / _mappe))
 import karakterark  # noqa: E402
 import spellkort  # noqa: E402
+import tjek  # noqa: E402
 
 app = Flask(__name__)
 
@@ -167,6 +168,18 @@ def api_save():
             payload.get("yaml", ""),
         )
         return jsonify({"saved": True})
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+
+@app.post("/api/check")
+def api_check():
+    """Fejl til editoren (linje og kolonne). Bygger ikke arket og skriver ingen filer."""
+    payload = request.get_json(silent=True) or {}
+    kind = payload.get("kind", "")
+    try:
+        data_path(payload.get("character", ""), kind)
+        return jsonify({"fejl": tjek.tjek(payload.get("yaml", ""), layout=kind == "karakterark")})
     except ValueError as exc:
         return jsonify({"error": str(exc)}), 400
 

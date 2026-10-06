@@ -5,19 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>D&D WebUI</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <!-- CodeMirror 6 hentes fra esm.sh. Versionerne er låst, og import map'et sikrer, at hver pakke kun findes én gang. -->
+  <!-- CodeMirror 6 hentes fra esm.sh. Versionerne er låst. external=… gør, at alle pakker bruger samme kopi fra import map'et (ellers virker fx lint-markeringer ikke). -->
   <script type="importmap">
   {
     "imports": {
-      "@codemirror/state": "https://esm.sh/@codemirror/state@6.7.6",
-      "@codemirror/view": "https://esm.sh/@codemirror/view@6.43.13",
-      "@codemirror/language": "https://esm.sh/@codemirror/language@6.12.4",
-      "@codemirror/commands": "https://esm.sh/@codemirror/commands@6.11.1",
-      "@codemirror/search": "https://esm.sh/@codemirror/search@6.7.2",
-      "@codemirror/lang-yaml": "https://esm.sh/@codemirror/lang-yaml@6.1.3",
-      "@lezer/common": "https://esm.sh/@lezer/common@1.5.3",
-      "@lezer/highlight": "https://esm.sh/@lezer/highlight@1.2.5",
-      "@lezer/lr": "https://esm.sh/@lezer/lr@1.4.10"
+      "@codemirror/state": "https://esm.sh/@codemirror/state@6.7.6?external=@codemirror/state,@codemirror/view,@codemirror/language,@lezer/common,@lezer/highlight,@lezer/lr",
+      "@codemirror/view": "https://esm.sh/@codemirror/view@6.43.13?external=@codemirror/state,@codemirror/view,@codemirror/language,@lezer/common,@lezer/highlight,@lezer/lr",
+      "@codemirror/language": "https://esm.sh/@codemirror/language@6.12.4?external=@codemirror/state,@codemirror/view,@codemirror/language,@lezer/common,@lezer/highlight,@lezer/lr",
+      "@codemirror/commands": "https://esm.sh/@codemirror/commands@6.11.1?external=@codemirror/state,@codemirror/view,@codemirror/language,@lezer/common,@lezer/highlight,@lezer/lr",
+      "@codemirror/search": "https://esm.sh/@codemirror/search@6.7.2?external=@codemirror/state,@codemirror/view,@codemirror/language,@lezer/common,@lezer/highlight,@lezer/lr",
+      "@codemirror/lang-yaml": "https://esm.sh/@codemirror/lang-yaml@6.1.3?external=@codemirror/state,@codemirror/view,@codemirror/language,@lezer/common,@lezer/highlight,@lezer/lr",
+      "@lezer/common": "https://esm.sh/@lezer/common@1.5.3?external=@codemirror/state,@codemirror/view,@codemirror/language,@lezer/common,@lezer/highlight,@lezer/lr",
+      "@lezer/highlight": "https://esm.sh/@lezer/highlight@1.2.5?external=@codemirror/state,@codemirror/view,@codemirror/language,@lezer/common,@lezer/highlight,@lezer/lr",
+      "@lezer/lr": "https://esm.sh/@lezer/lr@1.4.10?external=@codemirror/state,@codemirror/view,@codemirror/language,@lezer/common,@lezer/highlight,@lezer/lr",
+      "@codemirror/lint": "https://esm.sh/@codemirror/lint@6.9.7?deps=@codemirror/state@6.7.6,@codemirror/view@6.43.13&external=@codemirror/state,@codemirror/view,@codemirror/language,@lezer/common,@lezer/highlight,@lezer/lr",
+      "@replit/codemirror-indentation-markers": "https://esm.sh/@replit/codemirror-indentation-markers@6.5.3?deps=@codemirror/state@6.7.6,@codemirror/view@6.43.13,@codemirror/language@6.12.4&external=@codemirror/state,@codemirror/view,@codemirror/language,@lezer/common,@lezer/highlight,@lezer/lr"
     }
   }
   </script>
@@ -84,6 +86,8 @@ import {
 } from "@codemirror/language";
 import {search, searchKeymap} from "@codemirror/search";
 import {yaml} from "@codemirror/lang-yaml";
+import {linter, lintGutter} from "@codemirror/lint";
+import {indentationMarkers} from "@replit/codemirror-indentation-markers";
 
 const character = document.querySelector("#character");
 const kind = document.querySelector("#kind");
@@ -104,7 +108,33 @@ let previewTimer = null;
 let previewSeq = 0;
 let loadingYaml = false;
 
-// Editoren: linjenumre, YAML-farver, foldning, søgning (Ctrl+F) og fortryd. Ctrl+S gemmer.
+// Fejl under editoren: serveren finder dem (YAML-syntaks og layout), og de vises på den linje, de hører til.
+async function checkYaml(view) {
+  const doc = view.state.doc;
+  try {
+    const response = await fetch("/api/check", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        character: character.value,
+        kind: kind.value,
+        yaml: doc.toString()
+      })
+    });
+    const data = await response.json();
+    if (!response.ok) return [];
+    return data.fejl.map((f) => {
+      const line = doc.line(Math.min(Math.max(f.linje, 1), doc.lines));
+      const from = line.from + Math.min(Math.max(f.kolonne - 1, 0), line.length);
+      const to = Math.min(Math.max(line.to, from + 1), doc.length);
+      return {from: Math.min(from, to), to, severity: "error", message: f.besked};
+    });
+  } catch (error) {
+    return [];
+  }
+}
+
+// Editoren: linjenumre, YAML-farver, foldning, indrykningslinjer, fejl, søgning (Ctrl+F) og fortryd. Ctrl+S gemmer.
 const editor = new EditorView({
   parent: document.querySelector("#yaml"),
   state: EditorState.create({
@@ -123,6 +153,9 @@ const editor = new EditorView({
       EditorState.tabSize.of(2),
       EditorView.lineWrapping,
       yaml(),
+      indentationMarkers(),
+      lintGutter(),
+      linter(checkYaml, {delay: 500}),
       keymap.of([
         {key: "Mod-s", preventDefault: true, run: () => { save(); return true; }},
         indentWithTab,
