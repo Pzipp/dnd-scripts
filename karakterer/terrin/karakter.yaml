@@ -293,17 +293,25 @@ sider:
         titel: Udseende <i>Appearance</i>
         felter:
         - - Alder
-          - ''
+          - '24'
+        - - Køn
+          - Mand
+        - - Størrelse
+          - Lille
         - - Højde
-          - ''
+          - 85 cm
         - - Vægt
-          - ''
+          - 18 lb.
         - - Øjne
-          - ''
+          - Lysebrune
         - - Hår
-          - ''
+          - Mørkebrunt, lidt for langt
         - - Hud
-          - ''
+          - Lys med et strejf af vejr og støv fra vejen
+      - type: historie
+        titel: Tro
+        afsnit:
+        - Terin er ikke religiøs. Han ved, at guder findes, men han har aldrig set dem gøre noget for folk som ham.
       - type: kendetegn
         titel: Kendetegn
         punkter:
