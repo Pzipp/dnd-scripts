@@ -489,7 +489,7 @@ def box_magi(node, v, env):
     dc = "".join(
         f'<div class="stat magi-celle"><div class="lbl">{c.get("navn", "")}</div>'
         f'<div class="big">{fmt(c.get("slag", ""), env)}</div>'
-        f'<small class="f">DC {fmt(c.get("dc", ""), env)}</small></div>'
+        f'<small class="f">{formula(c.get("slag", ""), roll=True)} · DC {fmt(c.get("dc", ""), env)} = {formula(c.get("dc", ""), roll=False)}</small></div>'
         for c in node.get("dc", []))
     liste = "".join(f"<div><dt>{a}</dt><dd>{fmt(b, env)}</dd></div>" for a, b in node.get("liste", []))
     slots = fmt(node["slots"], env) if node.get("slots") else ""
