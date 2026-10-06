@@ -144,6 +144,7 @@ sider:
   - kolonner:
 
     - bredde: 1
+      samlet: true
       indhold:
       - type: ubevaebnet
       - type: bevaegelse
@@ -158,6 +159,7 @@ sider:
       - type: nyttige
 
     - bredde: 1.25
+      samlet: true
       indhold:
       - type: situationer
         vaerktoej:

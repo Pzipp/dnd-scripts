@@ -482,7 +482,7 @@ def _reg(fn, titel=None, card=True, small=False):
     return {"fn": fn, "titel": titel, "card": card, "small": small}
 
 
-# Alle typer. card=False: boksen har selv sin ramme (evner, stats) eller er en fuld-bredde tabel (handlinger).
+# Alle typer. card=False: boksen har selv sin ramme (evner, stats).
 # small=True: mindre skrift (som de smalle bokse på side 1).
 REGISTRY = {
     # side 1
@@ -496,7 +496,7 @@ REGISTRY = {
     "bonus": _reg(box_traek, small=True),
     "tur": _reg(box_tur, small=True),
     # side 2
-    "handlinger": _reg(box_handlinger, card=False),
+    "handlinger": _reg(box_handlinger),
     "ubevaebnet": _reg(box_ubevaebnet, "Ubevæbnet <i>Unarmed Strike</i>"),
     "bevaegelse": _reg(box_bevaegelse, "Bevægelse <i>Movement</i>"),
     "ekstra": _reg(box_ekstra),
