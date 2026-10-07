@@ -419,7 +419,21 @@ def state(data: dict) -> dict:
                 subclass_options = _label_options([{"name": s["name"], "source": s["source"]} for s in e.subclasses(class_name, {class_source})])
             is_caster = "spellcastingAbility" in class_obj
             if entry.get("subclass"):
-                features += e.subclass_features(class_name, entry["subclass"], {class_source}, class_level)
+                subclass_obj = next((s for s in e.subclasses(class_name, {class_source}) if s.get("name") == entry["subclass"]), None)
+                subclass_short = subclass_obj.get("shortName") if subclass_obj else entry["subclass"]
+                subclass_feats_by_level = {}
+                for sf in e.subclass_features(class_name, subclass_short, {class_source}, class_level):
+                    subclass_feats_by_level.setdefault(sf["level"], []).append(sf)
+                merged = []
+                for f in features:
+                    if f["name"].strip().lower() == "subclass feature" and f["level"] in subclass_feats_by_level:
+                        merged += subclass_feats_by_level.pop(f["level"])
+                    else:
+                        merged.append(f)
+                for level in sorted(subclass_feats_by_level):
+                    merged += subclass_feats_by_level[level]
+                merged.sort(key=lambda f: f["level"])
+                features = merged
             if is_caster:
                 spell_options = [s["name"] for s in e.class_spells(class_name, {class_source}, class_level)]
             if skills_count and len(entry["choices"].get("skills", [])) < skills_count:
