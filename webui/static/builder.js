@@ -200,7 +200,7 @@ function renderRace(c) {
     ${traits}
     ${r.feat_slot ? renderFeatSlot(r.feat_slot) : ""}
   `;
-  return wrapDetails("race", sectionMissing("race."), "Race / Species", body);
+  return wrapDetails("race", sectionMissing("race.") || sectionMissing("feats.race"), "Race / Species", body);
 }
 
 function renderClasses(c) {
@@ -258,7 +258,7 @@ function renderClasses(c) {
       ${features}
       ${spellsBlock}
     `;
-    return wrapDetails(`class-${k.id}`, sectionMissing(base), title, body);
+    return wrapDetails(`class-${k.id}`, sectionMissing(base) || sectionMissing(`feats.${k.id}_`), title, body);
   }).join("");
   const notice = isMissing("classes") ? `<p class="missing-banner">Mindst én klasse kræves.</p>` : "";
   return `${notice}${blocks}<button type="button" class="btn" id="add-class-btn">+ Tilføj klasse</button>`;
@@ -305,7 +305,7 @@ function renderBackground(c) {
     ${featBlock}
     ${b.feat_slot ? renderFeatSlot(b.feat_slot) : ""}
   `;
-  return wrapDetails("background", sectionMissing("background."), "Baggrund", body);
+  return wrapDetails("background", sectionMissing("background.") || sectionMissing("feats.background"), "Baggrund", body);
 }
 
 function renderAbilities(c) {
