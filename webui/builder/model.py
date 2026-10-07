@@ -266,20 +266,44 @@ def _feat_grant(obj: dict | None) -> dict | None:
     return {"type": "fixed", "id": feat_id} if feat_id else None
 
 
-def _meets_prerequisite(feat: dict, level: int, assigned: dict) -> bool:
+def _meets_prerequisite(feat: dict, level: int, assigned: dict, has_spellcasting: bool) -> bool:
     """prerequisite er en liste af ALTERNATIVER (opfyld én); inden i ét alternativ
-    skal niveau OG alle evne-krav være opfyldt."""
+    skal niveau, evt. spellcasting2020-krav (Spellcasting/Pact Magic feature) OG
+    alle evne-krav være opfyldt."""
     prereqs = feat.get("prerequisite")
     if not prereqs:
         return True
     for alt in prereqs:
         if alt.get("level", 0) > level:
             continue
+        if alt.get("spellcasting2020") and not has_spellcasting:
+            continue
         if all(
             (assigned.get(ability.upper()) or 0) >= minimum
             for req in (alt.get("ability") or [])
             for ability, minimum in req.items()
         ):
+            return True
+    return False
+
+
+def _class_has_spellcasting(entry: dict, sources: set[str]) -> bool:
+    """Spellcasting/Pact Magic-featuren kan komme fra selve klassen (fuld/halv
+    caster) eller fra en valgt subclass (fx Arcane Trickster, Eldritch Knight) -
+    begge steder markeres det med "spellcastingAbility" i class-JSON'en."""
+    name = entry.get("name")
+    if not name:
+        return False
+    class_sources = {entry["source"]} if entry.get("source") else sources
+    class_obj = e.get_class(name, class_sources)
+    if not class_obj:
+        return False
+    if "spellcastingAbility" in class_obj:
+        return True
+    subclass_name = entry.get("subclass")
+    if subclass_name:
+        subclass_obj = next((s for s in e.subclasses(name, class_sources) if s.get("name") == subclass_name), None)
+        if subclass_obj and "spellcastingAbility" in subclass_obj:
             return True
     return False
 
@@ -357,6 +381,11 @@ def _feat_sub_choices(feat_obj: dict, sources: set[str]) -> list[dict]:
     if feat_obj.get("name") == "Weapon Master":
         weapon_names = sorted(w["name"] for w in e.weapons(sources))
         choices.append({"id": "weapon", "title": "Våben (Mastery Property)", "options": weapon_names, "multiple": False})
+    if feat_obj.get("name") == "Elemental Adept":
+        # Damage-typen her står kun som fritekst i entries, ikke som et
+        # struktureret choose-felt (modsat fx Epic Boons' resist-valg) - ingen
+        # systematisk måde at opdage det på, derfor specialhåndteret som Weapon Master.
+        choices.append({"id": "damage_type", "title": "Skadetype (Energy Mastery)", "options": ["Acid", "Cold", "Fire", "Lightning", "Thunder"], "multiple": False})
     if feat_obj.get("category") == "EB":
         ability_choose = (feat_obj.get("ability") or [{}])[0].get("choose", {})
         if ability_choose.get("from"):
@@ -408,6 +437,7 @@ def state(data: dict) -> dict:
     missing = []
     level = total_level(data)
     assigned_abilities = data["abilities"].get("assigned", {})
+    has_spellcasting = any(_class_has_spellcasting(entry, sources) for entry in data.get("classes", {}).values())
 
     # race
     race_name = data["race"].get("name")
@@ -432,9 +462,18 @@ def state(data: dict) -> dict:
         missing.append("race.name")
 
     def _add_feat_slot(key: str, label: str, category: str) -> dict:
-        candidates = [ft for ft in e.feats_by_category(category, sources) if _meets_prerequisite(ft, level, assigned_abilities)]
-        options = _label_options([{"name": ft["name"], "source": ft["source"]} for ft in candidates])
+        candidates = [ft for ft in e.feats_by_category(category, sources) if _meets_prerequisite(ft, level, assigned_abilities, has_spellcasting)]
         chosen = data["feats"].get(key)
+        # Et allerede valgt feat holdes altid i options, selvom det ikke længere
+        # ville kvalificere (fx niveau faldt, eller en skærpet forudsætning som
+        # spellcasting2020 blev tilføjet senere) - ellers forsvinder valget fra
+        # sin egen <select>, ser ud som uvalgt, og brugeren risikerer at rydde
+        # det ved et uheld (samme fælde som multiclass-klassevælgeren havde).
+        if chosen and not any(ft["name"] == chosen["name"] for ft in candidates):
+            existing = e.get_feat(chosen["name"], {chosen["source"]})
+            if existing:
+                candidates = candidates + [existing]
+        options = _label_options([{"name": ft["name"], "source": ft["source"]} for ft in candidates])
         slot = {"key": key, "label": label, "options": options, "chosen": chosen, "text": "", "sub_choices": []}
         if chosen:
             feat_obj = e.get_feat(chosen["name"], {chosen["source"]})
@@ -486,7 +525,7 @@ def state(data: dict) -> dict:
             subclass_level = _subclass_level_for(entry, {class_source})
             if class_level >= subclass_level:
                 subclass_options = _label_options([{"name": s["name"], "source": s["source"]} for s in e.subclasses(class_name, {class_source})])
-            is_caster = "spellcastingAbility" in class_obj
+            is_caster = _class_has_spellcasting(entry, sources)
             if entry.get("subclass"):
                 subclass_obj = next((s for s in e.subclasses(class_name, {class_source}) if s.get("name") == entry["subclass"]), None)
                 subclass_short = subclass_obj.get("shortName") if subclass_obj else entry["subclass"]
