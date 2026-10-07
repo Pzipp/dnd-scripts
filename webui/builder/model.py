@@ -284,6 +284,34 @@ def _meets_prerequisite(feat: dict, level: int, assigned: dict) -> bool:
     return False
 
 
+def _meets_ability_requirement(primary_ability: list | None, assigned: dict) -> bool:
+    """primaryAbility er en liste af ALTERNATIVER (opfyld ét); inden i ét
+    alternativ skal alle nævnte evner være 13+. Bruges til multiclass-kravet:
+    'at least 13 in the primary ability of the new class and your current
+    classes' - gælder altså hver involveret klasse for sig, ikke kun den nye."""
+    if not primary_ability:
+        return True
+    for alt in primary_ability:
+        if all((assigned.get(ability.upper()) or 0) >= 13 for ability in alt):
+            return True
+    return False
+
+
+def _multiclass_class_options(data: dict, cid: str, assigned: dict, sources: set[str]) -> list[dict]:
+    """Klasser der reelt kan vælges til et IKKE-primært klasse-slot: kræver
+    13+ i den nye klasses primære evne, OG at alle allerede valgte klasser
+    (den primære og evt. andre) stadig selv opfylder deres eget krav."""
+    for other_cid, other_entry in data.get("classes", {}).items():
+        if other_cid == cid or not other_entry.get("name"):
+            continue
+        other_sources = {other_entry["source"]} if other_entry.get("source") else sources
+        other_obj = e.get_class(other_entry["name"], other_sources)
+        if other_obj and not _meets_ability_requirement(other_obj.get("primaryAbility"), assigned):
+            return []
+    eligible = [n for n in e.class_names() if _meets_ability_requirement((e.get_class(n, sources) or {}).get("primaryAbility"), assigned)]
+    return _label_options([{"name": n, "source": "XPHB"} for n in eligible])
+
+
 def _sub_choice_complete(sc: dict, stored_value) -> bool:
     """ASI's undervalg er to felter (mode + 1-2 evner), ikke bare 'findes værdien'."""
     if sc.get("type") == "asi":
@@ -420,14 +448,27 @@ def state(data: dict) -> dict:
         class_source = entry.get("source")
         class_level = entry.get("level", 1)
         class_obj = e.get_class(class_name, {class_source} if class_source else sources) if class_name else None
+        is_primary_class = cid == primary_id
         skills_from, skills_count = ([], 0)
         subclass_options = []
         subclass_level = 99
         features = []
         is_caster = False
         spell_options = []
+        extra_proficiencies = []
         if class_obj:
-            sp = class_obj.get("startingProficiencies", {})
+            # Multiclass (sekundær klasse) giver markant færre proficiencies end
+            # at starte som den klasse - se class_obj["multiclassing"] mod
+            # ["startingProficiencies"]. Kun den først tilføjede klasse ("primær",
+            # giver startudstyr) bruger den fulde startliste.
+            if is_primary_class:
+                sp = class_obj.get("startingProficiencies", {})
+            else:
+                sp = class_obj.get("multiclassing", {}).get("proficienciesGained", {})
+                for tool in sp.get("tools", []):
+                    extra_proficiencies.append(e.clean_text(tool))
+                for armor in sp.get("armor", []):
+                    extra_proficiencies.append(f"{armor.capitalize()} armor")
             skills_from, skills_count = _skills_from_choose(sp.get("skills"))
             features = e.class_features(class_name, {class_source}, class_level)
             subclass_level = _subclass_level_for(entry, {class_source})
@@ -480,9 +521,10 @@ def state(data: dict) -> dict:
 
         classes_state.append({
             "id": cid, "name": class_name, "source": class_source, "level": class_level,
-            "is_primary": cid == primary_id,
-            "options": class_options,
+            "is_primary": is_primary_class,
+            "options": class_options if is_primary_class else _multiclass_class_options(data, cid, assigned_abilities, sources),
             "skills_from": skills_from, "skills_count": skills_count,
+            "extra_proficiencies": extra_proficiencies,
             "subclass_options": subclass_options, "subclass_level": subclass_level, "subclass": entry.get("subclass"),
             "features": features_out,
             "is_caster": is_caster, "spell_options": spell_options,

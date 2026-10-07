@@ -222,6 +222,9 @@ function renderClasses(c) {
           }).join("")}
         </div></div>`
       : "";
+    const extraProfBlock = (k.extra_proficiencies || []).length
+      ? `<div class="sub-choice"><span>Giver desuden</span><div class="ftext">${esc(k.extra_proficiencies.join(", "))}</div></div>`
+      : "";
     const features = k.features.length
       ? `<ul class="feature-list">${k.features.map((f) => `
           <li>
@@ -254,6 +257,7 @@ function renderClasses(c) {
         </select>
       </label>
       ${skillsBlock}
+      ${extraProfBlock}
       ${subclassBlock}
       ${features}
       ${spellsBlock}
