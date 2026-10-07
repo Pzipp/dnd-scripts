@@ -1,0 +1,112 @@
+:root {
+  --parch: #f6eedb; --ink: #1f1811; --muted: #54452f; --accent: #6e2a12;
+  --line: #a88a5c; --paper: #fdfaf3; --bad: #9c2b2b; --good: #2d6e3f;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; min-height: 100vh; background: var(--paper); color: var(--ink);
+  font-family: "Crimson Pro", Georgia, serif; font-size: 15px; line-height: 1.4;
+}
+h1, h2, h3 { font-family: "IM Fell English", serif; font-weight: normal; margin: 0; }
+a { color: var(--accent); }
+
+.builder-top {
+  position: sticky; top: 0; z-index: 10;
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  padding: .7rem 1.4rem; background: var(--parch); border-bottom: 2px solid var(--line);
+}
+.builder-top h1 { font-size: 1.4rem; color: var(--accent); }
+.builder-top .meta { display: flex; align-items: center; gap: .9rem; font-size: .85rem; }
+.builder-top select { font-family: inherit; font-size: .95rem; padding: .25rem .4rem; border: 1px solid var(--line); border-radius: .3rem; background: var(--paper); }
+.builder-top .status { min-width: 6rem; text-align: right; color: var(--muted); font-size: .8rem; }
+
+.tabs { display: flex; gap: .4rem; padding: .6rem 1.4rem 0; }
+.tabs button {
+  font-family: "IM Fell English", serif; font-size: 1.05rem; padding: .5rem 1.3rem;
+  border: 1px solid var(--line); border-bottom: none; border-radius: .5rem .5rem 0 0;
+  background: #e9ddc2; color: var(--muted); cursor: pointer;
+}
+.tabs button.active { background: var(--parch); color: var(--accent); font-weight: 600; }
+
+.sheet {
+  max-width: 920px; margin: 0 auto; padding: 1.6rem 1.8rem 4rem;
+  background: var(--parch); border: 1px solid var(--line); border-top: none;
+  box-shadow: 0 4px 18px rgb(0 0 0 / 10%);
+}
+.page { display: none; }
+.page.active { display: block; }
+
+.step {
+  background: var(--paper); border: 1px solid var(--line); border-radius: .5rem;
+  padding: 1rem 1.2rem; margin-bottom: 1.1rem; position: relative;
+  transition: box-shadow .15s;
+}
+.step.locked { opacity: .45; pointer-events: none; }
+.step.missing { border-color: var(--bad); box-shadow: 0 0 0 2px rgb(156 43 43 / 20%); }
+.step h2 { font-size: 1.15rem; color: var(--accent); border-bottom: 1px solid var(--line); padding-bottom: .3rem; margin-bottom: .7rem; }
+.step h2 .n, .step summary .n { font-size: .75rem; color: var(--muted); font-family: "Crimson Pro", serif; margin-left: .5rem; font-weight: normal; }
+
+details.step { padding: 0; }
+details.step > summary {
+  display: flex; align-items: center; justify-content: space-between; gap: .6rem;
+  font-family: "IM Fell English", serif; font-size: 1.15rem; color: var(--accent);
+  cursor: pointer; padding: 1rem 1.2rem; list-style: revert;
+}
+details.step > summary::marker { color: var(--accent); }
+details.step[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: .7rem; }
+details.step > .step-body { padding: 0 1.2rem 1rem; }
+details.step summary button { font-size: .8rem; padding: .25rem .7rem; }
+
+label.field { display: block; margin-bottom: .6rem; }
+label.field > span { display: block; font-size: .8rem; color: var(--muted); font-weight: 600; margin-bottom: .2rem; }
+select, input[type="number"], input[type="text"] {
+  font-family: inherit; font-size: .95rem; padding: .4rem .55rem; border: 1px solid var(--line);
+  border-radius: .35rem; background: #fff; color: var(--ink);
+}
+select.invalid, input.invalid { border-color: var(--bad); box-shadow: 0 0 0 2px rgb(156 43 43 / 15%); }
+
+.sub-choice { margin-top: .5rem; padding-left: .8rem; border-left: 3px solid var(--line); }
+.checklist { display: flex; flex-wrap: wrap; gap: .4rem; }
+.checklist label {
+  border: 1px solid var(--line); border-radius: 1rem; padding: .25rem .7rem; font-size: .85rem;
+  cursor: pointer; background: #fff; display: flex; align-items: center; gap: .3rem;
+}
+.checklist label.checked { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+.feature-list { list-style: none; margin: .4rem 0 0; padding: 0; }
+.feature-list li { margin-bottom: .55rem; padding: .4rem .6rem; background: var(--parch); border-radius: .35rem; border: 1px solid var(--line); }
+.feature-list .fname { font-family: "IM Fell English", serif; color: var(--accent); }
+.feature-list .flevel { font-size: .72rem; color: var(--muted); margin-left: .4rem; }
+.feature-list .ftext { font-size: .82rem; color: var(--muted); margin-top: .2rem; white-space: pre-wrap; }
+
+.dice-grid { display: flex; flex-wrap: wrap; gap: .7rem; }
+.dice-cell { display: flex; flex-direction: column; align-items: center; gap: .25rem; }
+.dice-cell span { font-size: .72rem; color: var(--muted); }
+.dice-cell input { width: 3.4rem; text-align: center; }
+
+.ability-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .6rem; }
+.ability-grid .ab { text-align: center; }
+.ability-grid .ab .lbl { font-family: "IM Fell English", serif; color: var(--accent); }
+.ability-grid .ab select, .ability-grid .ab input { width: 100%; text-align: center; }
+
+.btn { font-family: "IM Fell English", serif; font-size: .95rem; padding: .4rem 1rem; border: 1px solid var(--accent);
+  border-radius: .4rem; background: var(--accent); color: #fff; cursor: pointer; }
+.btn.secondary { background: transparent; color: var(--accent); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.missing-banner { background: #fbe4e4; border: 1px solid var(--bad); color: var(--bad); border-radius: .4rem; padding: .5rem .8rem; font-size: .85rem; margin-bottom: 1rem; }
+
+.modal-backdrop { position: fixed; inset: 0; background: rgb(0 0 0 / 45%); display: none; align-items: center; justify-content: center; z-index: 50; }
+.modal-backdrop.open { display: flex; }
+.modal { background: var(--parch); border: 1px solid var(--line); border-radius: .6rem; padding: 1.2rem 1.4rem; max-width: 420px; box-shadow: 0 8px 30px rgb(0 0 0 / 30%); }
+.modal h3 { color: var(--accent); margin-bottom: .6rem; }
+.modal p { font-size: .9rem; color: var(--muted); }
+.modal .actions { display: flex; justify-content: flex-end; gap: .6rem; margin-top: 1rem; }
+
+.equip-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+.equip-pkg { border: 1px solid var(--line); border-radius: .4rem; padding: .7rem; margin-bottom: .6rem; cursor: pointer; background: #fff; }
+.equip-pkg.chosen { border-color: var(--accent); background: var(--parch); }
+.equip-pkg ul { margin: .3rem 0 0; padding-left: 1.1rem; font-size: .85rem; }
+
+.source-list label { display: flex; align-items: center; gap: .5rem; padding: .25rem 0; font-size: .9rem; }
+.source-list .code { font-family: ui-monospace, monospace; color: var(--muted); width: 4.5rem; display: inline-block; }

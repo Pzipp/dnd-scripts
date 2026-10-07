@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Karakterbygger</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&display=swap">
+  <link rel="stylesheet" href="{{ url_for('static', filename='builder.css') }}">
+</head>
+<body>
+<header class="builder-top">
+  <h1>Karakterbygger</h1>
+  <div class="meta">
+    <a href="/">&larr; WebUI</a>
+    <a href="/builder/settings">Kilder</a>
+  </div>
+</header>
+<main class="sheet" style="border-top:1px solid var(--line)">
+  <section class="step">
+    <h2>Opret ny karakter</h2>
+    <label class="field"><span>Navn (små bogstaver og bindestreg)</span>
+      <input type="text" id="new-name" placeholder="fx thorgrim">
+    </label>
+    <button class="btn" id="create-btn">Opret og byg</button>
+    <p id="create-error" style="color:var(--bad);display:none"></p>
+  </section>
+  <section class="step">
+    <h2>I gang med at bygge</h2>
+    {% if characters %}
+    <ul class="feature-list">
+      {% for c in characters %}
+      <li><a href="/builder/{{ c }}">{{ c }}</a></li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p>Ingen karakterer er i gang endnu.</p>
+    {% endif %}
+  </section>
+</main>
+<script>
+document.getElementById("create-btn").addEventListener("click", async () => {
+  const name = document.getElementById("new-name").value.trim().toLowerCase();
+  const errEl = document.getElementById("create-error");
+  errEl.style.display = "none";
+  const res = await fetch("/api/builder/create", {
+    method: "POST", headers: {"content-type": "application/json"}, body: JSON.stringify({name}),
+  });
+  const data = await res.json();
+  if (data.error) { errEl.textContent = data.error; errEl.style.display = "block"; return; }
+  location.href = `/builder/${data.name}`;
+});
+</script>
+</body>
+</html>
