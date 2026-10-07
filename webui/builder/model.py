@@ -430,8 +430,8 @@ def state(data: dict) -> dict:
                         merged += subclass_feats_by_level.pop(f["level"])
                     else:
                         merged.append(f)
-                for level in sorted(subclass_feats_by_level):
-                    merged += subclass_feats_by_level[level]
+                for leftover_level in sorted(subclass_feats_by_level):
+                    merged += subclass_feats_by_level[leftover_level]
                 merged.sort(key=lambda f: f["level"])
                 features = merged
             if is_caster:
