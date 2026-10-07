@@ -22,6 +22,10 @@ import tjek  # noqa: E402
 
 app = Flask(__name__)
 
+from builder.routes import bp as builder_bp  # noqa: E402
+
+app.register_blueprint(builder_bp)
+
 
 def character_dirs():
     if not CHARACTERS.is_dir():

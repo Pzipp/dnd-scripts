@@ -10,3 +10,6 @@ node_modules/
 
 # Lokal konfiguration (port, bind-adresse, UID) — se .env.example
 .env
+
+# Karakterbyggerens kilde-indstillinger (hvilke 5etools-bøger må bruges) — lokalt pr. opsætning
+webui/builder/settings.yaml
