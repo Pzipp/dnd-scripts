@@ -1,3 +1,5 @@
+import morphdom from "https://esm.sh/morphdom@2.7.8";
+
 const NAME = window.BUILDER_NAME;
 let state = null;
 let pending = null; // {fields} afventer bekræftelse i modal
@@ -377,11 +379,15 @@ function restoreOpenState(prevOpen) {
   });
 }
 
+function morphChildren(el, html) {
+  morphdom(el, `<div>${html}</div>`, { childrenOnly: true });
+}
+
 function render() {
   renderTop();
   const prevOpen = captureOpenState();
-  $("#page-character").innerHTML = renderCharacterPage();
-  $("#page-equipment").innerHTML = renderEquipmentPage();
+  morphChildren($("#page-character"), renderCharacterPage());
+  morphChildren($("#page-equipment"), renderEquipmentPage());
   restoreOpenState(prevOpen);
 }
 

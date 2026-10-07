@@ -42,6 +42,6 @@
 <script>
   window.BUILDER_NAME = {{ name|tojson }};
 </script>
-<script src="{{ url_for('static', filename='builder.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='builder.js') }}"></script>
 </body>
 </html>
