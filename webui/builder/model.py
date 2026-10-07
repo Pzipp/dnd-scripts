@@ -359,6 +359,70 @@ def _sub_choice_complete(sc: dict, stored_value) -> bool:
     return bool(stored_value)
 
 
+_SPELL_FILTER_KEYS = {"level", "school", "class"}
+
+
+def _parse_spell_filter(filter_str: str) -> dict | None:
+    """'level=1|school=I;N' -> {'level': '1', 'school': 'I;N'}. None hvis
+    filteret bruger et felt vi ikke slår op (fx Ritual Casters
+    'components & miscellaneous=ritual') - så det bevidst springes over
+    i stedet for at vise en forkert/tom liste."""
+    parsed = {}
+    for part in filter_str.split("|"):
+        if "=" not in part:
+            return None
+        key, value = part.split("=", 1)
+        key = key.strip()
+        if key not in _SPELL_FILTER_KEYS:
+            return None
+        parsed[key] = value.strip()
+    return parsed
+
+
+def _find_spell_filters(node, found: list) -> None:
+    """Gennemsøger additionalSpells-træet rekursivt for {'choose': '<filter>'}."""
+    if isinstance(node, dict):
+        if isinstance(node.get("choose"), str):
+            found.append((node["choose"], node.get("count", 1)))
+        for v in node.values():
+            _find_spell_filters(v, found)
+    elif isinstance(node, list):
+        for v in node:
+            _find_spell_filters(v, found)
+
+
+def _additional_spell_choices(feat_obj: dict, sources: set[str]) -> list[dict]:
+    """Nogle feats giver 'vælg et spell der opfylder X' (Shadow-Touched,
+    Fey-Touched, Blessed Warrior, Druidic Warrior m.fl.) via additionalSpells'
+    strukturerede "choose"-filterstrenge - data-drevet, ikke navn-specialtilfælde.
+    Feats med FLERE alternative blokke (en pr. navngivet oprindelse, fx Magic
+    Initiates "Cleric Spells"/"Druid Spells"/...) kræver først et valg af
+    HVILKEN blok, før spell-valget giver mening - en anden slags valg end
+    denne funktion dækker, så de springes bevidst over (kun én unavngiven
+    blok understøttes)."""
+    blocks = feat_obj.get("additionalSpells") or []
+    if len(blocks) != 1 or blocks[0].get("name"):
+        return []
+    found: list = []
+    _find_spell_filters(blocks[0], found)
+    choices = []
+    for i, (filter_str, count) in enumerate(found):
+        parsed = _parse_spell_filter(filter_str)
+        if not parsed:
+            continue
+        level = int(parsed["level"]) if "level" in parsed else None
+        schools = set(parsed["school"].split(";")) if "school" in parsed else None
+        class_name = parsed["class"].capitalize() if "class" in parsed else None
+        spells = e.spells_by_filter(sources, level=level, schools=schools, class_name=class_name)
+        if not spells:
+            continue
+        choices.append({
+            "id": f"spell_{i}", "title": f"Spell ({count})" if count > 1 else "Spell",
+            "options": [s["name"] for s in spells], "multiple": count > 1,
+        })
+    return choices
+
+
 def _feat_sub_choices(feat_obj: dict, sources: set[str]) -> list[dict]:
     """Et valgt feats egne undervalg. Feat-JSON'ens 'ability'-felt er IKKE
     generelt pålideligt - det optræder på feats hvor selve teksten slet ikke
@@ -398,6 +462,7 @@ def _feat_sub_choices(feat_obj: dict, sources: set[str]) -> list[dict]:
     if expertise.get("anyProficientSkill"):
         n = expertise["anyProficientSkill"]
         choices.append({"id": "expertise", "title": f"Expertise ({n}, blandt dine proficiencies)", "options": ALL_SKILLS, "multiple": n > 1})
+    choices += _additional_spell_choices(feat_obj, sources)
     return choices
 
 

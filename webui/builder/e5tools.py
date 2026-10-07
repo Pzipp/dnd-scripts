@@ -315,6 +315,25 @@ def class_spells(class_name: str, sources: set[str], max_level: int | None = Non
     return out
 
 
+def spells_by_filter(sources: set[str], level: int | None = None, schools: set[str] | None = None, class_name: str | None = None) -> list[dict] | None:
+    """Løser 5etools' "choose": "level=X|school=Y;Z"-filterstrenge (bruges af
+    feats som Shadow-Touched/Fey-Touched/Blessed Warrior til at give et valg
+    blandt spells, der opfylder kriterierne). Returnerer None hvis intet
+    kriterie er givet overhovedet (så en tom/ukendt filterstreng ikke stille
+    returnerer "alle spells")."""
+    if level is None and not schools and not class_name:
+        return None
+    pool = class_spells(class_name, sources, None) if class_name else _all_spells()
+    out = [
+        s for s in pool
+        if s.get("source") in sources
+        and (level is None or s.get("level") == level)
+        and (not schools or s.get("school") in schools)
+    ]
+    out.sort(key=lambda s: s.get("name", ""))
+    return out
+
+
 def class_table_value(class_obj: dict, column_label: str, level: int) -> int | None:
     """Slår en kolonne op i klassens egen tabel (classTableGroups), fx hvor mange
     våben Weapon Mastery giver på et givet niveau - tabel-drevet, ikke en fast tal."""
