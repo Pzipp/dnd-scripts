@@ -4,8 +4,12 @@
 }
 * { box-sizing: border-box; }
 body {
-  margin: 0; min-height: 100vh; background: var(--paper); color: var(--ink);
+  margin: 0; min-height: 100vh; color: var(--ink);
   font-family: "Crimson Pro", Georgia, serif; font-size: 15px; line-height: 1.4;
+  background-color: var(--paper);
+  background-image: url('pergament-tekstur.png');
+  background-size: cover; background-position: center; background-attachment: fixed;
+  background-blend-mode: multiply;
 }
 h1, h2, h3 { font-family: "IM Fell English", serif; font-weight: normal; margin: 0; }
 a { color: var(--accent); }
@@ -30,7 +34,11 @@ a { color: var(--accent); }
 
 .sheet {
   max-width: 920px; margin: 0 auto; padding: 1.6rem 1.8rem 4rem;
-  background: var(--parch); border: 1px solid var(--line); border-top: none;
+  background-color: var(--parch);
+  background-image: url('pergament-tekstur.png');
+  background-size: cover; background-position: center;
+  background-blend-mode: multiply;
+  border: 1px solid var(--line); border-top: none;
   box-shadow: 0 4px 18px rgb(0 0 0 / 10%);
 }
 .page { display: none; }
