@@ -300,15 +300,27 @@ def _meets_ability_requirement(primary_ability: list | None, assigned: dict) -> 
 def _multiclass_class_options(data: dict, cid: str, assigned: dict, sources: set[str]) -> list[dict]:
     """Klasser der reelt kan vælges til et IKKE-primært klasse-slot: kræver
     13+ i den nye klasses primære evne, OG at alle allerede valgte klasser
-    (den primære og evt. andre) stadig selv opfylder deres eget krav."""
+    (den primære og evt. andre) stadig selv opfylder deres eget krav.
+
+    Et allerede valgt navn på DETTE slot holdes altid med i listen, uanset
+    evnekravet - ellers forsvinder det valgte navn fra <select>'en, så snart
+    evnerne ikke (endnu) er udfyldt, og brugeren tror fejlagtigt at klassen
+    skal vælges forfra (hvilket rydder dens skills/valg unødigt)."""
+    current_name = data.get("classes", {}).get(cid, {}).get("name")
+    requirement_met = True
     for other_cid, other_entry in data.get("classes", {}).items():
         if other_cid == cid or not other_entry.get("name"):
             continue
         other_sources = {other_entry["source"]} if other_entry.get("source") else sources
         other_obj = e.get_class(other_entry["name"], other_sources)
         if other_obj and not _meets_ability_requirement(other_obj.get("primaryAbility"), assigned):
-            return []
-    eligible = [n for n in e.class_names() if _meets_ability_requirement((e.get_class(n, sources) or {}).get("primaryAbility"), assigned)]
+            requirement_met = False
+            break
+    eligible = []
+    if requirement_met:
+        eligible = [n for n in e.class_names() if _meets_ability_requirement((e.get_class(n, sources) or {}).get("primaryAbility"), assigned)]
+    if current_name and current_name not in eligible:
+        eligible.append(current_name)
     return _label_options([{"name": n, "source": "XPHB"} for n in eligible])
 
 
