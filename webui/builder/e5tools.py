@@ -355,6 +355,21 @@ def weapons(sources: set[str]) -> list[dict]:
     return [i for i in all_weapons if i.get("source") in sources and i.get("weaponCategory")]
 
 
+_TOOL_TYPES = {"AT", "INS", "T", "GS"}  # Artisan's Tools, Instruments, øvrige Tools, Gaming Sets
+
+
+def tools(sources: set[str]) -> list[dict]:
+    """Alle værktøjer (artisan's tools, instrumenter, tyveværktøj osv.) på tværs
+    af items-base.json (AT/INS) og items.json (T/GS) - 5etools deler dem over
+    to filer efter om de er "simple" baseitems eller har et fuldt item-opslag."""
+    pool = (
+        _load("items-base.json").get("baseitem", [])
+        + _load("items.json").get("item", [])
+        + _homebrew_entries("baseitem") + _homebrew_entries("item")
+    )
+    return [i for i in pool if i.get("source") in sources and (i.get("type") or "").split("|")[0] in _TOOL_TYPES]
+
+
 # ── Udstyr ───────────────────────────────────────────────────────────────
 def get_item(id_name: str) -> dict | None:
     """id_name er fx 'chain mail|xphb' (som i startingEquipment)."""

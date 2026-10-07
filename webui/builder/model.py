@@ -437,9 +437,20 @@ def _feat_sub_choices(feat_obj: dict, sources: set[str]) -> list[dict]:
     if skills_from:
         choices.append({"id": "skill", "title": f"Skill ({count})", "options": skills_from, "multiple": count > 1})
     for block in (feat_obj.get("skillToolLanguageProficiencies") or [{}])[0].get("choose", []):
-        if "anySkill" in (block.get("from") or []):
-            n = block.get("count", 1)
-            choices.append({"id": "skill_any", "title": f"Skill ({n}, blandt alle)", "options": ALL_SKILLS, "multiple": n > 1})
+        from_ = block.get("from") or []
+        n = block.get("count", 1)
+        # "anySkill"+"anyTool" sammen (Skilled) er ÉT kombineret valg - samme
+        # tæller dækker begge typer, ikke to separate puljer. Skills (små
+        # bogstaver) og værktøjsnavne (stort forbogstav) er allerede visuelt
+        # adskilte i listen uden behov for et ekstra præfiks.
+        pool = []
+        if "anySkill" in from_:
+            pool += ALL_SKILLS
+        if "anyTool" in from_:
+            pool += sorted(t["name"] for t in e.tools(sources))
+        if pool:
+            label = "/".join(p[3:].capitalize() for p in from_ if p.startswith("any"))
+            choices.append({"id": "skill_any", "title": f"{label} ({n}, blandt alle)", "options": pool, "multiple": n > 1})
     if feat_obj.get("name") == "Ability Score Improvement":
         choices.append({"id": "asi", "type": "asi", "title": "Evne-forbedring", "options": ABILITIES})
     if feat_obj.get("name") == "Weapon Master":
@@ -450,14 +461,37 @@ def _feat_sub_choices(feat_obj: dict, sources: set[str]) -> list[dict]:
         # struktureret choose-felt (modsat fx Epic Boons' resist-valg) - ingen
         # systematisk måde at opdage det på, derfor specialhåndteret som Weapon Master.
         choices.append({"id": "damage_type", "title": "Skadetype (Energy Mastery)", "options": ["Acid", "Cold", "Fire", "Lightning", "Thunder"], "multiple": False})
-    if feat_obj.get("category") == "EB":
+    if feat_obj.get("name") == "Resilient":
+        # Ability-feltets 'entry'-tekst siger eksplicit "choose one ability in
+        # which you lack saving throw proficiency, increase..." - ÉT valg giver
+        # BÅDE +1 og saving throw-træning i samme evne, ikke to uafhængige valg.
+        save_choose = (feat_obj.get("savingThrowProficiencies") or [{}])[0].get("choose", {})
+        if save_choose.get("from"):
+            choices.append({"id": "ability", "title": "Evne (+1 og saving throw-træning)", "options": [a.upper() for a in save_choose["from"]], "multiple": False})
+    elif feat_obj.get("category") in ("G", "EB") and feat_obj.get("name") != "Ability Score Improvement":
+        # Alle General- og Epic Boon-feats med et ability.choose-felt er
+        # half-feats, der giver +1 til én evne - en fast regel nævnt i
+        # kategoriens egen intro-tekst i reglerne, ikke gentaget i hvert
+        # enkelt feats egen tekst (samme opdagelse som Epic Boons egen
+        # +1-regel). Verificeret: INGEN feat i kategorierne G/EB har
+        # ability.choose uden faktisk at give denne forbedring.
         ability_choose = (feat_obj.get("ability") or [{}])[0].get("choose", {})
         if ability_choose.get("from"):
-            choices.append({"id": "ability", "title": "Evne-forbedring (+1, op til 30)", "options": [a.upper() for a in ability_choose["from"]], "multiple": False})
+            max_text = ", op til 30" if feat_obj.get("category") == "EB" else ""
+            choices.append({"id": "ability", "title": f"Evne-forbedring (+1{max_text})", "options": [a.upper() for a in ability_choose["from"]], "multiple": False})
     resist_choose = (feat_obj.get("resist") or [{}])[0].get("choose", {})
     if resist_choose.get("from"):
         n = resist_choose.get("count", 1)
         choices.append({"id": "resist", "title": f"Resistance ({n})", "options": [r.capitalize() for r in resist_choose["from"]], "multiple": n > 1})
+    tool_block = (feat_obj.get("toolProficiencies") or [{}])[0]
+    tool_choose = tool_block.get("choose", {})
+    if tool_choose.get("from"):
+        n = tool_choose.get("count", 1)
+        choices.append({"id": "tool", "title": f"Tool ({n})", "options": [t[:1].upper() + t[1:] for t in tool_choose["from"]], "multiple": n > 1})
+    if tool_block.get("anyMusicalInstrument"):
+        n = tool_block["anyMusicalInstrument"]
+        instrument_names = sorted({t["name"] for t in e.tools(sources) if (t.get("type") or "").split("|")[0] == "INS"})
+        choices.append({"id": "instrument", "title": f"Musikinstrument ({n}, blandt alle)", "options": instrument_names, "multiple": n > 1})
     expertise = (feat_obj.get("expertise") or [{}])[0]
     if expertise.get("anyProficientSkill"):
         n = expertise["anyProficientSkill"]
@@ -544,6 +578,13 @@ def state(data: dict) -> dict:
             feat_obj = e.get_feat(chosen["name"], {chosen["source"]})
             if feat_obj:
                 slot["text"] = e.render_text(feat_obj["entries"])
+                # Faste (ikke-valgfrie) evne-forbedringer (fx Durable: altid +1
+                # CON) nævnes - ligesom de valgfrie - kun i kategoriens egen
+                # intro-regel, ikke i feat'ens egen tekst, så de tilføjes her.
+                fixed_ability = (feat_obj.get("ability") or [{}])[0]
+                if fixed_ability and not fixed_ability.get("choose"):
+                    bumps = ", ".join(f"+{v} {k.upper()}" for k, v in fixed_ability.items())
+                    slot["text"] = f"Evne-forbedring: {bumps}.\n{slot['text']}"
                 slot["sub_choices"] = _feat_sub_choices(feat_obj, sources)
                 stored = chosen.get("choices", {})
                 for sc in slot["sub_choices"]:
