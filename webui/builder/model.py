@@ -297,9 +297,13 @@ def _sub_choice_complete(sc: dict, stored_value) -> bool:
 
 def _feat_sub_choices(feat_obj: dict, sources: set[str]) -> list[dict]:
     """Et valgt feats egne undervalg. Feat-JSON'ens 'ability'-felt er IKKE
-    pålideligt - det optræder på feats hvor selve teksten slet ikke giver en
-    evne-forbedring (fx Weapon Master), så det bruges ikke generisk. De to
-    kendte særtilfælde er specialhåndteret i stedet for gættet ud fra data."""
+    generelt pålideligt - det optræder på feats hvor selve teksten slet ikke
+    giver en evne-forbedring (fx Weapon Master), så det bruges ikke generisk
+    for alle feats. For Epic Boons (category EB) er feltet derimod altid
+    korrekt: alle Epic Boons giver +1 til én evne, op til 30 - det er en
+    fast regel for hele kategorien (nævnt i reglerne for Epic Boons som
+    helhed, ikke gentaget i hver enkelt boons egen tekst), så her bruges
+    kategori-koden som det pålidelige signal i stedet for feat-navnet."""
     choices = []
     skills_from, count = _skills_from_choose(feat_obj.get("skillProficiencies"))
     if skills_from:
@@ -313,6 +317,18 @@ def _feat_sub_choices(feat_obj: dict, sources: set[str]) -> list[dict]:
     if feat_obj.get("name") == "Weapon Master":
         weapon_names = sorted(w["name"] for w in e.weapons(sources))
         choices.append({"id": "weapon", "title": "Våben (Mastery Property)", "options": weapon_names, "multiple": False})
+    if feat_obj.get("category") == "EB":
+        ability_choose = (feat_obj.get("ability") or [{}])[0].get("choose", {})
+        if ability_choose.get("from"):
+            choices.append({"id": "ability", "title": "Evne-forbedring (+1, op til 30)", "options": [a.upper() for a in ability_choose["from"]], "multiple": False})
+    resist_choose = (feat_obj.get("resist") or [{}])[0].get("choose", {})
+    if resist_choose.get("from"):
+        n = resist_choose.get("count", 1)
+        choices.append({"id": "resist", "title": f"Resistance ({n})", "options": [r.capitalize() for r in resist_choose["from"]], "multiple": n > 1})
+    expertise = (feat_obj.get("expertise") or [{}])[0]
+    if expertise.get("anyProficientSkill"):
+        n = expertise["anyProficientSkill"]
+        choices.append({"id": "expertise", "title": f"Expertise ({n}, blandt dine proficiencies)", "options": ALL_SKILLS, "multiple": n > 1})
     return choices
 
 
