@@ -488,10 +488,10 @@ def _tiered_spell_choice(prepared: dict, sources: set[str], level: int, id_: str
     return {"id": id_, "title": f"Spell ({total})", "options": [s["name"] for s in spells], "multiple": total > 1}
 
 
-def _spell_choices_from_block(block: dict, sources: set[str], level: int, id_prefix: str = "") -> list[dict]:
+def _spell_choices_from_block(block: dict, sources: set[str], level: int, id_prefix: str = "", include_ability: bool = True) -> list[dict]:
     choices = []
     block_ability = block.get("ability")
-    if isinstance(block_ability, dict) and isinstance(block_ability.get("choose"), list):
+    if include_ability and isinstance(block_ability, dict) and isinstance(block_ability.get("choose"), list):
         choices.append({"id": f"{id_prefix}ability", "title": "Spellcasting-evne", "options": [a.upper() for a in block_ability["choose"]], "multiple": False})
     tiered = _tiered_spell_choice(block.get("prepared"), sources, level, f"{id_prefix}spell_prepared")
     if tiered:
@@ -523,7 +523,7 @@ def _spell_choices_from_block(block: dict, sources: set[str], level: int, id_pre
     return choices
 
 
-def _additional_spell_choices(feat_obj: dict, sources: set[str], stored: dict, level: int) -> list[dict]:
+def _additional_spell_choices(feat_obj: dict, sources: set[str], stored: dict, level: int, known_spells: set[str]) -> list[dict]:
     """Nogle feats giver 'vælg et spell der opfylder X' (Shadow-Touched,
     Fey-Touched, Blessed Warrior, Druidic Warrior, Ritual Caster m.fl.) via
     additionalSpells' strukturerede "choose"-filterstrenge - data-drevet,
@@ -535,13 +535,32 @@ def _additional_spell_choices(feat_obj: dict, sources: set[str], stored: dict, l
     valg, og de underliggende spell-valg beregnes først, når det er besvaret
     (læses fra stored, samme mønster som alle andre undervalg).
 
-    Alle ANDRE former (én blok, eller flere blokke der IKKE alle er navngivne
-    alternativer, fx Cold Caster: én blok giver automatisk Ray of Frost, en
-    anden giver et rigtigt valg) betyder at man får ALT fra hver blok
-    SAMTIDIG, ikke et valg mellem dem - derfor behandles hver blok for sig."""
+    Alle ANDRE former med flere blokke (ikke alle navngivne) betyder at man
+    får ALT fra hver blok SAMTIDIG, ikke et valg mellem dem - derfor
+    behandles hver blok for sig. Cold Caster er en undtagelse herfra, se
+    dens eget tjek nedenfor: dens to blokke er IKKE additive, men et
+    enten/eller betinget af om Ray of Frost allerede er kendt."""
     blocks = feat_obj.get("additionalSpells") or []
     if not blocks:
         return []
+    if feat_obj.get("name") == "Cold Caster":
+        # Egen tekst: "You learn the Ray of Frost cantrip. If you already
+        # know it, you learn a different Wizard cantrip of your choice." -
+        # det er IKKE begge dele samtidig (de to additionalSpells-blokke er
+        # ikke additive her), men den ene ELLER den anden, betinget af om
+        # Ray of Frost allerede står i spells.known. Evne-valget (hvilken
+        # evne der bruges til spellcasting) er allerede dækket af feat'ets
+        # EGNE ability-valg i _feat_sub_choices (samme felt som
+        # ability-forbedringen - se den for hvorfor), så det udelades her.
+        if "Ray of Frost" in known_spells:
+            # "... en ANDEN Wizard-cantrip" - Ray of Frost kendes allerede,
+            # så den giver ikke mening som mulighed i dette valg.
+            choices = _spell_choices_from_block(blocks[1], sources, level, include_ability=False)
+            for c in choices:
+                if isinstance(c.get("options"), list):
+                    c["options"] = [o for o in c["options"] if o != "Ray of Frost"]
+            return choices
+        return [{"id": "spell_fixed", "title": "Spell (automatisk)", "fixed": True, "options": ["Ray of Frost"], "multiple": False}]
     if len(blocks) > 1 and all(b.get("name") for b in blocks):
         origins = [b["name"].removesuffix(" Spells") for b in blocks]
         choices = [{"id": "origin", "title": "Oprindelse (spell-liste)", "options": origins, "multiple": False}]
@@ -558,7 +577,7 @@ def _additional_spell_choices(feat_obj: dict, sources: set[str], stored: dict, l
     return choices
 
 
-def _feat_sub_choices(feat_obj: dict, sources: set[str], stored: dict, level: int, half_feats: bool) -> list[dict]:
+def _feat_sub_choices(feat_obj: dict, sources: set[str], stored: dict, level: int, half_feats: bool, known_spells: set[str]) -> list[dict]:
     """Et valgt feats egne undervalg. Feat-JSON'ens 'ability'-felt er IKKE
     generelt pålideligt - det optræder på feats hvor selve teksten slet ikke
     giver en evne-forbedring (fx Weapon Master), så det bruges ikke generisk
@@ -605,6 +624,15 @@ def _feat_sub_choices(feat_obj: dict, sources: set[str], stored: dict, level: in
         save_choose = (feat_obj.get("savingThrowProficiencies") or [{}])[0].get("choose", {})
         if save_choose.get("from"):
             choices.append({"id": "ability", "title": "Evne (+1 og saving throw-træning)", "options": [a.upper() for a in save_choose["from"]], "multiple": False})
+    elif feat_obj.get("name") == "Cold Caster":
+        # Egen tekst: "The spell's spellcasting ability is the ability
+        # increased by this feat" - ÉT valg styrer BÅDE +1-forbedringen og
+        # cantrippets spellcasting-evne, ikke to separate valg (feltet står
+        # identisk gentaget i begge additionalSpells-blokke) - uafhængig af
+        # half_feats, ligesom Resilient, fordi det er feat'ets egen tekst.
+        ability_choose = (feat_obj.get("ability") or [{}])[0].get("choose", {})
+        if ability_choose.get("from"):
+            choices.append({"id": "ability", "title": "Evne (+1 og spellcasting-evne)", "options": [a.upper() for a in ability_choose["from"]], "multiple": False})
     elif feat_obj.get("category") == "EB":
         # Epic Boons' +1-regel er udiskutabel RAW (nævnt i kategoriens egen
         # intro-tekst), uafhængig af half_feats-indstillingen, som kun gælder
@@ -637,7 +665,7 @@ def _feat_sub_choices(feat_obj: dict, sources: set[str], stored: dict, level: in
     if expertise.get("anyProficientSkill"):
         n = expertise["anyProficientSkill"]
         choices.append({"id": "expertise", "title": f"Expertise ({n}, blandt dine proficiencies)", "options": ALL_SKILLS, "multiple": n > 1})
-    choices += _additional_spell_choices(feat_obj, sources, stored, level)
+    choices += _additional_spell_choices(feat_obj, sources, stored, level, known_spells)
     return choices
 
 
@@ -680,6 +708,7 @@ def state(data: dict) -> dict:
     level = total_level(data)
     assigned_abilities = data["abilities"].get("assigned", {})
     has_spellcasting = any(_class_has_spellcasting(entry, sources) for entry in data.get("classes", {}).values())
+    known_spells = set(data.get("spells", {}).get("known") or [])
 
     # race
     race_name = data["race"].get("name")
@@ -729,7 +758,7 @@ def state(data: dict) -> dict:
                     bumps = ", ".join(f"+{v} {k.upper()}" for k, v in fixed_ability.items())
                     slot["text"] = f"Evne-forbedring: {bumps}.\n{slot['text']}"
                 stored = chosen.get("choices", {})
-                slot["sub_choices"] = _feat_sub_choices(feat_obj, sources, stored, level, half_feats)
+                slot["sub_choices"] = _feat_sub_choices(feat_obj, sources, stored, level, half_feats, known_spells)
                 for sc in slot["sub_choices"]:
                     if not _sub_choice_complete(sc, stored.get(sc["id"])):
                         missing.append(f"feats.{key}.choices.{sc['id']}")
