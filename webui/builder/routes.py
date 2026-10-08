@@ -130,28 +130,50 @@ def api_class_remove():
     return jsonify(model.state(data))
 
 
-# ── Indstillinger: hvilke 5etools-kilder må byggeren slå op i ─────────────
-@bp.get("/builder/settings")
-def builder_settings():
-    return render_template("builder_settings.html")
+# ── Indstillinger: hvilke 5etools-kilder og husregler gælder for DENNE karakter ──
+@bp.get("/builder/<name>/settings")
+def builder_settings(name: str):
+    return render_template("builder_settings.html", name=name)
 
 
-@bp.get("/api/builder/sources")
-def api_sources():
+@bp.get("/api/builder/settings")
+def api_settings():
+    name = request.args.get("name", "")
+    try:
+        character_dir = _character_dir(name)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    if not character_dir.is_dir():
+        return jsonify({"error": "Ukendt karakter."}), 404
     if not e5tools.available():
         return jsonify({"error": "/e5tools er ikke mountet."}), 503
+    data = model.load(character_dir)
+    char_settings = data.get("settings", {})
     return jsonify({
         "all": e5tools.all_sources(),
-        "allowed": sorted(settings.allowed_sources()),
+        "allowed": sorted(char_settings.get("allowed_sources") or settings.DEFAULT_SOURCES),
         "default": settings.DEFAULT_SOURCES,
+        "half_feats": char_settings.get("half_feats", settings.DEFAULT_HALF_FEATS),
     })
 
 
-@bp.post("/api/builder/sources")
-def api_set_sources():
+@bp.post("/api/builder/settings")
+def api_set_settings():
     payload = request.get_json(silent=True) or {}
+    name = payload.get("name", "")
+    try:
+        character_dir = _character_dir(name)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    if not character_dir.is_dir():
+        return jsonify({"error": "Ukendt karakter."}), 404
     allowed = payload.get("allowed")
     if not isinstance(allowed, list) or not allowed:
         return jsonify({"error": "Vælg mindst én kilde."}), 400
-    settings.set_allowed_sources(allowed)
-    return jsonify({"allowed": sorted(settings.allowed_sources())})
+    data = model.load(character_dir)
+    data["settings"] = {
+        "allowed_sources": sorted(allowed),
+        "half_feats": bool(payload.get("half_feats", False)),
+    }
+    model.save(character_dir, data)
+    return jsonify({"allowed": data["settings"]["allowed_sources"], "half_feats": data["settings"]["half_feats"]})

@@ -12,7 +12,6 @@
   <h1>Karakterbygger</h1>
   <div class="meta">
     <a href="/">&larr; WebUI</a>
-    <a href="/builder/settings">Kilder</a>
   </div>
 </header>
 <main class="sheet" style="border-top:1px solid var(--line)">
@@ -29,7 +28,7 @@
     {% if characters %}
     <ul class="feature-list">
       {% for c in characters %}
-      <li><a href="/builder/{{ c }}">{{ c }}</a></li>
+      <li><a href="/builder/{{ c }}">{{ c }}</a> · <a href="/builder/{{ c }}/settings" style="font-size:.85rem">Indstillinger</a></li>
       {% endfor %}
     </ul>
     {% else %}

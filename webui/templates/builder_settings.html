@@ -3,31 +3,48 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Karakterbygger – Kilder</title>
+  <title>Karakterbygger – Indstillinger – {{ name }}</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&display=swap">
   <link rel="stylesheet" href="{{ url_for('static', filename='builder.css') }}">
 </head>
 <body>
 <header class="builder-top">
   <h1>Karakterbygger</h1>
-  <div class="meta"><a href="/builder">&larr; Alle karakterer</a></div>
+  <div class="meta">
+    <a href="/builder/{{ name }}">&larr; {{ name }}</a>
+  </div>
 </header>
 <main class="sheet" style="border-top:1px solid var(--line)">
   <section class="step">
     <h2>Tilladte kilder</h2>
     <p style="font-size:.85rem;color:var(--muted)">
+      Gælder kun denne karakter ({{ name }}) - andre karakterer kan have andre tilladte kilder.
       Kun valgte kilder bruges, når byggeren slår racer, klasser, baggrunde, feats og spells op.
       Standard er kun <strong>Player's Handbook (2024)</strong>. Listen er bygget ud fra, hvad der
       faktisk findes i /e5tools lige nu.
     </p>
     <div id="source-list" class="source-list"><p>Henter...</p></div>
-    <button class="btn" id="save-btn">Gem</button>
-    <span id="save-msg" style="margin-left:.6rem;color:var(--muted);font-size:.85rem"></span>
   </section>
+  <section class="step">
+    <h2>Husregler</h2>
+    <label style="display:flex;align-items:center;gap:.5rem;font-size:.9rem">
+      <input type="checkbox" id="half-feats">
+      Half-feats: General-feats giver også +1 til en evne
+    </label>
+    <p style="font-size:.8rem;color:var(--muted);margin-top:.3rem">
+      Ikke en fastlagt regel her - kun en mulig husregel. Slået fra som standard.
+      Epic Boons' egen +1-regel og Resilients egen evne/saving throw-valg er uafhængige af denne
+      indstilling og gælder altid.
+    </p>
+  </section>
+  <button class="btn" id="save-btn">Gem</button>
+  <span id="save-msg" style="margin-left:.6rem;color:var(--muted);font-size:.85rem"></span>
 </main>
 <script>
+const NAME = {{ name|tojson }};
+
 async function load() {
-  const res = await fetch("/api/builder/sources");
+  const res = await fetch(`/api/builder/settings?name=${encodeURIComponent(NAME)}`);
   const data = await res.json();
   if (data.error) {
     document.getElementById("source-list").innerHTML = `<p style="color:var(--bad)">${data.error}</p>`;
@@ -40,13 +57,16 @@ async function load() {
       <input type="checkbox" value="${code}" ${allowed.has(code) ? "checked" : ""} ${code === "XPHB" ? "disabled" : ""}>
       <span class="code">${code}</span> ${title}
     </label>`).join("");
+  document.getElementById("half-feats").checked = !!data.half_feats;
 }
 document.getElementById("save-btn").addEventListener("click", async () => {
   const boxes = document.querySelectorAll("#source-list input[type=checkbox]");
   const allowed = Array.from(boxes).filter((b) => b.checked).map((b) => b.value);
   if (!allowed.includes("XPHB")) allowed.push("XPHB");
-  const res = await fetch("/api/builder/sources", {
-    method: "POST", headers: {"content-type": "application/json"}, body: JSON.stringify({allowed}),
+  const half_feats = document.getElementById("half-feats").checked;
+  const res = await fetch("/api/builder/settings", {
+    method: "POST", headers: {"content-type": "application/json"},
+    body: JSON.stringify({name: NAME, allowed, half_feats}),
   });
   const data = await res.json();
   document.getElementById("save-msg").textContent = data.error ? data.error : "Gemt.";

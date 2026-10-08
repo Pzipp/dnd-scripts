@@ -41,6 +41,9 @@ def empty_character() -> dict:
         "feats": {},  # {slot_key: {name, source, choices}} - slot_key er "<class_id>_<niveau>" for ASI, eller "race"/"background"
         "spells": {"known": []},  # kun hvilke spells karakteren kender - prepared/known pr. dag styres af de printede kort, ikke her
         "equipment": {"class_package": None, "background_package": None, "extra": []},
+        # Pr. karakter, ikke delt - to gruppemedlemmer kan have forskellige
+        # tilladte kilder/husregler i gang samtidig.
+        "settings": {"allowed_sources": list(settings.DEFAULT_SOURCES), "half_feats": settings.DEFAULT_HALF_FEATS},
     }
 
 
@@ -151,7 +154,7 @@ def set_fields(data: dict, changes: dict, confirmed: bool = False) -> dict:
     """Sæt en eller flere felter atomisk. changes er {dot-path: værdi}.
     Returnerer {'ok': True} og ændrer data, eller {'ok': False, 'to_clear': [...],
     'message': ...} hvis et felt har afhængige valg, der ikke er bekræftet ryddet."""
-    sources = settings.allowed_sources()
+    sources = set(data.get("settings", {}).get("allowed_sources") or settings.DEFAULT_SOURCES)
     to_clear: list[str] = []
 
     for path, value in changes.items():
@@ -349,7 +352,13 @@ def _multiclass_class_options(data: dict, cid: str, assigned: dict, sources: set
 
 
 def _sub_choice_complete(sc: dict, stored_value) -> bool:
-    """ASI's undervalg er to felter (mode + 1-2 evner), ikke bare 'findes værdien'."""
+    """ASI's undervalg er to felter (mode + 1-2 evner), ikke bare 'findes værdien'.
+    Et "unknown"- eller "fixed"-valg (se _unknown_choice og
+    _spell_choices_from_block) har ingen muligheder brugeren selv skal vælge
+    mellem og skal derfor ikke stå som varigt "mangler" - det er en
+    oplysning, ikke noget der skal udfyldes."""
+    if sc.get("unknown") or sc.get("fixed"):
+        return True
     if sc.get("type") == "asi":
         if not isinstance(stored_value, dict) or not stored_value.get("mode"):
             return False
@@ -359,14 +368,22 @@ def _sub_choice_complete(sc: dict, stored_value) -> bool:
     return bool(stored_value)
 
 
-_SPELL_FILTER_KEYS = {"level", "school", "class"}
+def _unknown_choice(id_: str, title: str) -> dict:
+    """Et valg vi VED findes (der er et filter/choose-felt i data), men ikke
+    kan udlede konkrete muligheder for - fx et filter-felt vi ikke genkender,
+    eller et filter der (med nuværende kilder) ikke matcher noget. Vises i
+    stedet for stiltiende at udelade valget helt, så det ikke ser ud som om
+    feat'et ikke giver noget valg."""
+    return {"id": id_, "title": title, "unknown": True, "options": [], "multiple": False}
+
+
+_SPELL_FILTER_KEYS = {"level", "school", "class", "components & miscellaneous", "spell attack"}
 
 
 def _parse_spell_filter(filter_str: str) -> dict | None:
     """'level=1|school=I;N' -> {'level': '1', 'school': 'I;N'}. None hvis
-    filteret bruger et felt vi ikke slår op (fx Ritual Casters
-    'components & miscellaneous=ritual') - så det bevidst springes over
-    i stedet for at vise en forkert/tom liste."""
+    filteret bruger et felt vi slet ikke genkender - så det bevidst
+    springes over i stedet for at vise en forkert/tom liste."""
     parsed = {}
     for part in filter_str.split("|"):
         if "=" not in part:
@@ -379,51 +396,147 @@ def _parse_spell_filter(filter_str: str) -> dict | None:
     return parsed
 
 
-def _find_spell_filters(node, found: list) -> None:
-    """Gennemsøger additionalSpells-træet rekursivt for {'choose': '<filter>'}."""
+def _spells_for_filter(parsed: dict, sources: set[str]) -> list[dict]:
+    level = int(parsed["level"]) if "level" in parsed else None
+    schools = set(parsed["school"].split(";")) if "school" in parsed else None
+    class_names = {c.capitalize() for c in parsed["class"].split(";")} if "class" in parsed else None
+    ritual = True if parsed.get("components & miscellaneous") == "ritual" else None
+    spell_attack = set(parsed["spell attack"].split(";")) if "spell attack" in parsed else None
+    return e.spells_by_filter(sources, level=level, schools=schools, class_name=class_names, ritual=ritual, spell_attack=spell_attack)
+
+
+def _find_spell_filters(node, found: list, skip_keys: set = frozenset()) -> None:
+    """Gennemsøger additionalSpells-træet rekursivt for {'choose': '<filter>'}.
+    skip_keys springer en nøgle helt over (bruges til "prepared", som
+    håndteres særskilt pga. dens niveau-trappede antal - se _tiered_spell_choice)."""
     if isinstance(node, dict):
         if isinstance(node.get("choose"), str):
             found.append((node["choose"], node.get("count", 1)))
-        for v in node.values():
-            _find_spell_filters(v, found)
+        for k, v in node.items():
+            if k not in skip_keys:
+                _find_spell_filters(v, found, skip_keys)
     elif isinstance(node, list):
         for v in node:
-            _find_spell_filters(v, found)
+            _find_spell_filters(v, found, skip_keys)
 
 
-def _additional_spell_choices(feat_obj: dict, sources: set[str]) -> list[dict]:
-    """Nogle feats giver 'vælg et spell der opfylder X' (Shadow-Touched,
-    Fey-Touched, Blessed Warrior, Druidic Warrior m.fl.) via additionalSpells'
-    strukturerede "choose"-filterstrenge - data-drevet, ikke navn-specialtilfælde.
-    Feats med FLERE alternative blokke (en pr. navngivet oprindelse, fx Magic
-    Initiates "Cleric Spells"/"Druid Spells"/...) kræver først et valg af
-    HVILKEN blok, før spell-valget giver mening - en anden slags valg end
-    denne funktion dækker, så de springes bevidst over (kun én unavngiven
-    blok understøttes)."""
-    blocks = feat_obj.get("additionalSpells") or []
-    if len(blocks) != 1 or blocks[0].get("name"):
-        return []
-    found: list = []
-    _find_spell_filters(blocks[0], found)
+def _find_fixed_spell_names(node, found: list, skip_keys: set = frozenset()) -> None:
+    """Gennemsøger additionalSpells-træet rekursivt for FASTE spell-navne (rene
+    strenge som "ray of frost|xphb#c", ikke et {'choose': ...}-valg) - fx
+    Telekinetic/Telepathics automatiske cantrip, eller Shadow-Touched's faste
+    Invisibility-del ud over selve spell-VALGET. Uden dette var sådan en fast
+    tildeling helt usynlig (ingen valg at vise, men heller ingen tekst)."""
+    if isinstance(node, dict):
+        for k, v in node.items():
+            if k not in skip_keys:
+                _find_fixed_spell_names(v, found, skip_keys)
+    elif isinstance(node, list):
+        for v in node:
+            if isinstance(v, str):
+                found.append(v.split("|")[0].split("#")[0].strip())
+            else:
+                _find_fixed_spell_names(v, found, skip_keys)
+
+
+def _tiered_spell_choice(prepared: dict, sources: set[str], level: int, id_: str) -> dict | None:
+    """additionalSpells' "prepared"-form (Ritual Caster) giver FLERE spells,
+    hvor antallet vokser med karakterens niveau (nøglerne er de niveauer, hvor
+    endnu et spell låses op - fx Ritual Casters Proficiency Bonus-trin 1/5/9/
+    13/17) - lægges sammen for alle trin op til nuværende niveau, i stedet for
+    ét fast "count" som alle andre additionalSpells-former."""
+    if not isinstance(prepared, dict) or not all(str(k).isdigit() for k in prepared):
+        return None
+    total = 0
+    filter_str = None
+    for tier_level, entries in prepared.items():
+        if int(tier_level) > level:
+            continue
+        for entry in entries:
+            if isinstance(entry, dict) and isinstance(entry.get("choose"), str):
+                filter_str = filter_str or entry["choose"]
+                total += entry.get("count", 1)
+    if not filter_str or not total:
+        return None
+    parsed = _parse_spell_filter(filter_str)
+    if not parsed:
+        return _unknown_choice(id_, f"Spell ({total})")
+    spells = _spells_for_filter(parsed, sources)
+    if not spells:
+        return _unknown_choice(id_, f"Spell ({total})")
+    return {"id": id_, "title": f"Spell ({total})", "options": [s["name"] for s in spells], "multiple": total > 1}
+
+
+def _spell_choices_from_block(block: dict, sources: set[str], level: int, id_prefix: str = "") -> list[dict]:
     choices = []
+    block_ability = block.get("ability")
+    if isinstance(block_ability, dict) and isinstance(block_ability.get("choose"), list):
+        choices.append({"id": f"{id_prefix}ability", "title": "Spellcasting-evne", "options": [a.upper() for a in block_ability["choose"]], "multiple": False})
+    tiered = _tiered_spell_choice(block.get("prepared"), sources, level, f"{id_prefix}spell_prepared")
+    if tiered:
+        choices.append(tiered)
+    found: list = []
+    _find_spell_filters(block, found, skip_keys={"prepared"})
     for i, (filter_str, count) in enumerate(found):
+        title = f"Spell ({count})" if count > 1 else "Spell"
         parsed = _parse_spell_filter(filter_str)
         if not parsed:
+            choices.append(_unknown_choice(f"{id_prefix}spell_{i}", title))
             continue
-        level = int(parsed["level"]) if "level" in parsed else None
-        schools = set(parsed["school"].split(";")) if "school" in parsed else None
-        class_name = parsed["class"].capitalize() if "class" in parsed else None
-        spells = e.spells_by_filter(sources, level=level, schools=schools, class_name=class_name)
+        spells = _spells_for_filter(parsed, sources)
         if not spells:
+            choices.append(_unknown_choice(f"{id_prefix}spell_{i}", title))
             continue
         choices.append({
-            "id": f"spell_{i}", "title": f"Spell ({count})" if count > 1 else "Spell",
+            "id": f"{id_prefix}spell_{i}", "title": title,
             "options": [s["name"] for s in spells], "multiple": count > 1,
         })
+    fixed_names: list = []
+    _find_fixed_spell_names(block, fixed_names, skip_keys={"prepared", "ability"})
+    if fixed_names:
+        resolved = []
+        for raw in dict.fromkeys(fixed_names):  # dedupliker, bevar rækkefølge
+            spell = e.get_spell(raw, sources) or e.get_spell(raw, {"XPHB"})
+            resolved.append(spell["name"] if spell else raw.title())
+        choices.append({"id": f"{id_prefix}spell_fixed", "title": "Spell (automatisk)", "fixed": True, "options": resolved, "multiple": len(resolved) > 1})
     return choices
 
 
-def _feat_sub_choices(feat_obj: dict, sources: set[str]) -> list[dict]:
+def _additional_spell_choices(feat_obj: dict, sources: set[str], stored: dict, level: int) -> list[dict]:
+    """Nogle feats giver 'vælg et spell der opfylder X' (Shadow-Touched,
+    Fey-Touched, Blessed Warrior, Druidic Warrior, Ritual Caster m.fl.) via
+    additionalSpells' strukturerede "choose"-filterstrenge - data-drevet,
+    ikke navn-specialtilfælde.
+
+    Feats med FLERE alternative, navngivne blokke (Magic Initiates "Cleric
+    Spells"/"Druid Spells"/"Wizard Spells") kræver først et valg af HVILKEN
+    blok, før resten af valgene giver mening - det bliver sit eget "origin"-
+    valg, og de underliggende spell-valg beregnes først, når det er besvaret
+    (læses fra stored, samme mønster som alle andre undervalg).
+
+    Alle ANDRE former (én blok, eller flere blokke der IKKE alle er navngivne
+    alternativer, fx Cold Caster: én blok giver automatisk Ray of Frost, en
+    anden giver et rigtigt valg) betyder at man får ALT fra hver blok
+    SAMTIDIG, ikke et valg mellem dem - derfor behandles hver blok for sig."""
+    blocks = feat_obj.get("additionalSpells") or []
+    if not blocks:
+        return []
+    if len(blocks) > 1 and all(b.get("name") for b in blocks):
+        origins = [b["name"].removesuffix(" Spells") for b in blocks]
+        choices = [{"id": "origin", "title": "Oprindelse (spell-liste)", "options": origins, "multiple": False}]
+        chosen_origin = stored.get("origin")
+        block = next((b for b in blocks if b["name"].removesuffix(" Spells") == chosen_origin), None)
+        if block:
+            choices += _spell_choices_from_block(block, sources, level, id_prefix="origin_")
+        return choices
+    if len(blocks) == 1:
+        return _spell_choices_from_block(blocks[0], sources, level)
+    choices = []
+    for i, block in enumerate(blocks):
+        choices += _spell_choices_from_block(block, sources, level, id_prefix=f"b{i}_")
+    return choices
+
+
+def _feat_sub_choices(feat_obj: dict, sources: set[str], stored: dict, level: int, half_feats: bool) -> list[dict]:
     """Et valgt feats egne undervalg. Feat-JSON'ens 'ability'-felt er IKKE
     generelt pålideligt - det optræder på feats hvor selve teksten slet ikke
     giver en evne-forbedring (fx Weapon Master), så det bruges ikke generisk
@@ -463,22 +576,28 @@ def _feat_sub_choices(feat_obj: dict, sources: set[str]) -> list[dict]:
         choices.append({"id": "damage_type", "title": "Skadetype (Energy Mastery)", "options": ["Acid", "Cold", "Fire", "Lightning", "Thunder"], "multiple": False})
     if feat_obj.get("name") == "Resilient":
         # Ability-feltets 'entry'-tekst siger eksplicit "choose one ability in
-        # which you lack saving throw proficiency, increase..." - ÉT valg giver
-        # BÅDE +1 og saving throw-træning i samme evne, ikke to uafhængige valg.
+        # which you lack saving throw proficiency, increase..." - det er en del
+        # af Resilients EGEN tekst, ikke den omstridte "alle General-feats er
+        # half-feats"-regel, så det gælder uanset half_feats-indstillingen.
+        # ÉT valg giver BÅDE +1 og saving throw-træning i samme evne.
         save_choose = (feat_obj.get("savingThrowProficiencies") or [{}])[0].get("choose", {})
         if save_choose.get("from"):
             choices.append({"id": "ability", "title": "Evne (+1 og saving throw-træning)", "options": [a.upper() for a in save_choose["from"]], "multiple": False})
-    elif feat_obj.get("category") in ("G", "EB") and feat_obj.get("name") != "Ability Score Improvement":
-        # Alle General- og Epic Boon-feats med et ability.choose-felt er
-        # half-feats, der giver +1 til én evne - en fast regel nævnt i
-        # kategoriens egen intro-tekst i reglerne, ikke gentaget i hvert
-        # enkelt feats egen tekst (samme opdagelse som Epic Boons egen
-        # +1-regel). Verificeret: INGEN feat i kategorierne G/EB har
-        # ability.choose uden faktisk at give denne forbedring.
+    elif feat_obj.get("category") == "EB":
+        # Epic Boons' +1-regel er udiskutabel RAW (nævnt i kategoriens egen
+        # intro-tekst), uafhængig af half_feats-indstillingen, som kun gælder
+        # det omstridte "alle General-feats er half-feats"-spørgsmål.
         ability_choose = (feat_obj.get("ability") or [{}])[0].get("choose", {})
         if ability_choose.get("from"):
-            max_text = ", op til 30" if feat_obj.get("category") == "EB" else ""
-            choices.append({"id": "ability", "title": f"Evne-forbedring (+1{max_text})", "options": [a.upper() for a in ability_choose["from"]], "multiple": False})
+            choices.append({"id": "ability", "title": "Evne-forbedring (+1, op til 30)", "options": [a.upper() for a in ability_choose["from"]], "multiple": False})
+    elif half_feats and feat_obj.get("category") == "G" and feat_obj.get("name") != "Ability Score Improvement":
+        # Om General-feats generelt er half-feats (ud over dem der selv
+        # nævner det, som Resilient) er en husregel-diskussion, ikke en
+        # fastlagt del af reglerne her - derfor styret af indstillingen
+        # half_feats (pr. karakter, default fra), ikke altid aktiv.
+        ability_choose = (feat_obj.get("ability") or [{}])[0].get("choose", {})
+        if ability_choose.get("from"):
+            choices.append({"id": "ability", "title": "Evne-forbedring (+1)", "options": [a.upper() for a in ability_choose["from"]], "multiple": False})
     resist_choose = (feat_obj.get("resist") or [{}])[0].get("choose", {})
     if resist_choose.get("from"):
         n = resist_choose.get("count", 1)
@@ -496,7 +615,7 @@ def _feat_sub_choices(feat_obj: dict, sources: set[str]) -> list[dict]:
     if expertise.get("anyProficientSkill"):
         n = expertise["anyProficientSkill"]
         choices.append({"id": "expertise", "title": f"Expertise ({n}, blandt dine proficiencies)", "options": ALL_SKILLS, "multiple": n > 1})
-    choices += _additional_spell_choices(feat_obj, sources)
+    choices += _additional_spell_choices(feat_obj, sources, stored, level)
     return choices
 
 
@@ -532,7 +651,9 @@ def state(data: dict) -> dict:
     if not e.available():
         return {"choices": data, "e5tools_available": False, "missing": ["e5tools"]}
 
-    sources = settings.allowed_sources()
+    char_settings = data.get("settings", {})
+    sources = set(char_settings.get("allowed_sources") or settings.DEFAULT_SOURCES)
+    half_feats = char_settings.get("half_feats", settings.DEFAULT_HALF_FEATS)
     missing = []
     level = total_level(data)
     assigned_abilities = data["abilities"].get("assigned", {})
@@ -579,14 +700,14 @@ def state(data: dict) -> dict:
             if feat_obj:
                 slot["text"] = e.render_text(feat_obj["entries"])
                 # Faste (ikke-valgfrie) evne-forbedringer (fx Durable: altid +1
-                # CON) nævnes - ligesom de valgfrie - kun i kategoriens egen
-                # intro-regel, ikke i feat'ens egen tekst, så de tilføjes her.
+                # CON) hører til den omstridte "General-feats er half-feats"-
+                # regel (se half_feats ovenfor), så de vises kun når den er slået til.
                 fixed_ability = (feat_obj.get("ability") or [{}])[0]
-                if fixed_ability and not fixed_ability.get("choose"):
+                if half_feats and feat_obj.get("category") == "G" and fixed_ability and not fixed_ability.get("choose"):
                     bumps = ", ".join(f"+{v} {k.upper()}" for k, v in fixed_ability.items())
                     slot["text"] = f"Evne-forbedring: {bumps}.\n{slot['text']}"
-                slot["sub_choices"] = _feat_sub_choices(feat_obj, sources)
                 stored = chosen.get("choices", {})
+                slot["sub_choices"] = _feat_sub_choices(feat_obj, sources, stored, level, half_feats)
                 for sc in slot["sub_choices"]:
                     if not _sub_choice_complete(sc, stored.get(sc["id"])):
                         missing.append(f"feats.{key}.choices.{sc['id']}")

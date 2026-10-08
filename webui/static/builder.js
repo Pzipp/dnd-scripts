@@ -135,6 +135,12 @@ function renderSubChoices(basePath, subChoices, storedChoices) {
   return (subChoices || [])
     .map((sc) => {
       const current = (storedChoices || {})[sc.id];
+      if (sc.unknown) {
+        return `<div class="sub-choice"><span>${esc(sc.title)}</span><div class="ftext">(Tilladte valg er ukendt, se PHB)</div></div>`;
+      }
+      if (sc.fixed) {
+        return `<div class="sub-choice"><span>${esc(sc.title)}</span><div class="ftext">${esc(sc.options.join(", "))}</div></div>`;
+      }
       if (sc.type === "asi") {
         return renderAsiChoice(basePath, sc, current || {});
       }

@@ -294,34 +294,58 @@ def get_spell(name: str, sources: set[str]) -> dict | None:
     return None
 
 
-def class_spells(class_name: str, sources: set[str], max_level: int | None = None) -> list[dict]:
-    """Spells på en klasses spell-liste. For officiel data ligger klasse/spell-
-    sammenhænge i et separat opslagsværk (generated/gendata-spell-source-lookup.json),
-    ikke i selve spell-objektet - homebrew-spells forventes i stedet at have et
-    almindeligt classes.fromClassList-felt direkte på sig selv."""
+def class_spells(class_names: str | set[str], sources: set[str], max_level: int | None = None) -> list[dict]:
+    """Spells på en eller flere klassers spell-liste (fx et feat-filter som
+    "class=Cleric;Wizard" - matcher enhver spell der står på MINDST én af
+    dem). For officiel data ligger klasse/spell-sammenhænge i et separat
+    opslagsværk (generated/gendata-spell-source-lookup.json), ikke i selve
+    spell-objektet - homebrew-spells forventes i stedet at have et
+    almindeligt classes.fromClassList-felt direkte på sig selv.
+
+    Opslagets "class"-felt er selv opdelt pr. kildebog (fx en spell på
+    Wizards liste i XPHB, der OGSÅ står på Artificers liste via EFA, har
+    class: {"XPHB": {...}, "EFA": {"Artificer": true}}) - der slås derfor
+    op i alle TILLADTE kilder, ikke kun "XPHB", så en Artificer-feat først
+    giver resultater når EFA/TCE rent faktisk er slået til i indstillingerne."""
+    names = {class_names} if isinstance(class_names, str) else set(class_names)
     lookup = _load("generated/gendata-spell-source-lookup.json").get("xphb", {})
     out = []
     for s in _all_spells():
         if s.get("source") not in sources:
             continue
         info = lookup.get(s.get("name", "").lower(), {})
-        classes = set((info.get("class") or {}).get("XPHB", {})) | {
+        class_info = info.get("class") or {}
+        classes = {c for src in sources for c in class_info.get(src, {})} | {
             c.get("name") for c in (s.get("classes") or {}).get("fromClassList", [])
         }
-        if class_name in classes:
+        if classes & names:
             if max_level is None or s.get("level", 0) <= max_level:
                 out.append(s)
     out.sort(key=lambda s: (s.get("level", 0), s.get("name", "")))
     return out
 
 
-def spells_by_filter(sources: set[str], level: int | None = None, schools: set[str] | None = None, class_name: str | None = None) -> list[dict] | None:
+def _matches_spell_attack(spell: dict, wanted: set[str]) -> bool:
+    """5etools' "Spell Attack"-filter (M/R/O - Melee/Ranged/Other-Unknown, se
+    js/filter-spells.js i /srv/e5tools). spellAttack-feltet sættes kun til
+    "M" og/eller "R" (automatisk udledt af spell-teksten ved data-generering,
+    se converterutils-spell.js) - "O" findes ikke som en faktisk værdi, det
+    er UI'ets bagkat for "intet attack-kast" (feltet tomt/mangler)."""
+    actual = {t.upper() for t in (spell.get("spellAttack") or [])}
+    wanted = {w.upper() for w in wanted}
+    if "O" in wanted and not actual:
+        return True
+    return bool(actual & (wanted - {"O"}))
+
+
+def spells_by_filter(sources: set[str], level: int | None = None, schools: set[str] | None = None, class_name: str | set[str] | None = None, ritual: bool | None = None, spell_attack: set[str] | None = None) -> list[dict] | None:
     """Løser 5etools' "choose": "level=X|school=Y;Z"-filterstrenge (bruges af
     feats som Shadow-Touched/Fey-Touched/Blessed Warrior til at give et valg
-    blandt spells, der opfylder kriterierne). Returnerer None hvis intet
+    blandt spells, der opfylder kriterierne). ritual=True matcher kun spells
+    med meta.ritual (bruges af Ritual Caster). Returnerer None hvis intet
     kriterie er givet overhovedet (så en tom/ukendt filterstreng ikke stille
     returnerer "alle spells")."""
-    if level is None and not schools and not class_name:
+    if level is None and not schools and not class_name and ritual is None and not spell_attack:
         return None
     pool = class_spells(class_name, sources, None) if class_name else _all_spells()
     out = [
@@ -329,6 +353,8 @@ def spells_by_filter(sources: set[str], level: int | None = None, schools: set[s
         if s.get("source") in sources
         and (level is None or s.get("level") == level)
         and (not schools or s.get("school") in schools)
+        and (ritual is None or bool((s.get("meta") or {}).get("ritual")) == ritual)
+        and (not spell_attack or _matches_spell_attack(s, spell_attack))
     ]
     out.sort(key=lambda s: s.get("name", ""))
     return out
