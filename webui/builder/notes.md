@@ -10,15 +10,19 @@ identisk i både PHB (2014) og XPHB (2024). Uden videre ville en sådan spell
 stå dobbelt i enhver valgliste, hvis begge kilder er slået til samtidig.
 
 `_spells_for_filter()` deduplikerer derfor på `spell["name"]` og beholder
-kun den FØRSTE forekomst. Hvilken udgave det bliver, afgøres af
-filrækkefølgen i `spells/index.json`, ikke et bevidst valg af hvilken bogs
-version der skal vinde.
+kun den FØRSTE forekomst. Hvilken udgave det bliver, er IKKE et bevidst
+valg - det er simpelthen nøgle-rækkefølgen i `spells/index.json`, som 5etools
+selv har skrevet filen i, uden nogen garanti for at nyere udgave kommer sidst
+(eller først).
 
-**Risiko:** deduplikeringen går ud fra, at to bøgers version af samme
-spell-navn er reelt ens (en reprint). Er det ikke tilfældet - en bog har
-faktisk ændret reglerne for en spell under samme navn - vil brugeren kun se
-ÉN af de to udgaver, uden at vide hvilken, og uden mulighed for selv at
-vælge den anden.
+**Bekræftet problem, ikke kun en teoretisk risiko:** med både PHB (2014) og
+XPHB (2024) tilladt vinder 2014-udgaven af Fire Bolt over 2024-udgaven ved
+dedup - altså den ÆLDRE, ikke den nyere/aktuelle regel - fordi "PHB" står
+før "XPHB" i `spells/index.json`. Brugeren får ingen besked om at det er
+2014-reglen, der reelt blev valgt. Det er desuden ikke sikkert at ALLE
+genoptryk rent faktisk er identiske tekstligt (mindre ordlydsændringer
+forekommer mellem udgaver) - deduplikeringen skelner ikke mellem "ren
+reprint" og "reelt ændret regel under samme navn".
 
 **Hvis det bliver et problem:** stop med at dedupliere blindt, og vis i
 stedet alle udgaver med kilde-henvisning i parentes - samme mønster som
