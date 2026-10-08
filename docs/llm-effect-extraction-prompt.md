@@ -1,14 +1,23 @@
 # Eksempel: den samlede besked til LLM'et (effekt-udtræk + dansk beskrivelse)
 
-**`name_da` + `description_da` (uden `effects`) er nu IMPLEMENTERET** i
-`llm_client.py`/`descriptions.py` (ét separat commit) - `name_da` er en
-dansk undertitel til det engelske navn, ligesom `bibliotek`-kortenes eget
-`dansk`-felt, IKKE en oversættelse der erstatter navnet. `effects`
-(struktureret tal-udtræk) er stadig KUN denne skitse, ikke bygget.
+**Hele dette design er nu IMPLEMENTERET** i `llm_client.py`/`descriptions.py`/
+`effects.py`/`character_yaml.py` - `name_da`/`description_da`/`effect`/
+`back_note`/`effects`/`confidence` kommer alle fra SAMME kald (se
+`llm_client._prompt()`). `character_yaml._apply_effects()` folder kun
+`confidence: high` + `duration: permanent`-effects ind, og kun i to targets
+der rent faktisk har en anvendelse bygget (`initiative`, `hp_per_level`) -
+resten (`ac`, `saves`, `skills`, resistances, `darkvision`, `speed`) gemmes i
+`bibliotek/_effects.yaml`, men bruges ikke automatisk nogen steder endnu.
 
-Resten af dette dokument er et konkret eksempel på selve beskeden,
-til at vurdere om designet holder, før noget kodes. Ingen af teksterne
-herunder er opfundet: begge er den FAKTISKE output af
+Tre rigtige kald (Alert, Tough, Draconic Resilience) bekræftede designet
+konkret: Alert gav kun den permanente +PB-effect (Initiative Swap-handlingen
+blev korrekt UDELADT fra `effects`, kun beskrevet i tekst); Draconic
+Resilience gav både en permanent (`hp_per_level`) OG en betinget (`ac`, kun
+uden rustning) effect i SAMME liste - kun den permanente del anvendes.
+
+Resten af dette dokument er det oprindelige eksempel på selve beskeden, fra
+før koden blev skrevet - bevaret som dokumentation af designovervejelsen.
+Ingen af teksterne heri er opfundet: begge er den FAKTISKE output af
 `e5tools.render_text()` for `Alert` og `Tough` (XPHB), hentet direkte fra
 `/srv/e5tools/data/feats.json` i en kørende container. Det er bevidst - en
 LLM-prompt bygget på en forestillet tekst beviser ingenting om det rigtige
@@ -31,12 +40,10 @@ Bonus...". Hvis det skulle forveksle "Proficiency" (en træning/kategori) med
 LLM'et - ikke noget LLM'et "opfinder". Værd at rette i `e5tools.py`, hvis
 dette design bygges.
 
-**Bemærk:** Den rigtige, implementerede prompt (`llm_client._prompt()`) er
-pt. simplere end eksemplet nedenfor - den beder kun om `name_da`/`description_da`
-i formatet `id: dansk navn :: beskrivelse`, ét svar pr. linje (ikke et YAML-
-dokument, og ingen `effects`/`confidence`). Eksemplet nedenfor er den
-FULDE, fremtidige besked, inklusive effekt-udtræk - til at vise hvor det
-bærer hen, ikke hvad der kører i dag.
+**Bemærk:** Den rigtige, implementerede prompt (`llm_client._prompt()`) beder
+om PRÆCIS de samme felter som eksemplet nedenfor (name_da/description_da/
+effect/back_note/effects/confidence), i et YAML-svar - selve ordlyden er
+omskrevet undervejs, men indholdet matcher.
 
 ## Selve beskeden (ét samlet user-message, som i `llm_client.describe_batch()`)
 
@@ -150,14 +157,27 @@ passer. Det er netop forskellen på de to felter: `effects` er kun de rene
 tal-ændringer der er sikre at regne automatisk med; alt det situationsbestemte,
 valgfrie eller fortællende bliver kun stående som tekst til spilleren.
 
-## Hvad der stadig er ubesvaret (ikke en del af denne skitse)
+## Afklarede/implementerede siden skitsen
 
-* Hvad gør vi, når `confidence` er `medium`/`low`? (Forslag fra sidste
-  skitse: foldes ikke automatisk ind i totalerne - vises som forslag, ikke
-  autoritativt.)
-* Skal effects for KLASSEFEATURES (ikke feats) også dækkes - de har ofte
-  flere, niveau-afhængige dele (fx Barbarian Rage ændrer sig med niveau).
-  Ikke undersøgt endnu.
-* Selve integrationen i `character_yaml.py` (hvordan `effects` rent faktisk
-  folder ind i `initiative`/`hp` osv.) er stadig kun skitseret i den
-  tidligere besked, ikke designet i detaljer.
+* **`confidence: medium`/`low`** foldes IKKE ind automatisk - kun `high`
+  anvendes (se `character_yaml._apply_effects()`). `medium`/`low` gemmes i
+  `_effects.yaml`, men vises ikke som forslag nogen steder i UI'en endnu.
+* **`initiative` er ikke et `PRESERVED_FIELDS`-felt længere** (se
+  `character_yaml.py`s moduldocstring) - den genberegnes altid fra formel +
+  høj-konfidens effects, og overskriver BEVIDST en manuel rettelse, hvis en
+  høj-konfidens effect findes. Aftalt med brugeren 2026-10-08: enkelt og
+  forudsigeligt, fremfor en stille "kun hvis uændret"-regel.
+* **Kun to targets har en faktisk anvendelse bygget**: `initiative` (folder
+  ind i formel-strengen) og `hp_per_level` (lægges til HP × niveau). De
+  øvrige targets i target-listen (`ac`, `save:*`, `skill:*`,
+  `damage_resistance`/`immunity`/`vulnerability`, `condition_immunity`,
+  `darkvision`, `speed`) udtrækkes og gemmes korrekt, men anvendes IKKE
+  automatisk noget sted endnu.
+
+## Stadig ubesvaret
+
+* Klassefeatures med NIVEAU-AFHÆNGIGE effects (fx Barbarian Rage, der
+  ændrer skade/antal brug med niveau) - `effects`-skemaet har ikke et
+  "skalerer med niveau"-felt, kun en fast `value`. Ikke undersøgt endnu.
+* Et UI til at vise `medium`/`low`-forslag til spilleren (ikke autoritativt,
+  men heller ikke helt skjult) - ingen banner/knap for dette findes endnu.

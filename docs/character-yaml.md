@@ -47,27 +47,29 @@ summary: [[Klasse, Fighter 5], [Art, Human], [Baggrund, Soldier]]
 
 ## Manuelle felter
 
-`ac`, `initiative` og `languages` udregnes IKKE pålideligt af
-`derive_from_state()` - de får kun en fornuftig standardformel
-(`{10+DEX}`, `{+DEX}`, `Common`), og bevares derefter fra en eksisterende
-`character.yaml` i stedet for at blive overskrevet igen (se
-`PRESERVED_FIELDS` i `character_yaml.py`). To forskellige grunde til samme
-løsning:
+`ac` og `languages` udregnes IKKE pålideligt af `derive_from_state()` - de
+får kun en fornuftig standardformel (`{10+DEX}`, `Common`), og bevares
+derefter fra en eksisterende `character.yaml` i stedet for at blive
+overskrevet igen (se `PRESERVED_FIELDS` i `character_yaml.py`).
+choices.yaml tracker ikke den nødvendige info (hvilken rustning er rent
+faktisk udstyret? hvilke ekstra sprog gav en valgfri tildeling?) - samme
+situation som i den gamle `karakter.yaml`, hvor begge felter også er
+fritekst, spilleren selv sætter. Spilleren retter feltet i hånden,
+informeret af feat-listen (som stadig vises i Træning og valg) - samme
+afvejning de 8 håndskrevne karakterer allerede lever med for hele
+stats-rækken.
 
-* `ac`/`languages`: choices.yaml tracker ikke den nødvendige info
-  (hvilken rustning er rent faktisk udstyret? hvilke ekstra sprog gav en
-  valgfri tildeling?) - samme situation som i den gamle `karakter.yaml`,
-  hvor begge felter også er fritekst, spilleren selv sætter.
-* `initiative`: PB på initiativ kommer fra enkelte feats (fx Alert, XPHB),
-  men 5etools' data har INTET struktureret felt for den slags
-  mekanisk-effekt-tekst - kun fri engelsk prosa i `entries`. At
-  specialtjekke hvert feat ved navn i Python skalerer ikke til flere
-  hundrede feats/spells/features med lignende effekter, så render.py gør
-  det slet ikke - den læser bare tallet, ligesom alt andet.
-
-I begge tilfælde: spilleren retter feltet i hånden, informeret af
-feat-listen (som stadig vises i Træning og valg) - samme afvejning de 8
-håndskrevne karakterer allerede lever med for hele stats-rækken.
+`initiative` var tidligere i samme kategori (PB på initiativ kommer fra
+enkelte feats, fx Alert XPHB, men 5etools' data har intet struktureret felt
+for den slags mekanisk-effekt-tekst) - det er nu løst af et LLM-baseret
+effects-udtræk i stedet (se `effects.py` og
+[llm-effect-extraction-prompt.md](llm-effect-extraction-prompt.md)):
+`character_yaml._apply_effects()` folder høj-konfidens, PERMANENTE effects
+ind i formlen hver gang. `initiative` er derfor IKKE længere et
+`PRESERVED_FIELDS`-felt - den genberegnes altid, og overskriver BEVIDST en
+manuel rettelse, hvis en høj-konfidens effect findes. `render.py` læser den
+stadig bare som tallet den er, ligesom alt andet - selve udregningen ligger
+i `character_yaml.py`, aldrig i renderen.
 
 ## Kendte forenklinger
 
