@@ -70,7 +70,7 @@ regel, ikke noget der er sagt direkte om den nye bygger.
   oversættelses-adapter mellem de to systemer - en tidligere version havde
   det, men blev opgivet: en adapter mellem to parallelle sprog ville kun
   vokse, hver gang en ny boks-type dukkede op).
-* **Dansk udgave = kort gengivelse, cachet delt** i `bibliotek/_beskrivelser.yaml`,
+* **Dansk udgave = kort gengivelse, cachet delt** i `bibliotek/_descriptions.yaml`,
   genereret af et OpenAI-kompatibelt LLM-endpoint (claude-code ELLER
   Mistral, konfigureres i `.env` - se `webui/builder/llm_client.py`), kun
   ved et eksplicit knaptryk, i bidder af højst 10 ad gangen. Dækker spells,

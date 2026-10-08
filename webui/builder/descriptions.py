@@ -7,7 +7,7 @@ et langt større sæt end de kort gruppen har printet.
 
 Opslagskæde for en entry {name, source, kind}:
   1. De eksisterende, håndkuraterede bibliotek/*.yaml-kort (samme navn).
-  2. Den delte cache bibliotek/_beskrivelser.yaml (tidligere LLM-genereringer).
+  2. Den delte cache bibliotek/_descriptions.yaml (tidligere LLM-genereringer).
   3. Ellers: mangler - skal genereres (generate_missing()), kun ved et
      eksplicit knaptryk i UI'en, aldrig automatisk ved gem/build.
 """
@@ -25,7 +25,7 @@ BIBLIOTEK = ROOT / "bibliotek"
 # Præfikset med "_": scripts/kort/spellkort.py's kortbibliotek springer
 # filer med det præfiks over (samme konvention som "_skabelon/"), så denne
 # cache ikke bliver indlæst som kort.
-CACHE_PATH = BIBLIOTEK / "_beskrivelser.yaml"
+CACHE_PATH = BIBLIOTEK / "_descriptions.yaml"
 ENDINGS = (".yaml", ".yml")
 BATCH_SIZE = 10
 
