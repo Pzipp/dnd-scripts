@@ -1,0 +1,70 @@
+# Karakterark (nyt system): format for `character.yaml`
+
+Én fil pr. choices.yaml-karakter: `karakterer/<navn>/character.yaml`. Engelsk-
+nøglet, i modsætning til den gamle [`karakter.yaml`](karakterark-yaml.md).
+Genereres af `webui/builder/character_yaml.py`.
+
+Findes der en `choices.yaml` (se [choices-yaml.md](choices-yaml.md)) for
+karakteren, er `character.yaml` en AFLEDT fil: den genberegnes og
+overskrives, hver gang choices.yaml gemmes (`derive_and_save()`). Kun
+`choices.yaml` er kilden til sandhed i det tilfælde - rediger ikke
+`character.yaml` i hånden for en sådan karakter, det bliver overskrevet.
+
+Findes der INGEN `choices.yaml`, er `character.yaml` i stedet den primære
+fil - skrevet direkte, af builder-UI'en eller af et LLM. Denne vej er endnu
+ikke bygget (kun formatet er klar til det).
+
+## Opbygning
+
+```yaml
+name: Thorgrim
+level: 5                      # total, sum af classes[].level
+race: {name: Human, source: XPHB}
+background: {name: Soldier, source: XPHB}
+classes:
+- {name: Fighter, source: XPHB, level: 5, subclass: Eldritch Knight}
+abilities: {STR: 18, DEX: 14, CON: 16, INT: 10, WIS: 12, CHA: 8}
+proficiency_bonus: 3           # opslået fast tabel (PHB 2024), ikke et valg
+hp: 44                         # se "HP" nedenfor
+ac: '{10+DEX}'                 # IKKE afledt - se "Manuelle felter"
+speed: 30                      # fra racens egen speed
+hit_die: 10                    # primærklassens hit die (se "Multiclass-forenkling")
+saves: [STR, CON]              # primærklassens save-proficiencies
+skills: [athletics, intimidation]
+expertise: []
+tools: ["Smith's Tools"]       # flad liste - IKKE grupperet efter evne, se nedenfor
+languages: Common              # IKKE afledt - se "Manuelle felter"
+can_use: {armor: "light, medium, heavy, shields", weapons: "simple, martial"}
+masteries: []                  # ikke udledt endnu, se nedenfor
+feats: [{name: Tavern Brawler, source: XPHB}]
+spells_known: [{name: Fire Bolt, source: XPHB}]
+class_features: [{class: Fighter, name: Action Surge, source: XPHB, level: 2}]
+race_traits: [{name: Darkvision, source: XPHB}]
+extra_training: []
+summary: [[Klasse, Fighter 5], [Art, Human], [Baggrund, Soldier]]
+```
+
+## Manuelle felter
+
+`ac` og `languages` kan ikke slås op uden at opfinde en regel (hvilken
+rustning er rent faktisk udstyret? hvilke ekstra sprog gav en valgfri
+tildeling?) - samme situation som i den gamle `karakter.yaml`, hvor begge
+felter også er fritekst, spilleren selv sætter. `derive_and_save()` bevarer
+derfor disse felter fra en eksisterende `character.yaml` i stedet for at
+overskrive dem (se `PRESERVED_FIELDS` i `character_yaml.py`).
+
+## Kendte forenklinger
+
+* **`tools` er en flad liste**, ikke grupperet efter evne som den gamle
+  `vaerktoej: {DEX: [...]}`. 5etools' egne data har ikke en sikker,
+  opslåelig "hvilken evne styrer dette værktøj"-regel, og Print-fanen viser
+  derfor (endnu) ikke værktøj under evne-boksen.
+* **`masteries` udledes ikke endnu.** At afgøre hvilken Weapon Mastery-
+  egenskab et valgt våben faktisk har, kræver et opslag pr. våben i
+  5etools' `items-base.json`, som ikke er bygget endnu.
+* **HP bruger kun primærklassens hit die** (`hit_die + CON*level +
+  sum(hp_rolls)`). Ægte multiclass-HP skal bruge HVER klasses egen hit die
+  for de niveauer, DEN klasse blev taget på - men `choices.yaml`s
+  `hp_rolls` gemmer kun et terningslag pr. SAMLET niveau, ikke pr. klasse
+  (se [choices-yaml.md](choices-yaml.md)), så denne forenkling findes
+  allerede i dataformatet, ikke kun i `character_yaml.py`.

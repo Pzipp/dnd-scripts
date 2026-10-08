@@ -20,12 +20,20 @@
 <nav class="tabs">
   <button type="button" data-page="character" class="{{ 'active' if page == 'character' else '' }}">Karakter</button>
   <button type="button" data-page="equipment" class="{{ 'active' if page == 'equipment' else '' }}">Udstyr</button>
+  <button type="button" data-page="print" class="{{ 'active' if page == 'print' else '' }}">Print</button>
   <button type="button" onclick="location.href='/builder/{{ name }}/settings'">Kilder</button>
 </nav>
 <main class="sheet">
   <div id="missing-banner" class="missing-banner" style="display:none"></div>
   <div class="page {{ 'active' if page == 'character' else '' }}" id="page-character"></div>
   <div class="page {{ 'active' if page == 'equipment' else '' }}" id="page-equipment"></div>
+  <div class="page {{ 'active' if page == 'print' else '' }}" id="page-print">
+    <div id="print-banner" class="missing-banner with-action" style="display:none">
+      <span id="print-banner-text"></span>
+      <button type="button" class="btn secondary" id="translate-btn">Generér beskrivelser</button>
+    </div>
+    <iframe id="sheet-output" title="Karakterark"></iframe>
+  </div>
 </main>
 
 <div class="modal-backdrop" id="confirm-modal">

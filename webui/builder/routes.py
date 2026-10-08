@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import re
+import sys
 from pathlib import Path
 
 from flask import Blueprint, jsonify, render_template, request
 
-from . import e5tools, model, settings
+from . import character_yaml, descriptions, e5tools, llm_client, model, settings
+from . import sheets as sheets_module
 
 bp = Blueprint("builder", __name__)
 
@@ -13,11 +15,26 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 CHARACTERS = ROOT / "karakterer"
 NAME_OK = re.compile(r"^[a-z0-9-]+$")
 
+for _mappe in ("scripts", "scripts/karakterark"):
+    if str(ROOT / _mappe) not in sys.path:
+        sys.path.insert(0, str(ROOT / _mappe))
+import karakterark  # noqa: E402
+
+from . import legacy_adapter  # noqa: E402
+
 
 def _character_dir(name: str) -> Path:
     if not NAME_OK.match(name):
         raise ValueError("Navn må kun have små bogstaver, tal og bindestreg.")
     return CHARACTERS / name
+
+
+def _save_choices(character_dir: Path, data: dict) -> None:
+    """Gem choices.yaml, og hold character.yaml i sync (se character_yaml.py).
+    Brug denne i stedet for model.save() direkte, alle steder choices.yaml ændres."""
+    model.save(character_dir, data)
+    character_yaml.derive_and_save(character_dir, data)
+    sheets_module.ensure_exists(character_dir)
 
 
 def _builder_characters() -> list[str]:
@@ -45,7 +62,7 @@ def api_create():
     character_dir.mkdir(parents=True, exist_ok=True)
     path = model.choices_path(character_dir)
     if not path.is_file():
-        model.save(character_dir, model.empty_character())
+        _save_choices(character_dir, model.empty_character())
     return jsonify({"name": name})
 
 
@@ -57,6 +74,51 @@ def builder_character(name: str):
 @bp.get("/builder/<name>/equipment")
 def builder_equipment(name: str):
     return render_template("builder.html", name=name, page="equipment")
+
+
+@bp.get("/builder/<name>/print")
+def builder_print(name: str):
+    return render_template("builder.html", name=name, page="print")
+
+
+# ── Print: character.yaml + sheets.yaml -> HTML via den gamle karakterark.py ──
+@bp.get("/api/builder/sheet")
+def api_sheet():
+    name = request.args.get("name", "")
+    try:
+        character_dir = _character_dir(name)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    if not character_dir.is_dir():
+        return jsonify({"error": "Ukendt karakter."}), 404
+    if not character_yaml.character_path(character_dir).is_file():
+        return jsonify({"error": "Ingen character.yaml endnu - gem noget på Karakter-fanen først."}), 400
+    character = character_yaml.load(character_dir)
+    sheets = sheets_module.load(character_dir)
+    try:
+        html = karakterark.build(legacy_adapter.to_legacy(character, sheets), "farve")
+    except Exception as exc:  # et dataproblem i character.yaml/sheets.yaml
+        return jsonify({"error": f"Fejl i arket: {type(exc).__name__}: {exc}"}), 400
+    return jsonify({"html": html, "missing_descriptions": descriptions.missing_for(character)})
+
+
+@bp.post("/api/builder/translate")
+def api_translate():
+    payload = request.get_json(silent=True) or {}
+    try:
+        character_dir = _character_dir(payload.get("name", ""))
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    if not character_dir.is_dir():
+        return jsonify({"error": "Ukendt karakter."}), 404
+    character = character_yaml.load(character_dir)
+    try:
+        still_missing = descriptions.generate_missing(descriptions.missing_for(character))
+    except llm_client.LLMNotConfigured as exc:
+        return jsonify({"error": str(exc)}), 503
+    except llm_client.LLMRequestFailed as exc:
+        return jsonify({"error": str(exc)}), 502
+    return jsonify({"missing_descriptions": still_missing})
 
 
 @bp.get("/api/builder/state")
@@ -93,7 +155,7 @@ def api_answer():
         return jsonify({"error": f"Kunne ikke sætte felt: {exc}"}), 400
     if not result["ok"]:
         return jsonify({"needs_confirmation": True, **result})
-    model.save(character_dir, data)
+    _save_choices(character_dir, data)
     return jsonify(model.state(data))
 
 
@@ -108,7 +170,7 @@ def api_class_add():
         return jsonify({"error": "Ukendt karakter."}), 404
     data = model.load(character_dir)
     model.add_class(data)
-    model.save(character_dir, data)
+    _save_choices(character_dir, data)
     return jsonify(model.state(data))
 
 
@@ -126,7 +188,7 @@ def api_class_remove():
         return jsonify({"error": "Mangler class_id."}), 400
     data = model.load(character_dir)
     model.remove_class(data, class_id)
-    model.save(character_dir, data)
+    _save_choices(character_dir, data)
     return jsonify(model.state(data))
 
 
@@ -175,5 +237,5 @@ def api_set_settings():
         "allowed_sources": sorted(allowed),
         "half_feats": bool(payload.get("half_feats", False)),
     }
-    model.save(character_dir, data)
+    _save_choices(character_dir, data)
     return jsonify({"allowed": data["settings"]["allowed_sources"], "half_feats": data["settings"]["half_feats"]})

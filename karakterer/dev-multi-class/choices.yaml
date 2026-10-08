@@ -1,0 +1,87 @@
+race:
+  name: Halfling
+  source: XPHB
+  other_name: ''
+  choices: {}
+classes:
+  7e7d4c:
+    name: Druid
+    source: XPHB
+    level: 11
+    subclass: Circle of the Moon
+    choices:
+      skills:
+      - arcana
+      - religion
+  06a216:
+    name: Ranger
+    source: XPHB
+    level: 6
+    subclass: Gloom Stalker
+    choices:
+      skills:
+      - animal handling
+background:
+  name: Farmer
+  source: XPHB
+  choices:
+    ability_split:
+      type: 1-1-1
+abilities:
+  method: roll
+  rolls: {}
+  assigned:
+    STR: 16
+    DEX: 15
+    CON: 18
+    INT: 18
+    WIS: 17
+    CHA: 17
+hp_rolls:
+  '2': 3
+  '3': 8
+  '4': 7
+  '5': 4
+  '6': 3
+  '7': 7
+  '8': 1
+  '9': 8
+  '10': 2
+  '11': 6
+  '12': 2
+  '13': 6
+  '14': 7
+  '15': 5
+  '16': 4
+  '17': 3
+feats:
+  7e7d4c_4_abilityscoreimprovement:
+    name: Ability Score Improvement
+    source: XPHB
+    choices:
+      asi:
+        mode: '2'
+        ability1: INT
+  7e7d4c_8_abilityscoreimprovement:
+    name: Piercer
+    source: XPHB
+  06a216_2_fightingstyle:
+    name: Protection
+    source: XPHB
+  06a216_4_abilityscoreimprovement:
+    name: Ability Score Improvement
+    source: XPHB
+    choices:
+      asi:
+        mode: '2'
+        ability1: WIS
+spells:
+  known: []
+equipment:
+  class_package: A
+  background_package: A
+  extra: []
+settings:
+  allowed_sources:
+  - XPHB
+  half_feats: false

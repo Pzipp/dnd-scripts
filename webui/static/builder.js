@@ -401,6 +401,51 @@ function render() {
   restoreOpenState(prevOpen);
 }
 
+// ── Print-siden: character.yaml + sheets.yaml, renderet via den gamle karakterark.py ──
+function setPrintBanner(text, { showButton = false, enabled = true } = {}) {
+  const banner = $("#print-banner");
+  const btn = $("#translate-btn");
+  if (!text) {
+    banner.style.display = "none";
+    return;
+  }
+  $("#print-banner-text").textContent = text;
+  btn.style.display = showButton ? "" : "none";
+  btn.disabled = !enabled;
+  banner.style.display = "flex";
+}
+
+async function loadPrintPage() {
+  const output = $("#sheet-output");
+  setPrintBanner("Henter karakterarket...");
+  const res = await fetch(`/api/builder/sheet?name=${encodeURIComponent(NAME)}`);
+  const data = await res.json();
+  if (data.error) {
+    output.srcdoc = "";
+    setPrintBanner(data.error);
+    return;
+  }
+  output.srcdoc = data.html;
+  const n = (data.missing_descriptions || []).length;
+  setPrintBanner(n ? `${n} regler/besværgelser mangler en dansk beskrivelse.` : "", { showButton: true });
+}
+
+async function translateMissing() {
+  const btn = $("#translate-btn");
+  btn.disabled = true;
+  setPrintBanner("Genererer beskrivelser...", { showButton: true, enabled: false });
+  const res = await fetch("/api/builder/translate", {
+    method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: NAME }),
+  });
+  const data = await res.json();
+  if (data.error) {
+    setPrintBanner(data.error, { showButton: true });
+    return;
+  }
+  const n = (data.missing_descriptions || []).length;
+  setPrintBanner(n ? `${n} regler/besværgelser mangler stadig en dansk beskrivelse.` : "Alle beskrivelser er nu genereret.", { showButton: n > 0 });
+}
+
 // ── Event-delegation: ét sted for alle felter ─────────────────────────────
 async function addClass() {
   setStatus("Gemmer...");
@@ -428,7 +473,10 @@ function wireEvents() {
     if (!btn) return;
     document.querySelectorAll(".tabs button[data-page]").forEach((b) => b.classList.toggle("active", b === btn));
     document.querySelectorAll(".page").forEach((p) => p.classList.toggle("active", p.id === `page-${btn.dataset.page}`));
+    if (btn.dataset.page === "print") loadPrintPage();
   });
+
+  $("#translate-btn").addEventListener("click", translateMissing);
 
   $("#confirm-yes").addEventListener("click", () => {
     const fields = pending;
@@ -495,3 +543,4 @@ function getPath(obj, path) {
 
 wireEvents();
 fetchState();
+if ($(".tabs button.active")?.dataset.page === "print") loadPrintPage();

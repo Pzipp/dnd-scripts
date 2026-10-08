@@ -1,0 +1,91 @@
+race:
+  name: Gnome
+  source: XPHB
+  other_name: ''
+  choices: {}
+classes:
+  9989d9:
+    name: Wizard
+    source: XPHB
+    level: 19
+    subclass: Evoker
+    choices:
+      skills:
+      - history
+      - religion
+background:
+  name: Noble
+  source: XPHB
+  choices:
+    ability_split:
+      type: 2-1
+      plus2: int
+      plus1: cha
+abilities:
+  method: roll
+  rolls: {}
+  assigned:
+    STR: 11
+    DEX: 9
+    CON: 8
+    INT: 17
+    WIS: 5
+    CHA: 10
+hp_rolls:
+  '2': 5
+  '3': 3
+  '4': 4
+  '6': 2
+  '7': 7
+  '8': 6
+  '9': 2
+  '5': 7
+  '10': 6
+  '11': 5
+  '12': 8
+  '13': 4
+  '14': 2
+  '15': 7
+  '16': 3
+  '17': 8
+  '18': 2
+  '19': 1
+feats:
+  9989d9_4_abilityscoreimprovement:
+    name: Ability Score Improvement
+    source: XPHB
+    choices:
+      asi:
+        mode: '2'
+        ability1: WIS
+  9989d9_8_abilityscoreimprovement:
+    name: Resilient
+    source: XPHB
+    choices:
+      ability: INT
+  9989d9_12_abilityscoreimprovement:
+    name: Chef
+    source: XPHB
+  9989d9_16_abilityscoreimprovement:
+    name: Shadow-Touched
+    source: XPHB
+    choices:
+      spell_0: Inflict Wounds
+  9989d9_19_epicboon:
+    name: Boon of Recovery
+    source: XPHB
+    choices:
+      ability: CON
+spells:
+  known:
+  - Chill Touch
+  - Mind Sliver
+  - Minor Illusion
+equipment:
+  class_package: A
+  background_package: A
+  extra: []
+settings:
+  allowed_sources:
+  - XPHB
+  half_feats: false

@@ -30,6 +30,9 @@ services:
 
     environment:
       - TZ=${TZ:-Europe/Copenhagen}
+      - LLM_API_BASE=${LLM_API_BASE:-}
+      - LLM_API_KEY=${LLM_API_KEY:-}
+      - LLM_MODEL=${LLM_MODEL:-}
 
     logging:
       driver: json-file

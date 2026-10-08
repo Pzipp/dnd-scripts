@@ -103,6 +103,11 @@ select.invalid, input.invalid { border-color: var(--bad); box-shadow: 0 0 0 2px 
 .btn:disabled { opacity: .5; cursor: not-allowed; }
 
 .missing-banner { background: #fbe4e4; border: 1px solid var(--bad); color: var(--bad); border-radius: .4rem; padding: .5rem .8rem; font-size: .85rem; margin-bottom: 1rem; }
+.missing-banner.with-action { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+
+#page-print { display: none; }
+#page-print.active { display: flex; flex-direction: column; min-height: 80vh; }
+#sheet-output { width: 100%; flex: 1; min-height: 70vh; border: 0; background: #ddd; }
 
 .modal-backdrop { position: fixed; inset: 0; background: rgb(0 0 0 / 45%); display: none; align-items: center; justify-content: center; z-index: 50; }
 .modal-backdrop.open { display: flex; }
