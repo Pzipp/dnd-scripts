@@ -21,6 +21,7 @@ abilities:
 proficiency_bonus: 3
 hp: 29
 ac: '{10+DEX}'
+initiative: '{+DEX}'
 speed: 30
 hit_die: 8
 saves:

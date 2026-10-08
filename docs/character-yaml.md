@@ -27,6 +27,7 @@ abilities: {STR: 18, DEX: 14, CON: 16, INT: 10, WIS: 12, CHA: 8}
 proficiency_bonus: 3           # opslået fast tabel (PHB 2024), ikke et valg
 hp: 44                         # se "HP" nedenfor
 ac: '{10+DEX}'                 # IKKE afledt - se "Manuelle felter"
+initiative: '{+DEX}'           # IKKE afledt - se "Manuelle felter"
 speed: 30                      # fra racens egen speed
 hit_die: 10                    # primærklassens hit die (se "Multiclass-forenkling")
 saves: [STR, CON]              # primærklassens save-proficiencies
@@ -46,12 +47,27 @@ summary: [[Klasse, Fighter 5], [Art, Human], [Baggrund, Soldier]]
 
 ## Manuelle felter
 
-`ac` og `languages` kan ikke slås op uden at opfinde en regel (hvilken
-rustning er rent faktisk udstyret? hvilke ekstra sprog gav en valgfri
-tildeling?) - samme situation som i den gamle `karakter.yaml`, hvor begge
-felter også er fritekst, spilleren selv sætter. `derive_and_save()` bevarer
-derfor disse felter fra en eksisterende `character.yaml` i stedet for at
-overskrive dem (se `PRESERVED_FIELDS` i `character_yaml.py`).
+`ac`, `initiative` og `languages` udregnes IKKE pålideligt af
+`derive_from_state()` - de får kun en fornuftig standardformel
+(`{10+DEX}`, `{+DEX}`, `Common`), og bevares derefter fra en eksisterende
+`character.yaml` i stedet for at blive overskrevet igen (se
+`PRESERVED_FIELDS` i `character_yaml.py`). To forskellige grunde til samme
+løsning:
+
+* `ac`/`languages`: choices.yaml tracker ikke den nødvendige info
+  (hvilken rustning er rent faktisk udstyret? hvilke ekstra sprog gav en
+  valgfri tildeling?) - samme situation som i den gamle `karakter.yaml`,
+  hvor begge felter også er fritekst, spilleren selv sætter.
+* `initiative`: PB på initiativ kommer fra enkelte feats (fx Alert, XPHB),
+  men 5etools' data har INTET struktureret felt for den slags
+  mekanisk-effekt-tekst - kun fri engelsk prosa i `entries`. At
+  specialtjekke hvert feat ved navn i Python skalerer ikke til flere
+  hundrede feats/spells/features med lignende effekter, så render.py gør
+  det slet ikke - den læser bare tallet, ligesom alt andet.
+
+I begge tilfælde: spilleren retter feltet i hånden, informeret af
+feat-listen (som stadig vises i Træning og valg) - samme afvejning de 8
+håndskrevne karakterer allerede lever med for hele stats-rækken.
 
 ## Kendte forenklinger
 

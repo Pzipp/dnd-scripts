@@ -10,11 +10,17 @@ Findes choices.yaml IKKE, er character.yaml i stedet den primære fil -
 skrevet direkte (af builder-UI'en uden choices.yaml, eller af et LLM) - og
 røres aldrig herfra.
 
-Et par felter kan ikke udledes af choices.yaml uden at opfinde en regel, der
-ikke findes nogen steder i 5etools' data eller i den eksisterende builder
-(fx AC, som også i den gamle karakter.yaml er et frit felt spilleren selv
-sætter ud fra sin rustning). De felter bevares derfor fra en eksisterende
-character.yaml i stedet for at blive overskrevet - se PRESERVED_FIELDS.
+Et par felter kan ikke udledes SIKKERT af choices.yaml - enten fordi reglen
+kræver data choices.yaml ikke tracker (AC: hvilken rustning er udstyret nu),
+eller fordi den afhænger af ét ud af flere hundrede feats/spells/features,
+hvis mekaniske effekt (se fx Alert-feat'ets "+PB til initiativ") kun findes
+som fri engelsk prosa i 5etools' data, ikke et struktureret felt - at
+specialtjekke hvert feat ved navn i Python skalerer ikke. Disse felter får
+derfor kun en fornuftig STANDARDFORMEL herfra og bevares bagefter fra en
+eksisterende character.yaml i stedet for at blive overskrevet igen - se
+PRESERVED_FIELDS. Spilleren retter dem i hånden, informeret af feat-listen
+(der stadig vises i Træning og valg) - samme afvejning de 8 håndskrevne
+karakterer allerede lever med for hele stats-rækken.
 """
 from __future__ import annotations
 
@@ -35,9 +41,10 @@ PROFICIENCY_BONUS_BY_LEVEL = {
     **{lvl: 6 for lvl in range(17, 21)},
 }
 
-# Felter character.yaml IKKE udregner/overskriver, fordi der ikke findes en
-# opslåelig regel for dem (se modul-docstring) - bevares fra en eksisterende fil.
-PRESERVED_FIELDS = ("ac", "languages")
+# Felter character.yaml kun giver en standardformel til, og ellers bevarer
+# fra en eksisterende fil (se modul-docstring) - render.py skal ALDRIG
+# selv regne eller feat-tjekke disse, kun læse dem som alle andre tal.
+PRESERVED_FIELDS = ("ac", "initiative", "languages")
 
 
 def empty_character_sheet() -> dict:
@@ -51,6 +58,7 @@ def empty_character_sheet() -> dict:
         "proficiency_bonus": 2,
         "hp": None,
         "ac": "{10+DEX}",
+        "initiative": "{+DEX}",
         "speed": 30,
         "hit_die": 8,
         "saves": [],
@@ -261,6 +269,7 @@ def derive_from_state(data: dict, state: dict) -> dict:
         "proficiency_bonus": PROFICIENCY_BONUS_BY_LEVEL.get(total_level, 2),
         "hp": hp,
         "ac": "{10+DEX}",  # overskrives af PRESERVED_FIELDS-bevaring i derive_and_save, ikke afledt (se modul-docstring)
+        "initiative": "{+DEX}",  # samme - standard uden PB, se modul-docstring (Alert-feat'et m.fl. kan ikke generelt genkendes)
         "speed": speed,
         "hit_die": hit_die,
         "saves": saves,
