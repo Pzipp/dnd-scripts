@@ -34,18 +34,25 @@ pages:
   footer: 'Kilde: PHB 2024'
 ```
 
-## Nøgle-oversættelse (engelsk → dansk i `karakterark.py`)
+## Renderer
 
-Print-fanen bygger arket via den EKSISTERENDE `scripts/karakterark/karakterark.py`
-(uændret) ved at oversætte `sheets.yaml` til det format den allerede forstår
-- se `webui/builder/legacy_adapter.py`s `NODE_KEY_MAP`/`BOX_TYPES`. De
-engelske feltnavne følger den gamle [layout-tabel](karakterark-yaml.md#layout)
-1:1, bare på engelsk: `columns`/`rows` for `kolonner`/`raekker`, `width` for
-`bredde`, `content` for `indhold`, `items` for `punkter`, `title`/`subtitle`
-for `titel`/`undertitel`, `footer` for `foot`, `summary` for `ident`,
-`blank_lines` for `tomme`. Bokstyperne (`type:`) er også engelske - fx
-`abilities` for `evner`, `features` for `traek`, `attacks` for `angreb` - se
-den fulde liste i `legacy_adapter.py`s `BOX_TYPES`.
+Print-fanen bygger arket via `webui/builder/render.py` - en selvstændig,
+engelsk-nøglet renderer, der læser `sheets.yaml`/`character.yaml` direkte
+(ingen dansk mellemform, ingen oversættelses-adapter). Boks-typerne
+(`type:`) og felt-navnene er engelske fra kilden - se `render.py`s
+`REGISTRY` for den fulde liste af boks-typer (`abilities`, `stats`,
+`features`, `attacks`, `training` osv.) og hver `box_*`-funktion for det
+felt den forventer.
+
+`render.py` er en bevidst uafhængig kopi af
+`scripts/karakterark/karakterark.py`s rendering-logik (samme HTML/CSS,
+samme boks-for-boks-opbygning), lavet fordi en oversættelses-adapter mellem
+to parallelle sprog blev vurderet som en unødvendig, voksende
+vedligeholdelsesbyrde. De to renderere deler CSS'en i
+`scripts/karakterark/*.css` uændret. Når de 8 håndskrevne spillerkarakterer
+en dag migreres til `character.yaml`/`sheets.yaml`, kan
+`scripts/karakterark/karakterark.py` fjernes helt - se
+[`docs/karakterark-bygger-plan.md`](karakterark-bygger-plan.md).
 
 ## Afgrænsning
 

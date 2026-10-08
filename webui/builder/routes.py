@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 import re
-import sys
 from pathlib import Path
 
 from flask import Blueprint, jsonify, render_template, request
 
-from . import character_yaml, descriptions, e5tools, llm_client, model, settings
+from . import character_yaml, descriptions, e5tools, llm_client, model, render, settings
 from . import sheets as sheets_module
 
 bp = Blueprint("builder", __name__)
@@ -14,13 +13,6 @@ bp = Blueprint("builder", __name__)
 ROOT = Path(__file__).resolve().parent.parent.parent
 CHARACTERS = ROOT / "karakterer"
 NAME_OK = re.compile(r"^[a-z0-9-]+$")
-
-for _mappe in ("scripts", "scripts/karakterark"):
-    if str(ROOT / _mappe) not in sys.path:
-        sys.path.insert(0, str(ROOT / _mappe))
-import karakterark  # noqa: E402
-
-from . import legacy_adapter  # noqa: E402
 
 
 def _character_dir(name: str) -> Path:
@@ -81,7 +73,7 @@ def builder_print(name: str):
     return render_template("builder.html", name=name, page="print")
 
 
-# ── Print: character.yaml + sheets.yaml -> HTML via den gamle karakterark.py ──
+# ── Print: character.yaml + sheets.yaml -> HTML via den native render.py ──
 @bp.get("/api/builder/sheet")
 def api_sheet():
     name = request.args.get("name", "")
@@ -96,7 +88,7 @@ def api_sheet():
     character = character_yaml.load(character_dir)
     sheets = sheets_module.load(character_dir)
     try:
-        html = karakterark.build(legacy_adapter.to_legacy(character, sheets), "farve")
+        html = render.build(character, sheets, "farve")
     except Exception as exc:  # et dataproblem i character.yaml/sheets.yaml
         return jsonify({"error": f"Fejl i arket: {type(exc).__name__}: {exc}"}), 400
     return jsonify({"html": html, "missing_descriptions": descriptions.missing_for(character)})

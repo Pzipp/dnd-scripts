@@ -63,9 +63,13 @@ regel, ikke noget der er sagt direkte om den nye bygger.
   [character-yaml.md](character-yaml.md)/[sheets-yaml.md](sheets-yaml.md).
 * **Udregnet, i en separat fil** - ikke rå choices.yaml, og ikke i samme
   fil som layoutet.
-* **Layout-sproget genbruges**, bare med engelske nøgler - ingen ny editor,
-  ingen ny generator. Print-fanen bygger via den UÆNDREDE
-  `karakterark.py`, gennem en oversættelses-adapter (`legacy_adapter.py`).
+* **Layout-sproget genbruges**, bare med engelske nøgler - ingen ny editor.
+  Print-fanen bygger via `webui/builder/render.py`, en selvstændig
+  engelsk-nøglet renderer der læser `character.yaml`/`sheets.yaml` direkte
+  (samme CSS som den gamle `karakterark.py`, men ingen
+  oversættelses-adapter mellem de to systemer - en tidligere version havde
+  det, men blev opgivet: en adapter mellem to parallelle sprog ville kun
+  vokse, hver gang en ny boks-type dukkede op).
 * **Dansk udgave = kort gengivelse, cachet delt** i `bibliotek/_beskrivelser.yaml`,
   genereret af et OpenAI-kompatibelt LLM-endpoint (claude-code ELLER
   Mistral, konfigureres i `.env` - se `webui/builder/llm_client.py`), kun

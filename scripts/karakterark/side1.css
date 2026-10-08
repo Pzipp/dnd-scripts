@@ -125,10 +125,13 @@ table.sit td.sv{text-align:right;width:7mm}
 .taet li,.taet p,.taet .prose{font-size:8pt;margin:0 0 .2mm}
 .taet .ruled li{font-size:8pt;min-height:3.8mm}
 
-/* Din tur: nummereret plan med ensartet indrykning og overskrift */
-.box[data-type="tur"] h3{font-size:10.5pt;color:var(--accent);margin:0 0 .6mm;font-weight:normal;font-family:"IM Fell English",serif}
-.box[data-type="tur"] ol{margin:0;padding-left:4.5mm}
-.box[data-type="tur"] li{margin:0 0 .6mm}
+/* Din tur: nummereret plan med ensartet indrykning og overskrift.
+   data-type="turn" er det nye systems webui/builder/render.py (engelsk
+   boks-type), data-type="tur" er det gamle scripts/karakterark/karakterark.py
+   (dansk) - samme stil, to kildesystemer, indtil det gamle system fjernes. */
+.box[data-type="tur"] h3, .box[data-type="turn"] h3{font-size:10.5pt;color:var(--accent);margin:0 0 .6mm;font-weight:normal;font-family:"IM Fell English",serif}
+.box[data-type="tur"] ol, .box[data-type="turn"] ol{margin:0;padding-left:4.5mm}
+.box[data-type="tur"] li, .box[data-type="turn"] li{margin:0 0 .6mm}
 
 /* magi: DC-celler, besværgelseslister og slots */
 .magi-dc{display:grid;grid-template-columns:repeat(2,1fr);gap:1.5mm;margin-bottom:1.5mm}
