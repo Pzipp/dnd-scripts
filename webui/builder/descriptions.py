@@ -1,8 +1,9 @@
-"""Danske kort-beskrivelser til spells, feats, klassefeatures og race-traits -
-samme koncept som bibliotek/evner.yaml og bibliotek/besvaergelser.yaml
-(engelsk navn + en kort dansk gengivelse, IKKE en oversættelse af selve
-regelnavnet, jf. AGENTS.md's navnekonvention), men for ALT en karakter
-reelt har valgt - et langt større sæt end de kort gruppen har printet.
+"""Danske navne-undertitler og korte beskrivelser til spells, feats,
+klassefeatures og race-traits - samme koncept som bibliotek/evner.yaml og
+bibliotek/besvaergelser.yaml (engelsk navn forbliver primært og synligt,
+'dansk' er kun en undertitel, IKKE en oversættelse der erstatter navnet,
+jf. AGENTS.md's navnekonvention), men for ALT en karakter reelt har valgt -
+et langt større sæt end de kort gruppen har printet.
 
 Opslagskæde for en entry {name, source, kind}:
   1. De eksisterende, håndkuraterede bibliotek/*.yaml-kort (samme navn).
@@ -58,13 +59,18 @@ def _save_cache(cache: dict[str, dict]) -> None:
     CACHE_PATH.write_text(yaml.safe_dump(cache, allow_unicode=True, sort_keys=False), encoding="utf-8")
 
 
-def lookup(name: str, source: str | None) -> str | None:
-    """Kort dansk beskrivelse, hvis vi allerede har en - ellers None."""
+def lookup(name: str, source: str | None) -> dict | None:
+    """{'name_da', 'description_da'}, hvis vi allerede har en - ellers None.
+    name_da er en undertitel til det engelske navn (jf. AGENTS.md's
+    navnekonvention), IKKE en oversættelse der erstatter det - samme rolle
+    som bibliotek-kortenes eget 'dansk'-felt allerede har."""
     for card in _load_curated_cards():
         if card["navn"].lower() == name.lower():
-            return card.get("dansk") or card.get("effekt") or card.get("tekst")
+            return {"name_da": card.get("dansk"), "description_da": card.get("effekt") or card.get("tekst")}
     cached = _load_cache().get(_slug(name, source))
-    return cached.get("description_da") if cached else None
+    if cached:
+        return {"name_da": cached.get("name_da"), "description_da": cached.get("description_da")}
+    return None
 
 
 def _entries_from_character(character: dict) -> list[dict]:
@@ -105,9 +111,9 @@ def generate_missing(entries: list[dict]) -> list[dict]:
         slugged = [{**entry, "id": _slug(entry["name"], entry["source"])} for entry in batch]
         described = llm_client.describe_batch(slugged)
         for entry, slugged_entry in zip(batch, slugged):
-            description = described.get(slugged_entry["id"])
-            if description:
-                cache[slugged_entry["id"]] = {**entry, "description_da": description}
+            result = described.get(slugged_entry["id"])
+            if result:
+                cache[slugged_entry["id"]] = {**entry, **result}
             else:
                 still_missing.append(entry)
     _save_cache(cache)
