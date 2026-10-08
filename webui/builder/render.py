@@ -648,11 +648,11 @@ section.pg.margin-none > .page{width:210mm;padding-top:0}
 CSS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "scripts", "karakterark")
 
 
-def _css(name: str, stil: str | None) -> str:
-    """Genbruger scripts/karakterark/*.css uændret - se docs/sheets-yaml.md."""
-    s = open(os.path.join(CSS_DIR, f"{name}.css"), encoding="utf-8").read()
-    if stil and stil != "farve":
-        s += "\n" + open(os.path.join(CSS_DIR, f"{name}-{stil}.css"), encoding="utf-8").read()
+def _css(stil: str | None) -> str:
+    """Genbruger scripts/karakterark/sheets.css/sheets-bw.css uændret - se docs/sheets-yaml.md."""
+    s = open(os.path.join(CSS_DIR, "sheets.css"), encoding="utf-8").read()
+    if stil == "sorthvid":
+        s += "\n" + open(os.path.join(CSS_DIR, "sheets-bw.css"), encoding="utf-8").read()
     return s
 
 
@@ -660,7 +660,7 @@ def build(character: dict, sheets: dict, stil: str | None = None) -> str:
     env = make_env(character)
     pages = [page(p, character, env) for p in sheets.get("pages", [])]
     title = character.get("name") or "Karakterark"
-    style = scope_css(_css("side1", stil), "s1") + "\n" + FRAME_CSS
+    style = scope_css(_css(stil), "s1") + "\n" + FRAME_CSS
     return f'''<!DOCTYPE html>
 <html lang="da">
 <head>
