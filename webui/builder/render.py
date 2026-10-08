@@ -272,11 +272,15 @@ def box_stats(node, character, env):
         speed = character.get("speed", 30)
         prof, expert = skill_sets(character)
         perc = "+2*PB" if "perception" in expert else "+PB" if "perception" in prof else ""
+        # PB på initiativ er IKKE standard i 2024-reglerne - det kommer kun fra
+        # Alert-feat'et ("you can add your Proficiency Bonus" til Initiative-slaget).
+        has_alert = any(f.get("name") == "Alert" for f in character.get("feats", []))
+        init_pb = "+PB" if has_alert else ""
         fields = [
             ["<em>AC</em>", character.get("ac", "{10+DEX}")],
             ["Max HP", str(character.get("hp", "?"))],
             ["<em>Hit Dice</em>", f"{character.get('level', 1)}d{hit_die}", f"1 d{hit_die} pr. level"],
-            ["Initiativ", "{+DEX+PB}", "d20 + DEX + PB"],
+            ["Initiativ", "{+DEX" + init_pb + "}", "d20 + DEX" + (" + PB (Alert)" if has_alert else "")],
             ["Fart · <em>Speed</em>", str(speed), f"Dash: {2 * speed}"],
             ["<em>Prof. bonus</em>", "{+PB}", "level 1–4"],
             ["Passiv <em>Perc.</em>", "{10+WIS" + perc + "}"],
