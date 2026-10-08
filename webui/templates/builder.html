@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Karakterbygger – {{ name }}</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&display=swap">
+  <link rel="stylesheet" href="{{ url_for('static', filename='builder.css') }}">
+</head>
+<body>
+<header class="builder-top">
+  <h1>Karakterbygger</h1>
+  <div class="meta">
+    <a href="/builder">&larr; Alle karakterer</a>
+    <span id="total-level"></span>
+    <span>{{ name }}</span>
+    <span class="status" id="save-status"></span>
+  </div>
+</header>
+<nav class="tabs">
+  <button type="button" data-page="character" class="{{ 'active' if page == 'character' else '' }}">Karakter</button>
+  <button type="button" data-page="equipment" class="{{ 'active' if page == 'equipment' else '' }}">Udstyr</button>
+  <button type="button" onclick="location.href='/builder/{{ name }}/settings'">Kilder</button>
+</nav>
+<main class="sheet">
+  <div id="missing-banner" class="missing-banner" style="display:none"></div>
+  <div class="page {{ 'active' if page == 'character' else '' }}" id="page-character"></div>
+  <div class="page {{ 'active' if page == 'equipment' else '' }}" id="page-equipment"></div>
+</main>
+
+<div class="modal-backdrop" id="confirm-modal">
+  <div class="modal">
+    <h3>Er du sikker?</h3>
+    <p id="confirm-text"></p>
+    <div class="actions">
+      <button class="btn secondary" id="confirm-no">Nej, behold</button>
+      <button class="btn" id="confirm-yes">Ja, ryd</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  window.BUILDER_NAME = {{ name|tojson }};
+</script>
+<script type="module" src="{{ url_for('static', filename='builder.js') }}"></script>
+</body>
+</html>

@@ -1,30 +1,11 @@
 # D&D WebUI
 
-Et lille valgfrit overlay til projektets eksisterende D&D-scripts.
+Et valgfrit web-interface til projektets D&D-scripts. To forskellige features deler denne server:
 
-## Funktioner
+- **Karakterbygger** (`/builder`) - en trin-for-trin guide der bygger en karakter op ved at slå race/klasse/baggrund/feats/spells op i 5etools' egen regeldata (se "Kilder" i indstillingerne for hvilke kildebøger der er tilladt pr. karakter), og gemmer valgene i `karakterer/<karakter>/choices.yaml`. Se [webui/builder/](builder/) for selve kode/data-laget.
+- **YAML-editor** (den oprindelige feature) - rediger `karakter.yaml`/`kort.yaml` direkte i browseren og generér derefter med `dnd.py`. Se [README-yaml-editor.md](README-yaml-editor.md) for detaljer.
 
-- Vælg karakter.
-- Vælg **Karakterark** eller **Kort**.
-- Rediger den rigtige YAML-fil direkte i WebUI. Editoren har syntaksfarver, linjenumre, foldning, indrykningslinjer, søgning (Ctrl+F) og fortryd. Fejl markeres med rødt på linjen (YAML-syntaks og layout i karakterark, fra `/api/check`). **Ctrl+S** gemmer, og Tab indrykker.
-- **Forhåndsvisning**: output-feltet opdateres, mens du skriver (ca. 0,6 sek. efter du stopper). Det viser også ugemte rettelser, og der skrives ingen filer. Er YAML'en ugyldig, vises fejlen øverst i output-feltet, og den sidste gyldige forhåndsvisning bliver stående. Går en boks ud over A4-siden, står der en advarsel i feltet øverst i output-panelet med boksens titel og hvor mange pixels den går ud.
-- **Gem** skriver ændringerne tilbage til:
-  - `karakterer/<karakter>/karakter.yaml`
-  - `karakterer/<karakter>/kort.yaml`
-- **Generer** bruger derefter det eksisterende `dnd.py`/generator-script.
-- Output gemmes automatisk i karakterens eksisterende:
-  - `karakterer/<karakter>/udskrifter/`
-- Under vælgerne ligger links til den valgte karakters filer: `karakter.yaml` og `kort.yaml`, og de genererede filer i `udskrifter/`.
-- Stil-vælgeren vælger mellem **Farve** og **Sort/hvid**, og det samme tema som `dnd.py --stil` bruger. Outputtet er `karakterark-<stil>.html` eller `kort-<stil>.html`.
-- WebUI ændrer ikke de eksisterende generator-scripts.
-
-## Overlay – ikke en separat parallel version
-
-WebUI er kun et ekstra interface til de eksisterende filer og scripts. Det laver ikke en kopi af YAML-data eller output i `webui/`.
-
-Det kører kun, når du starter det. Når WebUI ikke er startet, fungerer `dnd.py` og alle de eksisterende scripts præcis som før.
-
-WebUI kan derfor bruges som et overlay, når det er praktisk, og ellers ignoreres.
+De to er ikke to versioner af samme ting - en karakter kan være lavet med den ene eller den anden, eller slet ingen af dem (direkte i filsystemet). Karakterbyggeren producerer i dag kun `choices.yaml`; den bygger endnu ikke selve det printbare karakterark (se nedenfor).
 
 ## Kør
 
@@ -66,6 +47,8 @@ docker compose up -d --build
 
 Compose-filen bind-mounter hele repoet, så `karakterer/` og `udskrifter/` ligger på din maskine. `DND_UID`/`DND_GID` (standard 1000) sørger for, at genererede filer ejes af dig og ikke af root. Find dine værdier med `id -u` og `id -g`.
 
+Karakterbyggeren kræver desuden 5etools' regeldata mountet read-only på `/e5tools` (se `E5TOOLS_DATA` i `webui/builder/e5tools.py`) - uden den virker `/builder` ikke, men YAML-editoren er uafhængig af det.
+
 Uden compose kan du køre containeren direkte:
 
 ```bash
@@ -91,16 +74,12 @@ Serveren kører, til du stopper den. Den stopper ikke af sig selv, når du lukke
 
 Tjek, at den er stoppet, ved at åbne `http://localhost:8080` (eller din egen port). Får du en fejl i browseren, kører den ikke mere.
 
-Det du allerede har trykket **Gem** på, ligger i YAML-filerne og er i behold. Ændringer, du ikke har gemt, går tabt, når siden lukkes.
+## Planlagt: karakterark-bygger
 
-## Arbejdsgang
-
-1. Vælg karakter og side.
-2. Rediger YAML.
-3. Tryk **Gem**.
-4. Tryk **Generer**. Med PDF afkrydset tager det typisk 15 sekunder eller mere.
-5. Den eksisterende generator skriver HTML direkte til karakterens `udskrifter/`-mappe.
-
-Forhåndsvisningen i step 2 bruger de samme generatorfunktioner som `Generer`, men gemmer intet.
-
-WebUI tillader ikke generering med ugemte ændringer, så output altid bygger på den YAML, der faktisk er gemt i projektet.
+En kommende feature læser `choices.yaml` (fra karakterbyggeren) og bygger
+det printbare karakterark direkte, i stedet for den manuelle
+`karakter.yaml`-vej. Ikke bygget endnu - se
+[docs/karakterark-bygger-plan.md](../docs/karakterark-bygger-plan.md) for
+hvad der er bedt om, og [docs/choices-yaml.md](../docs/choices-yaml.md)
+for formatet den skal læse. Dette afsnit skrives om til en rigtig
+beskrivelse, når featuren er bygget.
