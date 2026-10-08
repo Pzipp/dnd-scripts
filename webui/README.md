@@ -78,4 +78,8 @@ Tjek, at den er stoppet, ved at åbne `http://localhost:8080` (eller din egen po
 
 En kommende feature læser `choices.yaml` (fra karakterbyggeren) og bygger
 det printbare karakterark direkte, i stedet for den manuelle
-`karakter.yaml`-vej. Ikke bygget endnu - beskrives her, når den er.
+`karakter.yaml`-vej. Ikke bygget endnu - se
+[docs/karakterark-bygger-plan.md](../docs/karakterark-bygger-plan.md) for
+hvad der er bedt om, og [docs/choices-yaml.md](../docs/choices-yaml.md)
+for formatet den skal læse. Dette afsnit skrives om til en rigtig
+beskrivelse, når featuren er bygget.
