@@ -71,10 +71,7 @@ def _homebrew_entries(key: str) -> list[dict]:
 
 
 # ── alle kilde-koder faktisk til stede i dataene (til indstillingssiden) ────
-_SOURCE_FILES = [
-    "races.json", "backgrounds.json", "feats.json",
-    "spells/spells-phb.json", "spells/spells-xphb.json",
-]
+_SOURCE_FILES = ["races.json", "backgrounds.json", "feats.json"]
 
 
 def _safe_load(base: Path, rel_path: str) -> dict:
@@ -89,7 +86,8 @@ def all_sources() -> dict[str, str]:
     der rent faktisk findes i /e5tools/data og homebrew/ - ikke en gættet liste."""
     names = {b["id"]: b["name"] for b in _load("books.json").get("book", [])}
     names.update({b["id"]: b["name"] for b in _homebrew_entries("book") if b.get("id")})
-    datasets = [_safe_load(E5TOOLS_DATA, rel) for rel in _SOURCE_FILES]
+    spell_files = [f"spells/{f}" for f in _safe_load(E5TOOLS_DATA, "spells/index.json").values()]
+    datasets = [_safe_load(E5TOOLS_DATA, rel) for rel in _SOURCE_FILES + spell_files]
     datasets.append(_class_pool())
     datasets += [_safe_load(E5TOOLS_HOMEBREW, f) for f in _homebrew_files()]
     found: set[str] = set()
@@ -212,6 +210,14 @@ def class_names() -> list[str]:
     return sorted({c["name"] for c in _class_pool()["class"] if c.get("name")})
 
 
+def classes(sources: set[str]) -> list[dict]:
+    """Klasser der faktisk findes under en af de TILLADTE kilder - til
+    klasse-dropdownen, som race/background-dropdownene allerede gør det.
+    class_names() bruges stadig til prerequisite-opslag der selv tjekker
+    kilde pr. kandidat (se _meets_prerequisite/_feature_feat_category)."""
+    return [c for c in _class_pool()["class"] if c.get("source") in sources]
+
+
 def get_class(name: str, sources: set[str]) -> dict | None:
     for c in _class_pool()["class"]:
         if c.get("name") == name and c.get("source") in sources:
@@ -283,12 +289,22 @@ def feats_by_category(category: str, sources: set[str]) -> list[dict]:
 
 
 # ── Spells ───────────────────────────────────────────────────────────────
-def _all_spells() -> list[dict]:
-    return _load("spells/spells-xphb.json").get("spell", []) + _homebrew_entries("spell")
+def _all_spells(sources: set[str]) -> list[dict]:
+    """Spells fra alle spell-FILER hvis kilde er tilladt, ikke kun XPHB -
+    spells/index.json kortlægger kilde-kode til filnavn (fx "TCE":
+    "spells-tce.json"). En kilde uden sin egen spell-fil (fx RHW, LFL)
+    introducerer ingen nye spells, kun referencer til spells fra andre
+    bøger, og har derfor ingen fil at loade."""
+    index = _load("spells/index.json")
+    out = []
+    for code, filename in index.items():
+        if code in sources:
+            out += _load(f"spells/{filename}").get("spell", [])
+    return out + _homebrew_entries("spell")
 
 
 def get_spell(name: str, sources: set[str]) -> dict | None:
-    for s in _all_spells():
+    for s in _all_spells(sources):
         if s.get("source") in sources and s.get("name", "").lower() == name.lower():
             return s
     return None
@@ -302,18 +318,22 @@ def class_spells(class_names: str | set[str], sources: set[str], max_level: int 
     spell-objektet - homebrew-spells forventes i stedet at have et
     almindeligt classes.fromClassList-felt direkte på sig selv.
 
-    Opslagets "class"-felt er selv opdelt pr. kildebog (fx en spell på
-    Wizards liste i XPHB, der OGSÅ står på Artificers liste via EFA, har
-    class: {"XPHB": {...}, "EFA": {"Artificer": true}}) - der slås derfor
-    op i alle TILLADTE kilder, ikke kun "XPHB", så en Artificer-feat først
+    Opslagsværket er opdelt i ét underafsnit PR. BOG (nøglen er bogens kilde-
+    kode i små bogstaver, fx "efa") - et underafsnit indeholder kun de
+    spells, DEN bog selv introducerer, så en spell slås op under sin EGEN
+    kilde, ikke en fast "xphb". Hver spells egen "class"-felt er desuden selv
+    opdelt pr. kildebog (fx Wizards Acid Splash, der OGSÅ står på Artificers
+    liste via EFA, har class: {"XPHB": {...}, "EFA": {"Artificer": true}}) -
+    der slås derfor op i alle TILLADTE kilder, så en Artificer-feat først
     giver resultater når EFA/TCE rent faktisk er slået til i indstillingerne."""
     names = {class_names} if isinstance(class_names, str) else set(class_names)
-    lookup = _load("generated/gendata-spell-source-lookup.json").get("xphb", {})
+    lookup = _load("generated/gendata-spell-source-lookup.json")
     out = []
-    for s in _all_spells():
-        if s.get("source") not in sources:
+    for s in _all_spells(sources):
+        spell_source = s.get("source")
+        if spell_source not in sources:
             continue
-        info = lookup.get(s.get("name", "").lower(), {})
+        info = lookup.get(spell_source.lower(), {}).get(s.get("name", "").lower(), {})
         class_info = info.get("class") or {}
         classes = {c for src in sources for c in class_info.get(src, {})} | {
             c.get("name") for c in (s.get("classes") or {}).get("fromClassList", [])
@@ -347,7 +367,7 @@ def spells_by_filter(sources: set[str], level: int | None = None, schools: set[s
     returnerer "alle spells")."""
     if level is None and not schools and not class_name and ritual is None and not spell_attack:
         return None
-    pool = class_spells(class_name, sources, None) if class_name else _all_spells()
+    pool = class_spells(class_name, sources, None) if class_name else _all_spells(sources)
     out = [
         s for s in pool
         if s.get("source") in sources

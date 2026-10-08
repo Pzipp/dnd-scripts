@@ -345,10 +345,12 @@ def _multiclass_class_options(data: dict, cid: str, assigned: dict, sources: set
             break
     eligible = []
     if requirement_met:
-        eligible = [n for n in e.class_names() if _meets_ability_requirement((e.get_class(n, sources) or {}).get("primaryAbility"), assigned)]
-    if current_name and current_name not in eligible:
-        eligible.append(current_name)
-    return _label_options([{"name": n, "source": "XPHB"} for n in eligible])
+        eligible = [{"name": c["name"], "source": c["source"]} for c in e.classes(sources)
+                    if _meets_ability_requirement(c.get("primaryAbility"), assigned)]
+    if current_name and not any(c["name"] == current_name for c in eligible):
+        current_source = data.get("classes", {}).get(cid, {}).get("source") or "XPHB"
+        eligible.append({"name": current_name, "source": current_source})
+    return _label_options(eligible)
 
 
 def _sub_choice_complete(sc: dict, stored_value) -> bool:
@@ -402,7 +404,16 @@ def _spells_for_filter(parsed: dict, sources: set[str]) -> list[dict]:
     class_names = {c.capitalize() for c in parsed["class"].split(";")} if "class" in parsed else None
     ritual = True if parsed.get("components & miscellaneous") == "ritual" else None
     spell_attack = set(parsed["spell attack"].split(";")) if "spell attack" in parsed else None
-    return e.spells_by_filter(sources, level=level, schools=schools, class_name=class_names, ritual=ritual, spell_attack=spell_attack)
+    spells = e.spells_by_filter(sources, level=level, schools=schools, class_name=class_names, ritual=ritual, spell_attack=spell_attack) or []
+    # Flere tilladte kilder kan genoptrykke samme spell (fx PHB 2014 + XPHB
+    # 2024) - dedupliker på navn, så den ikke står dobbelt i en valgliste.
+    seen: set[str] = set()
+    out = []
+    for s in spells:
+        if s["name"] not in seen:
+            seen.add(s["name"])
+            out.append(s)
+    return out
 
 
 def _find_spell_filters(node, found: list, skip_keys: set = frozenset()) -> None:
@@ -718,9 +729,13 @@ def state(data: dict) -> dict:
     race_feat_slot = _add_feat_slot("race", f"Race ({race_name})", race_grant["category"]) if race_grant and race_grant["type"] == "choice" else None
 
     # classes (multiclass: hver klasse har sit eget niveau og sin egen progression)
-    class_options = _label_options([{"name": n, "source": "XPHB"} for n in e.class_names()]) if "XPHB" in sources else []
-    classes_state = []
     primary_id = primary_class_id(data)
+    class_entries = [{"name": c["name"], "source": c["source"]} for c in e.classes(sources)]
+    primary_entry = data.get("classes", {}).get(primary_id, {}) if primary_id else {}
+    if primary_entry.get("name") and not any(c["name"] == primary_entry["name"] for c in class_entries):
+        class_entries.append({"name": primary_entry["name"], "source": primary_entry.get("source") or "XPHB"})
+    class_options = _label_options(class_entries)
+    classes_state = []
     for cid, entry in data.get("classes", {}).items():
         class_name = entry.get("name")
         class_source = entry.get("source")
