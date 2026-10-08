@@ -1,0 +1,138 @@
+name: Dev Daryll
+level: 5
+race:
+  name: Dwarf
+  source: XPHB
+background:
+  name: Sailor
+  source: XPHB
+classes:
+- name: Monk
+  source: XPHB
+  level: 5
+  subclass: Warrior of the Open Hand
+abilities:
+  STR: 14
+  DEX: 13
+  CON: 12
+  INT: 12
+  WIS: 9
+  CHA: 11
+proficiency_bonus: 3
+hp: 29
+ac: '{10+DEX}'
+speed: 30
+hit_die: 8
+saves:
+- STR
+- DEX
+skills:
+- acrobatics
+- athletics
+- perception
+- stealth
+expertise: []
+tools:
+- navigator's tools
+languages: Common
+can_use:
+  weapons: simple, Martial weapons that have the Light property
+masteries: []
+feats:
+- name: Ability Score Improvement
+  source: XPHB
+spells_known: []
+class_features:
+- class: Monk
+  name: Bonus Unarmed Strike
+  source: XPHB
+  level: 1
+- class: Monk
+  name: Dexterous Attacks
+  source: XPHB
+  level: 1
+- class: Monk
+  name: Martial Arts
+  source: XPHB
+  level: 1
+- class: Monk
+  name: Martial Arts Die
+  source: XPHB
+  level: 1
+- class: Monk
+  name: Unarmored Defense
+  source: XPHB
+  level: 1
+- class: Monk
+  name: Flurry of Blows
+  source: XPHB
+  level: 2
+- class: Monk
+  name: Monk's Focus
+  source: XPHB
+  level: 2
+- class: Monk
+  name: Patient Defense
+  source: XPHB
+  level: 2
+- class: Monk
+  name: Step of the Wind
+  source: XPHB
+  level: 2
+- class: Monk
+  name: Unarmored Movement
+  source: XPHB
+  level: 2
+- class: Monk
+  name: Uncanny Metabolism
+  source: XPHB
+  level: 2
+- class: Monk
+  name: Deflect Attacks
+  source: XPHB
+  level: 3
+- class: Monk
+  name: Monk Subclass
+  source: XPHB
+  level: 3
+- class: Monk
+  name: Open Hand Technique
+  source: XPHB
+  level: 3
+- class: Monk
+  name: Warrior of the Open Hand
+  source: XPHB
+  level: 3
+- class: Monk
+  name: Ability Score Improvement
+  source: XPHB
+  level: 4
+- class: Monk
+  name: Slow Fall
+  source: XPHB
+  level: 4
+- class: Monk
+  name: Extra Attack
+  source: XPHB
+  level: 5
+- class: Monk
+  name: Stunning Strike
+  source: XPHB
+  level: 5
+race_traits:
+- name: Darkvision
+  source: XPHB
+- name: Dwarven Resilience
+  source: XPHB
+- name: Dwarven Toughness
+  source: XPHB
+- name: Stonecunning
+  source: XPHB
+extra_training: []
+summary:
+- - Klasse
+  - Monk 5
+- - Art
+  - Dwarf
+- - Baggrund
+  - Sailor

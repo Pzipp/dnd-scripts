@@ -15,9 +15,9 @@ abilities:
   STR: 11
   DEX: 9
   CON: 8
-  INT: 17
-  WIS: 5
-  CHA: 10
+  INT: 19
+  WIS: 7
+  CHA: 11
 proficiency_bonus: 6
 hp: 69
 ac: '{10+DEX}'

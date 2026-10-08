@@ -100,6 +100,52 @@ def _all_choice_blocks(data: dict) -> list[dict]:
     return blocks
 
 
+def _ability_bonuses(data: dict, state: dict, sources: set[str]) -> dict[str, int]:
+    """Evne-bonusser der IKKE er en del af grundscoren i abilities.assigned:
+    baggrundens ability_split (2024-reglen flyttede racernes evne-bonus til
+    baggrunden) og hver ASI-feats valgte +2/+1-fordeling (se
+    docs/choices-yaml.md#undervalg). Inkluderer også feats' FASTE
+    evne-forbedring (fx Durable: altid +1 CON), men kun når husreglen
+    half_feats er slået til - samme betingelse som model.py's egen
+    _add_feat_slot bruger til at vise den."""
+    bonuses = {a: 0 for a in model.ABILITIES}
+
+    split = (data.get("background", {}).get("choices") or {}).get("ability_split") or {}
+    if split.get("type") == "2-1":
+        if split.get("plus2"):
+            bonuses[split["plus2"].upper()] += 2
+        if split.get("plus1"):
+            bonuses[split["plus1"].upper()] += 1
+    elif split.get("type") == "1-1-1":
+        for ability in state.get("background", {}).get("ability_options") or []:
+            bonuses[ability.upper()] += 1
+
+    half_feats = data.get("settings", {}).get("half_feats", False)
+    for feat_entry in data.get("feats", {}).values():
+        if not feat_entry or not feat_entry.get("name"):
+            continue
+        asi = (feat_entry.get("choices") or {}).get("asi")
+        if asi:
+            ability1, ability2 = (asi.get("ability1") or "").upper(), (asi.get("ability2") or "").upper()
+            if asi.get("mode") == "2" and ability1 in bonuses:
+                bonuses[ability1] += 2
+            elif asi.get("mode") == "1-1":
+                if ability1 in bonuses:
+                    bonuses[ability1] += 1
+                if ability2 in bonuses:
+                    bonuses[ability2] += 1
+        if half_feats:
+            feat_source = {feat_entry["source"]} if feat_entry.get("source") else sources
+            feat_obj = e.get_feat(feat_entry["name"], feat_source)
+            fixed_ability = (feat_obj or {}).get("ability") or [{}]
+            fixed_ability = fixed_ability[0]
+            if fixed_ability and not fixed_ability.get("choose"):
+                for ability, amount in fixed_ability.items():
+                    if ability.upper() in bonuses:
+                        bonuses[ability.upper()] += amount
+    return bonuses
+
+
 def _collect(data: dict, *keys: str) -> list[str]:
     """Samler en undervalg-nøgle (se docs/choices-yaml.md#undervalg) fra alle
     race/klasse/baggrund/feat-valg - fx alle 'skill'/'skills'/'skill_any'
@@ -130,7 +176,11 @@ def derive_from_state(data: dict, state: dict) -> dict:
     )
 
     assigned = data.get("abilities", {}).get("assigned", {})
-    con_mod = _mod(assigned.get("CON", 10))
+    # state() beregnes før vi kan kende ability_options for '1-1-1'-fordelingen,
+    # men den afhænger kun af baggrund/feats, ikke af selve evnescoren - rækkefølgen er ok.
+    bonuses = _ability_bonuses(data, state, sources)
+    final_abilities = {a: assigned[a] + bonuses[a] for a in model.ABILITIES if a in assigned}
+    con_mod = _mod(final_abilities.get("CON", 10))
     hit_die = (primary_class_obj or {}).get("hd", {}).get("faces", 8)
     hp_rolls = data.get("hp_rolls", {})
     hp = None
@@ -164,10 +214,13 @@ def derive_from_state(data: dict, state: dict) -> dict:
     can_use = {}
     if primary_class_obj:
         sp = primary_class_obj.get("startingProficiencies", {})
+        # clean_text(): disse strenge kan indeholde rå 5etools-markup, fx
+        # "{@filter Light|items|...}" - uden den bliver {...} fejlagtigt
+        # tolket som en udregnet formel af karakterark.py's skabelon-motor.
         if sp.get("armor"):
-            can_use["armor"] = ", ".join(sp["armor"])
+            can_use["armor"] = ", ".join(e.clean_text(a) for a in sp["armor"])
         if sp.get("weapons"):
-            can_use["weapons"] = ", ".join(sp["weapons"])
+            can_use["weapons"] = ", ".join(e.clean_text(w) for w in sp["weapons"])
 
     known_spell_names = data.get("spells", {}).get("known") or []
     spells_known = []
@@ -204,7 +257,7 @@ def derive_from_state(data: dict, state: dict) -> dict:
         "race": {"name": race_name, "source": race_source},
         "background": {"name": background_name, "source": background_source},
         "classes": classes_out,
-        "abilities": dict(assigned),
+        "abilities": final_abilities,
         "proficiency_bonus": PROFICIENCY_BONUS_BY_LEVEL.get(total_level, 2),
         "hp": hp,
         "ac": "{10+DEX}",  # overskrives af PRESERVED_FIELDS-bevaring i derive_and_save, ikke afledt (se modul-docstring)
