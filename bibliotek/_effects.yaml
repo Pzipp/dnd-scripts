@@ -1,0 +1,10 @@
+alert-xphb:
+  name: Alert
+  source: XPHB
+  kind: feat
+  effects:
+  - target: initiative
+    type: add
+    value: PB
+    duration: permanent
+  confidence: high

@@ -105,11 +105,15 @@ def api_translate():
         return jsonify({"error": "Ukendt karakter."}), 404
     character = character_yaml.load(character_dir)
     try:
-        still_missing = descriptions.generate_missing(descriptions.missing_for(character))
+        still_missing = descriptions.generate_missing(descriptions.entries_needing_llm(character))
     except llm_client.LLMNotConfigured as exc:
         return jsonify({"error": str(exc)}), 503
     except llm_client.LLMRequestFailed as exc:
         return jsonify({"error": str(exc)}), 502
+    # Et nyt effects-fund (fx Alert's +PB til initiativ) skal slå igennem på
+    # character.yaml med det samme - uden dette ville det først ske ved næste
+    # choices.yaml-gem, selvom effects jo blev fundet lige nu.
+    character_yaml.derive_and_save(character_dir, model.load(character_dir))
     return jsonify({"missing_descriptions": still_missing})
 
 

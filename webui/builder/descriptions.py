@@ -20,7 +20,7 @@ from pathlib import Path
 
 import yaml
 
-from . import cards, llm_client
+from . import cards, effects, llm_client
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 BIBLIOTEK = ROOT / "bibliotek"
@@ -59,6 +59,13 @@ def _load_cache() -> dict[str, dict]:
 
 def _save_cache(cache: dict[str, dict]) -> None:
     CACHE_PATH.write_text(yaml.safe_dump(cache, allow_unicode=True, sort_keys=False), encoding="utf-8")
+
+
+def _has_curated_card(name: str) -> bool:
+    """True hvis der findes et RIGTIGT, håndlavet kort i bibliotek/*.yaml -
+    til at afgøre om et kort-udkast i cards.py ville være ren redundans
+    (modsat lookup(), der også tæller en ren cachet beskrivelse uden kort)."""
+    return any(card["navn"].lower() == name.lower() for card in _load_curated_cards())
 
 
 def lookup(name: str, source: str | None) -> dict | None:
@@ -104,18 +111,45 @@ def missing_for(character: dict) -> list[dict]:
     return [e for e in _entries_from_character(character) if lookup(e["name"], e["source"]) is None]
 
 
+def missing_effects_for(character: dict) -> list[dict]:
+    """Entries, der ALDRIG har fået et effects-tjek (se effects.py) - uanset
+    om de allerede har en beskrivelse (curated/cachet). Separat fra
+    missing_for(), fordi Alert m.fl. typisk allerede har en håndkurateret
+    beskrivelse, men aldrig har været igennem effects-udtræk."""
+    cache = effects.load()
+    return [e for e in _entries_from_character(character)
+            if effects._slug(e["name"], e.get("source")) not in cache]
+
+
+def entries_needing_llm(character: dict) -> list[dict]:
+    """Union af missing_for() og missing_effects_for() (dedupliceret) - det
+    EN knap/kald rent faktisk sender til LLM'en, se generate_missing()."""
+    seen, out = set(), []
+    for entry in missing_for(character) + missing_effects_for(character):
+        key = (entry["name"], entry["source"], entry["kind"])
+        if key not in seen:
+            seen.add(key)
+            out.append(entry)
+    return out
+
+
 def generate_missing(entries: list[dict]) -> list[dict]:
     """Kalder LLM'en i bidder af højst BATCH_SIZE (ikke ét kald pr. entry),
     gemmer resultaterne i den delte cache. Returnerer de entries, der
-    STADIG mangler (en fejlet bid prøves ikke automatisk igen i mindre bidder -
-    fejlen vises i UI'en, og brugeren kan trykke knappen igen).
+    STADIG mangler en beskrivelse (en fejlet bid prøves ikke automatisk igen
+    i mindre bidder - fejlen vises i UI'en, og brugeren kan trykke knappen
+    igen). entries bør komme fra entries_needing_llm(), ikke kun missing_for()
+    - ellers får en allerede-beskrevet entry (fx et håndkurateret feat) aldrig
+    et effects-tjek.
 
-    Samme svar bruges også til at lægge et kort-udkast i bibliotek/_cards.yaml
-    (se cards.update_cache()) - intet ekstra LLM-kald, ingen ekstra knap."""
+    Samme svar bruges også til: et kort-udkast i bibliotek/_cards.yaml (se
+    cards.update_cache()) og et effects-udtræk i bibliotek/_effects.yaml (se
+    effects.update_cache()) - intet ekstra LLM-kald, ingen ekstra knap."""
     if not entries:
         return []
     cache = _load_cache()
     cards_cache = cards.load()
+    effects_cache = effects.load()
     still_missing = []
     for i in range(0, len(entries), BATCH_SIZE):
         batch = entries[i : i + BATCH_SIZE]
@@ -123,14 +157,26 @@ def generate_missing(entries: list[dict]) -> list[dict]:
         described = llm_client.describe_batch(slugged)
         for entry, slugged_entry in zip(batch, slugged):
             result = described.get(slugged_entry["id"])
-            if result and result.get("description_da"):
+            if not result:
+                still_missing.append(entry)
+                continue
+            # Allerede håndkurateret/cachet? Lad den stå - lookup() giver den
+            # curaterede udgave forrang alligevel, så et nyt cache-svar her
+            # ville kun være ubrugt støj i _descriptions.yaml.
+            if result.get("description_da") and lookup(entry["name"], entry.get("source")) is None:
                 cache[slugged_entry["id"]] = {
                     **entry,
                     **{k: result[k] for k in ("name_da", "description_da") if k in result},
                 }
-                cards.update_cache(cards_cache, slugged_entry, result)
-            else:
+            elif not result.get("description_da") and lookup(entry["name"], entry.get("source")) is None:
                 still_missing.append(entry)
+            # Et kort-UDKAST er ren redundans, hvis der allerede findes et
+            # rigtigt, håndlavet kort - _has_curated_card() (ikke lookup()) er
+            # den rigtige afgørelse her.
+            if not _has_curated_card(entry["name"]):
+                cards.update_cache(cards_cache, slugged_entry, result)
+            effects.update_cache(effects_cache, slugged_entry, result)
     _save_cache(cache)
     cards.save(cards_cache)
+    effects.save(effects_cache)
     return still_missing

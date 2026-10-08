@@ -10,17 +10,22 @@ Findes choices.yaml IKKE, er character.yaml i stedet den primære fil -
 skrevet direkte (af builder-UI'en uden choices.yaml, eller af et LLM) - og
 røres aldrig herfra.
 
-Et par felter kan ikke udledes SIKKERT af choices.yaml - enten fordi reglen
-kræver data choices.yaml ikke tracker (AC: hvilken rustning er udstyret nu),
-eller fordi den afhænger af ét ud af flere hundrede feats/spells/features,
-hvis mekaniske effekt (se fx Alert-feat'ets "+PB til initiativ") kun findes
-som fri engelsk prosa i 5etools' data, ikke et struktureret felt - at
-specialtjekke hvert feat ved navn i Python skalerer ikke. Disse felter får
-derfor kun en fornuftig STANDARDFORMEL herfra og bevares bagefter fra en
-eksisterende character.yaml i stedet for at blive overskrevet igen - se
-PRESERVED_FIELDS. Spilleren retter dem i hånden, informeret af feat-listen
-(der stadig vises i Træning og valg) - samme afvejning de 8 håndskrevne
-karakterer allerede lever med for hele stats-rækken.
+Et par felter kan ikke udledes SIKKERT af choices.yaml, fordi reglen kræver
+data choices.yaml ikke tracker (AC: hvilken rustning er udstyret nu;
+languages: hvilke sprog en valgfri tildeling gav) - de får kun en fornuftig
+STANDARDFORMEL herfra og bevares bagefter fra en eksisterende character.yaml
+i stedet for at blive overskrevet igen, se PRESERVED_FIELDS. Spilleren retter
+dem i hånden.
+
+`initiative` var tidligere i samme kategori (Alert-feat'ets "+PB til
+initiativ" findes kun som fri engelsk prosa i 5etools' data, intet
+struktureret felt) - det er den LLM-baserede effects-udtræk (se effects.py)
+nu løser: _apply_effects() folder høj-konfidens, permanente effects (fundet
+af samme LLM-kald som descriptions.py/cards.py bruger) ind i formlen hver
+gang. initiative er derfor IKKE et PRESERVED_FIELD længere - den genberegnes
+altid, og overskriver bevidst en evt. manuel rettelse, hvis en høj-konfidens
+effect findes (aftalt med brugeren: enkelt og forudsigeligt, fremfor en
+stille "kun hvis uændret"-regel).
 """
 from __future__ import annotations
 
@@ -29,6 +34,7 @@ from pathlib import Path
 import yaml
 
 from . import e5tools as e
+from . import effects
 from . import model
 
 # D&D 2024 (PHB)-reglens faste Proficiency Bonus pr. level - ikke noget nogen
@@ -44,7 +50,29 @@ PROFICIENCY_BONUS_BY_LEVEL = {
 # Felter character.yaml kun giver en standardformel til, og ellers bevarer
 # fra en eksisterende fil (se modul-docstring) - render.py skal ALDRIG
 # selv regne eller feat-tjekke disse, kun læse dem som alle andre tal.
-PRESERVED_FIELDS = ("ac", "initiative", "languages")
+# initiative er IKKE med her - se modul-docstring: den genberegnes altid,
+# inkl. effects.py's høj-konfidens permanente effects.
+PRESERVED_FIELDS = ("ac", "languages")
+
+
+def _apply_effects(entries: list[dict], initiative_formula: str, hp: int | None, total_level: int) -> tuple[str, int | None]:
+    """Folder høj-konfidens, PERMANENTE effects (se effects.py) ind i
+    initiative-formlen og HP - de to eneste targets, der rent faktisk er
+    bygget en anvendelse for (se docs/llm-effect-extraction-prompt.md).
+    Andre targets (ac, saves, skills, resistances, darkvision, speed) er
+    gemt i _effects.yaml, men IKKE foldet ind nogen steder endnu."""
+    for eff in effects.high_confidence_effects(entries):
+        target, kind, value = eff.get("target"), eff.get("type"), str(eff.get("value", ""))
+        if target == "initiative" and kind == "add":
+            term = value.removeprefix("ability:")
+            if term and f"+{term}" not in initiative_formula:
+                initiative_formula = initiative_formula[:-1] + f"+{term}" + "}"
+        elif target == "hp_per_level" and kind == "add" and hp is not None:
+            try:
+                hp += int(value) * total_level
+            except ValueError:
+                pass
+    return initiative_formula, hp
 
 
 def empty_character_sheet() -> dict:
@@ -251,6 +279,10 @@ def derive_from_state(data: dict, state: dict) -> dict:
         for f in c.get("features", [])
     ]
 
+    initiative_formula, hp = _apply_effects(
+        feats + spells_known + class_features + race_traits, "{+DEX}", hp, total_level
+    )
+
     summary = [
         [label, value] for label, value in [
             ("Klasse", ", ".join(f"{c['name']} {c['level']}" for c in classes_out if c["name"])),
@@ -269,7 +301,7 @@ def derive_from_state(data: dict, state: dict) -> dict:
         "proficiency_bonus": PROFICIENCY_BONUS_BY_LEVEL.get(total_level, 2),
         "hp": hp,
         "ac": "{10+DEX}",  # overskrives af PRESERVED_FIELDS-bevaring i derive_and_save, ikke afledt (se modul-docstring)
-        "initiative": "{+DEX}",  # samme - standard uden PB, se modul-docstring (Alert-feat'et m.fl. kan ikke generelt genkendes)
+        "initiative": initiative_formula,  # standard + evt. høj-konfidens effects (fx Alert) - se _apply_effects()
         "speed": speed,
         "hit_die": hit_die,
         "saves": saves,
