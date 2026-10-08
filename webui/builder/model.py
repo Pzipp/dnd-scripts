@@ -406,13 +406,24 @@ def _spells_for_filter(parsed: dict, sources: set[str]) -> list[dict]:
     spell_attack = set(parsed["spell attack"].split(";")) if "spell attack" in parsed else None
     spells = e.spells_by_filter(sources, level=level, schools=schools, class_name=class_names, ritual=ritual, spell_attack=spell_attack) or []
     # Flere tilladte kilder kan genoptrykke samme spell (fx PHB 2014 + XPHB
-    # 2024) - dedupliker på navn, så den ikke står dobbelt i en valgliste.
-    seen: set[str] = set()
+    # 2024) - de to udgaver er IKKE nødvendigvis identiske (se notes.md), så
+    # ingen af dem fjernes. I stedet suffikses navnet med kilden, akkurat som
+    # _label_options() allerede gør for racer/baggrunde/feats, og KUN når
+    # navnet reelt er ambigut (findes under mere end én kandidat her).
+    by_name: dict[str, int] = {}
+    for s in spells:
+        by_name[s["name"]] = by_name.get(s["name"], 0) + 1
+    seen: set[tuple[str, str | None]] = set()
     out = []
     for s in spells:
-        if s["name"] not in seen:
-            seen.add(s["name"])
-            out.append(s)
+        key = (s["name"], s.get("source"))
+        if key in seen:
+            continue
+        seen.add(key)
+        label = s["name"]
+        if by_name[s["name"]] > 1:
+            label = f"{label} ({s.get('source')})"
+        out.append({**s, "name": label})
     return out
 
 
