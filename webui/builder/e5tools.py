@@ -380,17 +380,26 @@ def spells_by_filter(sources: set[str], level: int | None = None, schools: set[s
     return out
 
 
-def class_table_value(class_obj: dict, column_label: str, level: int) -> int | None:
+def class_table_value(class_obj: dict, column_label: str, level: int) -> int | str | None:
     """Slår en kolonne op i klassens egen tabel (classTableGroups), fx hvor mange
-    våben Weapon Mastery giver på et givet niveau - tabel-drevet, ikke en fast tal."""
+    våben Weapon Mastery giver, eller Sneak Attacks terningeskade, på et givet
+    niveau - tabel-drevet, ikke en fast tal. Terning-celler (fx Sneak Attack,
+    Rage-skade) er i 5etools' data et struktureret {type: dice, toRoll: [...]}-
+    objekt, ikke et tal - de returneres som en terning-streng ("2d6"), flere
+    terne i samme celle som "1d6+1d4"."""
     for group in class_obj.get("classTableGroups", []):
         labels = group.get("colLabels", [])
         if column_label in labels:
             idx = labels.index(column_label)
             rows = group.get("rows", [])
             if 0 < level <= len(rows):
+                cell = rows[level - 1][idx]
+                if isinstance(cell, dict) and cell.get("type") == "dice":
+                    dice = [f"{d['number']}d{d['faces']}" for d in cell.get("toRoll", [])
+                            if "number" in d and "faces" in d]
+                    return "+".join(dice) if dice else None
                 try:
-                    return int(rows[level - 1][idx])
+                    return int(cell)
                 except (ValueError, TypeError):
                     return None
     return None

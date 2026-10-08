@@ -1,0 +1,50 @@
+martial-arts-xphb:
+  name: Martial Arts
+  source: XPHB
+  kind: class_feature
+  type: klasse
+  kicker: Klasseevne · Monk <i>level 1</i>
+  scaling:
+  - - Level 1
+    - 1d6
+  - - '5'
+    - 1d8
+  - - '11'
+    - 1d10
+  - - '17'
+    - 1d12
+  scaling_title: Martial Arts efter level
+  name_da: Kampkunst
+  description_da: Lader dig bruge Kløgt i stedet for Styrke til dine ubevæbnede slag
+    og klostervåben, og dine ubevæbnede slag gør mere skade end normalt for en, der
+    kæmper med de bare hænder.
+  effect: Brug Kløgt frem for Styrke til angreb og skade med ubevæbnede slag og klostervåben.
+    Dine ubevæbnede slag bliver kraftigere, i takt med at du stiger i munk-niveau.
+  back_note: Kræver at du ikke bærer rustning eller fører et skjold - ellers gælder
+    fordelene ikke.
+bonus-unarmed-strike-xphb:
+  name: Bonus Unarmed Strike
+  source: XPHB
+  kind: class_feature
+  type: klasse
+  kicker: Klasseevne · Monk <i>level 1</i>
+  name_da: Ekstra ubevæbnet slag
+  description_da: Lige efter du har brugt din handling på et Angreb, kan du som bonushandling
+    udføre et ekstra ubevæbnet slag.
+  effect: Har du netop brugt handlingen på Angreb, kan du med det samme smide endnu
+    et ubevæbnet slag ind som bonushandling - helt gratis.
+  back_note: Du skal have brugt Angreb-handlingen dette træk, og din bonushandling
+    må ikke allerede være brugt på noget andet.
+boon-of-recovery-xphb:
+  name: Boon of Recovery
+  source: XPHB
+  kind: feat
+  type: feat
+  kicker: Epic Boon
+  name_da: Genopretningens Velsignelse
+  description_da: Et epic boon-feat (fra niveau 19), der gør dig usædvanligt svær
+    at slå helt ud - din krop klamrer sig til livet, hvor andre ville segne.
+  effect: Når noget normalt ville lægge dig ned eller slå dig bevidstløs, kan din
+    vilje holde dig på benene lidt længere end nogen havde troet muligt.
+  back_note: Kræfterne skal genoplades - evnen kan kun bruges et begrænset antal gange,
+    inden du skal holde en lang rast.

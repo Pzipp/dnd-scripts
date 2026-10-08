@@ -20,3 +20,29 @@ shadow-touched-xphb:
   description_da: Du styrker Intelligens, Visdom eller Karisma med 1 (maks. 20) og
     lærer Invisibility samt et niveau 1-trylleri fra illusions- eller nekromantiskolen,
     som du kan kaste uden trylleslot én gang pr. lang pause.
+martial-arts-xphb:
+  name: Martial Arts
+  source: XPHB
+  kind: class_feature
+  class: Monk
+  level: 1
+  name_da: Kampkunst
+  description_da: Lader dig bruge Kløgt i stedet for Styrke til dine ubevæbnede slag
+    og klostervåben, og dine ubevæbnede slag gør mere skade end normalt for en, der
+    kæmper med de bare hænder.
+bonus-unarmed-strike-xphb:
+  name: Bonus Unarmed Strike
+  source: XPHB
+  kind: class_feature
+  class: Monk
+  level: 1
+  name_da: Ekstra ubevæbnet slag
+  description_da: Lige efter du har brugt din handling på et Angreb, kan du som bonushandling
+    udføre et ekstra ubevæbnet slag.
+boon-of-recovery-xphb:
+  name: Boon of Recovery
+  source: XPHB
+  kind: feat
+  name_da: Genopretningens Velsignelse
+  description_da: Et epic boon-feat (fra niveau 19), der gør dig usædvanligt svær
+    at slå helt ud - din krop klamrer sig til livet, hvor andre ville segne.
