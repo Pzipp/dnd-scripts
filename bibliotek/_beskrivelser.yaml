@@ -1,0 +1,22 @@
+resilient-xphb:
+  name: Resilient
+  source: XPHB
+  kind: feat
+  name_da: Hårdfør
+  description_da: Du styrker en valgt evne med 1 (maks. 20) og får færdighedsbonus
+    til redningskast med den evne.
+chef-xphb:
+  name: Chef
+  source: XPHB
+  kind: feat
+  name_da: Kok
+  description_da: Du styrker Konstitution eller Visdom med 1 (maks. 20), får kokkeredskaber
+    og kan under pauser lave mad, der giver ekstra liv eller midlertidige liv.
+shadow-touched-xphb:
+  name: Shadow-Touched
+  source: XPHB
+  kind: feat
+  name_da: Skyggerørt
+  description_da: Du styrker Intelligens, Visdom eller Karisma med 1 (maks. 20) og
+    lærer Invisibility samt et niveau 1-trylleri fra illusions- eller nekromantiskolen,
+    som du kan kaste uden trylleslot én gang pr. lang pause.
