@@ -38,24 +38,22 @@ abilities:
     WIS: 17
     CHA: 17
 hp_rolls:
-  7e7d4c:
-    '2': 8
-    '3': 6
-    '4': 8
-    '5': 6
-    '6': 8
-    '7': 8
-    '8': 3
-    '9': 8
-    '10': 2
-    '11': 7
-  06a216:
-    '1': 9
-    '2': 7
-    '3': 8
-    '4': 1
-    '5': 8
-    '6': 2
+  '2': 3
+  '3': 8
+  '4': 7
+  '5': 4
+  '6': 3
+  '7': 7
+  '8': 1
+  '9': 8
+  '10': 2
+  '11': 6
+  '12': 2
+  '13': 6
+  '14': 7
+  '15': 5
+  '16': 4
+  '17': 3
 feats:
   7e7d4c_4_abilityscoreimprovement:
     name: Ability Score Improvement
@@ -83,13 +81,6 @@ equipment:
   class_package: A
   background_package: A
   extra: []
-  armor:
-    name: Padded Armor
-    source: XPHB
-languages:
-  known:
-  - Dwarvish
-  - Goblin
 settings:
   allowed_sources:
   - XPHB

@@ -316,13 +316,22 @@ sider:
         titel: Kendetegn
         punkter:
         - Hænderne er altid i gang.
-        tomme: 3
+        - Terin Stoutkettle er lille, selv for en halfling, med et vågent blik og et smil, der sjældent helt afslører, hvad han tænker.
+        - Han ser venlig ud, men der er altid en beregnende glød bag øjnene.
+        - Hans mørkebrune hår er lidt for langt, og hans lommer er fyldt med små værktøjer og nips.
+        - Han bevæger sig lydløst og har en uro i kroppen, som om han hele tiden er klar til enten at stikke af eller slå først.
+       
       - type: historie
         titel: Historie <i>Backstory</i>
         afsnit:
-        - Voksede op hos sin mor <b>Elira</b>, der var alkymist.
-        - Har en lillesøster, <b>Talla</b>, som han ikke har set siden.
-        tomme: 6
+        - Terin voksede op i en beskeden husholdning i udkanten af en landsby. Hans mor, Elira Stoutkettle, var alkymist og solgte salver, urter og små “mirakler” på markeder.
+        - Hans far, Darrin Stoutkettle, forsvandt, da Terin var omkring syv vintre gammel. Nogle sagde, han var rejst, andre at han aldrig kom hjem fra en handel.
+        - Elira klarede sig, og Terin lærte både hendes håndværk og hendes evne til at overleve — men også, at nogle gange må man tage, før andre tager fra én.
+        - Som dreng stjal han småting, ingredienser og mønter; som teenager tog han større chancer.
+        - Et af de sidste kup gik galt. En mand døde, og Terin flygtede. Han var femten, da han forlod hjemmet — og har siden levet af hurtige hænder og hurtige beslutninger.
+
+        - Han har en yngre søster, Talla, som han ikke har set siden. Nogle nætter drømmer han, at hun kalder på ham, men han ved ikke, om det er skyld eller savn.
+        tomme: 1
       - type: traening
         titel: Træning og valg <i>Proficiencies</i>
     - bredde: 1
@@ -330,7 +339,9 @@ sider:
       - type: personlighed
         titel: Personlighed
         punkter:
-        - '<b>Træk</b>: roligt ydre, men hurtigt temperament, når nogen udnytter ham.'
+        - '<b>Træk</b>: roligt ydre, men hurtigt temperament, når nogen udnytter ham.
+        Holder sine hænder beskæftigede — pusler med en kniv, kaster en mønt, eller tjekker udstyr — aldrig helt afslappet.
+        Har en tør humor, især når tingene bliver farlige.'
         - '<b>Idealer</b>: overlevelse og frihed. Ingen skal have magt over hans liv.'
         - '<b>Bånd</b>: minderne om moren Elira og hendes alkymi · lillesøsteren Talla.'
         - '<b>Brister</b>: ser vold som en praktisk løsning · forventer altid forræderi · tager den nemmeste vej, også når den er blodig.'
@@ -339,11 +350,14 @@ sider:
         punkter:
         - <b>Elira</b> · mor · alkymist
         - <b>Talla</b> · lillesøster
-        tomme: 6
+        tomme: 2
       - type: fjender
         titel: Fjender og rivaler
-        punkter: []
-        tomme: 6
+        punkter: 
+        - Terin forlod sit hjem som femtenårig efter et mislykket tyveri, der endte med blod.
+        - Han ved ikke, om nogen stadig leder efter ham — men han antager det.
+        - I enhver større by holder han øje med ansigter, der stirrer lidt for længe.
+        tomme: 5
       - type: maal
         titel: Mål og drømme
         punkter: []

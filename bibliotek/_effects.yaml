@@ -176,3 +176,75 @@ darkvision-xphb:
     value: '60'
     duration: permanent
   confidence: high
+charm-person-xphb:
+  name: Charm Person
+  source: XPHB
+  kind: spell
+  effects: []
+  confidence: null
+expeditious-retreat-xphb:
+  name: Expeditious Retreat
+  source: XPHB
+  kind: spell
+  effects: []
+  confidence: null
+feather-fall-xphb:
+  name: Feather Fall
+  source: XPHB
+  kind: spell
+  effects: []
+  confidence: null
+identify-xphb:
+  name: Identify
+  source: XPHB
+  kind: spell
+  effects: []
+  confidence: null
+ice-knife-xphb:
+  name: Ice Knife
+  source: XPHB
+  kind: spell
+  effects: []
+  confidence: null
+ray-of-sickness-xphb:
+  name: Ray of Sickness
+  source: XPHB
+  kind: spell
+  effects: []
+  confidence: null
+shield-xphb:
+  name: Shield
+  source: XPHB
+  kind: spell
+  effects: []
+  confidence: null
+tenser-s-floating-disk-xphb:
+  name: Tenser's Floating Disk
+  source: XPHB
+  kind: spell
+  effects: []
+  confidence: null
+blur-xphb:
+  name: Blur
+  source: XPHB
+  kind: spell
+  effects: []
+  confidence: null
+locate-object-xphb:
+  name: Locate Object
+  source: XPHB
+  kind: spell
+  effects: []
+  confidence: null
+control-water-xphb:
+  name: Control Water
+  source: XPHB
+  kind: spell
+  effects: []
+  confidence: null
+rary-s-telepathic-bond-xphb:
+  name: Rary's Telepathic Bond
+  source: XPHB
+  kind: spell
+  effects: []
+  confidence: null

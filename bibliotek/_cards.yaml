@@ -325,3 +325,51 @@ shadow-touched-xphb:
     Cast begge gratis, indtil du skal bruge en spell slot i stedet.
   back_note: Din spellcasting-ability for de to spells er den ability-score, du vælger
     at øge med denne feat.
+charm-person-xphb:
+  name: Charm Person
+  source: XPHB
+  kind: spell
+expeditious-retreat-xphb:
+  name: Expeditious Retreat
+  source: XPHB
+  kind: spell
+feather-fall-xphb:
+  name: Feather Fall
+  source: XPHB
+  kind: spell
+identify-xphb:
+  name: Identify
+  source: XPHB
+  kind: spell
+ice-knife-xphb:
+  name: Ice Knife
+  source: XPHB
+  kind: spell
+ray-of-sickness-xphb:
+  name: Ray of Sickness
+  source: XPHB
+  kind: spell
+shield-xphb:
+  name: Shield
+  source: XPHB
+  kind: spell
+tenser-s-floating-disk-xphb:
+  name: Tenser's Floating Disk
+  source: XPHB
+  kind: spell
+blur-xphb:
+  name: Blur
+  source: XPHB
+  kind: spell
+locate-object-xphb:
+  name: Locate Object
+  source: XPHB
+  kind: spell
+control-water-xphb:
+  name: Control Water
+  source: XPHB
+  kind: spell
+rary-s-telepathic-bond-xphb:
+  name: Rary's Telepathic Bond
+  source: XPHB
+  kind: spell

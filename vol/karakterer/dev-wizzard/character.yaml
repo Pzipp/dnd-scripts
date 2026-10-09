@@ -16,15 +16,11 @@ abilities:
   DEX: 9
   CON: 8
   INT: 19
-  WIS: 15
+  WIS: 7
   CHA: 11
 proficiency_bonus: 6
-hp: 57
-hit_dice:
-- die: 6
-  count: 19
-ac: 18
-ac_note: Chain Mail + Shield
+hp: 69
+ac: '{10+DEX}'
 initiative: '{+DEX}'
 speed: 30
 hit_die: 6
@@ -38,7 +34,7 @@ skills:
 expertise: []
 tools:
 - anyGamingSet
-languages: Common, Draconic, Elvish
+languages: Common
 can_use:
   weapons: simple
 masteries: []
@@ -59,30 +55,6 @@ spells_known:
 - name: Mind Sliver
   source: XPHB
 - name: Minor Illusion
-  source: XPHB
-- name: Charm Person
-  source: XPHB
-- name: Expeditious Retreat
-  source: XPHB
-- name: Feather Fall
-  source: XPHB
-- name: Identify
-  source: XPHB
-- name: Ice Knife
-  source: XPHB
-- name: Ray of Sickness
-  source: XPHB
-- name: Shield
-  source: XPHB
-- name: Tenser's Floating Disk
-  source: XPHB
-- name: Blur
-  source: XPHB
-- name: Locate Object
-  source: XPHB
-- name: Control Water
-  source: XPHB
-- name: Rary's Telepathic Bond
   source: XPHB
 class_features:
 - class: Wizard

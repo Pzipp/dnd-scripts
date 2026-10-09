@@ -32,11 +32,10 @@ abilities:
     WIS: 9
     CHA: 11
 hp_rolls:
-  b2fd7b:
-    '2': 2
-    '3': 7
-    '4': 8
-    '5': 3
+  '2': 4
+  '3': 4
+  '4': 4
+  '5': 4
 feats:
   b2fd7b_4_abilityscoreimprovement:
     name: Ability Score Improvement
@@ -52,10 +51,6 @@ equipment:
   class_package: A
   background_package: A
   extra: []
-languages:
-  known:
-  - Draconic
-  - Elvish
 settings:
   allowed_sources:
   - XPHB
