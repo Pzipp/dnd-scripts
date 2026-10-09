@@ -1,0 +1,13 @@
+/* Stormblå — cool slate blue accents on pale grey parchment. Load after both base stylesheets. */
+:root { --paper:#f5f6f3; --ink:#252d34; --ink-2:#59646b; --hair:#b3bdc1; --ground:#e7ebeb; --acc:#496779; }
+.sheet { background:#fff; }
+.card { background:linear-gradient(135deg, rgba(73,103,121,.055), transparent 48%), var(--paper); }
+.frame,.frame::before { border-color:var(--acc); }
+.badge { color:var(--acc); border-color:var(--acc); box-shadow:0 0 0 .5mm var(--paper), 0 0 0 .7mm var(--acc); }
+.kicker,.stats,.dice,.scale th,.scale td { border-color:var(--acc); }
+.stats div:nth-child(odd) { background:rgba(73,103,121,.05); }
+.tag { color:var(--acc); border-color:#9aaeb7; background:rgba(73,103,121,.04); }
+.dv,.orn,.rules h4 { color:var(--acc); }
+.scale th { background:var(--acc); color:var(--paper); }
+.rules h4::after { border-color:#aab9c0; }
+.ico-k { border-color:var(--acc); background:linear-gradient(90deg, var(--acc) 50%, transparent 50%); }

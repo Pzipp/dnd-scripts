@@ -1,0 +1,13 @@
+/* Vinrød — dusty burgundy and muted ivory, inspired by old rulebooks. Load after both base stylesheets. */
+:root { --paper:#faf4e9; --ink:#332725; --ink-2:#68544d; --hair:#c5b2a1; --ground:#eee4d7; --acc:#844b4b; }
+.sheet { background:#fff; }
+.card { background:linear-gradient(160deg, rgba(132,75,75,.045), transparent 48%), var(--paper); }
+.frame,.frame::before { border-color:var(--acc); }
+.badge { color:var(--acc); border-color:var(--acc); box-shadow:0 0 0 .5mm var(--paper), 0 0 0 .7mm var(--acc); }
+.kicker,.stats,.dice,.scale th,.scale td { border-color:var(--acc); }
+.stats div:nth-child(odd) { background:rgba(132,75,75,.045); }
+.tag { color:var(--acc); border-color:#c0a09a; background:rgba(132,75,75,.035); }
+.dv,.orn,.rules h4 { color:var(--acc); }
+.scale th { background:var(--acc); color:var(--paper); }
+.rules h4::after { border-color:#c5a9a2; }
+.ico-k { border-color:var(--acc); background:linear-gradient(90deg, var(--acc) 50%, transparent 50%); }

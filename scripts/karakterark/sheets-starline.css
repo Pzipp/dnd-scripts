@@ -1,0 +1,19 @@
+/* Stjernelinje: enkel natteblå stil med små stjerner og fine dobbelte skillelinjer. */
+:root{
+  --parch:#edf0f5; --ink:#252d3b; --muted:#626d7e; --accent:#354d70; --line:#aab8ce; --paper:#fcfdff;
+  --str:#9b4b4a; --dex:#3c755f; --con:#98713b; --int:#3e6497; --wis:#6b5c99; --cha:#965d83;
+}
+body{font-family:"Crimson Pro",Georgia,serif;line-height:1.22}
+h1,h2,h3,.stat .big,.ab .name,.ab .mod{font-family:"Crimson Pro",Georgia,serif}
+.box{position:relative;border-radius:0;border-color:var(--line);box-shadow:none}
+.box:before,.box:after{position:absolute;color:var(--accent);font-size:7pt;line-height:1;pointer-events:none}
+.box:before{content:"✦";top:.5mm;right:1mm}
+.box:after{content:"✧";bottom:.4mm;left:1mm}
+.box h2{color:var(--accent);border-bottom:0;padding-bottom:1mm;position:relative;letter-spacing:.025em}
+.box h2:after{content:"✦  ─────────────────────────";display:block;overflow:hidden;white-space:nowrap;color:var(--line);font-size:6pt;letter-spacing:.04em;margin-top:.3mm}
+.head{border-bottom:1.5px double var(--accent)}
+.name h1,.turn h3,.feat p b{color:var(--accent)}
+.ab{border-radius:0;border-left-width:3px}
+.ab li{border-top-style:dashed;border-top-color:#ccd5e2}
+.dc,.coins div{border-radius:0;border-color:var(--line)}
+.dot{border-radius:50%}

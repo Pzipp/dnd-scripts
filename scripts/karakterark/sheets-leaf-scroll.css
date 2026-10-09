@@ -1,0 +1,20 @@
+/* Bladranker: lys salvie, varme naturtoner og diskrete bladornamenter. */
+:root{
+  --parch:#eff2e8; --ink:#26352c; --muted:#657264; --accent:#3e624b; --line:#a9b9a0; --paper:#fcfff9;
+  --str:#914b42; --dex:#36734e; --con:#96713a; --int:#426b87; --wis:#6e648e; --cha:#925d79;
+}
+body{font-family:"Crimson Pro",Georgia,serif;line-height:1.23}
+h1,h2,h3,.stat .big,.ab .name,.ab .mod{font-family:"Crimson Pro",Georgia,serif}
+.box{position:relative;border-radius:0;border-color:var(--line);box-shadow:none}
+.box:before,.box:after{position:absolute;color:var(--accent);font-size:8pt;line-height:1;pointer-events:none}
+.box:before{content:"❧";top:.3mm;right:.8mm;transform:rotate(-15deg)}
+.box:after{content:"❧";bottom:.2mm;left:.8mm;transform:rotate(165deg)}
+.box h2{color:var(--accent);border-bottom:0;padding-bottom:1mm;position:relative}
+.box h2:after{content:"";display:block;height:1px;margin-top:.8mm;background:linear-gradient(90deg,var(--line) 0%,var(--line) 42%,transparent 42%,transparent 45%,var(--line) 45%,var(--line) 87%,transparent 100%)}
+.box h2:before{content:"❧";font-size:.75em;margin-right:1mm;color:var(--muted)}
+.head{border-bottom:1.5px solid var(--accent)}
+.name h1,.turn h3,.feat p b{color:var(--accent)}
+.ab{border-radius:0;border-left-width:3px}
+.ab li{border-top-style:dotted;border-top-color:#cbd6c4}
+.dc,.coins div{border-radius:0;border-color:var(--line)}
+.dot{border-radius:50%}

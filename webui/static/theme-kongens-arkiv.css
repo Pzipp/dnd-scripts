@@ -1,0 +1,59 @@
+/* Kongens Arkiv — optional theme layered after style.css */
+:root {
+  --archive-ink: #33271e;
+  --archive-muted: #786653;
+  --archive-paper: #e8dcc0;
+  --archive-paper-light: #f4ead3;
+  --archive-wood: #30251d;
+  --archive-wood-light: #49372a;
+  --archive-brass: #a8874e;
+  --archive-border: #b7a27c;
+  --archive-shadow: rgba(31, 22, 15, .22);
+}
+body {
+  color: var(--archive-ink);
+  background-color: #b6a17e;
+  background-image: linear-gradient(rgba(56, 39, 24, .10), rgba(56, 39, 24, .10)), url("pergament-slidt.svg");
+  background-attachment: fixed;
+  background-size: cover;
+}
+.topbar {
+  background: linear-gradient(135deg, #292019, #493629 60%, #30251d);
+  color: #f0e2c2;
+  border-bottom: 3px solid var(--archive-brass);
+  box-shadow: 0 4px 14px var(--archive-shadow);
+}
+.topbar a, .topbar button { color: #f0e2c2; }
+.controls {
+  background: rgba(48, 37, 29, .96);
+  color: #eadbb9;
+  border-color: #776044;
+}
+.panel {
+  background: rgba(244, 234, 211, .96);
+  color: var(--archive-ink);
+  border: 1px solid var(--archive-border);
+  box-shadow: 0 5px 16px var(--archive-shadow);
+}
+.panel-head {
+  background: linear-gradient(90deg, #e0d0ad, #efe3c8 55%, #d8c49c);
+  color: #493426;
+  border-bottom: 1px solid #b7a27c;
+}
+button, .button, input[type="button"], input[type="submit"] {
+  background: #58412d;
+  color: #f6e8c7;
+  border: 1px solid #9e804d;
+}
+button:hover, .button:hover, input[type="button"]:hover, input[type="submit"]:hover {
+  background: #705638;
+}
+input, select, textarea, .yaml-editor, pre, code {
+  color: #30251d;
+  background-color: #fbf3df;
+  border-color: #c6b28a;
+}
+.status { color: #66513a; }
+a { color: #76532a; }
+a:hover { color: #3d2b19; }
+:focus-visible { outline: 2px solid #a8874e; outline-offset: 2px; }

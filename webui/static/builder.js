@@ -477,7 +477,8 @@ function setPrintBanner(text, { showButton = false, enabled = true } = {}) {
 async function loadPrintPage() {
   const output = $("#sheet-output");
   setPrintBanner("Henter karakterarket...");
-  const res = await fetch(`/api/builder/sheet?name=${encodeURIComponent(NAME)}`);
+  const style = $("#sheet-style")?.value || "farve";
+  const res = await fetch(`/api/builder/sheet?name=${encodeURIComponent(NAME)}&style=${encodeURIComponent(style)}`);
   const data = await res.json();
   if (data.error) {
     output.srcdoc = "";
@@ -542,7 +543,7 @@ async function sheetsLint(view) {
 async function sheetsPreview() {
   const text = sheetsEditor.state.doc.toString();
   const res = await fetch("/api/builder/sheets_preview", {
-    method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: NAME, yaml: text }),
+    method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: NAME, yaml: text, style: $("#sheet-style")?.value || "farve" }),
   });
   const data = await res.json();
   if (data.error) {
@@ -654,6 +655,11 @@ function wireEvents() {
   $("#translate-btn").addEventListener("click", translateMissing);
   $("#edit-layout-btn").addEventListener("click", toggleLayoutEditor);
   $("#sheets-save-btn").addEventListener("click", saveSheetsYaml);
+  $("#sheet-style")?.addEventListener("change", () => {
+    const editor = $("#sheets-editor");
+    if (sheetsEditor && editor && editor.style.display !== "none") sheetsPreview();
+    else loadPrintPage();
+  });
 
   $("#confirm-yes").addEventListener("click", () => {
     const fields = pending;

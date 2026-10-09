@@ -36,19 +36,36 @@ python3 scripts/kort/spellkort.py valak [--stil farve|sorthvid|begge] [--ud MAPP
 
 ## Stile
 
+### Grundstile
+
 | Fil | Indhold |
 |---|---|
-| `spellkort.css` | Layout og **sort/hvid** (kun sort blæk) |
-| `spellkort-farve.css` | Lægges oven på i **farve**: pergament og en accentfarve pr. skole (Evocation rød, Abjuration blå, Transmutation grøn …) eller korttype |
+| `spellkort.css` | Grundlayout og sort/hvid (kun sort blæk) |
+| `spellkort-farve.css` | Farvegrundlag: lyst pergament og afdæmpet accentfarve pr. skole eller korttype |
 
-Generatoren sætter `data-kat="<skole eller type>"` på hvert kort i farve-stilen. Ny accentfarve = ny regel i `spellkort-farve.css`.
+Generatoren sætter `data-kat="<skole eller type>"` på hvert kort i farvestilen. Standardens skolefarver er i `spellkort-farve.css`.
+
+### Fem ekstra, afdæmpede temaer
+
+Disse CSS-filer er **alternative visuelle lag** oven på grundstilen. De ændrer ikke kortenes mål eller layout, og detaljerne holdes diskrete, så teksten stadig er let at læse.
+
+| Fil | Type | Udtryk |
+|---|---|---|
+| [`stil-sorthvid-gravure.css`](stil-sorthvid-gravure.css) | Sort/hvid | Fine gravurelinjer, dobbelt understregning og skarp sort/hvid |
+| [`stil-sorthvid-herbarium.css`](stil-sorthvid-herbarium.css) | Sort/hvid | Bløde, let uregelmæssige rammer og botanisk håndtegnet præg |
+| [`stil-farve-skovland.css`](stil-farve-skovland.css) | Farve | Mosgrønne accenter og varmt, lyst pergament |
+| [`stil-farve-stormblaa.css`](stil-farve-stormblaa.css) | Farve | Skiferblå detaljer på køligt, lyst papir |
+| [`stil-farve-vinroed.css`](stil-farve-vinroed.css) | Farve | Støvet vinrød og elfenbensfarvet papir |
+
+**Indlæsningsrækkefølge:** brug `spellkort.css` først. Til farvekort lægges `spellkort-farve.css` ovenpå, og derefter ét af de tre farvetemaer. Til sort/hvid lægges ét af de to sort/hvid-temaer efter `spellkort.css`. Temaerne er separate CSS-overlays; den nuværende generator vælger stadig kun mellem grundstilen sort/hvid og standardfarve automatisk.
 
 ## Filer
 
 | Fil | Indhold |
 |---|---|
 | `spellkort.py` | Generatoren |
-| `spellkort.css`, `spellkort-farve.css` | Layout og stile |
+| `spellkort.css`, `spellkort-farve.css` | Grundlayout og standardstile |
+| `stil-*.css` | Fem valgfrie tema-overlays |
 
 Kortdata findes ikke her, men i `bibliotek/*.yaml`, og alle filer dér indlæses. Et id skal være unikt på tværs af filerne.
 

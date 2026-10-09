@@ -88,8 +88,9 @@ def api_sheet():
         return jsonify({"error": "Ingen character.yaml endnu - gem noget på Karakter-fanen først."}), 400
     character = character_yaml.load(character_dir)
     sheets = sheets_module.load(character_dir)
+    stil = request.args.get("style", "farve")
     try:
-        html = render.build(character, sheets, "farve")
+        html = render.build(character, sheets, stil)
     except Exception as exc:  # et dataproblem i character.yaml/sheets.yaml
         return jsonify({"error": f"Fejl i arket: {type(exc).__name__}: {exc}"}), 400
     return jsonify({"html": html, "missing_descriptions": descriptions.missing_for(character)})
@@ -197,8 +198,9 @@ def api_sheets_preview():
     except ValueError as exc:
         return jsonify({"error": str(exc)}), 400
     character = character_yaml.load(character_dir)
+    stil = payload.get("style", "farve")
     try:
-        html = render.build(character, parsed, "farve")
+        html = render.build(character, parsed, stil)
     except Exception as exc:  # et dataproblem i den (endnu ugemte) sheets-YAML
         return jsonify({"error": f"Fejl i arket: {type(exc).__name__}: {exc}"}), 400
     return jsonify({"html": html, "missing_descriptions": descriptions.missing_for(character)})

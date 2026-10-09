@@ -1,0 +1,16 @@
+/* Arkanum: mystisk blæk-lilla, sølvgrå linjer og juvelfarvede evner. */
+:root{
+  --parch:#f0edf5; --ink:#29243a; --muted:#655f78; --accent:#60458b; --line:#b8accb; --paper:#fffaff;
+  --str:#a34552; --dex:#2e7a68; --con:#a16b2b; --int:#4a61a5; --wis:#7653a4; --cha:#a04487;
+}
+body{font-family:"Crimson Pro",Georgia,serif;line-height:1.23}
+h1,h2,h3,.stat .big,.ab .name,.ab .mod{font-family:"Crimson Pro",Georgia,serif}
+.box{border-radius:1.5mm;border-color:var(--line);box-shadow:0 0 .8mm rgba(96,69,139,.10)}
+.box h2{color:var(--accent);border-bottom:1px solid var(--line);letter-spacing:.04em}
+.box h2:before{content:"✦ ";font-size:.8em}
+.head{border-bottom:1px solid var(--accent)}
+.name h1,.turn h3,.feat p b{color:var(--accent)}
+.ab{border-radius:0 1.5mm 1.5mm 0}
+.ab li{border-top-style:dotted;border-top-color:#d1c6df}
+.dc,.coins div{border-color:var(--line);border-radius:1.2mm}
+.dot{border-radius:50%}

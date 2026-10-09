@@ -1,0 +1,11 @@
+/* Gravure — understated monochrome engraving theme. Load after spellkort.css. */
+:root { --paper:#fff; --ink:#202020; --ink-2:#555; --hair:#aaa; --ground:#efefec; }
+.sheet { background:#fff; }
+.card { background:#fff; }
+.frame { border-width:.45mm; }
+.frame::before { inset:1.4mm; border-style:dotted; border-width:.12mm; }
+.kicker { border-bottom-style:double; border-bottom-width:.35mm; }
+.badge { box-shadow:0 0 0 .45mm #fff, 0 0 0 .65mm var(--ink); }
+.stats,.dice { border-width:.18mm; }
+.tag { border-radius:1mm; }
+.orn { font-size:7pt; }
