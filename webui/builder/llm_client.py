@@ -80,6 +80,10 @@ def _config() -> tuple[str, str, str]:
     return base.rstrip("/"), key, model
 
 
+def is_configured() -> bool:
+    return bool(os.environ.get("LLM_API_BASE") and os.environ.get("LLM_API_KEY") and os.environ.get("LLM_MODEL"))
+
+
 def _entry_line(e: dict) -> str:
     """Én linje pr. entry til prompten. class/level/race tages med, når
     entry'en har dem (class_feature/race_trait, se descriptions.py) - ekstra
@@ -239,6 +243,19 @@ def _parse(text: str, ids: set[str]) -> dict[str, dict]:
         if fields:
             out[key] = fields
     return out
+
+
+def prompt_for(entries: list[dict]) -> str:
+    """Samme prompt-tekst som describe_batch() sender til LLM'en, uden selve
+    HTTP-kaldet - til is_configured() == False, hvor brugeren selv kopierer
+    prompten ind i sin egen chat (se descriptions.manual_prompt())."""
+    return _prompt(entries)
+
+
+def parse_response(text: str, ids: set[str]) -> dict[str, dict]:
+    """Samme fortolkning som describe_batch() bruger på LLM-svaret, men af en
+    tekst brugeren selv har indsat (kopieret fra sin egen chat)."""
+    return _parse(text, ids)
 
 
 def describe_batch(entries: list[dict]) -> dict[str, dict]:

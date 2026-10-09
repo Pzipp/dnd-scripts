@@ -140,3 +140,13 @@ select.invalid, input.invalid { border-color: var(--bad); box-shadow: 0 0 0 2px 
 #sheets-editor-mount .cm-activeLine { background: rgb(120 90 40 / 6%); }
 #sheets-editor-status { font-size: .78rem; color: var(--muted); }
 #sheets-editor-status.error { color: #9a2020; }
+
+/* Manuel LLM-prompt (intet endpoint sat i .env) på Print-siden - samme
+   ramme/editor-head-mønster som #sheets-editor, bare uden CodeMirror. */
+#translate-manual { border: 1px solid var(--line); border-radius: .5rem; margin-bottom: .8rem; background: #fff; overflow: hidden; }
+#translate-manual .editor-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .6rem .8rem; border-bottom: 1px solid var(--line); background: var(--parch); }
+.mono-area { display: block; width: 100%; box-sizing: border-box; border: none; border-bottom: 1px solid var(--line); resize: vertical; padding: .6rem .8rem; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; line-height: 1.45; }
+.mono-area:last-child { border-bottom: none; }
+.mono-area[readonly] { background: #f6f3ee; color: var(--muted); }
+#translate-manual-status { font-size: .78rem; color: var(--muted); padding: 0 .8rem .6rem; }
+#translate-manual-status.error { color: #9a2020; }

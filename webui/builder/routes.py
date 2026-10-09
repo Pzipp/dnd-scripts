@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import re
+import sys
 from pathlib import Path
 
 import yaml
-from flask import Blueprint, jsonify, render_template, request
+from flask import Blueprint, jsonify, render_template, request, send_from_directory
 
 from . import character_yaml, descriptions, e5tools, llm_client, model, render, settings
 from . import sheets as sheets_module
@@ -14,6 +15,12 @@ bp = Blueprint("builder", __name__)
 ROOT = Path(__file__).resolve().parent.parent.parent
 CHARACTERS = ROOT / "karakterer"
 NAME_OK = re.compile(r"^[a-z0-9-]+$")
+
+# Samme PDF-generator som det gamle system (scripts/pdf/), genbrugt uændret.
+sys.path.insert(0, str(ROOT / "scripts" / "pdf"))
+import lav_pdf  # noqa: E402
+
+PDF_STYLES = {"farve", *render.STYLE_FILES}
 
 
 def _character_dir(name: str) -> Path:
@@ -96,8 +103,57 @@ def api_sheet():
     return jsonify({"html": html, "missing_descriptions": descriptions.missing_for(character)})
 
 
+@bp.post("/api/builder/pdf")
+def api_pdf():
+    """Print-klar PDF af det GEMTE character.yaml + sheets.yaml, via samme
+    Playwright-generator som det gamle system (scripts/pdf/lav_pdf.py).
+    HTML og PDF lægges side om side i karakterens udskrifter/, som CLI'en."""
+    payload = request.get_json(silent=True) or {}
+    try:
+        character_dir = _character_dir(payload.get("name", ""))
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    if not character_dir.is_dir():
+        return jsonify({"error": "Ukendt karakter."}), 404
+    if not character_yaml.character_path(character_dir).is_file():
+        return jsonify({"error": "Ingen character.yaml endnu - gem noget på Karakter-fanen først."}), 400
+    stil = payload.get("style", "farve")
+    if stil not in PDF_STYLES:
+        return jsonify({"error": "Ukendt stil."}), 400
+    character = character_yaml.load(character_dir)
+    sheets = sheets_module.load(character_dir)
+    try:
+        html = render.build(character, sheets, stil)
+    except Exception as exc:  # et dataproblem i character.yaml/sheets.yaml
+        return jsonify({"error": f"Fejl i arket: {type(exc).__name__}: {exc}"}), 400
+    out = character_dir / "udskrifter"
+    out.mkdir(exist_ok=True)
+    html_path = out / f"karakterark-{stil}.html"
+    pdf_path = out / f"karakterark-{stil}.pdf"
+    html_path.write_text(html, encoding="utf-8")
+    try:
+        lav_pdf.lav_pdf([(str(html_path), str(pdf_path))])
+    except SystemExit as exc:  # faelles.fejl(), fx manglende Playwright/Chromium
+        return jsonify({"error": str(exc.code)}), 500
+    return jsonify({"pdf": f"/builder/download/{payload.get('name', '')}/{pdf_path.name}"})
+
+
+@bp.get("/builder/download/<name>/<filename>")
+def builder_download(name: str, filename: str):
+    try:
+        character_dir = _character_dir(name)
+    except ValueError:
+        return jsonify({"error": "Ukendt karakter."}), 404
+    if filename not in {f"karakterark-{s}.pdf" for s in PDF_STYLES}:
+        return jsonify({"error": "Ukendt fil."}), 404
+    return send_from_directory(character_dir / "udskrifter", filename, as_attachment=True)
+
+
 @bp.post("/api/builder/translate")
 def api_translate():
+    """Automatisk, hvis llm_client.is_configured() - ellers returneres en
+    prompt til at kopiere ind i brugerens egen chat (manual: true), se
+    /api/builder/translate/manual for vejen tilbage."""
     payload = request.get_json(silent=True) or {}
     try:
         character_dir = _character_dir(payload.get("name", ""))
@@ -106,15 +162,38 @@ def api_translate():
     if not character_dir.is_dir():
         return jsonify({"error": "Ukendt karakter."}), 404
     character = character_yaml.load(character_dir)
+    entries = descriptions.entries_needing_llm(character)
+    if not llm_client.is_configured():
+        return jsonify({"manual": True, "prompt": descriptions.manual_prompt(entries)})
     try:
-        still_missing = descriptions.generate_missing(descriptions.entries_needing_llm(character))
-    except llm_client.LLMNotConfigured as exc:
-        return jsonify({"error": str(exc)}), 503
+        still_missing = descriptions.generate_missing(entries)
     except llm_client.LLMRequestFailed as exc:
         return jsonify({"error": str(exc)}), 502
     # Et nyt effects-fund (fx Alert's +PB til initiativ) skal slå igennem på
     # character.yaml med det samme - uden dette ville det først ske ved næste
     # choices.yaml-gem, selvom effects jo blev fundet lige nu.
+    character_yaml.derive_and_save(character_dir, model.load(character_dir))
+    return jsonify({"missing_descriptions": still_missing})
+
+
+@bp.post("/api/builder/translate/manual")
+def api_translate_manual():
+    """Brugeren har selv kopieret prompten fra api_translate() ind i sin
+    egen chat og indsætter nu svaret her - samme cache-opdatering og
+    character.yaml-genafledning som den automatiske vej."""
+    payload = request.get_json(silent=True) or {}
+    try:
+        character_dir = _character_dir(payload.get("name", ""))
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    if not character_dir.is_dir():
+        return jsonify({"error": "Ukendt karakter."}), 404
+    response_text = payload.get("response", "")
+    if not response_text.strip():
+        return jsonify({"error": "Indsæt svaret fra chatten først."}), 400
+    character = character_yaml.load(character_dir)
+    entries = descriptions.entries_needing_llm(character)
+    still_missing = descriptions.apply_manual_response(entries, response_text)
     character_yaml.derive_and_save(character_dir, model.load(character_dir))
     return jsonify({"missing_descriptions": still_missing})
 
