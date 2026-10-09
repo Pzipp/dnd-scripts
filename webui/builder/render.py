@@ -690,12 +690,22 @@ section.pg.margin-none > .page{width:210mm;padding-top:0}
 CSS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "scripts", "karakterark")
 
 
+STYLE_FILES = {
+    "sorthvid": "sheets-bw.css",
+    "moderne": "sheets-modern.css",
+    "skov": "sheets-forest.css",
+    "mork-fantasy": "sheets-dark.css",
+}
+
+
 def _css(stil: str | None) -> str:
-    """Genbruger scripts/karakterark/sheets.css/sheets-bw.css uændret - se docs/sheets-yaml.md."""
+    """Læs grundtemaet og læg det valgte tema ovenpå."""
     s = open(os.path.join(CSS_DIR, "sheets.css"), encoding="utf-8").read()
-    if stil == "sorthvid":
-        s += "\n" + open(os.path.join(CSS_DIR, "sheets-bw.css"), encoding="utf-8").read()
-    return s
+    if stil in (None, "farve"):
+        return s
+    if stil not in STYLE_FILES:
+        raise ValueError(f"Ukendt karakterark-stil: {stil}")
+    return s + "\n" + open(os.path.join(CSS_DIR, STYLE_FILES[stil]), encoding="utf-8").read()
 
 
 def build(character: dict, sheets: dict, stil: str | None = None) -> str:
