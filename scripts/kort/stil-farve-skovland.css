@@ -1,0 +1,13 @@
+/* Skovland — muted moss green and warm parchment. Load after both base stylesheets. */
+:root { --paper:#f8f5e9; --ink:#292d24; --ink-2:#5b6252; --hair:#b8b7a2; --ground:#e9e7d9; --acc:#52664b; }
+.sheet { background:#fff; }
+.card { background:linear-gradient(145deg, rgba(104,126,83,.045), transparent 45%), var(--paper); }
+.frame,.frame::before { border-color:var(--acc); }
+.badge { color:var(--acc); border-color:var(--acc); box-shadow:0 0 0 .5mm var(--paper), 0 0 0 .7mm var(--acc); }
+.kicker,.stats,.dice,.scale th,.scale td { border-color:var(--acc); }
+.stats div:nth-child(odd) { background:rgba(104,126,83,.055); }
+.tag { color:var(--acc); border-color:#87937b; background:rgba(104,126,83,.045); }
+.dv,.orn,.rules h4 { color:var(--acc); }
+.scale th { background:var(--acc); color:var(--paper); }
+.rules h4::after { border-color:#a6b09a; }
+.ico-k { border-color:var(--acc); background:linear-gradient(90deg, var(--acc) 50%, transparent 50%); }

@@ -9,7 +9,7 @@ Dataformat: "faelles" holder de fælles felter (navn, evner, pb, ac, hp, ...). "
 én post pr. side med valgfri "top" (titel, undertitel, ident), "layout" (kolonner, rækker og bokse)
 og "foot". Hver boks har en "type", og typen slår op i REGISTRY. Typen bestemmer udseendet.
 
-Stil: side1.css er den fælles stil (side1-sorthvid.css lægges ovenpå i sort/hvid).
+Stil: sheets.css er den fælles stil (sheets-bw.css lægges ovenpå i sort/hvid).
 Små tegn i teksterne:
   []          -> afkrydsningsfelt
   {+UDTRYK}   -> regnes ud og vises med fortegn, fx {+DEX+PB} -> +5
@@ -651,17 +651,17 @@ section.pg.margin-none > .page{width:210mm;padding-top:0}
 def build(data, stil=None):
     here = os.path.dirname(os.path.abspath(__file__))
 
-    def css(name):
-        s = open(os.path.join(here, f"{name}.css"), encoding="utf-8").read()
-        if stil and stil != "farve":
-            s += "\n" + open(os.path.join(here, f"{name}-{stil}.css"), encoding="utf-8").read()
+    def css():
+        s = open(os.path.join(here, "sheets.css"), encoding="utf-8").read()
+        if stil == "sorthvid":
+            s += "\n" + open(os.path.join(here, "sheets-bw.css"), encoding="utf-8").read()
         return s
     stil = stil or data.get("stil")
     v = data["faelles"]
     env = make_env(v)
     pages = [page(p, v, env) for p in data.get("sider", [])]
     titel = data.get("titel", v["navn"])
-    style = scope_css(css("side1"), "s1") + "\n" + FRAME_CSS
+    style = scope_css(css(), "s1") + "\n" + FRAME_CSS
     return f'''<!DOCTYPE html>
 <html lang="da">
 <head>

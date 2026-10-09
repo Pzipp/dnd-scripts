@@ -1,9 +1,10 @@
 # D&D WebUI
 
-Et valgfrit web-interface til projektets D&D-scripts. To forskellige features deler denne server:
+Et valgfrit web-interface til projektets D&D-scripts. `/` er en simpel menu
+til to forskellige features, der deler denne server:
 
-- **Karakterbygger** (`/builder`) - en trin-for-trin guide der bygger en karakter op ved at slå race/klasse/baggrund/feats/spells op i 5etools' egen regeldata (se "Kilder" i indstillingerne for hvilke kildebøger der er tilladt pr. karakter), og gemmer valgene i `karakterer/<karakter>/choices.yaml`. Se [webui/builder/](builder/) for selve kode/data-laget.
-- **YAML-editor** (den oprindelige feature) - rediger `karakter.yaml`/`kort.yaml` direkte i browseren og generér derefter med `dnd.py`. Se [README-yaml-editor.md](README-yaml-editor.md) for detaljer.
+- **Karakterbygger** (`/builder`) - en trin-for-trin guide der bygger en karakter op ved at slå race/klasse/baggrund/feats/spells op i 5etools' egen regeldata (se "Kilder" i indstillingerne for hvilke kildebøger der er tilladt pr. karakter), og gemmer valgene i `karakterer/<karakter>/choices.yaml`. Se [webui/builder/](builder/) for selve kode/data-laget. Layoutet (`sheets.yaml`) redigeres direkte i en indbygget YAML-editor på byggerens Print-fane (samme CodeMirror-opsætning som nedenfor, mod `webui/builder/render.py` i stedet).
+- **YAML-editor** (`/editor`, den oprindelige feature) - rediger `karakter.yaml`/`kort.yaml` direkte i browseren og generér derefter med `dnd.py`. Se [README-yaml-editor.md](README-yaml-editor.md) for detaljer. Dækker IKKE `sheets.yaml` (se Karakterbyggeren ovenfor) - to samtidige redigeringsflader mod samme fil var en dårlig idé.
 
 De to er ikke to versioner af samme ting - en karakter kan være lavet med den ene eller den anden, eller slet ingen af dem (direkte i filsystemet). Karakterbyggeren producerer i dag kun `choices.yaml`; den bygger endnu ikke selve det printbare karakterark (se nedenfor).
 

@@ -1,0 +1,62 @@
+/* Tema: Arkanum
+   Indlæs efter style.css. Mørk blæk, blågrå paneler og diskrete stjerneprikker. */
+:root {
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  color: #e8e4f2;
+  background: #111622;
+}
+body {
+  background-color: #111622;
+  background-image:
+    radial-gradient(circle at 14% 18%, rgb(184 169 235 / 13%) 0 1px, transparent 2px),
+    radial-gradient(circle at 78% 62%, rgb(184 169 235 / 10%) 0 1px, transparent 2px),
+    linear-gradient(135deg, #151b2a, #20243a 55%, #111622);
+  background-size: 47px 53px, 71px 67px, auto;
+  background-attachment: fixed;
+}
+.topbar {
+  align-items: center;
+  background: #191f30;
+  border-bottom: 1px solid #6f679a;
+  box-shadow: 0 4px 18px rgb(0 0 0 / 28%);
+}
+.topbar h1 { color: #d6c7ff; letter-spacing: .04em; }
+.panel {
+  background: #202638;
+  border: 1px solid #4f5274;
+  border-radius: .35rem;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 22%);
+}
+.panel-head {
+  background: linear-gradient(90deg, #282c43, #252b40 60%, #282c43);
+  border-bottom: 1px solid #4f5274;
+}
+.panel-head h2 { color: #d6c7ff; }
+.panel-head span, .status, .downloads strong { color: #b5b1cb; }
+select, button, input[type="color"] {
+  border: 1px solid #77729f;
+  border-radius: .35rem;
+  background: #282d43;
+  color: #f0ecff;
+}
+button {
+  background: #5b4b8a;
+  border-color: #8d7fc0;
+  font-weight: 700;
+}
+button:hover:not(:disabled) { background: #7060a5; }
+button:disabled { opacity: .5; }
+.yaml-editor .cm-editor { color: #e8e4f2; background: #171d2c; }
+.yaml-editor .cm-gutters { background: #202638; border-right-color: #414763; color: #8e91ae; }
+.yaml-editor .cm-activeLineGutter { background: #30334d; }
+.yaml-editor .cm-activeLine { background: rgb(181 166 255 / 8%); }
+.yaml-editor .cm-cursor, .yaml-editor .cm-dropCursor { border-left-color: #e0d3ff; }
+.empty { color: #aaa9c5; }
+iframe { background: #171b29; }
+a { color: #d6c7ff; }
+a:hover { color: #fff0b3; }
+.status.error, .panel-head .error { color: #ff9eaa; }
+@media (max-width: 900px) {
+  .topbar { gap: .8rem; }
+  .layout { padding: .7rem; }
+}

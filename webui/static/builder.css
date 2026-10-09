@@ -67,6 +67,8 @@ details.step summary button { font-size: .8rem; padding: .25rem .7rem; }
 
 label.field { display: block; margin-bottom: .6rem; }
 label.field > span { display: block; font-size: .8rem; color: var(--muted); font-weight: 600; margin-bottom: .2rem; }
+label.checkbox-field { display: flex; align-items: center; gap: .4rem; margin-bottom: .6rem; cursor: pointer; }
+label.checkbox-field small { color: var(--muted); }
 select, input[type="number"], input[type="text"] {
   font-family: inherit; font-size: .95rem; padding: .4rem .55rem; border: 1px solid var(--line);
   border-radius: .35rem; background: #fff; color: var(--ink);
@@ -103,6 +105,11 @@ select.invalid, input.invalid { border-color: var(--bad); box-shadow: 0 0 0 2px 
 .btn:disabled { opacity: .5; cursor: not-allowed; }
 
 .missing-banner { background: #fbe4e4; border: 1px solid var(--bad); color: var(--bad); border-radius: .4rem; padding: .5rem .8rem; font-size: .85rem; margin-bottom: 1rem; }
+.missing-banner.with-action { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+
+#page-print { display: none; }
+#page-print.active { display: flex; flex-direction: column; min-height: 80vh; }
+#sheet-output { width: 100%; flex: 1; min-height: 70vh; border: 0; background: #ddd; }
 
 .modal-backdrop { position: fixed; inset: 0; background: rgb(0 0 0 / 45%); display: none; align-items: center; justify-content: center; z-index: 50; }
 .modal-backdrop.open { display: flex; }
@@ -118,3 +125,18 @@ select.invalid, input.invalid { border-color: var(--bad); box-shadow: 0 0 0 2px 
 
 .source-list label { display: flex; align-items: center; gap: .5rem; padding: .25rem 0; font-size: .9rem; }
 .source-list .code { font-family: ui-monospace, monospace; color: var(--muted); width: 4.5rem; display: inline-block; }
+
+/* Layout-editor (sheets.yaml) på Print-siden - CodeMirror-delen er kopieret
+   fra webui/static/style.css (den gamle YAML-editor på "/"), skoped under
+   #sheets-editor for ikke at krydse builder.css's egne .btn/.status-regler. */
+#sheets-editor { border: 1px solid var(--line); border-radius: .5rem; margin-bottom: .8rem; background: #fff; overflow: hidden; }
+#sheets-editor .editor-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .6rem .8rem; border-bottom: 1px solid var(--line); background: var(--parch); }
+#sheets-editor-mount { display: flex; min-height: 40vh; }
+#sheets-editor-mount .cm-editor { flex: 1; min-width: 0; font-size: 13px; }
+#sheets-editor-mount .cm-editor.cm-focused { outline: none; }
+#sheets-editor-mount .cm-editor .cm-scroller { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; line-height: 1.45; }
+#sheets-editor-mount .cm-gutters { background: #f6f3ee; border-right-color: #ddd5ca; color: #9a9185; }
+#sheets-editor-mount .cm-activeLineGutter { background: #ece7de; }
+#sheets-editor-mount .cm-activeLine { background: rgb(120 90 40 / 6%); }
+#sheets-editor-status { font-size: .78rem; color: var(--muted); }
+#sheets-editor-status.error { color: #9a2020; }

@@ -35,8 +35,8 @@ Dev-one har fem sider: karakterark, handlinger, udstyr, baggrund og regler/ting.
 | Fil | Indhold |
 |---|---|
 | `karakterark.py` | Generatoren |
-| `side1.css` | Den fælles stil for alle sider. **Farve** |
-| `side1-sorthvid.css` | Lægges oven på `side1.css` i sort/hvid |
+| `sheets.css` | Den fælles stil for alle sider. **Farve**. Deles uændret med det nye systems `webui/builder/render.py` |
+| `sheets-bw.css` | Lægges oven på `sheets.css` i sort/hvid |
 | `tjek.py` | Fejlkontrol af YAML til webui'en (linje og kolonne). Bruger `REGISTRY` |
 
 Alle sider bruger den samme stil. CSS'en scopes under `.s1`, så den kun gælder arket.

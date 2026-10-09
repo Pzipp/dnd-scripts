@@ -1,9 +1,11 @@
 # Plan: karakterark-bygger ud fra `choices.yaml`
 
-**Status: IKKE bygget.** Dette er en beskrivelse af hvad der er bedt om, så
-en ny session kan fortsætte derfra - ikke en implementeret feature, og ikke
-en bindende arkitektur-beslutning. Hvor noget nedenfor er åbent/uafklaret,
-står det udtrykkeligt.
+**Status: bygget for choices.yaml-karakterer (gren `karakterark-nyt-system`).**
+De 8 håndskrevne spillerkarakterer (gammel `karakter.yaml`) er IKKE
+omfattet og er urørte. Se [`docs/character-yaml.md`](character-yaml.md) og
+[`docs/sheets-yaml.md`](sheets-yaml.md) for det endelige format, og
+"Hvad der blev besluttet" nedenfor for hvordan de uafklarede spørgsmål
+herunder faktisk blev afgjort.
 
 ## Hvad det skal gøre
 
@@ -53,3 +55,30 @@ kun forklarende tekst er dansk. En "dansk udgave" af et opslag bliver
 derfor sandsynligvis en dansk GENGIVELSE/forklaring af reglen, ikke en
 oversættelse af selve navnet - men det er min kobling til en eksisterende
 regel, ikke noget der er sagt direkte om den nye bygger.
+
+## Hvad der blev besluttet
+
+* **To filer, ikke én kombination:** `character.yaml` (udregnede stats,
+  engelsk) + `sheets.yaml` (layout, engelsk) - se
+  [character-yaml.md](character-yaml.md)/[sheets-yaml.md](sheets-yaml.md).
+* **Udregnet, i en separat fil** - ikke rå choices.yaml, og ikke i samme
+  fil som layoutet.
+* **Layout-sproget genbruges**, bare med engelske nøgler - ingen ny editor.
+  Print-fanen bygger via `webui/builder/render.py`, en selvstændig
+  engelsk-nøglet renderer der læser `character.yaml`/`sheets.yaml` direkte
+  (samme CSS som den gamle `karakterark.py`, men ingen
+  oversættelses-adapter mellem de to systemer - en tidligere version havde
+  det, men blev opgivet: en adapter mellem to parallelle sprog ville kun
+  vokse, hver gang en ny boks-type dukkede op).
+* **Dansk udgave = kort gengivelse, cachet delt** i `bibliotek/_descriptions.yaml`,
+  genereret af et OpenAI-kompatibelt LLM-endpoint (claude-code ELLER
+  Mistral, konfigureres i `.env` - se `webui/builder/llm_client.py`), kun
+  ved et eksplicit knaptryk, i bidder af højst 10 ad gangen. Dækker spells,
+  feats, klassefeatures OG race-traits (ikke kun spells/feats).
+* **Ikke bygget i denne omgang** (bevidst afgrænset, se
+  [sheets-yaml.md](sheets-yaml.md#afgrænsning) og
+  [character-yaml.md](character-yaml.md#kendte-forenklinger)): automatisk
+  indsættelse af de oversatte beskrivelser i selve arket, AC/sprog udledt
+  af valg, værktøj grupperet efter evne, Weapon Mastery pr. våben, ægte
+  multiclass-HP, migrering af de 8 håndskrevne karakterer, og en LLM-skrevet
+  `character.yaml` uden choices.yaml (kun formatet er klar til det).

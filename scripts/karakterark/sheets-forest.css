@@ -1,0 +1,14 @@
+/* Skov: naturfarver, varm papirflade og grønne overskrifter. */
+:root{
+  --parch:#edf1e4; --ink:#20291e; --muted:#53644a; --accent:#355c36; --line:#a4b28c; --paper:#fffdf6;
+  --str:#7d3830; --dex:#315e3b; --con:#8b5b24; --int:#315b70; --wis:#62523a; --cha:#81516b;
+}
+.box{border-radius:1mm}
+.box h2{color:var(--accent);border-bottom-width:1.4px}
+.head{border-bottom-color:var(--accent)}
+.name h1,.turn h3,.feat p b{color:var(--accent)}
+.ab{border-radius:0 1mm 1mm 0}
+.ab li{border-top-style:solid;border-top-color:#c7d0b9}
+.dc{border-radius:1mm}
+.coins div{border-radius:1mm}
+.dot{border-radius:50%}

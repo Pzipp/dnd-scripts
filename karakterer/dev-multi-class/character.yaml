@@ -1,0 +1,208 @@
+name: Dev Multi Class
+level: 17
+race:
+  name: Halfling
+  source: XPHB
+background:
+  name: Farmer
+  source: XPHB
+classes:
+- name: Druid
+  source: XPHB
+  level: 11
+  subclass: Circle of the Moon
+- name: Ranger
+  source: XPHB
+  level: 6
+  subclass: Gloom Stalker
+abilities:
+  STR: 17
+  DEX: 15
+  CON: 19
+  INT: 20
+  WIS: 20
+  CHA: 17
+proficiency_bonus: 6
+hp: 175
+hit_dice:
+- die: 10
+  count: 6
+- die: 8
+  count: 11
+ac: 12
+ac_note: 10 + DEX (ingen rustning)
+initiative: '{+DEX}'
+speed: 30
+hit_die: 8
+saves:
+- INT
+- WIS
+skills:
+- animal handling
+- arcana
+- nature
+- religion
+expertise: []
+tools:
+- carpenter's tools
+languages: Common
+can_use:
+  armor: light, shield
+  weapons: simple
+masteries: []
+feats:
+- name: Ability Score Improvement
+  source: XPHB
+- name: Piercer
+  source: XPHB
+- name: Protection
+  source: XPHB
+- name: Ability Score Improvement
+  source: XPHB
+spells_known: []
+class_features:
+- class: Druid
+  name: Druidic
+  source: XPHB
+  level: 1
+- class: Druid
+  name: Magician
+  source: XPHB
+  level: 1
+- class: Druid
+  name: Primal Order
+  source: XPHB
+  level: 1
+- class: Druid
+  name: Spellcasting
+  source: XPHB
+  level: 1
+- class: Druid
+  name: Warden
+  source: XPHB
+  level: 1
+- class: Druid
+  name: Wild Companion
+  source: XPHB
+  level: 2
+- class: Druid
+  name: Wild Shape
+  source: XPHB
+  level: 2
+- class: Druid
+  name: Druid Subclass
+  source: XPHB
+  level: 3
+- class: Druid
+  name: Circle Forms
+  source: XPHB
+  level: 3
+- class: Druid
+  name: Circle of the Moon
+  source: XPHB
+  level: 3
+- class: Druid
+  name: Circle of the Moon Spells
+  source: XPHB
+  level: 3
+- class: Druid
+  name: Ability Score Improvement
+  source: XPHB
+  level: 4
+- class: Druid
+  name: Wild Resurgence
+  source: XPHB
+  level: 5
+- class: Druid
+  name: Improved Circle Forms
+  source: XPHB
+  level: 6
+- class: Druid
+  name: Elemental Fury
+  source: XPHB
+  level: 7
+- class: Druid
+  name: Potent Spellcasting
+  source: XPHB
+  level: 7
+- class: Druid
+  name: Primal Strike
+  source: XPHB
+  level: 7
+- class: Druid
+  name: Ability Score Improvement
+  source: XPHB
+  level: 8
+- class: Druid
+  name: Moonlight Step
+  source: XPHB
+  level: 10
+- class: Ranger
+  name: Favored Enemy
+  source: XPHB
+  level: 1
+- class: Ranger
+  name: Spellcasting
+  source: XPHB
+  level: 1
+- class: Ranger
+  name: Weapon Mastery
+  source: XPHB
+  level: 1
+- class: Ranger
+  name: Deft Explorer
+  source: XPHB
+  level: 2
+- class: Ranger
+  name: Fighting Style
+  source: XPHB
+  level: 2
+- class: Ranger
+  name: Ranger Subclass
+  source: XPHB
+  level: 3
+- class: Ranger
+  name: Dread Ambusher
+  source: XPHB
+  level: 3
+- class: Ranger
+  name: Gloom Stalker
+  source: XPHB
+  level: 3
+- class: Ranger
+  name: Gloom Stalker Spells
+  source: XPHB
+  level: 3
+- class: Ranger
+  name: Umbral Sight
+  source: XPHB
+  level: 3
+- class: Ranger
+  name: Ability Score Improvement
+  source: XPHB
+  level: 4
+- class: Ranger
+  name: Extra Attack
+  source: XPHB
+  level: 5
+- class: Ranger
+  name: Roving
+  source: XPHB
+  level: 6
+race_traits:
+- name: Brave
+  source: XPHB
+- name: Halfling Nimbleness
+  source: XPHB
+- name: Luck
+  source: XPHB
+- name: Naturally Stealthy
+  source: XPHB
+extra_training: []
+summary:
+- - Klasse
+  - Druid 11, Ranger 6
+- - Art
+  - Halfling
+- - Baggrund
+  - Farmer

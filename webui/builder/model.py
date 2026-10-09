@@ -40,7 +40,8 @@ def empty_character() -> dict:
         "hp_rolls": {},
         "feats": {},  # {slot_key: {name, source, choices}} - slot_key er "<class_id>_<niveau>" for ASI, eller "race"/"background"
         "spells": {"known": []},  # kun hvilke spells karakteren kender - prepared/known pr. dag styres af de printede kort, ikke her
-        "equipment": {"class_package": None, "background_package": None, "extra": []},
+        "equipment": {"class_package": None, "background_package": None, "extra": [], "armor": {"name": None, "source": None}, "shield": False},
+        "languages": {"known": []},  # PHB 2024 kap. 2: Common (fast) + 2 valgt/rullet fra Standard Languages-tabellen
         # Pr. karakter, ikke delt - to gruppemedlemmer kan have forskellige
         # tilladte kilder/husregler i gang samtidig.
         "settings": {"allowed_sources": list(settings.DEFAULT_SOURCES), "half_feats": settings.DEFAULT_HALF_FEATS},
@@ -854,7 +855,7 @@ def state(data: dict) -> dict:
 
         classes_state.append({
             "id": cid, "name": class_name, "source": class_source, "level": class_level,
-            "is_primary": is_primary_class,
+            "is_primary": is_primary_class, "hit_die": (class_obj or {}).get("hd", {}).get("faces", 8),
             "options": class_options if is_primary_class else _multiclass_class_options(data, cid, assigned_abilities, sources),
             "skills_from": skills_from, "skills_count": skills_count,
             "extra_proficiencies": extra_proficiencies,
@@ -897,11 +898,23 @@ def state(data: dict) -> dict:
     elif len(data["abilities"].get("assigned", {})) < 6:
         missing.append("abilities.assigned")
 
-    # hp (fra niveau 2, samlet karakterniveau på tværs af alle klasser)
-    hp_levels = list(range(2, level + 1))
-    for n in hp_levels:
-        if str(n) not in data.get("hp_rolls", {}):
-            missing.append(f"hp_rolls.{n}")
+    # hp (pr. klasse - kun PRIMÆRklassens niveau 1 er implicit max/ikke gemt;
+    # en sekundær klasses EGNE niveau 1 ER med her, fordi karakteren ikke er
+    # "a 1st-level character" når den multiclasses ind i den, jf. PHB 2024's
+    # multiclass-HP-regel - den får samme terningslag/CON-regel som alle
+    # andre niveauer, ikke den specielle max-ved-niveau-1-bonus)
+    hp_levels = [
+        {
+            "class_id": c["id"], "name": c["name"], "hit_die": c["hit_die"],
+            "levels": list(range(1, c["level"] + 1)) if not c["is_primary"] else list(range(2, c["level"] + 1)),
+        }
+        for c in classes_state
+    ]
+    for group in hp_levels:
+        stored = data.get("hp_rolls", {}).get(group["class_id"], {})
+        for n in group["levels"]:
+            if str(n) not in stored:
+                missing.append(f"hp_rolls.{group['class_id']}.{n}")
 
     # udstyr: kun den primære (først valgte) klasse giver startudstyr, som i reglerne
     primary_entry = data.get("classes", {}).get(primary_id, {}) if primary_id else {}
@@ -914,6 +927,22 @@ def state(data: dict) -> dict:
         missing.append("equipment.class_package")
     if background_packages and not data["equipment"].get("background_package"):
         missing.append("equipment.background_package")
+
+    # Armor er valgfrit (ingen rustning er et gyldigt, bare svagere, valg) -
+    # derfor ikke i missing. Shield holdes ude af selve dropdownen (type S),
+    # den er en separat on/off (kan bæres sammen med enhver rustning).
+    # name="" (ikke None) - optionList()/parseCombo() i builder.js forventer
+    # tom streng for "intet valgt", samme konvention som race/baggrunds "Vælg..."-pladsholderen.
+    armor_options = [{"name": "", "source": None, "label": "Ingen rustning"}] + _label_options(
+        [{"name": a["name"], "source": a["source"]} for a in e.armors(sources) if (a.get("type") or "").split("|")[0] != "S"]
+    )
+
+    # Sprog: PHB 2024 kap. 2 ("Choose Languages") - Common er fast/implicit,
+    # ikke en del af valget her. Ingen øvre grænse tjekkes (samme konvention
+    # som klassers skills_count ovenfor - kun "under" flages som missing).
+    language_options = _label_options([{"name": l["name"], "source": l["source"]} for l in e.standard_languages(sources)])
+    if len(data.get("languages", {}).get("known", [])) < 2:
+        missing.append("languages.known")
 
     return {
         "choices": data,
@@ -931,5 +960,6 @@ def state(data: dict) -> dict:
             "feat_slot": background_feat_slot,
         },
         "hp_levels": hp_levels,
-        "equipment": {"class_packages": class_packages, "background_packages": background_packages},
+        "equipment": {"class_packages": class_packages, "background_packages": background_packages, "armor_options": armor_options},
+        "language_options": language_options,
     }

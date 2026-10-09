@@ -1,0 +1,100 @@
+race:
+  name: Gnome
+  source: XPHB
+  other_name: ''
+  choices: {}
+classes:
+  9989d9:
+    name: Wizard
+    source: XPHB
+    level: 19
+    subclass: Evoker
+    choices:
+      skills:
+      - history
+      - religion
+background:
+  name: Noble
+  source: XPHB
+  choices:
+    ability_split:
+      type: 2-1
+      plus2: int
+      plus1: cha
+abilities:
+  method: roll
+  rolls: {}
+  assigned:
+    STR: 11
+    DEX: 9
+    CON: 8
+    INT: 17
+    WIS: 5
+    CHA: 10
+hp_rolls:
+  9989d9:
+    '2': 3
+    '3': 5
+    '4': 4
+    '5': 3
+    '6': 4
+    '7': 6
+    '8': 3
+    '9': 5
+    '10': 5
+    '11': 3
+    '12': 4
+    '13': 1
+    '14': 5
+    '15': 5
+    '16': 2
+    '17': 6
+    '18': 4
+    '19': 2
+feats:
+  9989d9_4_abilityscoreimprovement:
+    name: Ability Score Improvement
+    source: XPHB
+    choices:
+      asi:
+        mode: '2'
+        ability1: WIS
+  9989d9_8_abilityscoreimprovement:
+    name: Resilient
+    source: XPHB
+    choices:
+      ability: INT
+  9989d9_12_abilityscoreimprovement:
+    name: Chef
+    source: XPHB
+  9989d9_16_abilityscoreimprovement:
+    name: Shadow-Touched
+    source: XPHB
+    choices:
+      spell_0: Inflict Wounds
+  9989d9_19_epicboon:
+    name: Boon of Recovery
+    source: XPHB
+    choices:
+      ability: CON
+spells:
+  known:
+  - Chill Touch
+  - Mind Sliver
+  - Minor Illusion
+equipment:
+  class_package: A
+  background_package: A
+  extra: []
+  armor:
+    name: Chain Mail
+    source: XPHB
+  shield: true
+languages:
+  known:
+  - Draconic
+  - Elvish
+settings:
+  allowed_sources:
+  - XPHB
+  half_feats: false

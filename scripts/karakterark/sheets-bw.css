@@ -1,4 +1,4 @@
-/* Sort/hvid: lægges oven på side1.css. Kun sort blæk på hvidt. */
+/* Sort/hvid: lægges oven på sheets.css. Kun sort blæk på hvidt. */
 :root{
   --parch:#fff; --ink:#000; --muted:#333; --accent:#000; --line:#777; --paper:#fff;
   --str:#000; --dex:#000; --con:#000; --int:#000; --wis:#000; --cha:#000;

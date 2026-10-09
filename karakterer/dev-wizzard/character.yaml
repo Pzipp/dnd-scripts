@@ -1,0 +1,150 @@
+name: Dev Wizzard
+level: 19
+race:
+  name: Gnome
+  source: XPHB
+background:
+  name: Noble
+  source: XPHB
+classes:
+- name: Wizard
+  source: XPHB
+  level: 19
+  subclass: Evoker
+abilities:
+  STR: 11
+  DEX: 9
+  CON: 8
+  INT: 19
+  WIS: 7
+  CHA: 11
+proficiency_bonus: 6
+hp: 57
+hit_dice:
+- die: 6
+  count: 19
+ac: 18
+ac_note: Chain Mail + Shield
+initiative: '{+DEX}'
+speed: 30
+hit_die: 6
+saves:
+- INT
+- WIS
+skills:
+- history
+- persuasion
+- religion
+expertise: []
+tools:
+- anyGamingSet
+languages: Common, Draconic, Elvish
+can_use:
+  weapons: simple
+masteries: []
+feats:
+- name: Ability Score Improvement
+  source: XPHB
+- name: Resilient
+  source: XPHB
+- name: Chef
+  source: XPHB
+- name: Shadow-Touched
+  source: XPHB
+- name: Boon of Recovery
+  source: XPHB
+spells_known:
+- name: Chill Touch
+  source: XPHB
+- name: Mind Sliver
+  source: XPHB
+- name: Minor Illusion
+  source: XPHB
+class_features:
+- class: Wizard
+  name: Arcane Recovery
+  source: XPHB
+  level: 1
+- class: Wizard
+  name: Ritual Adept
+  source: XPHB
+  level: 1
+- class: Wizard
+  name: Spellcasting
+  source: XPHB
+  level: 1
+- class: Wizard
+  name: Scholar
+  source: XPHB
+  level: 2
+- class: Wizard
+  name: Wizard Subclass
+  source: XPHB
+  level: 3
+- class: Wizard
+  name: Evoker
+  source: XPHB
+  level: 3
+- class: Wizard
+  name: Evocation Savant
+  source: XPHB
+  level: 3
+- class: Wizard
+  name: Potent Cantrip
+  source: XPHB
+  level: 3
+- class: Wizard
+  name: Ability Score Improvement
+  source: XPHB
+  level: 4
+- class: Wizard
+  name: Memorize Spell
+  source: XPHB
+  level: 5
+- class: Wizard
+  name: Sculpt Spells
+  source: XPHB
+  level: 6
+- class: Wizard
+  name: Ability Score Improvement
+  source: XPHB
+  level: 8
+- class: Wizard
+  name: Empowered Evocation
+  source: XPHB
+  level: 10
+- class: Wizard
+  name: Ability Score Improvement
+  source: XPHB
+  level: 12
+- class: Wizard
+  name: Overchannel
+  source: XPHB
+  level: 14
+- class: Wizard
+  name: Ability Score Improvement
+  source: XPHB
+  level: 16
+- class: Wizard
+  name: Spell Mastery
+  source: XPHB
+  level: 18
+- class: Wizard
+  name: Epic Boon
+  source: XPHB
+  level: 19
+race_traits:
+- name: Darkvision
+  source: XPHB
+- name: Gnomish Cunning
+  source: XPHB
+- name: Gnomish Lineage
+  source: XPHB
+extra_training: []
+summary:
+- - Klasse
+  - Wizard 19
+- - Art
+  - Gnome
+- - Baggrund
+  - Noble

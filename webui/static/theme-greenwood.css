@@ -1,0 +1,58 @@
+/* Tema: Grønne dybder
+   Indlæs efter style.css. Skovgrønne flader, lyst papir og afdæmpede messingdetaljer. */
+:root {
+  font-family: "Palatino Linotype", Palatino, Georgia, serif;
+  color: #202c22;
+  background: #dce2d3;
+}
+body {
+  background-color: #dce2d3;
+  background-image:
+    radial-gradient(ellipse at 15% 10%, rgb(255 255 255 / 45%), transparent 42%),
+    linear-gradient(135deg, #dce2d3, #c7d0bd 50%, #e4e6d9);
+  background-attachment: fixed;
+}
+.topbar {
+  align-items: center;
+  background: #253b2d;
+  border-bottom: 3px double #a6a06b;
+  color: #f2f0df;
+  box-shadow: 0 3px 12px rgb(20 39 26 / 18%);
+}
+.topbar h1 { color: #e5dfb4; font-family: Georgia, serif; letter-spacing: .025em; }
+.panel {
+  background: #f5f4e9;
+  border: 1px solid #a5ae91;
+  border-radius: .25rem .75rem .25rem .75rem;
+  box-shadow: 0 5px 16px rgb(29 50 32 / 12%);
+}
+.panel-head {
+  background: linear-gradient(90deg, #e0e5d4, #f3f2e5 55%, #e0e5d4);
+  border-bottom: 1px solid #b5b99b;
+}
+.panel-head h2 { color: #31543b; }
+.panel-head span, .status, .downloads strong { color: #596a55; }
+select, button, input[type="color"] {
+  border: 1px solid #8b9c7d;
+  border-radius: .3rem;
+  background: #fbfaef;
+  color: #24372a;
+}
+button {
+  background: #365941;
+  border-color: #294832;
+  color: #f7f4df;
+}
+button:hover:not(:disabled) { background: #47734f; }
+.yaml-editor .cm-gutters { background: #e7eadb; border-right-color: #c4cbb5; color: #7d8975; }
+.yaml-editor .cm-activeLineGutter { background: #d7dfca; }
+.yaml-editor .cm-activeLine { background: rgb(59 104 66 / 8%); }
+.empty { color: #687665; }
+iframe { background: #d7dfd0; }
+a { color: #315f3d; }
+a:hover { color: #7b5728; }
+.status.error, .panel-head .error { color: #9b3029; }
+@media (max-width: 900px) {
+  .topbar { gap: .8rem; }
+  .layout { padding: .7rem; }
+}

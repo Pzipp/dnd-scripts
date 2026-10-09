@@ -1,0 +1,58 @@
+race:
+  name: Dwarf
+  source: XPHB
+  other_name: ''
+  choices: {}
+classes:
+  b2fd7b:
+    name: Monk
+    source: XPHB
+    level: 5
+    subclass: Warrior of the Open Hand
+    choices:
+      skills:
+      - stealth
+      - athletics
+background:
+  name: Sailor
+  source: XPHB
+  choices:
+    ability_split:
+      type: 2-1
+      plus2: str
+      plus1: dex
+abilities:
+  method: roll
+  rolls: {}
+  assigned:
+    STR: 12
+    DEX: 12
+    CON: 11
+    INT: 11
+    WIS: 9
+    CHA: 11
+hp_rolls:
+  b2fd7b:
+    '2': 2
+    '3': 7
+    '4': 8
+    '5': 3
+feats:
+  b2fd7b_4_abilityscoreimprovement:
+    name: Ability Score Improvement
+    source: XPHB
+    choices:
+      asi:
+        mode: 1-1
+        ability1: INT
+        ability2: CON
+spells:
+  known: []
+equipment:
+  class_package: A
+  background_package: A
+  extra: []
+settings:
+  allowed_sources:
+  - XPHB
+  half_feats: false

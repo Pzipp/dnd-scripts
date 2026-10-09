@@ -1,0 +1,106 @@
+# Karakterark (nyt system): format for `character.yaml`
+
+Én fil pr. choices.yaml-karakter: `karakterer/<navn>/character.yaml`. Engelsk-
+nøglet, i modsætning til den gamle [`karakter.yaml`](karakterark-yaml.md).
+Genereres af `webui/builder/character_yaml.py`.
+
+Findes der en `choices.yaml` (se [choices-yaml.md](choices-yaml.md)) for
+karakteren, er `character.yaml` en AFLEDT fil: den genberegnes og
+overskrives, hver gang choices.yaml gemmes (`derive_and_save()`). Kun
+`choices.yaml` er kilden til sandhed i det tilfælde - rediger ikke
+`character.yaml` i hånden for en sådan karakter, det bliver overskrevet.
+
+Findes der INGEN `choices.yaml`, er `character.yaml` i stedet den primære
+fil - skrevet direkte, af builder-UI'en eller af et LLM. Denne vej er endnu
+ikke bygget (kun formatet er klar til det).
+
+## Opbygning
+
+```yaml
+name: Thorgrim
+level: 5                      # total, sum af classes[].level
+race: {name: Human, source: XPHB}
+background: {name: Soldier, source: XPHB}
+classes:
+- {name: Fighter, source: XPHB, level: 5, subclass: Eldritch Knight}
+abilities: {STR: 18, DEX: 14, CON: 16, INT: 10, WIS: 12, CHA: 8}
+proficiency_bonus: 3           # opslået fast tabel (PHB 2024), ikke et valg
+hp: 44                         # summen af ALLE klassers hp_rolls + CON-mod×level - se character_yaml._hp()
+hit_dice: [{die: 10, count: 5}]  # poolet efter terningtype across klasser (PHB 2024 multiclass-regel) - se character_yaml._hit_dice_pool()
+ac: 16                         # afledt af equipment.armor/shield - se character_yaml._ac()
+ac_note: Chain Mail            # kort forklaring til AC-boksens fodnote, ikke en formel
+initiative: '{+DEX}'           # standard + evt. høj-konfidens effects (fx Alert) - se "Afledte felter med et kendt gap"
+speed: 30                      # fra racens egen speed
+hit_die: 10                    # primærklassens hit die (bruges kun til level 1-HP'en, ikke resten - se hp/hit_dice)
+saves: [STR, CON]              # primærklassens save-proficiencies
+skills: [athletics, intimidation]
+expertise: []
+tools: ["Smith's Tools"]       # flad liste - IKKE grupperet efter evne, se nedenfor
+languages: Common, Draconic, Elvish  # Common (fast) + languages.known - se character_yaml._languages()
+can_use: {armor: "light, medium, heavy, shields", weapons: "simple, martial"}
+masteries: []                  # ikke udledt endnu, se nedenfor
+feats: [{name: Tavern Brawler, source: XPHB}]
+spells_known: [{name: Fire Bolt, source: XPHB}]
+class_features: [{class: Fighter, name: Action Surge, source: XPHB, level: 2}]
+race_traits: [{name: Darkvision, source: XPHB}]
+extra_training: []
+summary: [[Klasse, Fighter 5], [Art, Human], [Baggrund, Soldier]]
+```
+
+## Afledte felter med et kendt gap
+
+`PRESERVED_FIELDS` i `character_yaml.py` er i dag tom - `ac`, `initiative`
+og `languages` var tidligere manuelle/preserverede felter, men er alle tre
+nu RIGTIGT afledte af choices.yaml:
+
+- `initiative`: PB på initiativ kommer fra enkelte feats (fx Alert XPHB),
+  løst via et LLM-baseret effects-udtræk (se `effects.py` og
+  [llm-effect-extraction-prompt.md](llm-effect-extraction-prompt.md)) -
+  `character_yaml._apply_effects()` folder høj-konfidens, PERMANENTE
+  effects ind i formlen hver gang.
+- `ac`: løst ved at tracke udstyret rustning direkte i choices.yaml
+  (`equipment.armor`/`equipment.shield`, se [choices-yaml.md](choices-yaml.md))
+  - `character_yaml._ac()` følger PHB 2024 kap. 1 (Light = base + DEX,
+  Medium = base + DEX maks. 2, Heavy = base uden DEX, Shield +2 uanset
+  rustning). `ac_note` er en kort tekst-forklaring til AC-boksens fodnote
+  (fx "Chain Mail + Shield") - render.py viser den som den er, regner intet
+  selv.
+- `languages`: løst ved at tracke PHB 2024 kap. 2's "Choose Languages"-regel
+  direkte (`languages.known`, 2 sprog valgt fra Standard Languages-tabellen,
+  se [choices-yaml.md](choices-yaml.md)) - `character_yaml._languages()`
+  bygger `"Common, " + ", ".join(known)`. **Kendt, BEVIDST gap:** "Your
+  class and other features might also give you languages" (fx Rogue får
+  Thieves' Cant, Druid får Druidic) tælles IKKE med her - de vises kun som
+  tekst i den feature, der giver dem (Træning og valg), ikke tilføjet til
+  `languages`-linjen. Der er ingen generel, sikker regel i 5etools' data for
+  at opdage ALLE den slags class-tildelte sprog automatisk.
+
+Alle tre genberegnes altid og overskriver BEVIDST en manuel rettelse (samme
+"enkelt og forudsigeligt"-aftale som resten af systemet). `render.py` læser
+dem bare som værdierne de er, ligesom alt andet - selve udregningen ligger
+altid i `character_yaml.py`, aldrig i renderen.
+
+## Kendte forenklinger
+
+* **`tools` er en flad liste**, ikke grupperet efter evne som den gamle
+  `vaerktoej: {DEX: [...]}`. 5etools' egne data har ikke en sikker,
+  opslåelig "hvilken evne styrer dette værktøj"-regel, og Print-fanen viser
+  derfor (endnu) ikke værktøj under evne-boksen.
+* **`masteries` udledes ikke endnu.** At afgøre hvilken Weapon Mastery-
+  egenskab et valgt våben faktisk har, kræver et opslag pr. våben i
+  5etools' `items-base.json`, som ikke er bygget endnu.
+* **HP/Hit Dice bruger nu HVER klasses egen hit die** (rettet - var tidligere
+  kun primærklassens). `choices.yaml`s `hp_rolls` er pr. klasse (se
+  [choices-yaml.md](choices-yaml.md)): PRIMÆRklassens niveau 1 er implicit
+  max (ikke gemt, "you gain the 1st-level hit points for a class only when
+  you are a 1st-level character"), en SEKUNDÆR klasses EGEN niveau 1 ER
+  gemt (den får IKKE max, da karakteren ikke er 1st-level når den
+  multiclasses ind i den). `hp = primærklassens maks.terning + sum(ALLE
+  hp_rolls) + CON-mod × total_level` - sidste led bruger TOTAL niveau (ikke
+  "total_level - 1"), så en retroaktiv CON-ændring korrekt regnes om for
+  alle niveauer på én gang (PHB 2024: "When your Constitution modifier
+  increases by 1, your hit point maximum increases by 1 for each level you
+  have attained"). `hit_dice` pooles separat efter terningtype ("If the Hit
+  Dice are the same die type, you can simply pool them together... If your
+  classes give you Hit Dice of different types, keep track of them
+  separately").

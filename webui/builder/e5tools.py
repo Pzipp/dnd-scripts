@@ -380,17 +380,26 @@ def spells_by_filter(sources: set[str], level: int | None = None, schools: set[s
     return out
 
 
-def class_table_value(class_obj: dict, column_label: str, level: int) -> int | None:
+def class_table_value(class_obj: dict, column_label: str, level: int) -> int | str | None:
     """Slår en kolonne op i klassens egen tabel (classTableGroups), fx hvor mange
-    våben Weapon Mastery giver på et givet niveau - tabel-drevet, ikke en fast tal."""
+    våben Weapon Mastery giver, eller Sneak Attacks terningeskade, på et givet
+    niveau - tabel-drevet, ikke en fast tal. Terning-celler (fx Sneak Attack,
+    Rage-skade) er i 5etools' data et struktureret {type: dice, toRoll: [...]}-
+    objekt, ikke et tal - de returneres som en terning-streng ("2d6"), flere
+    terne i samme celle som "1d6+1d4"."""
     for group in class_obj.get("classTableGroups", []):
         labels = group.get("colLabels", [])
         if column_label in labels:
             idx = labels.index(column_label)
             rows = group.get("rows", [])
             if 0 < level <= len(rows):
+                cell = rows[level - 1][idx]
+                if isinstance(cell, dict) and cell.get("type") == "dice":
+                    dice = [f"{d['number']}d{d['faces']}" for d in cell.get("toRoll", [])
+                            if "number" in d and "faces" in d]
+                    return "+".join(dice) if dice else None
                 try:
-                    return int(rows[level - 1][idx])
+                    return int(cell)
                 except (ValueError, TypeError):
                     return None
     return None
@@ -399,6 +408,32 @@ def class_table_value(class_obj: dict, column_label: str, level: int) -> int | N
 def weapons(sources: set[str]) -> list[dict]:
     all_weapons = _load("items-base.json").get("baseitem", []) + _homebrew_entries("baseitem") + _homebrew_entries("item")
     return [i for i in all_weapons if i.get("source") in sources and i.get("weaponCategory")]
+
+
+def armors(sources: set[str]) -> list[dict]:
+    """Rustninger + Shield. type er 'LA'/'MA'/'HA'/'S' (med evt. '|XPHB'-
+    kildesuffiks) - afgør DEX-reglen i character_yaml._ac()."""
+    pool = _load("items-base.json").get("baseitem", []) + _homebrew_entries("baseitem") + _homebrew_entries("item")
+    return [i for i in pool if i.get("source") in sources and (i.get("armor") or (i.get("type") or "").split("|")[0] == "S")]
+
+
+def get_armor(name: str, sources: set[str]) -> dict | None:
+    for a in armors(sources):
+        if a.get("name") == name:
+            return a
+    return None
+
+
+# ── Sprog ────────────────────────────────────────────────────────────────
+def standard_languages(sources: set[str]) -> list[dict]:
+    """De 9 "Standard Languages" fra PHB 2024 kap. 2 ("Choose Languages"),
+    UDEN Common selv - Common er fast/implicit for alle karakterer, ikke en
+    del af det 2-sprogs valg. type == "standard" i languages.json matcher
+    1:1 med bogens Standard Languages-tabel (bekræftet mod kap. 2's egen
+    tekst: "Common plus two languages you roll or choose from the Standard
+    Languages table")."""
+    all_langs = _load("languages.json").get("language", []) + _homebrew_entries("language")
+    return [l for l in all_langs if l.get("source") in sources and l.get("type") == "standard" and l.get("name") != "Common"]
 
 
 _TOOL_TYPES = {"AT", "INS", "T", "GS"}  # Artisan's Tools, Instruments, øvrige Tools, Gaming Sets

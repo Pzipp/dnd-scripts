@@ -78,10 +78,15 @@ abilities:
     WIS: 18
     CHA: 18
 
-hp_rolls:                  # {niveau: hp-tilvækst DET niveau} - KUN niveau 2 og op (niveau 1 er altid max, ikke gemt)
-  '2': 5
-  '3': 5
-  ...
+hp_rolls:                  # {class_id: {niveau: hp-tilvækst DET niveau for DEN klasse}} - pr. klasse, ikke pr. samlet niveau
+  af4f76:                  # PRIMÆRklassens niveau 1 er altid max/IKKE gemt (kun niveau 2+)
+    '2': 5
+    '3': 5
+    ...
+  '664090':                # en SEKUNDÆR klasses EGEN niveau 1 ER med her (ikke max - se character-yaml.md)
+    '1': 4
+    '2': 7
+    ...
 
 feats:                     # DICT - key er en "slot-key", se "Feat slot-keys" nedenfor
   race:
@@ -102,6 +107,11 @@ equipment:
   class_package: A         # bogstav-nøgle ind i 5etools' startingEquipment-valgsæt for den PRIMÆRE klasse
   background_package: A    # samme, for baggrunden
   extra: []                # fritekst, ekstra udstyr brugeren selv har tilføjet
+  armor: {name: Chain Mail, source: XPHB}  # udstyret kropsrustning, eller {name: null, source: null} = ingen
+  shield: false             # Shield (+2 AC) - separat fra armor, kan bæres sammen med enhver rustning
+
+languages:
+  known: [Draconic, Elvish]  # PRÆCIS 2, valgt fra Standard Languages-tabellen (PHB 2024 kap. 2) - Common er altid implicit, ikke med her
 
 settings:                  # PR. KARAKTER, ikke delt mellem karakterer
   allowed_sources: [XPHB]  # hvilke 5etools-kildekoder der må slås op i for DENNE karakter

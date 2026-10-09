@@ -1,0 +1,163 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# SKABELON: sheets.yaml - sideopsætning til det NYE system (choices.yaml-karakterer)
+#
+# Samme layout-sprog som den gamle karakter.yaml's "sider:" (se
+# docs/karakterark-yaml.md#layout), bare med engelske nøgler. Stats/evner/
+# træning udregnes fra character.yaml (se docs/character-yaml.md), resten af
+# indholdet (baggrund, kampagnenoter osv.) udfyldes i hånden, ligesom i dag.
+#
+# Bruges som startskabelon, når en choices.yaml-karakter får sin første
+# sheets.yaml (se webui/builder/sheets.py).
+# ═══════════════════════════════════════════════════════════════════════════════
+
+pages:
+
+# ── Side 1 · Karakterark ─────────────────────────────────────────────────────────
+- margin: small
+  top: {}                      # sidehoved med character.name og character.summary
+  layout:
+  - type: stats                # stat-rækken øverst (AC, HP, Hit Dice, Initiativ, Fart, Prof. bonus, Passiv Perception)
+  - columns:
+    - width: 1
+      content:
+      - type: abilities         # de seks evner med saves, skills og værktøj
+      - type: languages             # Common + de 2 valgt i byggeren beregnes automatisk
+        title: Sprog
+      - type: passive              # Perception/Investigation/Insight beregnes automatisk
+        title: Passive sanser
+    - width: 2
+      content:
+      - type: attacks
+        title: Angreb <em>· Attacks</em>
+        attacks:
+        - [Kortsværd <em>Shortsword</em>, '{+STR+PB}', '1d6{+STR} Slashing', '']
+      - type: rules
+        title: Snigangreb
+        subtitle: én gang pr. tur
+        items:
+        - Skriv en regel her.
+      - columns:
+        - width: 1
+          content:
+          - type: features
+            title: Evner &amp; træk
+            items:
+            - name: Eksempel <em>Example</em>
+              tag: Passiv
+              text: Skriv teksten her.
+        - width: 1
+          content:
+          - type: bonus_actions
+            title: Bonus actions
+            items:
+            - name: Cunning Action
+              text: <em>Dash</em> eller <em>Disengage</em>.
+          - type: turn
+            title: Nærkamp
+            subtitle: nærkamp
+            items:
+            - '<b>Attack</b>: skriv planen her.'
+  footer: 'Kilde: PHB 2024'
+
+# ── Side 2 · Handlinger ──────────────────────────────────────────────────────────
+- margin: small
+  top:
+    subtitle: Hvad kan jeg gøre?
+    summary:
+    - [Slag, d20 + tallet]
+    - [Fordel, "2 d20, tag højeste"]
+    - [Ulempe, "2 d20, tag laveste"]
+  layout:
+  - type: actions
+    bonus: {Dash: Cunning Action}
+  - columns:
+    - width: 1
+      merged: tight
+      content:
+      - type: unarmed
+      - type: movement
+      - type: extra
+        title: Egne træk
+        items:
+        - '<b>Navn</b>: teksten.'
+      - type: death_saves
+      - type: mastery
+      - type: useful
+    - width: 1.25
+      merged: tight
+      content:
+      - type: skill_checks
+        tools:
+        - {name: Thieves' Tools, ability: DEX, use: 'Dirke en lås'}
+      - type: conditions
+  footer: "Kilde: Player's Handbook 2024 · kap. 1 (handlinger)"
+
+# ── Side 3 · Udstyr ──────────────────────────────────────────────────────────────
+- margin: small
+  top: {}                      # Klasse/Art/Baggrund fra character.yaml, se side 1
+  layout:
+  - columns:
+    - width: 1
+      content:
+      - type: weapons
+        items:
+        - Læderrustning <i>Leather Armor</i> · AC 11 + DEX
+        blank_lines: 2
+      - type: gear
+        items: []
+        blank_lines: 6
+      - type: special
+        items:
+        - <b>Eksempel</b> <i>Hjemmelavet</i> · en genstand med en effekt.
+        blank_lines: 2
+      - type: money
+    - width: 1
+      content:
+      - type: campaign
+        items: []
+        blank_lines: 10
+      - type: places
+        items: []
+        blank_lines: 6
+      - type: people
+        items: []
+        blank_lines: 6
+
+# ── Side 4 · Baggrund ────────────────────────────────────────────────────────────
+- margin: small
+  top:                          # Klasse/Art/Baggrund fra character.yaml, Holdning er manuel (ikke i choices.yaml)
+    extra_summary:
+    - [Holdning, Neutral]
+  layout:
+  - columns:
+    - width: 1
+      content:
+      - type: appearance
+        fields:
+        - [Alder, '']
+        - [Højde, '']
+      - type: traits
+        items: []
+        blank_lines: 3
+      - type: backstory
+        paragraphs:
+        - Skriv baggrundshistorien her.
+        blank_lines: 4
+      - type: training             # træning og valg, udregnes fra character.yaml
+    - width: 1
+      content:
+      - type: personality
+        items: []
+        blank_lines: 4
+      - type: family
+        items: []
+        blank_lines: 4
+      - type: enemies
+        items: []
+        blank_lines: 4
+      - type: goals
+        items: []
+        blank_lines: 4
+      - type: secrets
+        items: []
+        blank_lines: 4
