@@ -260,9 +260,17 @@ def describe_batch(entries: list[dict]) -> dict[str, dict]:
         method="POST",
     )
     try:
-        with urllib.request.urlopen(request, timeout=180) as response:
+        # Et bid på 10 entries × 6 felter målt til ~200s mod den lokale
+        # claude-code-endpoint (langsom hardware) - backend'en NÅR at svare,
+        # men en for stram timeout her lukker forbindelsen, FØR svaret
+        # skrives, og smider et færdigt resultat væk (set i praksis:
+        # BrokenPipeError i backend'ens log, selvom svaret var klart).
+        with urllib.request.urlopen(request, timeout=300) as response:
             body = json.loads(response.read().decode("utf-8"))
-    except urllib.error.URLError as exc:
+    except (urllib.error.URLError, TimeoutError) as exc:
+        # En langsom READ (ikke selve connect) rejser en rå TimeoutError, IKKE
+        # en URLError - fanges separat, ellers crasher kaldet uhåndteret
+        # (set i praksis: langsomt batch-svar fra en lokal LLM-endpoint).
         raise LLMRequestFailed(f"LLM-kald fejlede: {exc}") from exc
     try:
         text = body["choices"][0]["message"]["content"]

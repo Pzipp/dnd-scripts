@@ -22,3 +22,157 @@ tough-xphb:
     value: '2'
     duration: permanent
   confidence: high
+potent-cantrip-xphb:
+  name: Potent Cantrip
+  source: XPHB
+  kind: class_feature
+  effects: []
+  confidence: null
+ability-score-improvement-xphb:
+  name: Ability Score Improvement
+  source: XPHB
+  kind: class_feature
+  effects: []
+  confidence: null
+memorize-spell-xphb:
+  name: Memorize Spell
+  source: XPHB
+  kind: class_feature
+  effects: []
+  confidence: null
+sculpt-spells-xphb:
+  name: Sculpt Spells
+  source: XPHB
+  kind: class_feature
+  effects: []
+  confidence: null
+empowered-evocation-xphb:
+  name: Empowered Evocation
+  source: XPHB
+  kind: class_feature
+  effects: []
+  confidence: null
+overchannel-xphb:
+  name: Overchannel
+  source: XPHB
+  kind: class_feature
+  effects: []
+  confidence: null
+spell-mastery-xphb:
+  name: Spell Mastery
+  source: XPHB
+  kind: class_feature
+  effects: []
+  confidence: null
+epic-boon-xphb:
+  name: Epic Boon
+  source: XPHB
+  kind: class_feature
+  effects: []
+  confidence: null
+gnomish-cunning-xphb:
+  name: Gnomish Cunning
+  source: XPHB
+  kind: race_trait
+  effects: []
+  confidence: null
+gnomish-lineage-xphb:
+  name: Gnomish Lineage
+  source: XPHB
+  kind: race_trait
+  effects: []
+  confidence: null
+chill-touch-xphb:
+  name: Chill Touch
+  source: XPHB
+  kind: spell
+  effects: []
+  confidence: null
+mind-sliver-xphb:
+  name: Mind Sliver
+  source: XPHB
+  kind: spell
+  effects: []
+  confidence: null
+arcane-recovery-xphb:
+  name: Arcane Recovery
+  source: XPHB
+  kind: class_feature
+  effects: []
+  confidence: null
+ritual-adept-xphb:
+  name: Ritual Adept
+  source: XPHB
+  kind: class_feature
+  effects: []
+  confidence: null
+spellcasting-xphb:
+  name: Spellcasting
+  source: XPHB
+  kind: class_feature
+  effects: []
+  confidence: null
+scholar-xphb:
+  name: Scholar
+  source: XPHB
+  kind: class_feature
+  effects: []
+  confidence: null
+wizard-subclass-xphb:
+  name: Wizard Subclass
+  source: XPHB
+  kind: class_feature
+  effects: []
+  confidence: null
+evoker-xphb:
+  name: Evoker
+  source: XPHB
+  kind: class_feature
+  effects: []
+  confidence: null
+evocation-savant-xphb:
+  name: Evocation Savant
+  source: XPHB
+  kind: class_feature
+  effects: []
+  confidence: null
+resilient-xphb:
+  name: Resilient
+  source: XPHB
+  kind: feat
+  effects: []
+  confidence: null
+chef-xphb:
+  name: Chef
+  source: XPHB
+  kind: feat
+  effects: []
+  confidence: null
+shadow-touched-xphb:
+  name: Shadow-Touched
+  source: XPHB
+  kind: feat
+  effects: []
+  confidence: null
+boon-of-recovery-xphb:
+  name: Boon of Recovery
+  source: XPHB
+  kind: feat
+  effects: []
+  confidence: null
+minor-illusion-xphb:
+  name: Minor Illusion
+  source: XPHB
+  kind: spell
+  effects: []
+  confidence: null
+darkvision-xphb:
+  name: Darkvision
+  source: XPHB
+  kind: race_trait
+  effects:
+  - target: darkvision
+    type: set
+    value: '60'
+    duration: permanent
+  confidence: high

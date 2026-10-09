@@ -41,10 +41,287 @@ boon-of-recovery-xphb:
   kind: feat
   type: feat
   kicker: Epic Boon
-  name_da: Genopretningens Velsignelse
-  description_da: Et epic boon-feat (fra niveau 19), der gør dig usædvanligt svær
-    at slå helt ud - din krop klamrer sig til livet, hvor andre ville segne.
-  effect: Når noget normalt ville lægge dig ned eller slå dig bevidstløs, kan din
-    vilje holde dig på benene lidt længere end nogen havde troet muligt.
-  back_note: Kræfterne skal genoplades - evnen kan kun bruges et begrænset antal gange,
-    inden du skal holde en lang rast.
+  name_da: Velsignelse af Helbredelse
+  description_da: Som en Bonus Action kan du øjeblikkeligt genvinde en stor mængde
+    HP, og kan bruge den igen uden Long Rest ved at ofre en høj-level spell slot.
+  effect: Brug en Bonus Action til straks at genvinde en stor mængde HP. Ofr en spell
+    slot af 5. level eller højere for at bruge den igen før din næste Long Rest.
+  back_note: Denne Epic Boon kræver, at du er mindst Level 19.
+potent-cantrip-xphb:
+  name: Potent Cantrip
+  source: XPHB
+  kind: class_feature
+  type: klasse
+  kicker: Klasseevne · Wizard <i>level 3</i>
+  name_da: Kraftfuld Cantrip
+  description_da: Dine skade-Cantrips virker stadig delvist, selv når et mål består
+    sit saving throw - det tager stadig halv skade, men undgår ekstra effekter.
+  effect: Består et mål sit saving throw mod en af dine Cantrips, tager det stadig
+    halv skade (hvis nogen) - men ingen ekstra effekt.
+  back_note: Gælder kun Cantrips med en skadekomponent, der kræver et saving throw
+    - ikke angrebsslag-Cantrips.
+ability-score-improvement-xphb:
+  name: Ability Score Improvement
+  source: XPHB
+  kind: class_feature
+  type: klasse
+  kicker: Klasseevne · Wizard <i>level 4</i>
+  name_da: Forbedring af Evneværdi
+  description_da: Du øger én evneværdi med 2, eller to evneværdier med 1 hver (maks.
+    20), eller vælger et feat i stedet.
+  effect: Øg én evneværdi med 2, eller to evneværdier med 1 hver - eller vælg et feat
+    i stedet. Ingen evneværdi kan overstige 20.
+  back_note: Du kan vælge et feat med niveaukrav i stedet for den rene talforbedring,
+    hvis du opfylder kravene.
+memorize-spell-xphb:
+  name: Memorize Spell
+  source: XPHB
+  kind: class_feature
+  type: klasse
+  kicker: Klasseevne · Wizard <i>level 5</i>
+  name_da: Genindstudér Besværgelse
+  description_da: Under en Short Rest kan du studere din spellbog og erstatte én forberedt
+    spell med en anden fra bogen.
+  effect: Brug en Short Rest til at bytte én forberedt spell ud med en anden fra din
+    spellbog.
+  back_note: Jo højere niveau den nye spell har, jo længere tid tager det at studere
+    og forberede den.
+sculpt-spells-xphb:
+  name: Sculpt Spells
+  source: XPHB
+  kind: class_feature
+  type: klasse
+  kicker: Klasseevne · Wizard <i>level 6</i>
+  name_da: Formgiv Besværgelser
+  description_da: Når du caster en Evocation-spell, kan du skåne et antal allierede
+    (1 + spellets niveau) inden for effekten.
+  effect: Vælg 1 + spellets niveau af allierede inden for en Evocation-spells effekt.
+    De består automatisk deres saving throw og undgår skade, hvis et vellykket save
+    normalt giver halv skade.
+  back_note: Virker kun på Evocation-spells, der rammer et område og tillader et saving
+    throw - ikke enkeltmålsangreb.
+empowered-evocation-xphb:
+  name: Empowered Evocation
+  source: XPHB
+  kind: class_feature
+  type: klasse
+  kicker: Klasseevne · Wizard <i>level 10</i>
+  name_da: Styrket Evocation
+  description_da: Du lægger dit INT-modifier til én skadeterning, hver gang du caster
+    en Evocation-spell, der gør skade.
+  effect: Læg dit INT-modifier til én skadeterning, hver gang du caster en skadegivende
+    Evocation-spell.
+  back_note: Bonussen gælder kun én enkelt terning pr. cast, ikke hele skade-summen
+    fra spellet.
+overchannel-xphb:
+  name: Overchannel
+  source: XPHB
+  kind: class_feature
+  type: klasse
+  kicker: Klasseevne · Wizard <i>level 14</i>
+  name_da: Overbelastning
+  description_da: Du kan caste en skadegivende spell (niveau 1-5) med maksimal skade,
+    men tager selv necrotic skade som tilbageslag.
+  effect: Cast en spell af niveau 1-5 med maksimal skade i stedet for at slå terninger.
+    Du tager selv necrotic skade som konsekvens - voksende ved gentagen brug før en
+    Long Rest.
+  back_note: Necrotic-skaden fra Overchannel ignorerer resistance og immunity.
+spell-mastery-xphb:
+  name: Spell Mastery
+  source: XPHB
+  kind: class_feature
+  type: klasse
+  kicker: Klasseevne · Wizard <i>level 18</i>
+  name_da: Mesterskab over Besværgelser
+  description_da: Du vælger en 1.-niveau og en 2.-niveau spell fra din spellbog, som
+    du herefter kan caste på laveste niveau uden at bruge en spell slot.
+  effect: Vælg én 1.-niveau og én 2.-niveau spell fra din spellbog. Du kan caste dem
+    på laveste niveau helt gratis, uden at bruge spell slots.
+  back_note: Ønsker du at caste dem på et højere niveau, skal du stadig bruge en spell
+    slot som normalt.
+epic-boon-xphb:
+  name: Epic Boon
+  source: XPHB
+  kind: class_feature
+  type: klasse
+  kicker: Klasseevne · Wizard <i>level 19</i>
+  name_da: Episk Gave
+  description_da: Du får et Epic Boon-feat efter eget valg, eller et andet feat du
+    opfylder kravene til.
+  effect: Vælg et Epic Boon-feat - en kraftfuld evne forbeholdt karakterer på niveau
+    19 og derover.
+  back_note: Du kan vælge et almindeligt feat i stedet for et Epic Boon, hvis du foretrækker
+    det.
+gnomish-cunning-xphb:
+  name: Gnomish Cunning
+  source: XPHB
+  kind: race_trait
+  type: art
+  kicker: Art · Gnome
+  name_da: Gnome-snilde
+  description_da: Du har Advantage på alle INT-, WIS- og CHA-saving throws.
+  effect: Advantage på alle saving throws, du laver med INT, WIS eller CHA.
+  back_note: Fordelen gælder generelt for disse tre evner - ikke kun saves mod magi.
+gnomish-lineage-xphb:
+  name: Gnomish Lineage
+  source: XPHB
+  kind: race_trait
+  type: art
+  kicker: Art · Gnome
+  name_da: Gnome-afstamning
+  description_da: Du vælger Forest Gnome eller Rock Gnome-afstamning og får en ekstra
+    Cantrip samt en tilknyttet bonusevne baseret på dit valg.
+  effect: Vælg Forest Gnome (Minor Illusion og senere en dyre-kommunikationsspell)
+    eller Rock Gnome (Mending og Prestidigitation med en tinker-vinkel). INT er din
+    spellcasting-evne.
+  back_note: Valget sker, når du vælger Gnome som din art, og kan normalt ikke ændres
+    senere.
+chill-touch-xphb:
+  name: Chill Touch
+  source: XPHB
+  kind: spell
+  name_da: Kuldeberøring
+  description_da: En spøgelseshånd angriber målet på afstand med Necrotic-skade og
+    hindrer det i at regenerere HP til din næste tur; er målet Undead, får det desuden
+    Disadvantage på angreb mod dig.
+  effect: Spøgelseshånd angriber på afstand og påfører Necrotic-skade. Målet kan ikke
+    regenerere HP før din næste tur starter. Er målet Undead, får det Disadvantage
+    på angreb mod dig til slutningen af din næste tur.
+  back_note: Skaden stiger automatisk ved character level 5, 11 og 17 - du behøver
+    ikke opgradere besværgelsen selv.
+mind-sliver-xphb:
+  name: Mind Sliver
+  source: XPHB
+  kind: spell
+  name_da: Sindssplint
+  description_da: Et psykisk stik tvinger målet til et INT-saving throw; ved fejlet
+    slag tager det Psychic-skade, og dets næste saving throw inden din næste tur straffes.
+  effect: Målet laver et INT-saving throw. Fejler det, tager det Psychic-skade, og
+    dets næste saving throw inden din næste tur reduceres med et d4-udfald.
+  back_note: Straffen gælder kun det førstkommende saving throw målet laver - gem
+    besværgelsen til lige før et vigtigt modstands-slag.
+arcane-recovery-xphb:
+  name: Arcane Recovery
+  source: XPHB
+  kind: class_feature
+  type: klasse
+  kicker: Klasseevne · Wizard <i>level 1</i>
+  name_da: Arkan Genopladning
+  description_da: Én gang om dagen efter en Short Rest kan du genoprette brugte spell
+    slots med et samlet niveau op til halvdelen af dit Wizard-niveau (rundet op).
+  effect: Efter en Short Rest kan du, én gang dagligt, genvinde spell slots med samlet
+    niveau op til halvdelen af dit Wizard-niveau (rundet op). Ingen slot kan være
+    niveau 6 eller højere.
+  back_note: Brug den gerne lige før en forventet kamp - den nulstiller kun igen ved
+    en Long Rest.
+ritual-adept-xphb:
+  name: Ritual Adept
+  source: XPHB
+  kind: class_feature
+  type: klasse
+  kicker: Klasseevne · Wizard <i>level 1</i>
+  name_da: Ritual-Adept
+  description_da: Du kan kaste enhver besværgelse med Ritual-tagget som et ritual,
+    hvis den står i din spellbog - selv hvis den ikke er forberedt.
+  effect: Alle besværgelser med Ritual-tagget i din spellbog kan kastes som ritual,
+    uanset om de er forberedt eller ej.
+  back_note: Ritual-kastning tager 10 minutter ekstra, men bruger ingen spell slot.
+spellcasting-xphb:
+  name: Spellcasting
+  source: XPHB
+  kind: class_feature
+  type: klasse
+  kicker: Klasseevne · Wizard <i>level 1</i>
+  name_da: Magianvendelse
+  description_da: Du kaster besværgelser fra din spellbog via INT, kender et antal
+    cantrips, og forbereder besværgelser der kan ændres efter en Long Rest.
+  effect: INT er din spellcasting ability. Du har en spellbog med Wizard-besværgelser,
+    kender et antal cantrips, og forbereder besværgelser efter en Long Rest.
+  back_note: Du kan altid skifte dine forberedte besværgelser ud, når du afslutter
+    en Long Rest - ikke kun ved level-up.
+scholar-xphb:
+  name: Scholar
+  source: XPHB
+  kind: class_feature
+  type: klasse
+  kicker: Klasseevne · Wizard <i>level 2</i>
+  name_da: Lærd
+  description_da: Du vælger en viden-færdighed (fx Arcana eller History), hvor du
+    opnår eller styrker proficiency til Expertise, så din Proficiency Bonus for den
+    tælles dobbelt.
+  effect: Vælg én af Arcana, History, Investigation, Medicine, Nature eller Religion.
+    Du får Expertise i den - din Proficiency Bonus for checks med den tælles dobbelt.
+  back_note: Har du ikke allerede proficiency i den valgte færdighed, giver featuren
+    dig først proficiency og derefter Expertise på samme tid.
+wizard-subclass-xphb:
+  name: Wizard Subclass
+  source: XPHB
+  kind: class_feature
+  type: klasse
+  kicker: Klasseevne · Wizard <i>level 3</i>
+  name_da: Wizard-Underklasse
+  description_da: Du vælger din Arcane Tradition (underklasse), som giver dig særlige
+    features ved dette og senere levels.
+  effect: Du vælger en Arcane Tradition - din Wizard-underklasse. Den giver dig særlige
+    features ved dette og senere levels.
+  back_note: Valget kan normalt ikke ændres bagefter uden DM's tilladelse - vælg den
+    skole der matcher din spillestil.
+evoker-xphb:
+  name: Evoker
+  source: XPHB
+  kind: class_feature
+  type: klasse
+  kicker: Klasseevne · Wizard <i>level 3</i>
+  name_da: Evoker
+  description_da: Du specialiserer dig i Evocation-magi, som kanaliserer rå elementarkraft
+    til kontrolleret, destruktiv skade.
+  effect: Din Arcane Tradition er Evocation. Du mestrer besværgelser der skaber direkte,
+    ødelæggende elementareffekter.
+  back_note: Evoker-underklassen er særligt stærk til at ramme fjender med skadebesværgelser
+    uden at skade dine egne allierede.
+evocation-savant-xphb:
+  name: Evocation Savant
+  source: XPHB
+  kind: class_feature
+  type: klasse
+  kicker: Klasseevne · Wizard <i>level 3</i>
+  name_da: Evocation-Ekspert
+  description_da: Tids- og guld-omkostningen for at kopiere en Evocation-besværgelse
+    ind i din spellbog halveres.
+  effect: Når du kopierer en Evocation-besværgelse ind i din spellbog, bruger du kun
+    halvdelen af den normale tid og guld.
+  back_note: Gælder kun Evocation-skolen - andre skolers besværgelser kopieres stadig
+    til normal pris.
+resilient-xphb:
+  name: Resilient
+  source: XPHB
+  kind: feat
+  type: feat
+  kicker: General feat
+  name_da: Robust
+  description_da: Du styrker én valgt ability score med 1 (maks. 20) og får proficiency
+    i saving throws med den.
+  effect: Vælg én ability score. Den stiger med 1 (maks. 20), og du får proficiency
+    i saving throws med den.
+  back_note: God til at lukke et hul i dine saving throws - vælg den evne hvor du
+    mangler mest modstand.
+chef-xphb:
+  name: Chef
+  source: XPHB
+  kind: feat
+  type: feat
+  kicker: General feat
+shadow-touched-xphb:
+  name: Shadow-Touched
+  source: XPHB
+  kind: feat
+  type: feat
+  kicker: General feat
+  name_da: Skyggeberørt
+  description_da: Du får +1 til INT, WIS eller CHA (op til 20), og lærer Invisibility
+    samt et selvvalgt 1.-level spell fra Illusion- eller Necromancy-skolen, som du
+    kan caste gratis én gang pr. Long Rest.
+  effect: Lær Invisibility og et 1.-level spell fra Illusion- eller Necromancy-skolen.
+    Cast begge gratis, indtil du skal bruge en spell slot i stedet.
+  back_note: Din spellcasting-ability for de to spells er den ability-score, du vælger
+    at øge med denne feat.

@@ -136,10 +136,13 @@ def entries_needing_llm(character: dict) -> list[dict]:
 def generate_missing(entries: list[dict]) -> list[dict]:
     """Kalder LLM'en i bidder af højst BATCH_SIZE (ikke ét kald pr. entry),
     gemmer resultaterne i den delte cache. Returnerer de entries, der
-    STADIG mangler en beskrivelse (en fejlet bid prøves ikke automatisk igen
-    i mindre bidder - fejlen vises i UI'en, og brugeren kan trykke knappen
-    igen). entries bør komme fra entries_needing_llm(), ikke kun missing_for()
-    - ellers får en allerede-beskrevet entry (fx et håndkurateret feat) aldrig
+    STADIG mangler en beskrivelse. Fejler et bid (fx LLM-timeout), gemmes
+    allerede-lykkedes bidder FØR fejlen videregives - en langsom/fejlende
+    bid skal ikke kassere arbejde, tidligere bidder allerede har gjort
+    færdigt (set i praksis: bid 2 af 3 timede ud efter 180s, og uden
+    pr.-bid-gemning gik bid 1's resultat tabt sammen med fejlen).
+    entries bør komme fra entries_needing_llm(), ikke kun missing_for() -
+    ellers får en allerede-beskrevet entry (fx et håndkurateret feat) aldrig
     et effects-tjek.
 
     Samme svar bruges også til: et kort-udkast i bibliotek/_cards.yaml (se
@@ -151,32 +154,36 @@ def generate_missing(entries: list[dict]) -> list[dict]:
     cards_cache = cards.load()
     effects_cache = effects.load()
     still_missing = []
-    for i in range(0, len(entries), BATCH_SIZE):
-        batch = entries[i : i + BATCH_SIZE]
-        slugged = [{**entry, "id": _slug(entry["name"], entry["source"])} for entry in batch]
-        described = llm_client.describe_batch(slugged)
-        for entry, slugged_entry in zip(batch, slugged):
-            result = described.get(slugged_entry["id"])
-            if not result:
-                still_missing.append(entry)
-                continue
-            # Allerede håndkurateret/cachet? Lad den stå - lookup() giver den
-            # curaterede udgave forrang alligevel, så et nyt cache-svar her
-            # ville kun være ubrugt støj i _descriptions.yaml.
-            if result.get("description_da") and lookup(entry["name"], entry.get("source")) is None:
-                cache[slugged_entry["id"]] = {
-                    **entry,
-                    **{k: result[k] for k in ("name_da", "description_da") if k in result},
-                }
-            elif not result.get("description_da") and lookup(entry["name"], entry.get("source")) is None:
-                still_missing.append(entry)
-            # Et kort-UDKAST er ren redundans, hvis der allerede findes et
-            # rigtigt, håndlavet kort - _has_curated_card() (ikke lookup()) er
-            # den rigtige afgørelse her.
-            if not _has_curated_card(entry["name"]):
-                cards.update_cache(cards_cache, slugged_entry, result)
-            effects.update_cache(effects_cache, slugged_entry, result)
-    _save_cache(cache)
-    cards.save(cards_cache)
-    effects.save(effects_cache)
+    try:
+        for i in range(0, len(entries), BATCH_SIZE):
+            batch = entries[i : i + BATCH_SIZE]
+            slugged = [{**entry, "id": _slug(entry["name"], entry["source"])} for entry in batch]
+            described = llm_client.describe_batch(slugged)
+            for entry, slugged_entry in zip(batch, slugged):
+                # "or {}" (ikke "if not result: continue") - en entry, der
+                # allerede HAR en beskrivelse (lookup() ovenfor) og bare
+                # ventede på et effects-tjek, får ofte et TOMT svar her, fordi
+                # den reelt ikke har nogen målbar effekt. Den skal stadig
+                # markeres "tjekket" nedenfor (effects.update_cache()) - ellers
+                # bliver den gensendt til LLM'en ved hvert fremtidigt knaptryk,
+                # for evigt, selvom svaret aldrig ændrer sig.
+                result = described.get(slugged_entry["id"]) or {}
+                already_has_description = lookup(entry["name"], entry.get("source")) is not None
+                if result.get("description_da") and not already_has_description:
+                    cache[slugged_entry["id"]] = {
+                        **entry,
+                        **{k: result[k] for k in ("name_da", "description_da") if k in result},
+                    }
+                elif not result.get("description_da") and not already_has_description:
+                    still_missing.append(entry)
+                # Et kort-UDKAST er ren redundans, hvis der allerede findes et
+                # rigtigt, håndlavet kort - _has_curated_card() (ikke lookup()) er
+                # den rigtige afgørelse her.
+                if not _has_curated_card(entry["name"]):
+                    cards.update_cache(cards_cache, slugged_entry, result)
+                effects.update_cache(effects_cache, slugged_entry, result)
+    finally:
+        _save_cache(cache)
+        cards.save(cards_cache)
+        effects.save(effects_cache)
     return still_missing
