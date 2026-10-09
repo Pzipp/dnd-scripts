@@ -1,0 +1,19 @@
+/* Blækornament: afdæmpet blæk, pergament og små håndtegnede krøller. */
+:root{
+  --parch:#f5f0e5; --ink:#292820; --muted:#6d6759; --accent:#4e5145; --line:#b9ad91; --paper:#fffdf7;
+  --str:#8d4540; --dex:#4d7258; --con:#92703d; --int:#4f6987; --wis:#76618a; --cha:#965f78;
+}
+body{font-family:"Crimson Pro",Georgia,serif;line-height:1.23}
+h1,h2,h3,.stat .big,.ab .name,.ab .mod{font-family:"Crimson Pro",Georgia,serif}
+.box{position:relative;border-radius:0;border-color:var(--line);box-shadow:none}
+.box:before,.box:after{position:absolute;color:var(--accent);font-family:Georgia,serif;font-size:9pt;line-height:1;pointer-events:none}
+.box:before{content:"❧";top:.4mm;right:1mm}
+.box:after{content:"❧";bottom:.2mm;left:.8mm;transform:rotate(180deg)}
+.box h2{color:var(--accent);border-bottom:0;position:relative;padding-bottom:1mm;letter-spacing:.025em}
+.box h2:after{content:"";position:absolute;bottom:0;left:0;width:100%;height:1px;background:linear-gradient(90deg,var(--line),var(--line) 70%,transparent)}
+.head{border-bottom:1.5px solid var(--accent)}
+.name h1,.turn h3,.feat p b{color:var(--accent)}
+.ab{border-radius:0;border-left-width:3px}
+.ab li{border-top-style:dashed;border-top-color:#d8ceba}
+.dc,.coins div{border-radius:0;border-color:var(--line)}
+.dot{border-radius:50%}
