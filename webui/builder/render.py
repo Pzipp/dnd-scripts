@@ -695,6 +695,9 @@ STYLE_FILES = {
     "moderne": "sheets-modern.css",
     "skov": "sheets-forest.css",
     "mork-fantasy": "sheets-dark.css",
+    "kongelig": "sheets-royal.css",
+    "blod-stal": "sheets-blood-steel.css",
+    "arkanum": "sheets-arcane.css",
 }
 
 
