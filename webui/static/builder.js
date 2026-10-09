@@ -103,7 +103,6 @@ function renderCharacterPage() {
     ${renderClasses(c)}
     ${renderBackground(c)}
     ${renderAbilities(c)}
-    ${renderHp(c)}
   `;
 }
 
@@ -265,6 +264,7 @@ function renderClasses(c) {
       ${skillsBlock}
       ${extraProfBlock}
       ${subclassBlock}
+      ${renderClassHp(k, c)}
       ${features}
       ${spellsBlock}
     `;
@@ -341,18 +341,35 @@ function renderAbilities(c) {
   return wrapDetails("abilities", sectionMissing("abilities."), "Evner", body);
 }
 
-function renderHp(c) {
-  if (!state.hp_levels.length) return "";
+function renderClassHp(k, c) {
+  const group = (state.hp_levels || []).find((g) => g.class_id === k.id);
+  if (!group) return "";
+  const stored = (c.hp_rolls || {})[k.id] || {};
+  // Primærklassens niveau 1 er altid makstal på terningen (PHB 2024s
+  // multiclass-regel: "you gain the 1st-level hit points for a class only
+  // when you are a 1st-level character") - vist som et LÅST felt, så man
+  // visuelt kan se hvor det kommer fra, men gemmes ikke i hp_rolls (samme
+  // som i dag, bare nu pr. klasse i stedet for kun for primærklassen).
+  // En sekundær klasses EGEN niveau 1 er IKKE låst - den ruller/vælger som
+  // alle andre niveauer, fordi karakteren ikke er "1st-level" når den
+  // multiclasses ind i den.
+  const lockedLevel1 = k.is_primary
+    ? `<div class="dice-cell"><span>Niveau 1</span>
+        <input type="number" value="${k.hit_die}" disabled title="Niveau 1 er altid makstal på terningen (d${k.hit_die}), ikke rullet">
+      </div>`
+    : "";
+  const base = `hp_rolls.${k.id}`;
   const body = `
     <div class="dice-grid">
-      ${state.hp_levels.map((lvl) => `
+      ${lockedLevel1}
+      ${group.levels.map((lvl) => `
         <div class="dice-cell">
           <span>Niveau ${lvl}</span>
-          <input type="number" min="1" max="12" data-field="hp_rolls.${lvl}" value="${c.hp_rolls[lvl] ?? ""}" class="${cls(isMissing(`hp_rolls.${lvl}`))}">
+          <input type="number" min="1" max="${k.hit_die}" data-field="${base}.${lvl}" value="${stored[lvl] ?? ""}" class="${cls(isMissing(`${base}.${lvl}`))}">
         </div>`).join("")}
     </div>
   `;
-  return wrapDetails("hp", sectionMissing("hp_rolls."), "HP-terningslag", body);
+  return wrapDetails(`hp-${k.id}`, sectionMissing(`${base}.`), `HP-terningslag (d${k.hit_die})`, body);
 }
 
 // ── Udstyrs-siden ──────────────────────────────────────────────────────

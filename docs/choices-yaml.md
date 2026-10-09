@@ -78,10 +78,15 @@ abilities:
     WIS: 18
     CHA: 18
 
-hp_rolls:                  # {niveau: hp-tilvækst DET niveau} - KUN niveau 2 og op (niveau 1 er altid max, ikke gemt)
-  '2': 5
-  '3': 5
-  ...
+hp_rolls:                  # {class_id: {niveau: hp-tilvækst DET niveau for DEN klasse}} - pr. klasse, ikke pr. samlet niveau
+  af4f76:                  # PRIMÆRklassens niveau 1 er altid max/IKKE gemt (kun niveau 2+)
+    '2': 5
+    '3': 5
+    ...
+  '664090':                # en SEKUNDÆR klasses EGEN niveau 1 ER med her (ikke max - se character-yaml.md)
+    '1': 4
+    '2': 7
+    ...
 
 feats:                     # DICT - key er en "slot-key", se "Feat slot-keys" nedenfor
   race:

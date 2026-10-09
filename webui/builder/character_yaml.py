@@ -55,6 +55,45 @@ PROFICIENCY_BONUS_BY_LEVEL = {
 PRESERVED_FIELDS = ("ac", "languages")
 
 
+def _hit_dice_pool(data: dict, sources: set[str]) -> list[dict]:
+    """Hit Dice poolet efter terningtype, PHB 2024s multiclass-regel: "If the
+    Hit Dice are the same die type, you can simply pool them together...
+    If your classes give you Hit Dice of different types, keep track of
+    them separately." Fx Fighter 5/Paladin 5 (begge d10) -> [{die: 10,
+    count: 10}]; Paladin 5/Cleric 5 (d10+d8) -> [{die:10,count:5},{die:8,count:5}]."""
+    pool: dict[int, int] = {}
+    for entry in data.get("classes", {}).values():
+        class_source = {entry["source"]} if entry.get("source") else sources
+        class_obj = e.get_class(entry.get("name"), class_source) if entry.get("name") else None
+        faces = (class_obj or {}).get("hd", {}).get("faces", 8)
+        pool[faces] = pool.get(faces, 0) + entry.get("level", 0)
+    return [{"die": faces, "count": count} for faces, count in sorted(pool.items(), reverse=True)]
+
+
+def _hp(data: dict, primary_id: str | None, primary_hit_die: int, con_mod: int, total_level: int) -> int | None:
+    """Summen af alle klassers hp_rolls (se model.py's state(): kun
+    PRIMÆRklassens niveau 1 er implicit max/ikke gemt - en sekundær klasses
+    EGEN niveau 1 ER med, fordi karakteren ikke er "a 1st-level character"
+    når den multiclasses ind i den, PHB 2024) + CON-mod × total niveau.
+    Sidste led (ikke kun × (total_level-1) som tidligere) gør selv en
+    retroaktiv CON-ændring korrekt: "When your Constitution modifier
+    increases by 1, your hit point maximum increases by 1 for each level
+    you have attained" - alle niveauer regnes om, ikke kun fremtidige.
+    None hvis et påkrævet niveau mangler et terningslag."""
+    hp_rolls = data.get("hp_rolls", {})
+    total = primary_hit_die
+    for cid, entry in data.get("classes", {}).items():
+        class_level = entry.get("level", 0)
+        required_levels = range(2, class_level + 1) if cid == primary_id else range(1, class_level + 1)
+        rolls = hp_rolls.get(cid, {})
+        for lvl in required_levels:
+            value = rolls.get(str(lvl))
+            if value is None:
+                return None
+            total += value
+    return total + con_mod * total_level
+
+
 def _apply_effects(entries: list[dict], initiative_formula: str, hp: int | None, total_level: int) -> tuple[str, int | None]:
     """Folder høj-konfidens, PERMANENTE effects (se effects.py) ind i
     initiative-formlen og HP - de to eneste targets, der rent faktisk er
@@ -85,6 +124,7 @@ def empty_character_sheet() -> dict:
         "abilities": {},
         "proficiency_bonus": 2,
         "hp": None,
+        "hit_dice": [],
         "ac": "{10+DEX}",
         "initiative": "{+DEX}",
         "speed": 30,
@@ -218,10 +258,8 @@ def derive_from_state(data: dict, state: dict) -> dict:
     final_abilities = {a: assigned[a] + bonuses[a] for a in model.ABILITIES if a in assigned}
     con_mod = _mod(final_abilities.get("CON", 10))
     hit_die = (primary_class_obj or {}).get("hd", {}).get("faces", 8)
-    hp_rolls = data.get("hp_rolls", {})
-    hp = None
-    if assigned.get("CON") is not None and len(hp_rolls) >= max(total_level - 1, 0):
-        hp = hit_die + con_mod + sum(hp_rolls.values()) + con_mod * (total_level - 1)
+    hit_dice = _hit_dice_pool(data, sources)
+    hp = _hp(data, primary_id, hit_die, con_mod, total_level) if assigned.get("CON") is not None else None
 
     saves = [s.upper() for s in (primary_class_obj or {}).get("proficiency", [])]
 
@@ -300,6 +338,7 @@ def derive_from_state(data: dict, state: dict) -> dict:
         "abilities": final_abilities,
         "proficiency_bonus": PROFICIENCY_BONUS_BY_LEVEL.get(total_level, 2),
         "hp": hp,
+        "hit_dice": hit_dice,  # poolet efter terningtype across klasser, se _hit_dice_pool()
         "ac": "{10+DEX}",  # overskrives af PRESERVED_FIELDS-bevaring i derive_and_save, ikke afledt (se modul-docstring)
         "initiative": initiative_formula,  # standard + evt. høj-konfidens effects (fx Alert) - se _apply_effects()
         "speed": speed,

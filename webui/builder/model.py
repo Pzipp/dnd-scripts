@@ -854,7 +854,7 @@ def state(data: dict) -> dict:
 
         classes_state.append({
             "id": cid, "name": class_name, "source": class_source, "level": class_level,
-            "is_primary": is_primary_class,
+            "is_primary": is_primary_class, "hit_die": (class_obj or {}).get("hd", {}).get("faces", 8),
             "options": class_options if is_primary_class else _multiclass_class_options(data, cid, assigned_abilities, sources),
             "skills_from": skills_from, "skills_count": skills_count,
             "extra_proficiencies": extra_proficiencies,
@@ -897,11 +897,23 @@ def state(data: dict) -> dict:
     elif len(data["abilities"].get("assigned", {})) < 6:
         missing.append("abilities.assigned")
 
-    # hp (fra niveau 2, samlet karakterniveau på tværs af alle klasser)
-    hp_levels = list(range(2, level + 1))
-    for n in hp_levels:
-        if str(n) not in data.get("hp_rolls", {}):
-            missing.append(f"hp_rolls.{n}")
+    # hp (pr. klasse - kun PRIMÆRklassens niveau 1 er implicit max/ikke gemt;
+    # en sekundær klasses EGNE niveau 1 ER med her, fordi karakteren ikke er
+    # "a 1st-level character" når den multiclasses ind i den, jf. PHB 2024's
+    # multiclass-HP-regel - den får samme terningslag/CON-regel som alle
+    # andre niveauer, ikke den specielle max-ved-niveau-1-bonus)
+    hp_levels = [
+        {
+            "class_id": c["id"], "name": c["name"], "hit_die": c["hit_die"],
+            "levels": list(range(1, c["level"] + 1)) if not c["is_primary"] else list(range(2, c["level"] + 1)),
+        }
+        for c in classes_state
+    ]
+    for group in hp_levels:
+        stored = data.get("hp_rolls", {}).get(group["class_id"], {})
+        for n in group["levels"]:
+            if str(n) not in stored:
+                missing.append(f"hp_rolls.{group['class_id']}.{n}")
 
     # udstyr: kun den primære (først valgte) klasse giver startudstyr, som i reglerne
     primary_entry = data.get("classes", {}).get(primary_id, {}) if primary_id else {}

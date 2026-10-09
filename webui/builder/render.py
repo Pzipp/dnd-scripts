@@ -264,18 +264,29 @@ def box_abilities(node, character, env):
     return f'<div class="abil">{render_abilities(character, env)}{legend}</div>'
 
 
+def _hit_dice_display(character: dict) -> str:
+    """"5d10 + 3d8"-stil, poolet efter terningtype across klasser (se
+    character_yaml._hit_dice_pool()) - IKKE level×primærklassens terning,
+    som er forkert for multiclass (PHB 2024: "If your classes give you Hit
+    Dice of different types, keep track of them separately"). Fallback for
+    en ældre character.yaml uden feltet (kun førend denne rettelse)."""
+    pool = character.get("hit_dice") or []
+    if not pool:
+        return f"{character.get('level', 1)}d{character.get('hit_die', 8)}"
+    return " + ".join(f"{p['count']}d{p['die']}" for p in pool)
+
+
 def box_stats(node, character, env):
     """Stat-rækken øverst. Uden fields bruges standarden ud fra character (ac, hp, level, speed, hit_die, abilities, skills)."""
     fields = node.get("fields")
     if fields is None:
-        hit_die = character.get("hit_die", 8)
         speed = character.get("speed", 30)
         prof, expert = skill_sets(character)
         perc = "+2*PB" if "perception" in expert else "+PB" if "perception" in prof else ""
         fields = [
             ["<em>AC</em>", character.get("ac", "{10+DEX}")],
             ["Max HP", str(character.get("hp", "?"))],
-            ["<em>Hit Dice</em>", f"{character.get('level', 1)}d{hit_die}", f"1 d{hit_die} pr. level"],
+            ["<em>Hit Dice</em>", _hit_dice_display(character), "1 terning pr. level, se klassen"],
             # Initiativ læses fra character.yaml, ikke udregnet her - se
             # character_yaml.py's modul-docstring (PB på initiativ afhænger
             # af feats som Alert, som ikke kan genkendes generelt fra 5etools' data).
@@ -394,11 +405,13 @@ def box_extra(node, character, env):
 
 
 def box_death_saves(node, character, env):
-    hd = character.get("hit_die", 8)
+    # "egen terning" ikke ét fast tal: multiclass kan have flere terningtyper
+    # (se _hit_dice_display()) - spilleren bruger terningen fra DEN klasse,
+    # den valgte Hit Die kommer fra, ikke nødvendigvis primærklassens.
     return (f'<h2>{node["title"]}</h2><ul class="t">'
             '<li><b>0 HP</b>: bevidstløs. Hver tur: <i>death save</i>, d20 10+ = succes. 3 succeser: stabil · 3 fiaskoer: død. Nat. 20: 1 HP · nat. 1: to fiaskoer · skade: én fiasko.</li>'
             '<li><b>Stabilisere en anden</b>: Medicine DC 10. <b>Heroic Inspiration</b>: slå én d20 om.</li>'
-            f'<li><b>Short Rest</b> (1 t): brug Hit Dice, 1d{hd}{sign(env["CON"])} HP pr. terning. <b>Long Rest</b> (8 t): alt HP og alle Hit Dice tilbage, −1 <i>Exhaustion</i>.</li>'
+            f'<li><b>Short Rest</b> (1 t): brug Hit Dice, 1 egen terning{sign(env["CON"])} HP pr. terning (se Hit Dice ovenfor). <b>Long Rest</b> (8 t): alt HP og alle Hit Dice tilbage, −1 <i>Exhaustion</i>.</li>'
             "</ul>")
 
 

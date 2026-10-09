@@ -19,7 +19,10 @@ abilities:
   WIS: 7
   CHA: 11
 proficiency_bonus: 6
-hp: 69
+hp: 57
+hit_dice:
+- die: 6
+  count: 19
 ac: '{10+DEX}'
 initiative: '{+DEX}'
 speed: 30

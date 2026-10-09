@@ -25,11 +25,12 @@ classes:
 - {name: Fighter, source: XPHB, level: 5, subclass: Eldritch Knight}
 abilities: {STR: 18, DEX: 14, CON: 16, INT: 10, WIS: 12, CHA: 8}
 proficiency_bonus: 3           # opslået fast tabel (PHB 2024), ikke et valg
-hp: 44                         # se "HP" nedenfor
+hp: 44                         # summen af ALLE klassers hp_rolls + CON-mod×level - se character_yaml._hp()
+hit_dice: [{die: 10, count: 5}]  # poolet efter terningtype across klasser (PHB 2024 multiclass-regel) - se character_yaml._hit_dice_pool()
 ac: '{10+DEX}'                 # IKKE afledt - se "Manuelle felter"
 initiative: '{+DEX}'           # IKKE afledt - se "Manuelle felter"
 speed: 30                      # fra racens egen speed
-hit_die: 10                    # primærklassens hit die (se "Multiclass-forenkling")
+hit_die: 10                    # primærklassens hit die (bruges kun til level 1-HP'en, ikke resten - se hp/hit_dice)
 saves: [STR, CON]              # primærklassens save-proficiencies
 skills: [athletics, intimidation]
 expertise: []
@@ -80,9 +81,18 @@ i `character_yaml.py`, aldrig i renderen.
 * **`masteries` udledes ikke endnu.** At afgøre hvilken Weapon Mastery-
   egenskab et valgt våben faktisk har, kræver et opslag pr. våben i
   5etools' `items-base.json`, som ikke er bygget endnu.
-* **HP bruger kun primærklassens hit die** (`hit_die + CON*level +
-  sum(hp_rolls)`). Ægte multiclass-HP skal bruge HVER klasses egen hit die
-  for de niveauer, DEN klasse blev taget på - men `choices.yaml`s
-  `hp_rolls` gemmer kun et terningslag pr. SAMLET niveau, ikke pr. klasse
-  (se [choices-yaml.md](choices-yaml.md)), så denne forenkling findes
-  allerede i dataformatet, ikke kun i `character_yaml.py`.
+* **HP/Hit Dice bruger nu HVER klasses egen hit die** (rettet - var tidligere
+  kun primærklassens). `choices.yaml`s `hp_rolls` er pr. klasse (se
+  [choices-yaml.md](choices-yaml.md)): PRIMÆRklassens niveau 1 er implicit
+  max (ikke gemt, "you gain the 1st-level hit points for a class only when
+  you are a 1st-level character"), en SEKUNDÆR klasses EGEN niveau 1 ER
+  gemt (den får IKKE max, da karakteren ikke er 1st-level når den
+  multiclasses ind i den). `hp = primærklassens maks.terning + sum(ALLE
+  hp_rolls) + CON-mod × total_level` - sidste led bruger TOTAL niveau (ikke
+  "total_level - 1"), så en retroaktiv CON-ændring korrekt regnes om for
+  alle niveauer på én gang (PHB 2024: "When your Constitution modifier
+  increases by 1, your hit point maximum increases by 1 for each level you
+  have attained"). `hit_dice` pooles separat efter terningtype ("If the Hit
+  Dice are the same die type, you can simply pool them together... If your
+  classes give you Hit Dice of different types, keep track of them
+  separately").
