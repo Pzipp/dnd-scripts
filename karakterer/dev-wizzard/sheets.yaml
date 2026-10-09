@@ -33,11 +33,9 @@ pages:
         - width: 1
           content:
           - type: features
-            title: Evner &amp; træk
-            items:
-            - name: Eksempel <em>Example</em>
-              tag: Passiv
-              text: Skriv teksten her.
+            title: Feats
+            auto: true
+            exclude: [Ability Score Improvement]
         - width: 1
           content:
           - type: bonus_actions

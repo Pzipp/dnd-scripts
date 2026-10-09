@@ -39,6 +39,7 @@
       <select id="kind">
         <option value="karakterark">Karakterark</option>
         <option value="kort">Kort</option>
+        <option value="sheets">Layout (sheets.yaml)</option>
       </select>
     </label>
     <label>Stil
@@ -47,7 +48,7 @@
         <option value="sorthvid">Sort/hvid</option>
       </select>
     </label>
-    <label class="check"><input id="pdf" type="checkbox" checked> PDF</label>
+    <label id="pdf-label" class="check"><input id="pdf" type="checkbox" checked> PDF</label>
     <button id="save" type="button">Gem</button>
     <button id="generate" type="button">Generer</button>
     <div id="downloads" class="downloads"></div>
@@ -93,8 +94,17 @@ const character = document.querySelector("#character");
 const kind = document.querySelector("#kind");
 const stil = document.querySelector("#stil");
 const pdf = document.querySelector("#pdf");
+const pdfLabel = document.querySelector("#pdf-label");
 const saveButton = document.querySelector("#save");
 const generateButton = document.querySelector("#generate");
+
+// Layout (sheets.yaml) har intet dnd.py/PDF-generering endnu - kun Gem +
+// forhåndsvisning (se app.py's generate(), som afviser kind=sheets).
+function updateKindUI() {
+  const isSheets = kind.value === "sheets";
+  pdfLabel.hidden = isSheets;
+  generateButton.hidden = isSheets;
+}
 const statusBox = document.querySelector("#status");
 const output = document.querySelector("#output");
 const empty = document.querySelector("#empty");
@@ -383,9 +393,10 @@ async function generate() {
 }
 
 character.addEventListener("change", () => { loadYaml(); loadFiles(); });
-kind.addEventListener("change", loadYaml);
+kind.addEventListener("change", () => { updateKindUI(); loadYaml(); });
 saveButton.addEventListener("click", save);
 generateButton.addEventListener("click", generate);
+updateKindUI();
 loadYaml();
 loadFiles();
 </script>
