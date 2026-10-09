@@ -53,15 +53,20 @@ def update_cache(cache: dict[str, dict], entry: dict, llm_result: dict) -> None:
     }
 
 
-def high_confidence_effects(entries: list[dict]) -> list[dict]:
+def high_confidence_effects(entries: list[dict]) -> list[tuple[dict, dict]]:
     """Alle permanente effects med confidence: high for de givne entries (fx
-    en karakters fulde feats+class_features+race_traits+spells_known) - det
-    eneste filter character_yaml._apply_effects() behøver."""
+    en karakters fulde feats+class_features+race_traits+spells_known), som
+    (entry, effect)-par - IKKE kun effecten alene. character_yaml._apply_
+    effects() skal vide hvilken entry en hp_per_level-effect kom fra (feat
+    eller class_feature) for at vide om den skal ganges med karakterens
+    TOTALE niveau (feats, fx Tough: "twice your character level") eller med
+    DEN GRANTENDE KLASSES EGEN niveau (class_features, fx Draconic
+    Resilience: skalerer med Sorcerer-niveau, ikke karakterniveau)."""
     cache = load()
     out = []
     for entry in entries:
         cached = cache.get(_slug(entry["name"], entry.get("source")))
         if not cached or cached.get("confidence") != "high":
             continue
-        out.extend(eff for eff in cached.get("effects", []) if eff.get("duration") == "permanent")
+        out.extend((entry, eff) for eff in cached.get("effects", []) if eff.get("duration") == "permanent")
     return out

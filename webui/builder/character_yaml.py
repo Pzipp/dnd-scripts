@@ -94,21 +94,31 @@ def _hp(data: dict, primary_id: str | None, primary_hit_die: int, con_mod: int, 
     return total + con_mod * total_level
 
 
-def _apply_effects(entries: list[dict], initiative_formula: str, hp: int | None, total_level: int) -> tuple[str, int | None]:
+def _apply_effects(
+    entries: list[dict], initiative_formula: str, hp: int | None, total_level: int, class_levels: dict[str, int]
+) -> tuple[str, int | None]:
     """Folder høj-konfidens, PERMANENTE effects (se effects.py) ind i
     initiative-formlen og HP - de to eneste targets, der rent faktisk er
     bygget en anvendelse for (se docs/llm-effect-extraction-prompt.md).
     Andre targets (ac, saves, skills, resistances, darkvision, speed) er
-    gemt i _effects.yaml, men IKKE foldet ind nogen steder endnu."""
-    for eff in effects.high_confidence_effects(entries):
+    gemt i _effects.yaml, men IKKE foldet ind nogen steder endnu.
+
+    hp_per_level skalerer med KARAKTERniveau for feats (fx Tough: "twice
+    your character level"), men med DEN GRANTENDE KLASSES EGEN niveau for
+    class_features (fx Draconic Resilience: skalerer med Sorcerer-niveau,
+    ikke total niveau - en multiclass Sorcerer 3/Fighter 5 får stadig kun
+    Sorcerer-niveauets andel, ikke 8). class_levels er {klassenavn: niveau},
+    fra samme classes_out derive_from_state() allerede bygger."""
+    for entry, eff in effects.high_confidence_effects(entries):
         target, kind, value = eff.get("target"), eff.get("type"), str(eff.get("value", ""))
         if target == "initiative" and kind == "add":
             term = value.removeprefix("ability:")
             if term and f"+{term}" not in initiative_formula:
                 initiative_formula = initiative_formula[:-1] + f"+{term}" + "}"
         elif target == "hp_per_level" and kind == "add" and hp is not None:
+            multiplier = class_levels.get(entry.get("class"), total_level) if entry["kind"] == "class_feature" else total_level
             try:
-                hp += int(value) * total_level
+                hp += int(value) * multiplier
             except ValueError:
                 pass
     return initiative_formula, hp
@@ -317,9 +327,18 @@ def derive_from_state(data: dict, state: dict) -> dict:
         for f in c.get("features", [])
     ]
 
-    initiative_formula, hp = _apply_effects(
-        feats + spells_known + class_features + race_traits, "{+DEX}", hp, total_level
+    # "kind" tilføjes KUN til denne ephemere kopi til effects-opslag, ikke
+    # til feats/spells_known/class_features/race_traits selv - det ville
+    # være redundant støj i den gemte character.yaml (hvilken liste en
+    # entry står i, siger allerede dens "kind").
+    effect_entries = (
+        [{**f, "kind": "feat"} for f in feats]
+        + [{**s, "kind": "spell"} for s in spells_known]
+        + [{**c, "kind": "class_feature"} for c in class_features]
+        + [{**t, "kind": "race_trait"} for t in race_traits]
     )
+    class_levels = {c["name"]: c["level"] for c in classes_out}
+    initiative_formula, hp = _apply_effects(effect_entries, "{+DEX}", hp, total_level, class_levels)
 
     summary = [
         [label, value] for label, value in [

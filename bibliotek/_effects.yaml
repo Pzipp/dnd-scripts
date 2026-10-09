@@ -8,3 +8,17 @@ alert-xphb:
     value: PB
     duration: permanent
   confidence: high
+tough-xphb:
+  name: Tough
+  source: XPHB
+  kind: feat
+  effects:
+  - target: hp_max
+    type: add
+    value: '2'
+    duration: permanent
+  - target: hp_per_level
+    type: add
+    value: '2'
+    duration: permanent
+  confidence: high
