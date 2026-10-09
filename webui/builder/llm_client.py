@@ -80,11 +80,62 @@ def _config() -> tuple[str, str, str]:
     return base.rstrip("/"), key, model
 
 
+def _entry_line(e: dict) -> str:
+    """Én linje pr. entry til prompten. class/level/race tages med, når
+    entry'en har dem (class_feature/race_trait, se descriptions.py) - ekstra
+    kontekst modellen allerede havde adgang til via entry-dicten, men som
+    IKKE blev sendt med før - fx Sorcerer-niveau 3 for Draconic Resilience,
+    relevant for at vurdere om en effect skalerer med klasse- eller
+    karakter-niveau (se docs/llm-effect-extraction-prompt.md)."""
+    parts = [f"id={e['id']}", f"navn=\"{e['name']}\"", f"kilde={e.get('source') or '?'}",
+             f"type={KIND_LABELS.get(e['kind'], e['kind'])}"]
+    if e.get("class"):
+        parts.append(f"klasse={e['class']}")
+    if e.get("level"):
+        parts.append(f"niveau={e['level']}")
+    if e.get("race"):
+        parts.append(f"art={e['race']}")
+    return "- " + " ".join(parts)
+
+
+# Et VIRKELIGT, verificeret eksempel pr. mønster (ikke opfundet - se
+# docs/llm-effect-extraction-prompt.md): Alert viser det simple, rent
+# permanente tilfælde; Draconic Resilience viser et PERMANENT + BETINGET
+# effect i samme liste, OG en bevidst 'medium'-confidence, fordi HP-bonussen
+# reelt skalerer med Sorcerer-niveau, ikke karakterniveau - en nuance
+# target-listen ikke kan udtrykke præcist, så lavere confidence er det
+# ærlige svar i stedet for en for skarp værdi.
+_FEW_SHOT = """
+Eksempel (kun til at vise FORMATET - svar ikke med disse to, medmindre de
+faktisk står i den rigtige liste nedenfor):
+
+Input:
+- id=alert-xphb navn="Alert" kilde=XPHB type=feat
+- id=draconic-resilience-xphb navn="Draconic Resilience" kilde=XPHB type=klassefeature klasse=Sorcerer niveau=3
+
+Forventet svar:
+alert-xphb:
+  name_da: Årvågen
+  description_da: Du lægger din Proficiency Bonus til initiativslag, og kan bytte initiativ med en villig allieret lige efter slaget.
+  effect: Læg din Proficiency Bonus til Initiative. Byt dit Initiative-resultat med en villig allieret lige efter slaget.
+  back_note: Byttet skal ske umiddelbart efter initiativslaget - ikke senere i runden.
+  effects:
+    - {target: initiative, type: add, value: PB, duration: permanent}
+  confidence: high
+draconic-resilience-xphb:
+  name_da: Dragelig Modstandskraft
+  description_da: Dit maksimale HP stiger, og uden rustning får du en alternativ AC baseret på DEX og CHA.
+  effect: HP-maksimum stiger, når du får featuren, og yderligere for hvert Sorcerer-niveau. Uden rustning er AC = 10 + DEX + CHA.
+  back_note: AC-bonussen gælder kun uden rustning - tager du rustning på, bruger du dens værdi i stedet.
+  effects:
+    - {target: hp_per_level, type: add, value: "1", duration: permanent}
+    - {target: ac, type: set, value: "10+DEX+CHA", duration: conditional}
+  confidence: medium
+"""
+
+
 def _prompt(entries: list[dict]) -> str:
-    lines = [
-        f"- id={e['id']} navn=\"{e['name']}\" kilde={e.get('source') or '?'} type={KIND_LABELS.get(e['kind'], e['kind'])}"
-        for e in entries
-    ]
+    lines = [_entry_line(e) for e in entries]
     return (
         "Du hjælper med et dansk D&D 2024 (Player's Handbook 2024)-karakterark "
         "og kortsæt. For hver regel nedenfor skal du give disse ting:\n\n"
@@ -110,8 +161,21 @@ def _prompt(entries: list[dict]) -> str:
         "tvivl, lad 'effects' være en tom liste - det er altid et sikkert svar.\n"
         "6. confidence: high, medium eller low - dit eget skøn på sikkerheden "
         "i 'effects' (tom liste behøver ikke et skøn, så confidence kan "
-        "udelades, hvis 'effects' er tom).\n\n"
-        "Target-liste til effects (brug KUN disse - ingen andre værdier er "
+        "udelades, hvis 'effects' er tom). Vælg 'medium'/'low' i stedet for "
+        "'high', hvis effekten reelt afhænger af noget value-feltet ikke kan "
+        "udtrykke præcist (fx at en bonus skalerer med KLASSE-niveau, ikke "
+        "karakter-niveau, eller med en anden klasses niveau i et multiclass-"
+        "tilfælde) - 'high' bruges automatisk af systemet, så en for skarp "
+        "værdi her kan give et forkert tal på arket.\n\n"
+        "VIGTIGT - navnekonvention: regelnavne/termer (Proficiency Bonus/PB, "
+        "evnenavne STR/DEX/CON/INT/WIS/CHA, skadetyper som Fire/Slashing, "
+        "tilstande som Incapacitated, osv.) oversættes ALDRIG til dansk, "
+        "heller ikke inde i en dansk sætning - de forbliver altid på engelsk "
+        "i name_da/description_da/effect/back_note, ligesom i bibliotek-"
+        "kortenes egen stil. Skriv 'Proficiency Bonus', ikke 'øvelsesbonus'; "
+        "'DEX', ikke 'behændighed'.\n"
+        + _FEW_SHOT +
+        "\nTarget-liste til effects (brug KUN disse - ingen andre værdier er "
         "gyldige): initiative, ac, hp_max, hp_per_level, speed, "
         "save:STR, save:DEX, save:CON, save:INT, save:WIS, save:CHA, "
         "skill:<skillnavn i små bogstaver, fx skill:perception>, "
@@ -130,6 +194,7 @@ def _prompt(entries: list[dict]) -> str:
         "udelad feltet/effekten helt i stedet for at gætte. Opfind ALDRIG "
         "terningeslag, formler eller taltabeller i effect/back_note/"
         "description_da - det bliver IKKE bedt om i de felter.\n\n"
+        "Nu den RIGTIGE liste - svar kun for disse:\n"
         + "\n".join(lines)
         + "\n\nSvar med PRÆCIS ét YAML-dokument, nøjagtigt i dette format, "
         "intet andet (ingen indledning, ingen afslutning, ingen markdown-"
