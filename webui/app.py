@@ -22,7 +22,6 @@ import tjek  # noqa: E402
 
 app = Flask(__name__)
 
-from builder import character_yaml, render  # noqa: E402
 from builder.routes import bp as builder_bp  # noqa: E402
 
 app.register_blueprint(builder_bp)
@@ -38,15 +37,12 @@ def character_dirs():
     )
 
 
-KIND_FILENAMES = {"karakterark": "karakter.yaml", "kort": "kort.yaml", "sheets": "sheets.yaml"}
-
-
 def data_path(character: str, kind: str) -> Path:
     if character not in character_dirs():
         raise ValueError("Ukendt karakter.")
-    if kind not in KIND_FILENAMES:
+    if kind not in {"karakterark", "kort"}:
         raise ValueError("Ukendt side.")
-    filename = KIND_FILENAMES[kind]
+    filename = "karakter.yaml" if kind == "karakterark" else "kort.yaml"
     path = CHARACTERS / character / filename
     if not path.is_file():
         raise ValueError(f"{character} har ingen {filename}.")
@@ -99,13 +95,7 @@ def preview(character: str, kind: str, stil: str, yaml_text: str) -> str:
     try:
         if kind == "karakterark":
             return karakterark.build(parsed, stil)
-        if kind == "kort":
-            return spellkort.build(parsed, stil)
-        # kind == "sheets": character.yaml er IKKE filen der redigeres her -
-        # den indlæses separat (uredigeret), kun sheets-delen er den friske
-        # YAML fra editoren, endnu ikke nødvendigvis gemt.
-        char_data = character_yaml.load(CHARACTERS / character)
-        return render.build(char_data, parsed, stil)
+        return spellkort.build(parsed, stil)
     except SystemExit as exc:  # faelles.fejl() afslutter med en forklarende tekst
         raise ValueError(str(exc.code).removeprefix("FEJL: ")) from exc
     except Exception as exc:  # fx et manglende felt i data
@@ -113,8 +103,6 @@ def preview(character: str, kind: str, stil: str, yaml_text: str) -> str:
 
 
 def generate(character: str, kind: str, stil: str, pdf: bool = False) -> dict:
-    if kind == "sheets":
-        raise ValueError("Generering/PDF er ikke bygget for Layout (sheets.yaml) endnu - brug Print-fanen i Karakterbyggeren for at se arket.")
     check_stil(stil)  # før generatoren kører, så en ugyldig stil ikke giver en halv fil
     source = data_path(character, kind)
     target = output_dir(character)
@@ -236,7 +224,7 @@ def output_file(character: str, filename: str):
     return send_from_directory(directory, filename)
 
 
-DATA_FILES = ("karakter.yaml", "kort.yaml", "sheets.yaml")
+DATA_FILES = ("karakter.yaml", "kort.yaml")
 
 
 @app.get("/api/files")
