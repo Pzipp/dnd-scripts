@@ -37,28 +37,60 @@ def _slug(name: str, source: str | None) -> str:
     return f"{base}-{(source or '').lower()}" if source else base
 
 
+# Mtime-cachede: lookup() kaldes én gang PR. ENTRY på en karakter (feats +
+# spells_known + class_features + race_traits, let 30-40 stk.) fra
+# missing_for(), som igen kaldes ved HVER åbning af Print-fanen
+# (api_sheet()). Uden denne cache blev alle bibliotek/*.yaml-filer og
+# _descriptions.yaml genindlæst og re-parset for HVER entry - målt til 70s
+# for én Print-fane-åbning (168 yaml.safe_load-kald for 42 entries). Nøglen
+# er filernes mtime, ikke bare "indlæst én gang", så en håndrettelse i
+# bibliotek/*.yaml stadig slår igennem uden en container-genstart.
+_curated_cards_cache: tuple[float, list[dict]] | None = None
+_descriptions_cache: tuple[float, dict] | None = None
+
+
+def _curated_paths() -> list[Path]:
+    if not BIBLIOTEK.is_dir():
+        return []
+    return [p for p in sorted(BIBLIOTEK.iterdir())
+            if not p.name.startswith(("_", ".")) and p.suffix in ENDINGS and p != CACHE_PATH]
+
+
 def _load_curated_cards() -> list[dict]:
     """Alle kort i bibliotek/*.yaml (ikke beskrivelser.yaml selv)."""
+    global _curated_cards_cache
+    paths = _curated_paths()
+    mtime = max((p.stat().st_mtime for p in paths), default=0.0)
+    if _curated_cards_cache is not None and _curated_cards_cache[0] == mtime:
+        return _curated_cards_cache[1]
     cards = []
-    if not BIBLIOTEK.is_dir():
-        return cards
-    for path in sorted(BIBLIOTEK.iterdir()):
-        if path.name.startswith(("_", ".")) or path.suffix not in ENDINGS or path == CACHE_PATH:
-            continue
+    for path in paths:
         for card in (yaml.safe_load(path.read_text(encoding="utf-8")) or {}).values():
             if isinstance(card, dict) and card.get("navn"):
                 cards.append(card)
+    _curated_cards_cache = (mtime, cards)
     return cards
 
 
 def _load_cache() -> dict[str, dict]:
+    global _descriptions_cache
     if not CACHE_PATH.is_file():
         return {}
-    return yaml.safe_load(CACHE_PATH.read_text(encoding="utf-8")) or {}
+    mtime = CACHE_PATH.stat().st_mtime
+    if _descriptions_cache is not None and _descriptions_cache[0] == mtime:
+        return _descriptions_cache[1]
+    data = yaml.safe_load(CACHE_PATH.read_text(encoding="utf-8")) or {}
+    _descriptions_cache = (mtime, data)
+    return data
 
 
 def _save_cache(cache: dict[str, dict]) -> None:
+    global _descriptions_cache
     CACHE_PATH.write_text(yaml.safe_dump(cache, allow_unicode=True, sort_keys=False), encoding="utf-8")
+    # Opdatér mtime-cachen direkte med den netop skrevne cache, i stedet for
+    # at lade næste _load_cache()-kald læse filen igen - en ny beskrivelse
+    # skal kunne ses med det samme (se api_translate()'s kommentar om dette).
+    _descriptions_cache = (CACHE_PATH.stat().st_mtime, cache)
 
 
 def _has_curated_card(name: str) -> bool:
@@ -133,6 +165,34 @@ def entries_needing_llm(character: dict) -> list[dict]:
     return out
 
 
+def _apply_described(entry: dict, slugged_entry: dict, result: dict,
+                      cache: dict, cards_cache: dict, effects_cache: dict, still_missing: list) -> None:
+    """Fælles for generate_missing() (automatisk LLM-kald) og
+    apply_manual_response() (brugeren indsætter selv et svar): tager ÉT
+    allerede-fortolket LLM-svar for ÉN entry og lægger det i de tre delte
+    cacher (beskrivelser, kort-udkast, effects)."""
+    # "or {}" (ikke "if not result: continue") - en entry, der allerede HAR
+    # en beskrivelse (lookup() ovenfor) og bare ventede på et effects-tjek,
+    # får ofte et TOMT svar her, fordi den reelt ikke har nogen målbar
+    # effekt. Den skal stadig markeres "tjekket" nedenfor
+    # (effects.update_cache()) - ellers bliver den gensendt til LLM'en ved
+    # hvert fremtidigt knaptryk, for evigt, selvom svaret aldrig ændrer sig.
+    already_has_description = lookup(entry["name"], entry.get("source")) is not None
+    if result.get("description_da") and not already_has_description:
+        cache[slugged_entry["id"]] = {
+            **entry,
+            **{k: result[k] for k in ("name_da", "description_da") if k in result},
+        }
+    elif not result.get("description_da") and not already_has_description:
+        still_missing.append(entry)
+    # Et kort-UDKAST er ren redundans, hvis der allerede findes et rigtigt,
+    # håndlavet kort - _has_curated_card() (ikke lookup()) er den rigtige
+    # afgørelse her.
+    if not _has_curated_card(entry["name"]):
+        cards.update_cache(cards_cache, slugged_entry, result)
+    effects.update_cache(effects_cache, slugged_entry, result)
+
+
 def generate_missing(entries: list[dict]) -> list[dict]:
     """Kalder LLM'en i bidder af højst BATCH_SIZE (ikke ét kald pr. entry),
     gemmer resultaterne i den delte cache. Returnerer de entries, der
@@ -147,7 +207,9 @@ def generate_missing(entries: list[dict]) -> list[dict]:
 
     Samme svar bruges også til: et kort-udkast i bibliotek/_cards.yaml (se
     cards.update_cache()) og et effects-udtræk i bibliotek/_effects.yaml (se
-    effects.update_cache()) - intet ekstra LLM-kald, ingen ekstra knap."""
+    effects.update_cache()) - intet ekstra LLM-kald, ingen ekstra knap.
+    Kræver llm_client.is_configured() - se apply_manual_response() for
+    vejen uden et sat LLM-endpoint."""
     if not entries:
         return []
     cache = _load_cache()
@@ -160,28 +222,40 @@ def generate_missing(entries: list[dict]) -> list[dict]:
             slugged = [{**entry, "id": _slug(entry["name"], entry["source"])} for entry in batch]
             described = llm_client.describe_batch(slugged)
             for entry, slugged_entry in zip(batch, slugged):
-                # "or {}" (ikke "if not result: continue") - en entry, der
-                # allerede HAR en beskrivelse (lookup() ovenfor) og bare
-                # ventede på et effects-tjek, får ofte et TOMT svar her, fordi
-                # den reelt ikke har nogen målbar effekt. Den skal stadig
-                # markeres "tjekket" nedenfor (effects.update_cache()) - ellers
-                # bliver den gensendt til LLM'en ved hvert fremtidigt knaptryk,
-                # for evigt, selvom svaret aldrig ændrer sig.
-                result = described.get(slugged_entry["id"]) or {}
-                already_has_description = lookup(entry["name"], entry.get("source")) is not None
-                if result.get("description_da") and not already_has_description:
-                    cache[slugged_entry["id"]] = {
-                        **entry,
-                        **{k: result[k] for k in ("name_da", "description_da") if k in result},
-                    }
-                elif not result.get("description_da") and not already_has_description:
-                    still_missing.append(entry)
-                # Et kort-UDKAST er ren redundans, hvis der allerede findes et
-                # rigtigt, håndlavet kort - _has_curated_card() (ikke lookup()) er
-                # den rigtige afgørelse her.
-                if not _has_curated_card(entry["name"]):
-                    cards.update_cache(cards_cache, slugged_entry, result)
-                effects.update_cache(effects_cache, slugged_entry, result)
+                _apply_described(entry, slugged_entry, described.get(slugged_entry["id"]) or {},
+                                  cache, cards_cache, effects_cache, still_missing)
+    finally:
+        _save_cache(cache)
+        cards.save(cards_cache)
+        effects.save(effects_cache)
+    return still_missing
+
+
+def manual_prompt(entries: list[dict]) -> str:
+    """Prompten til at kopiere ind i brugerens egen chat, når intet
+    LLM-endpoint er sat op (llm_client.is_configured() == False) - samme
+    prompt-tekst som generate_missing() ellers ville have sendt selv."""
+    slugged = [{**entry, "id": _slug(entry["name"], entry["source"])} for entry in entries]
+    return llm_client.prompt_for(slugged)
+
+
+def apply_manual_response(entries: list[dict], text: str) -> list[dict]:
+    """Samme cache-opdatering som generate_missing(), men af et svar
+    BRUGEREN selv har indsat (kopieret fra sin egen chat efter manual_prompt())
+    i stedet for et direkte LLM-kald. entries skal være den SAMME liste
+    (samme rækkefølge/id'er) som blev brugt til at lave prompten."""
+    if not entries:
+        return []
+    slugged = [{**entry, "id": _slug(entry["name"], entry["source"])} for entry in entries]
+    described = llm_client.parse_response(text, {e["id"] for e in slugged})
+    cache = _load_cache()
+    cards_cache = cards.load()
+    effects_cache = effects.load()
+    still_missing = []
+    try:
+        for entry, slugged_entry in zip(entries, slugged):
+            _apply_described(entry, slugged_entry, described.get(slugged_entry["id"]) or {},
+                              cache, cards_cache, effects_cache, still_missing)
     finally:
         _save_cache(cache)
         cards.save(cards_cache)

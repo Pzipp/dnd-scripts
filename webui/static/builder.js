@@ -476,6 +476,7 @@ function setPrintBanner(text, { showButton = false, enabled = true } = {}) {
 
 async function loadPrintPage() {
   const output = $("#sheet-output");
+  hideManualPrompt();
   setPrintBanner("Henter karakterarket...");
   const style = $("#sheet-style")?.value || "farve";
   const res = await fetch(`/api/builder/sheet?name=${encodeURIComponent(NAME)}&style=${encodeURIComponent(style)}`);
@@ -490,9 +491,16 @@ async function loadPrintPage() {
   setPrintBanner(n ? `${n} regler/besværgelser mangler en dansk beskrivelse.` : "", { showButton: true });
 }
 
+function hideManualPrompt() {
+  $("#translate-manual").style.display = "none";
+  $("#translate-response").value = "";
+  $("#translate-manual-status").textContent = "";
+}
+
 async function translateMissing() {
   const btn = $("#translate-btn");
   btn.disabled = true;
+  hideManualPrompt();
   setPrintBanner("Genererer beskrivelser...", { showButton: true, enabled: false });
   const res = await fetch("/api/builder/translate", {
     method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: NAME }),
@@ -502,8 +510,74 @@ async function translateMissing() {
     setPrintBanner(data.error, { showButton: true });
     return;
   }
+  if (data.manual) {
+    // Intet LLM-endpoint sat i .env - vis prompten til at kopiere ind i
+    // brugerens egen chat i stedet for at fejle.
+    setPrintBanner("Intet LLM-endpoint sat op. Kopiér prompten nedenfor ind i din egen chat.", { showButton: true });
+    $("#translate-prompt").value = data.prompt;
+    $("#translate-manual").style.display = "";
+    return;
+  }
   const n = (data.missing_descriptions || []).length;
   setPrintBanner(n ? `${n} regler/besværgelser mangler stadig en dansk beskrivelse.` : "Alle beskrivelser er nu genereret.", { showButton: n > 0 });
+}
+
+async function copyPrompt() {
+  await navigator.clipboard.writeText($("#translate-prompt").value);
+  const status = $("#translate-manual-status");
+  status.classList.remove("error");
+  status.textContent = "Kopieret.";
+}
+
+async function applyManualResponse() {
+  const text = $("#translate-response").value;
+  const status = $("#translate-manual-status");
+  const btn = $("#translate-apply-btn");
+  if (!text.trim()) {
+    status.classList.add("error");
+    status.textContent = "Indsæt svaret fra chatten først.";
+    return;
+  }
+  btn.disabled = true;
+  status.classList.remove("error");
+  status.textContent = "Gemmer...";
+  const res = await fetch("/api/builder/translate/manual", {
+    method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ name: NAME, response: text }),
+  });
+  const data = await res.json();
+  btn.disabled = false;
+  if (data.error) {
+    status.classList.add("error");
+    status.textContent = data.error;
+    return;
+  }
+  const n = (data.missing_descriptions || []).length;
+  if (n === 0) hideManualPrompt();
+  else status.textContent = `Gemt. ${n} mangler stadig - kør "Generér beskrivelser" igen for en ny prompt til dem.`;
+  setPrintBanner(n ? `${n} regler/besværgelser mangler stadig en dansk beskrivelse.` : "Alle beskrivelser er nu genereret.", { showButton: n > 0 });
+}
+
+async function makePdf() {
+  const btn = $("#pdf-btn");
+  const status = $("#pdf-status");
+  btn.disabled = true;
+  status.textContent = "Laver PDF... (kan tage lidt tid)";
+  const style = $("#sheet-style")?.value || "farve";
+  try {
+    const res = await fetch("/api/builder/pdf", {
+      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: NAME, style }),
+    });
+    const data = await res.json();
+    if (data.error) {
+      status.textContent = data.error;
+      return;
+    }
+    status.textContent = "";
+    window.open(data.pdf, "_blank");
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 // ── Layout-editor (sheets.yaml) på Print-siden ────────────────────────────
@@ -653,7 +727,10 @@ function wireEvents() {
   });
 
   $("#translate-btn").addEventListener("click", translateMissing);
+  $("#translate-copy-btn").addEventListener("click", copyPrompt);
+  $("#translate-apply-btn").addEventListener("click", applyManualResponse);
   $("#edit-layout-btn").addEventListener("click", toggleLayoutEditor);
+  $("#pdf-btn").addEventListener("click", makePdf);
   $("#sheets-save-btn").addEventListener("click", saveSheetsYaml);
   $("#sheet-style")?.addEventListener("change", () => {
     const editor = $("#sheets-editor");

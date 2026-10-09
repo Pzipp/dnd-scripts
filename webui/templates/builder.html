@@ -50,6 +50,19 @@
       <span id="print-banner-text"></span>
       <button type="button" class="btn secondary" id="translate-btn">Generér beskrivelser</button>
     </div>
+    <div id="translate-manual" style="display:none">
+      <div class="editor-head">
+        <span>Prompt - kopiér ind i din egen chat</span>
+        <button type="button" class="btn secondary" id="translate-copy-btn">Kopiér</button>
+      </div>
+      <textarea id="translate-prompt" class="mono-area" readonly rows="10"></textarea>
+      <div class="editor-head">
+        <span>Indsæt chattens svar her</span>
+        <button type="button" class="btn" id="translate-apply-btn">Brug svar</button>
+      </div>
+      <textarea id="translate-response" class="mono-area" rows="10" placeholder="Indsæt hele svaret (YAML), ét dokument som vist i prompten..."></textarea>
+      <div id="translate-manual-status"></div>
+    </div>
     <label class="print-style" for="sheet-style">Udseende
       <select id="sheet-style">
         <option value="farve">Klassisk pergament</option>
@@ -66,6 +79,8 @@
       </select>
     </label>
     <button type="button" class="btn secondary" id="edit-layout-btn" style="margin-bottom:.6rem">Rediger layout</button>
+    <button type="button" class="btn" id="pdf-btn" style="margin-bottom:.6rem">Lav PDF</button>
+    <span id="pdf-status"></span>
     <div id="sheets-editor" style="display:none">
       <div class="editor-head">
         <span>sheets.yaml</span>
