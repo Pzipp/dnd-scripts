@@ -1,4 +1,16 @@
 import morphdom from "https://esm.sh/morphdom@2.7.8";
+import {
+  EditorView, keymap, lineNumbers, highlightActiveLine, highlightActiveLineGutter, drawSelection,
+} from "@codemirror/view";
+import {EditorState} from "@codemirror/state";
+import {defaultKeymap, history, historyKeymap, indentWithTab} from "@codemirror/commands";
+import {
+  bracketMatching, defaultHighlightStyle, foldGutter, foldKeymap, indentUnit, syntaxHighlighting,
+} from "@codemirror/language";
+import {search, searchKeymap} from "@codemirror/search";
+import {yaml as yamlLang} from "@codemirror/lang-yaml";
+import {linter, lintGutter} from "@codemirror/lint";
+import {indentationMarkers} from "@replit/codemirror-indentation-markers";
 
 const NAME = window.BUILDER_NAME;
 let state = null;
@@ -418,7 +430,7 @@ function render() {
   restoreOpenState(prevOpen);
 }
 
-// ── Print-siden: character.yaml + sheets.yaml, renderet via den gamle karakterark.py ──
+// ── Print-siden: character.yaml + sheets.yaml, renderet via webui/builder/render.py ──
 function setPrintBanner(text, { showButton = false, enabled = true } = {}) {
   const banner = $("#print-banner");
   const btn = $("#translate-btn");
@@ -463,6 +475,122 @@ async function translateMissing() {
   setPrintBanner(n ? `${n} regler/besværgelser mangler stadig en dansk beskrivelse.` : "Alle beskrivelser er nu genereret.", { showButton: n > 0 });
 }
 
+// ── Layout-editor (sheets.yaml) på Print-siden ────────────────────────────
+// CodeMirror-opsætningen er kopieret fra den gamle YAML-editor (webui/
+// templates/index.html) - samme mønster (linje/kolonne-fejl, debounced
+// forhåndsvisning, Ctrl+S), bare mod /api/builder/sheets_*-endepunkterne
+// og render.py i stedet for karakterark.py/kort.py.
+let sheetsEditor = null;
+let sheetsSavedYaml = "";
+let sheetsPreviewTimer = null;
+
+function setSheetsStatus(text, isError = false) {
+  const el = $("#sheets-editor-status");
+  el.textContent = text;
+  el.classList.toggle("error", isError);
+}
+
+async function sheetsLint(view) {
+  const doc = view.state.doc;
+  try {
+    const res = await fetch("/api/builder/sheets_check", {
+      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ yaml: doc.toString() }),
+    });
+    const data = await res.json();
+    if (!res.ok) return [];
+    return (data.fejl || []).map((f) => {
+      const line = doc.line(Math.min(Math.max(f.linje, 1), doc.lines));
+      const from = line.from + Math.min(Math.max(f.kolonne - 1, 0), line.length);
+      const to = Math.min(Math.max(line.to, from + 1), doc.length);
+      return { from: Math.min(from, to), to, severity: "error", message: f.besked };
+    });
+  } catch {
+    return [];
+  }
+}
+
+async function sheetsPreview() {
+  const text = sheetsEditor.state.doc.toString();
+  const res = await fetch("/api/builder/sheets_preview", {
+    method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: NAME, yaml: text }),
+  });
+  const data = await res.json();
+  if (data.error) {
+    setSheetsStatus(data.error, true);
+    return;
+  }
+  $("#sheet-output").srcdoc = data.html;
+  const n = (data.missing_descriptions || []).length;
+  setPrintBanner(n ? `${n} regler/besværgelser mangler en dansk beskrivelse.` : "", { showButton: true });
+  setSheetsStatus(text === sheetsSavedYaml ? "Gemt." : "Ugemt - viser dine rettelser.");
+}
+
+function scheduleSheetsPreview() {
+  if (sheetsPreviewTimer) clearTimeout(sheetsPreviewTimer);
+  sheetsPreviewTimer = setTimeout(sheetsPreview, 600);
+}
+
+async function saveSheetsYaml() {
+  const text = sheetsEditor.state.doc.toString();
+  setSheetsStatus("Gemmer...");
+  const res = await fetch("/api/builder/sheets_yaml", {
+    method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: NAME, yaml: text }),
+  });
+  const data = await res.json();
+  if (data.error) {
+    setSheetsStatus(data.error, true);
+    return;
+  }
+  sheetsSavedYaml = text;
+  setSheetsStatus("Gemt.");
+}
+
+function createSheetsEditor(initialYaml) {
+  sheetsEditor = new EditorView({
+    parent: $("#sheets-editor-mount"),
+    state: EditorState.create({
+      doc: initialYaml,
+      extensions: [
+        lineNumbers(), highlightActiveLine(), highlightActiveLineGutter(), drawSelection(),
+        history(), foldGutter(), bracketMatching(), indentUnit.of("  "), indentationMarkers(),
+        syntaxHighlighting(defaultHighlightStyle, { fallback: true }), search(), lintGutter(),
+        linter(sheetsLint), yamlLang(), EditorState.tabSize.of(2), EditorView.lineWrapping,
+        keymap.of([
+          { key: "Mod-s", run: () => { saveSheetsYaml(); return true; } },
+          indentWithTab, ...defaultKeymap, ...historyKeymap, ...foldKeymap, ...searchKeymap,
+        ]),
+        EditorView.updateListener.of((update) => {
+          if (update.docChanged) {
+            setSheetsStatus(update.state.doc.toString() === sheetsSavedYaml ? "" : "Ikke gemt.");
+            scheduleSheetsPreview();
+          }
+        }),
+      ],
+    }),
+  });
+}
+
+async function toggleLayoutEditor() {
+  const panel = $("#sheets-editor");
+  const opening = panel.style.display === "none";
+  if (!opening) {
+    panel.style.display = "none";
+    return;
+  }
+  panel.style.display = "";
+  if (sheetsEditor) return;  // allerede hentet/bygget fra en tidligere åbning
+  setSheetsStatus("Henter sheets.yaml...");
+  const res = await fetch(`/api/builder/sheets_yaml?name=${encodeURIComponent(NAME)}`);
+  const data = await res.json();
+  if (data.error) {
+    setSheetsStatus(data.error, true);
+    return;
+  }
+  sheetsSavedYaml = data.yaml;
+  createSheetsEditor(data.yaml);
+  setSheetsStatus("");
+}
+
 // ── Event-delegation: ét sted for alle felter ─────────────────────────────
 async function addClass() {
   setStatus("Gemmer...");
@@ -494,6 +622,8 @@ function wireEvents() {
   });
 
   $("#translate-btn").addEventListener("click", translateMissing);
+  $("#edit-layout-btn").addEventListener("click", toggleLayoutEditor);
+  $("#sheets-save-btn").addEventListener("click", saveSheetsYaml);
 
   $("#confirm-yes").addEventListener("click", () => {
     const fields = pending;

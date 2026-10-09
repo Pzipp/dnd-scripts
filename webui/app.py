@@ -146,6 +146,11 @@ def generate(character: str, kind: str, stil: str, pdf: bool = False) -> dict:
 
 @app.get("/")
 def index():
+    return render_template("menu.html")
+
+
+@app.get("/editor")
+def editor():
     return render_template("index.html", characters=character_dirs())
 
 

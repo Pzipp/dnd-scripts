@@ -13,6 +13,14 @@ Findes filen ikke, kopieres skabelonen ind første gang (`webui/builder/sheets.p
 Fritekst-sektionerne (baggrund, kampagnenoter, egne træk) udfyldes i hånden,
 ligesom i dag.
 
+**Redigeres via en indbygget YAML-editor på byggerens Print-fane**
+("Rediger layout"-knappen) - CodeMirror med syntaksfarver, linjenumre,
+fejlmarkering og live-forhåndsvisning, samme opsætning som den gamle
+YAML-editor (`/editor`, se [webui/README-yaml-editor.md](../webui/README-yaml-editor.md)),
+bare mod `/api/builder/sheets_*`-endepunkterne og `render.py` i stedet for
+`karakterark.py`. Den gamle editor redigerer IKKE `sheets.yaml` - to
+samtidige redigeringsflader mod samme fil var en dårlig idé.
+
 ## Opbygning
 
 ```yaml

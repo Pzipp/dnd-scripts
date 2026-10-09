@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>D&D WebUI</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&display=swap">
+  <link rel="stylesheet" href="{{ url_for('static', filename='builder.css') }}">
+</head>
+<body>
+<header class="builder-top">
+  <h1>D&amp;D WebUI</h1>
+</header>
+<main class="sheet" style="border-top:1px solid var(--line)">
+  <section class="step">
+    <h2>Karakterbygger</h2>
+    <p>Byg en karakter trin for trin ud fra 5etools' regeldata, og se det printbare ark (<code>character.yaml</code>/<code>sheets.yaml</code>).</p>
+    <a class="btn" href="/builder">Åbn karakterbygger</a>
+  </section>
+  <section class="step">
+    <h2>YAML-editor (det gamle system)</h2>
+    <p>Rediger <code>karakter.yaml</code>/<code>kort.yaml</code> direkte i browseren - til de håndskrevne karakterer, der ikke bruger karakterbyggeren.</p>
+    <a class="btn secondary" href="/editor">Åbn YAML-editor</a>
+  </section>
+</main>
+</body>
+</html>
