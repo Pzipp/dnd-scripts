@@ -698,6 +698,9 @@ STYLE_FILES = {
     "kongelig": "sheets-royal.css",
     "blod-stal": "sheets-blood-steel.css",
     "arkanum": "sheets-arcane.css",
+    "blaekornament": "sheets-ink-ornament.css",
+    "bladkrus": "sheets-leaf-scroll.css",
+    "stjernelinje": "sheets-starline.css",
 }
 
 
