@@ -1,0 +1,15 @@
+/* Kongelig: dyb marineblå, elfenben og diskrete gulddetaljer. */
+:root{
+  --parch:#f3eee2; --ink:#202b40; --muted:#667084; --accent:#24436b; --line:#b9a779; --paper:#fffdf7;
+  --str:#9b4540; --dex:#367052; --con:#9a6b27; --int:#315f98; --wis:#66528b; --cha:#914b72;
+}
+body{font-family:"Crimson Pro",Georgia,serif;line-height:1.22}
+h1,h2,h3,.stat .big,.ab .name,.ab .mod{font-family:"Crimson Pro",Georgia,serif}
+.box{border-radius:.6mm;border-color:var(--line)}
+.box h2{color:var(--accent);border-bottom:1.5px double var(--line);letter-spacing:.035em}
+.head{border-bottom:1.5px solid var(--accent)}
+.name h1,.turn h3,.feat p b{color:var(--accent)}
+.ab{border-radius:0}
+.ab .name{letter-spacing:.035em}
+.dc,.coins div{border-color:var(--line);border-radius:.5mm}
+.dot{border-radius:50%}
