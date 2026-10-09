@@ -34,6 +34,32 @@ pages:
   footer: 'Kilde: PHB 2024'
 ```
 
+## Feats: manuel eller automatisk
+
+`type: features` kan bygge sine `items` på to måder, pr. boks:
+
+```yaml
+# Manuel (standard) - items skrives i hånden, som ovenfor.
+- type: features
+  title: Evner &amp; træk
+  items: [{name: Action Surge, tag: Niveau 2, text: Skriv teksten her.}]
+
+# Automatisk - items bygges fra character.yamls feats-liste, navn + dansk
+# beskrivelse slået op via samme kæde som "mangler beskrivelse"-banneret
+# (håndkurateret kort -> delt cache -> mangler, se descriptions.lookup()).
+- type: features
+  title: Feats
+  auto: true
+  exclude: [Ability Score Improvement]   # valgfri - feat-navne der IKKE skal vises her
+```
+
+`exclude` er til feats, du hellere vil beskrive i hånden et andet sted
+(fx et avanceret feat, der fortjener sin egen boks). En feat uden
+oversættelse endnu vises med sit engelske navn og tom tekst - ingen fejl,
+ingen opfundet tekst. Kun `feats` dækkes i dag - `class_features`/
+`spells_known`/`race_traits` er stadig ikke automatiserede (se
+[Afgrænsning](#afgrænsning)).
+
 ## Renderer
 
 Print-fanen bygger arket via `webui/builder/render.py` - en selvstændig,
@@ -56,10 +82,8 @@ en dag migreres til `character.yaml`/`sheets.yaml`, kan
 
 ## Afgrænsning
 
-Boksenes `items`/`punkter` udfyldes IKKE automatisk fra `character.yaml`s
-`feats`/`spells_known`/`class_features`/`race_traits` endnu - de skrives i
-hånden, ligesom i det gamle system. De danske beskrivelser, som
-`webui/builder/descriptions.py` finder/genererer (se [`docs/karakterark-bygger-plan.md`](karakterark-bygger-plan.md)),
-er derfor i dag kun data til rådighed (vist som "mangler"-banner på
-Print-fanen) - at koble dem automatisk ind i layoutet er en naturlig næste
-udvidelse, men ikke bygget i denne omgang.
+`feats` kan vises automatisk (se [Feats: manuel eller automatisk](#feats-manuel-eller-automatisk)
+ovenfor). `spells_known`/`class_features`/`race_traits` udfyldes stadig
+IKKE automatisk nogen steder - de skrives i hånden, ligesom i det gamle
+system, eller dækkes slet ikke af selve arket (spells/klasseevner hører i
+dag til det separate kort-system, `kort.yaml`/`spellkort.py`).

@@ -18,6 +18,8 @@ from __future__ import annotations
 import os
 import re
 
+from . import descriptions
+
 ABILITY_ROWS = [("STR", "Styrke", "str"), ("DEX", "Smidighed", "dex"), ("CON", "Udholdenhed", "con"),
                 ("INT", "Intelligens", "int"), ("WIS", "Visdom", "wis"), ("CHA", "Karisma", "cha")]
 SKILLS = {
@@ -328,10 +330,34 @@ def box_rules(node, character, env):
     return h + '<ul class="t">' + "".join(f"<li>{fmt(p, env)}</li>" for p in node.get("items", [])) + "</ul>"
 
 
+def _auto_feat_items(character: dict, exclude: list[str]) -> list[dict]:
+    """items til box_features(), automatisk fra character['feats'] i stedet
+    for hånd-skrevet i sheets.yaml - navn + dansk beskrivelse via
+    descriptions.lookup() (samme opslagskæde som "mangler beskrivelse"-
+    banneret allerede bruger: håndkurateret kort -> delt cache -> mangler).
+    exclude: liste af feat-navne (case-insensitive) der IKKE skal vises her
+    - fx hvis spilleren selv vil skrive én af dem i hånden et andet sted."""
+    excluded = {n.lower() for n in exclude}
+    items = []
+    for f in character.get("feats", []):
+        if f["name"].lower() in excluded:
+            continue
+        found = descriptions.lookup(f["name"], f.get("source"))
+        name_da = found.get("name_da") if found else None
+        text = (found.get("description_da") if found else None) or ""
+        display_name = f'{f["name"]} <i>· {name_da}</i>' if name_da else f["name"]
+        items.append({"name": display_name, "text": text})
+    return items
+
+
 def box_features(node, character, env):
-    """Træk og bonus-handlinger: name, valgfri tag og text pr. item."""
+    """Træk og bonus-handlinger: name, valgfri tag og text pr. item.
+    auto: true bygger items automatisk fra character['feats'] i stedet for
+    at læse node['items'] fra sheets.yaml - se _auto_feat_items(). exclude:
+    [navn, ...] (kun relevant med auto: true) springer specifikke feats
+    over."""
     o = [f'<h2>{node["title"]}</h2>']
-    items = node.get("items", [])
+    items = _auto_feat_items(character, node.get("exclude", [])) if node.get("auto") else node.get("items", [])
     for i, t in enumerate(items):
         last = ' style="margin:0"' if i == len(items) - 1 else ""
         tag = f'<span class="tag">{t["tag"]}</span>' if t.get("tag") else ""
