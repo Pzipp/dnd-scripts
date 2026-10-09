@@ -107,6 +107,11 @@ equipment:
   class_package: A         # bogstav-nøgle ind i 5etools' startingEquipment-valgsæt for den PRIMÆRE klasse
   background_package: A    # samme, for baggrunden
   extra: []                # fritekst, ekstra udstyr brugeren selv har tilføjet
+  armor: {name: Chain Mail, source: XPHB}  # udstyret kropsrustning, eller {name: null, source: null} = ingen
+  shield: false             # Shield (+2 AC) - separat fra armor, kan bæres sammen med enhver rustning
+
+languages:
+  known: [Draconic, Elvish]  # PRÆCIS 2, valgt fra Standard Languages-tabellen (PHB 2024 kap. 2) - Common er altid implicit, ikke med her
 
 settings:                  # PR. KARAKTER, ikke delt mellem karakterer
   allowed_sources: [XPHB]  # hvilke 5etools-kildekoder der må slås op i for DENNE karakter

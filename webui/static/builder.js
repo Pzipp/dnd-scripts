@@ -115,7 +115,25 @@ function renderCharacterPage() {
     ${renderClasses(c)}
     ${renderBackground(c)}
     ${renderAbilities(c)}
+    ${renderLanguages(c)}
   `;
+}
+
+// PHB 2024 kap. 2 ("Choose Languages"): Common kendes altid (ikke en del af
+// valget), + 2 sprog fra Standard Languages-tabellen - samme chip-mønster
+// som andre "vælg N fra en liste"-felter (se renderSubChoices's multiple-gren).
+// Klasse-/feature-tildelte ekstra sprog (fx Thieves' Cant) tælles ikke med
+// her, se character_yaml._languages()'s docstring.
+function renderLanguages(c) {
+  const chosen = c.languages?.known || [];
+  const chips = (state.language_options || [])
+    .map((o) => `<label data-field="languages.known" data-multi="1" data-value="${esc(o.name)}" class="${chosen.includes(o.name) ? "checked" : ""}"><input type="checkbox" ${chosen.includes(o.name) ? "checked" : ""}>${esc(o.label)}</label>`)
+    .join("");
+  const body = `
+    <div class="ftext">Common kendes altid. Vælg 2 fra Standard Languages-tabellen.</div>
+    <div class="checklist">${chips}</div>
+  `;
+  return wrapDetails("languages", isMissing("languages.known"), `Sprog (${chosen.length}/2)`, body);
 }
 
 function renderAsiChoice(basePath, sc, current) {
@@ -393,7 +411,19 @@ function renderEquipmentPage() {
         <strong>Pakke ${key}</strong>
         <ul>${items.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>
       </div>`).join("");
+  const armorBody = `
+    <label class="field"><span>Rustning</span>
+      <select data-field-combo="equipment.armor">
+        ${optionList(state.equipment.armor_options, c.equipment.armor?.name)}
+      </select>
+    </label>
+    <label class="checkbox-field">
+      <input type="checkbox" data-field="equipment.shield" ${c.equipment.shield ? "checked" : ""}>
+      Shield <small>(+2 AC, kan bæres sammen med enhver rustning)</small>
+    </label>
+  `;
   return `
+    ${wrapDetails("equip-armor", false, "Rustning (AC)", armorBody)}
     ${wrapDetails("equip-class", isMissing("equipment.class_package"), "Udstyr fra klasse", pkg(state.equipment.class_packages, "equipment.class_package", c.equipment.class_package))}
     ${wrapDetails("equip-background", isMissing("equipment.background_package"), "Udstyr fra baggrund", pkg(state.equipment.background_packages, "equipment.background_package", c.equipment.background_package))}
   `;
@@ -652,7 +682,8 @@ function wireEvents() {
     if (fieldEl && !fieldEl.dataset.multi) {
       const path = fieldEl.dataset.field;
       let value = fieldEl.value;
-      if (fieldEl.type === "number" || path.endsWith(".level")) value = value === "" ? null : Number(value);
+      if (fieldEl.type === "checkbox") value = fieldEl.checked;
+      else if (fieldEl.type === "number" || path.endsWith(".level")) value = value === "" ? null : Number(value);
       answer({ [path]: value });
     }
   });

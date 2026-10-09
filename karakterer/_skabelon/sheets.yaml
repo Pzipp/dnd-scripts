@@ -21,13 +21,10 @@ pages:
     - width: 1
       content:
       - type: abilities         # de seks evner med saves, skills og værktøj
-      - type: languages
+      - type: languages             # Common + de 2 valgt i byggeren beregnes automatisk
         title: Sprog
-        text: Common
-      - type: passive
+      - type: passive              # Perception/Investigation/Insight beregnes automatisk
         title: Passive sanser
-        items:
-        - [Perception, '{10+WIS}']
     - width: 2
       content:
       - type: attacks
@@ -97,9 +94,7 @@ pages:
 
 # ── Side 3 · Udstyr ──────────────────────────────────────────────────────────────
 - margin: small
-  top:
-    summary:
-    - [Klasse, Fighter 1]
+  top: {}                      # Klasse/Art/Baggrund fra character.yaml, se side 1
   layout:
   - columns:
     - width: 1
@@ -130,10 +125,8 @@ pages:
 
 # ── Side 4 · Baggrund ────────────────────────────────────────────────────────────
 - margin: small
-  top:
-    summary:
-    - [Art, Human]
-    - [Baggrund, Soldier]
+  top:                          # Klasse/Art/Baggrund fra character.yaml, Holdning er manuel (ikke i choices.yaml)
+    extra_summary:
     - [Holdning, Neutral]
   layout:
   - columns:

@@ -27,15 +27,16 @@ abilities: {STR: 18, DEX: 14, CON: 16, INT: 10, WIS: 12, CHA: 8}
 proficiency_bonus: 3           # opslået fast tabel (PHB 2024), ikke et valg
 hp: 44                         # summen af ALLE klassers hp_rolls + CON-mod×level - se character_yaml._hp()
 hit_dice: [{die: 10, count: 5}]  # poolet efter terningtype across klasser (PHB 2024 multiclass-regel) - se character_yaml._hit_dice_pool()
-ac: '{10+DEX}'                 # IKKE afledt - se "Manuelle felter"
-initiative: '{+DEX}'           # IKKE afledt - se "Manuelle felter"
+ac: 16                         # afledt af equipment.armor/shield - se character_yaml._ac()
+ac_note: Chain Mail            # kort forklaring til AC-boksens fodnote, ikke en formel
+initiative: '{+DEX}'           # standard + evt. høj-konfidens effects (fx Alert) - se "Afledte felter med et kendt gap"
 speed: 30                      # fra racens egen speed
 hit_die: 10                    # primærklassens hit die (bruges kun til level 1-HP'en, ikke resten - se hp/hit_dice)
 saves: [STR, CON]              # primærklassens save-proficiencies
 skills: [athletics, intimidation]
 expertise: []
 tools: ["Smith's Tools"]       # flad liste - IKKE grupperet efter evne, se nedenfor
-languages: Common              # IKKE afledt - se "Manuelle felter"
+languages: Common, Draconic, Elvish  # Common (fast) + languages.known - se character_yaml._languages()
 can_use: {armor: "light, medium, heavy, shields", weapons: "simple, martial"}
 masteries: []                  # ikke udledt endnu, se nedenfor
 feats: [{name: Tavern Brawler, source: XPHB}]
@@ -46,31 +47,38 @@ extra_training: []
 summary: [[Klasse, Fighter 5], [Art, Human], [Baggrund, Soldier]]
 ```
 
-## Manuelle felter
+## Afledte felter med et kendt gap
 
-`ac` og `languages` udregnes IKKE pålideligt af `derive_from_state()` - de
-får kun en fornuftig standardformel (`{10+DEX}`, `Common`), og bevares
-derefter fra en eksisterende `character.yaml` i stedet for at blive
-overskrevet igen (se `PRESERVED_FIELDS` i `character_yaml.py`).
-choices.yaml tracker ikke den nødvendige info (hvilken rustning er rent
-faktisk udstyret? hvilke ekstra sprog gav en valgfri tildeling?) - samme
-situation som i den gamle `karakter.yaml`, hvor begge felter også er
-fritekst, spilleren selv sætter. Spilleren retter feltet i hånden,
-informeret af feat-listen (som stadig vises i Træning og valg) - samme
-afvejning de 8 håndskrevne karakterer allerede lever med for hele
-stats-rækken.
+`PRESERVED_FIELDS` i `character_yaml.py` er i dag tom - `ac`, `initiative`
+og `languages` var tidligere manuelle/preserverede felter, men er alle tre
+nu RIGTIGT afledte af choices.yaml:
 
-`initiative` var tidligere i samme kategori (PB på initiativ kommer fra
-enkelte feats, fx Alert XPHB, men 5etools' data har intet struktureret felt
-for den slags mekanisk-effekt-tekst) - det er nu løst af et LLM-baseret
-effects-udtræk i stedet (se `effects.py` og
-[llm-effect-extraction-prompt.md](llm-effect-extraction-prompt.md)):
-`character_yaml._apply_effects()` folder høj-konfidens, PERMANENTE effects
-ind i formlen hver gang. `initiative` er derfor IKKE længere et
-`PRESERVED_FIELDS`-felt - den genberegnes altid, og overskriver BEVIDST en
-manuel rettelse, hvis en høj-konfidens effect findes. `render.py` læser den
-stadig bare som tallet den er, ligesom alt andet - selve udregningen ligger
-i `character_yaml.py`, aldrig i renderen.
+- `initiative`: PB på initiativ kommer fra enkelte feats (fx Alert XPHB),
+  løst via et LLM-baseret effects-udtræk (se `effects.py` og
+  [llm-effect-extraction-prompt.md](llm-effect-extraction-prompt.md)) -
+  `character_yaml._apply_effects()` folder høj-konfidens, PERMANENTE
+  effects ind i formlen hver gang.
+- `ac`: løst ved at tracke udstyret rustning direkte i choices.yaml
+  (`equipment.armor`/`equipment.shield`, se [choices-yaml.md](choices-yaml.md))
+  - `character_yaml._ac()` følger PHB 2024 kap. 1 (Light = base + DEX,
+  Medium = base + DEX maks. 2, Heavy = base uden DEX, Shield +2 uanset
+  rustning). `ac_note` er en kort tekst-forklaring til AC-boksens fodnote
+  (fx "Chain Mail + Shield") - render.py viser den som den er, regner intet
+  selv.
+- `languages`: løst ved at tracke PHB 2024 kap. 2's "Choose Languages"-regel
+  direkte (`languages.known`, 2 sprog valgt fra Standard Languages-tabellen,
+  se [choices-yaml.md](choices-yaml.md)) - `character_yaml._languages()`
+  bygger `"Common, " + ", ".join(known)`. **Kendt, BEVIDST gap:** "Your
+  class and other features might also give you languages" (fx Rogue får
+  Thieves' Cant, Druid får Druidic) tælles IKKE med her - de vises kun som
+  tekst i den feature, der giver dem (Træning og valg), ikke tilføjet til
+  `languages`-linjen. Der er ingen generel, sikker regel i 5etools' data for
+  at opdage ALLE den slags class-tildelte sprog automatisk.
+
+Alle tre genberegnes altid og overskriver BEVIDST en manuel rettelse (samme
+"enkelt og forudsigeligt"-aftale som resten af systemet). `render.py` læser
+dem bare som værdierne de er, ligesom alt andet - selve udregningen ligger
+altid i `character_yaml.py`, aldrig i renderen.
 
 ## Kendte forenklinger
 

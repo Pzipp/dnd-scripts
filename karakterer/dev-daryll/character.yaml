@@ -23,7 +23,8 @@ hp: 33
 hit_dice:
 - die: 8
   count: 5
-ac: '{10+DEX}'
+ac: 11
+ac_note: 10 + DEX (ingen rustning)
 initiative: '{+DEX}'
 speed: 30
 hit_die: 8

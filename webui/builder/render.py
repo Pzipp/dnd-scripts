@@ -283,10 +283,16 @@ def box_stats(node, character, env):
     fields = node.get("fields")
     if fields is None:
         speed = character.get("speed", 30)
-        prof, expert = skill_sets(character)
-        perc = "+2*PB" if "perception" in expert else "+PB" if "perception" in prof else ""
+        # ac_note er en kort forklaring fra character_yaml._ac() (fx
+        # "Breastplate + DEX (maks 2) + Shield") - ikke en formel render.py
+        # selv regner (se arkitektur-reglen i modul-docstringen). Mangler
+        # den (en håndskrevet character.yaml uden choices.yaml), falder
+        # fodnoten tilbage til formula(), som før.
+        ac_field = ["<em>AC</em>", character.get("ac", "{10+DEX}")]
+        if character.get("ac_note"):
+            ac_field.append(character["ac_note"])
         fields = [
-            ["<em>AC</em>", character.get("ac", "{10+DEX}")],
+            ac_field,
             ["Max HP", str(character.get("hp", "?"))],
             ["<em>Hit Dice</em>", _hit_dice_display(character), "1 terning pr. level, se klassen"],
             # Initiativ læses fra character.yaml, ikke udregnet her - se
@@ -295,7 +301,7 @@ def box_stats(node, character, env):
             ["Initiativ", character.get("initiative", "{+DEX}")],
             ["Fart · <em>Speed</em>", str(speed), f"Dash: {2 * speed}"],
             ["<em>Prof. bonus</em>", "{+PB}", "level 1–4"],
-            ["Passiv <em>Perc.</em>", "{10+WIS" + perc + "}"],
+            ["Passiv <em>Perc.</em>", _passive_formula(character, "perception")],
         ]
     return '<div class="grid top">' + "".join(
         f'<div class="box stat"><div class="lbl">{field[0]}</div><div class="big">{fmt(field[1], env)}</div>'
@@ -303,9 +309,27 @@ def box_stats(node, character, env):
         + "</div>" for field in fields) + "</div>"
 
 
+# De tre passive sanser (PHB 2024: 10 + skillens bonus, samme PB-regel som
+# et almindeligt skill check - trænet = +PB, Expertise = +2×PB).
+PASSIVE_SKILLS = [("Perception", "perception"), ("Investigation", "investigation"), ("Insight", "insight")]
+
+
+def _passive_formula(character: dict, skill: str) -> str:
+    prof, expert = skill_sets(character)
+    bonus = "+2*PB" if skill in expert else "+PB" if skill in prof else ""
+    return "{10+" + SKILL_ABILITY[skill] + bonus + "}"
+
+
 def box_passive(node, character, env):
+    """Uden items beregnes alle tre passive sanser automatisk ud fra
+    character['skills']/['expertise'] - samme PB-regel som _passive_formula()
+    allerede bruger til Passiv Perc. i box_stats(). items kan stadig angives
+    i sheets.yaml for at overstyre (fx en anden sans, eller en fast situationel bonus)."""
+    items = node.get("items")
+    if items is None:
+        items = [[label, _passive_formula(character, skill)] for label, skill in PASSIVE_SKILLS]
     rows = []
-    for a, b in node.get("items", []):
+    for a, b in items:
         fl = formula(b)
         flag = f' <small class="sf">{fl}</small>' if fl else ""
         rows.append(f"<span>{a}{flag}</span><b>{fmt(b, env)}</b>")
@@ -313,7 +337,15 @@ def box_passive(node, character, env):
 
 
 def box_languages(node, character, env):
-    return f'<h2>{node["title"]}</h2>{fmt(node["text"], env)}'
+    """Uden text falder tilbage til character['languages'] (Common + de 2
+    valgt i byggeren, se character_yaml._languages()) - samme auto-mønster
+    som box_passive(). text kan stadig angives for at overstyre/tilføje
+    klasse-/feature-tildelte sprog (fx Thieves' Cant), som IKKE er talt med
+    automatisk, se character_yaml.py's modul-docstring."""
+    text = node.get("text")
+    if text is None:
+        text = character.get("languages", "Common")
+    return f'<h2>{node["title"]}</h2>{fmt(text, env)}'
 
 
 def box_attacks(node, character, env):
@@ -649,13 +681,22 @@ def layout_stack(nodes, character, env, flat=False) -> str:
 
 
 def page(p, character, env) -> str:
-    """Én side: valgfri top (title, subtitle, summary), layout og footer."""
+    """Én side: valgfri top (title, subtitle, summary), layout og footer.
+
+    top.summary udeladt helt -> character['summary'] (Klasse/Art/Baggrund,
+    se character_yaml.derive_from_state()) - samme felter, ingen manuel
+    indtastning pr. side. top.summary angivet -> bruges i stedet, uændret
+    (fx side 2's Slag/Fordel/Ulempe-forklaring, som intet har med karakteren
+    at gøre). top.extra_summary lægges ALTID til bagefter - til felter uden
+    en datakilde endnu, fx Holdning (alignment findes ikke i choices.yaml)."""
     head = ""
     if "top" in p:
         top = p["top"] or {}
+        summary = character.get("summary", []) if top.get("summary") is None else top["summary"]
+        summary = summary + (top.get("extra_summary") or [])
         head = (f'<header class="head"><div class="name"><h1>{top.get("title", character["name"])}</h1>'
                 f'<span class="epithet">{top.get("subtitle", "")}</span></div>'
-                f'{ident(top.get("summary", character.get("summary", [])))}</header>')
+                f'{ident(summary)}</header>')
     no_frame = p.get("box_type") == "none"  # box_type: none på en side fjerner rammerne på alle bokse på siden
     body = f'<div class="layout">{layout_stack(p.get("layout", []), character, env, no_frame)}</div>'
     foot = f'<div class="foot">{p.get("footer", "")}</div>' if p.get("footer") else ""

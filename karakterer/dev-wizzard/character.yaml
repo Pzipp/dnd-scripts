@@ -23,7 +23,8 @@ hp: 57
 hit_dice:
 - die: 6
   count: 19
-ac: '{10+DEX}'
+ac: 18
+ac_note: Chain Mail + Shield
 initiative: '{+DEX}'
 speed: 30
 hit_die: 6
@@ -37,7 +38,7 @@ skills:
 expertise: []
 tools:
 - anyGamingSet
-languages: Common
+languages: Common, Draconic, Elvish
 can_use:
   weapons: simple
 masteries: []

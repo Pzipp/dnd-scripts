@@ -42,6 +42,19 @@ pages:
   footer: 'Kilde: PHB 2024'
 ```
 
+`top.summary` udeladt helt (`top: {}` eller ingen `summary`-nøgle) viser
+automatisk `character.yaml`s `summary` (Klasse/Art/Baggrund) - ingen
+hånd-indtastning pr. side. Angives `top.summary` selv, bruges den i stedet
+(fx side 2's Slag/Fordel/Ulempe-forklaring, der intet har med karakteren at
+gøre). `top.extra_summary` lægges ALTID til bagefter, til felter uden en
+datakilde i `choices.yaml` endnu (fx Holdning/alignment):
+
+```yaml
+top:
+  extra_summary:
+  - [Holdning, Neutral]
+```
+
 ## Feats: manuel eller automatisk
 
 `type: features` kan bygge sine `items` på to måder, pr. boks:
@@ -67,6 +80,40 @@ oversættelse endnu vises med sit engelske navn og tom tekst - ingen fejl,
 ingen opfundet tekst. Kun `feats` dækkes i dag - `class_features`/
 `spells_known`/`race_traits` er stadig ikke automatiserede (se
 [Afgrænsning](#afgrænsning)).
+
+## Passive sanser
+
+`type: passive` beregner som standard alle tre passive sanser (Perception,
+Investigation, Insight: `10 + ability + PB` hvis trænet, `+2×PB` ved
+Expertise, ellers ingen PB - samme regel som et almindeligt skill check)
+ud fra `character.yaml`s `skills`/`expertise`. Ingen `items` behøves:
+
+```yaml
+- type: passive
+  title: Passive sanser
+```
+
+`items` kan stadig angives (samme `[label, '{...}']`-par som andre bokse)
+for at overstyre - fx en fjerde, situationsbestemt passiv sans.
+
+## Sprog og AC
+
+`type: languages` falder på samme måde tilbage til `character.yaml`s
+`languages` (Common + de 2 valgt i byggeren, se
+[choices-yaml.md](choices-yaml.md)), hvis `text` udelades:
+
+```yaml
+- type: languages
+  title: Sprog
+```
+
+`text` kan stadig angives for at overstyre eller tilføje et klasse-/
+feature-tildelt sprog (fx Thieves' Cant), som IKKE tælles med automatisk -
+se [character-yaml.md](character-yaml.md#afledte-felter-med-et-kendt-gap).
+
+AC (i `type: stats`-rækken) er på samme måde altid beregnet fra
+`equipment.armor`/`equipment.shield`, ikke et felt i sheets.yaml selv - se
+samme afsnit i character-yaml.md.
 
 ## Renderer
 

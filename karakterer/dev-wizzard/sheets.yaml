@@ -9,14 +9,8 @@ pages:
       - type: abilities
       - type: languages
         title: Sprog
-        text: Common
-        # sprog kan udledes. sprog valg indbygges i karakter byggeren, undersøg regler.
       - type: passive
         title: Passive sanser
-        items:
-        - - Perception
-          - '{10+WIS}'
-        # Passive sanser bør kunne beregnes automatisk. der er tre. undersøg regler.
     - width: 2
       content:
       - type: attacks
@@ -94,11 +88,7 @@ pages:
       - type: conditions
   footer: 'Kilde: Player''s Handbook 2024 · kap. 1 (handlinger)'
 - margin: small
-  top:
-    summary:
-    - - Klasse
-      - Fighter 1
-    # denne kan automatisk læses fra yaml
+  top: {}                      # Klasse/Art/Baggrund fra character.yaml, se side 1
   layout:
   - columns:
     - width: 1
@@ -131,15 +121,10 @@ pages:
         items: []
         blank_lines: 6
 - margin: small
-  top:
-    summary:
-    - - Art
-      - Human
-    - - Baggrund
-      - Soldier
+  top:                          # Klasse/Art/Baggrund fra character.yaml, Holdning er manuel (ikke i choices.yaml)
+    extra_summary:
     - - Holdning
       - Neutral
-    # kan hentes fra karakterens yaml.
   layout:
   - columns:
     - width: 1

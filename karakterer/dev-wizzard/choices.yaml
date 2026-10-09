@@ -86,6 +86,14 @@ equipment:
   class_package: A
   background_package: A
   extra: []
+  armor:
+    name: Chain Mail
+    source: XPHB
+  shield: true
+languages:
+  known:
+  - Draconic
+  - Elvish
 settings:
   allowed_sources:
   - XPHB

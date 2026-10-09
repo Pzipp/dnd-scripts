@@ -10,12 +10,27 @@ Findes choices.yaml IKKE, er character.yaml i stedet den primære fil -
 skrevet direkte (af builder-UI'en uden choices.yaml, eller af et LLM) - og
 røres aldrig herfra.
 
-Et par felter kan ikke udledes SIKKERT af choices.yaml, fordi reglen kræver
-data choices.yaml ikke tracker (AC: hvilken rustning er udstyret nu;
-languages: hvilke sprog en valgfri tildeling gav) - de får kun en fornuftig
-STANDARDFORMEL herfra og bevares bagefter fra en eksisterende character.yaml
-i stedet for at blive overskrevet igen, se PRESERVED_FIELDS. Spilleren retter
-dem i hånden.
+PRESERVED_FIELDS er i dag tom - de to felter, der tidligere stod der (ac,
+languages), er begge blevet rigtigt afledte i stedet, se nedenfor. Et NYT
+felt lægges her, hvis en fremtidig regel igen afhænger af data choices.yaml
+ikke tracker endnu (samme mønster: standardformel + bevaring af en
+eksisterende character.yaml, i stedet for at blive overskrevet).
+
+`languages` var tidligere i samme kategori (choices.yaml trackede intet
+sprogvalg) - PHB 2024 kap. 2's "Choose Languages"-regel (Common + 2 valgt
+fra Standard Languages-tabellen, se languages.known i choices.yaml) er nu
+modelleret direkte, og `_languages()` bygger den fulde streng. KENDT,
+BEVIDST gap: "Your class and other features might also give you languages"
+(fx Rogue/Thieves' Cant, Druid/Druidic) er IKKE talt med her - de vises kun
+som tekst i den feature, der giver dem (Træning og valg), ikke tilføjet til
+languages-linjen. Se "Kendte forenklinger" i docs/character-yaml.md.
+
+`ac` var tidligere i samme kategori (ingen udstyrs-tilstand i choices.yaml),
+men udstyret rustning tracked nu direkte (equipment.armor/shield) - `_ac()`
+beregner den rigtige AC (PHB 2024: Light/Medium/Heavy har hver sin DEX-regel,
+Shield lægger +2 til uanset rustning). Ligesom `initiative` er `ac` derfor
+IKKE et PRESERVED_FIELD længere - den genberegnes altid og overskriver
+bevidst en evt. manuel rettelse, samme "enkelt og forudsigeligt"-aftale.
 
 `initiative` var tidligere i samme kategori (Alert-feat'ets "+PB til
 initiativ" findes kun som fri engelsk prosa i 5etools' data, intet
@@ -48,11 +63,10 @@ PROFICIENCY_BONUS_BY_LEVEL = {
 }
 
 # Felter character.yaml kun giver en standardformel til, og ellers bevarer
-# fra en eksisterende fil (se modul-docstring) - render.py skal ALDRIG
-# selv regne eller feat-tjekke disse, kun læse dem som alle andre tal.
-# initiative er IKKE med her - se modul-docstring: den genberegnes altid,
-# inkl. effects.py's høj-konfidens permanente effects.
-PRESERVED_FIELDS = ("ac", "languages")
+# fra en eksisterende fil (se modul-docstring) - render.py skal ALDRIG selv
+# regne eller feat-tjekke disse, kun læse dem som alle andre tal. Tom i dag
+# - initiative/ac/languages er alle rigtigt afledte nu, se modul-docstring.
+PRESERVED_FIELDS = ()
 
 
 def _hit_dice_pool(data: dict, sources: set[str]) -> list[dict]:
@@ -92,6 +106,40 @@ def _hp(data: dict, primary_id: str | None, primary_hit_die: int, con_mod: int, 
                 return None
             total += value
     return total + con_mod * total_level
+
+
+def _languages(data: dict) -> str:
+    """Common (fast) + languages.known (PHB 2024 kap. 2's 2-sprogs valg fra
+    Standard Languages-tabellen, se e5tools.standard_languages()). Tæller
+    IKKE klasse-/feature-tildelte ekstra sprog (fx Thieves' Cant) med - se
+    modul-docstringens note om det kendte, bevidste gap."""
+    known = data.get("languages", {}).get("known") or []
+    return ", ".join(["Common", *known])
+
+
+def _ac(data: dict, sources: set[str], dex_mod: int) -> tuple[int, str]:
+    """(ac, note) - PHB 2024 kap. 1 (Armor Training): Light = base + DEX,
+    Medium = base + DEX (maks. +2), Heavy = base (ingen DEX). Uden rustning:
+    10 + DEX. Shield (+2) lægges altid til, uanset rustning - vælges separat
+    fra equipment.armor, fordi det kan bæres sammen med enhver rustning."""
+    choice = data.get("equipment", {}).get("armor") or {}
+    armor_sources = {choice["source"]} if choice.get("source") else sources
+    armor_obj = e.get_armor(choice["name"], armor_sources) if choice.get("name") else None
+    if armor_obj:
+        base = armor_obj.get("ac", 10)
+        armor_type = (armor_obj.get("type") or "").split("|")[0]
+        if armor_type == "HA":
+            ac, note = base, armor_obj["name"]
+        elif armor_type == "MA":
+            ac, note = base + min(dex_mod, 2), f"{armor_obj['name']} + DEX (maks 2)"
+        else:
+            ac, note = base + dex_mod, f"{armor_obj['name']} + DEX"
+    else:
+        ac, note = 10 + dex_mod, "10 + DEX (ingen rustning)"
+    if data.get("equipment", {}).get("shield"):
+        ac += 2
+        note += " + Shield"
+    return ac, note
 
 
 def _apply_effects(
@@ -267,6 +315,7 @@ def derive_from_state(data: dict, state: dict) -> dict:
     bonuses = _ability_bonuses(data, state, sources)
     final_abilities = {a: assigned[a] + bonuses[a] for a in model.ABILITIES if a in assigned}
     con_mod = _mod(final_abilities.get("CON", 10))
+    ac, ac_note = _ac(data, sources, _mod(final_abilities.get("DEX", 10)))
     hit_die = (primary_class_obj or {}).get("hd", {}).get("faces", 8)
     hit_dice = _hit_dice_pool(data, sources)
     hp = _hp(data, primary_id, hit_die, con_mod, total_level) if assigned.get("CON") is not None else None
@@ -358,7 +407,8 @@ def derive_from_state(data: dict, state: dict) -> dict:
         "proficiency_bonus": PROFICIENCY_BONUS_BY_LEVEL.get(total_level, 2),
         "hp": hp,
         "hit_dice": hit_dice,  # poolet efter terningtype across klasser, se _hit_dice_pool()
-        "ac": "{10+DEX}",  # overskrives af PRESERVED_FIELDS-bevaring i derive_and_save, ikke afledt (se modul-docstring)
+        "ac": ac,  # se _ac() - afledt af equipment.armor/shield, ikke et PRESERVED_FIELD længere
+        "ac_note": ac_note,  # kort forklaring til AC-boksens fodnote i render.py (box_stats), ikke en formel
         "initiative": initiative_formula,  # standard + evt. høj-konfidens effects (fx Alert) - se _apply_effects()
         "speed": speed,
         "hit_die": hit_die,
@@ -366,7 +416,7 @@ def derive_from_state(data: dict, state: dict) -> dict:
         "skills": skills,
         "expertise": expertise,
         "tools": tools,
-        "languages": "Common",  # overskrives af PRESERVED_FIELDS-bevaring i derive_and_save, ikke afledt (se modul-docstring)
+        "languages": _languages(data),  # se _languages() - klasse-/feature-tildelte ekstra sprog er IKKE talt med, kendt gap
         "can_use": can_use,
         "masteries": [],  # se docs/character-yaml.md: ikke udledt endnu (mangler sikker opslagsvej til mastery pr. våben)
         "feats": feats,

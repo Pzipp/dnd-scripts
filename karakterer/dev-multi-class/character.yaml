@@ -29,7 +29,8 @@ hit_dice:
   count: 6
 - die: 8
   count: 11
-ac: '{10+DEX}'
+ac: 12
+ac_note: 10 + DEX (ingen rustning)
 initiative: '{+DEX}'
 speed: 30
 hit_die: 8

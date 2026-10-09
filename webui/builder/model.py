@@ -40,7 +40,8 @@ def empty_character() -> dict:
         "hp_rolls": {},
         "feats": {},  # {slot_key: {name, source, choices}} - slot_key er "<class_id>_<niveau>" for ASI, eller "race"/"background"
         "spells": {"known": []},  # kun hvilke spells karakteren kender - prepared/known pr. dag styres af de printede kort, ikke her
-        "equipment": {"class_package": None, "background_package": None, "extra": []},
+        "equipment": {"class_package": None, "background_package": None, "extra": [], "armor": {"name": None, "source": None}, "shield": False},
+        "languages": {"known": []},  # PHB 2024 kap. 2: Common (fast) + 2 valgt/rullet fra Standard Languages-tabellen
         # Pr. karakter, ikke delt - to gruppemedlemmer kan have forskellige
         # tilladte kilder/husregler i gang samtidig.
         "settings": {"allowed_sources": list(settings.DEFAULT_SOURCES), "half_feats": settings.DEFAULT_HALF_FEATS},
@@ -927,6 +928,22 @@ def state(data: dict) -> dict:
     if background_packages and not data["equipment"].get("background_package"):
         missing.append("equipment.background_package")
 
+    # Armor er valgfrit (ingen rustning er et gyldigt, bare svagere, valg) -
+    # derfor ikke i missing. Shield holdes ude af selve dropdownen (type S),
+    # den er en separat on/off (kan bæres sammen med enhver rustning).
+    # name="" (ikke None) - optionList()/parseCombo() i builder.js forventer
+    # tom streng for "intet valgt", samme konvention som race/baggrunds "Vælg..."-pladsholderen.
+    armor_options = [{"name": "", "source": None, "label": "Ingen rustning"}] + _label_options(
+        [{"name": a["name"], "source": a["source"]} for a in e.armors(sources) if (a.get("type") or "").split("|")[0] != "S"]
+    )
+
+    # Sprog: PHB 2024 kap. 2 ("Choose Languages") - Common er fast/implicit,
+    # ikke en del af valget her. Ingen øvre grænse tjekkes (samme konvention
+    # som klassers skills_count ovenfor - kun "under" flages som missing).
+    language_options = _label_options([{"name": l["name"], "source": l["source"]} for l in e.standard_languages(sources)])
+    if len(data.get("languages", {}).get("known", [])) < 2:
+        missing.append("languages.known")
+
     return {
         "choices": data,
         "e5tools_available": True,
@@ -943,5 +960,6 @@ def state(data: dict) -> dict:
             "feat_slot": background_feat_slot,
         },
         "hp_levels": hp_levels,
-        "equipment": {"class_packages": class_packages, "background_packages": background_packages},
+        "equipment": {"class_packages": class_packages, "background_packages": background_packages, "armor_options": armor_options},
+        "language_options": language_options,
     }
