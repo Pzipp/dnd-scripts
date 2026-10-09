@@ -1,0 +1,15 @@
+/* Blod & stål: kampklar, jernfarvet med vinrøde accenter. */
+:root{
+  --parch:#eee9e5; --ink:#292326; --muted:#6e6266; --accent:#762f3c; --line:#b9a8a8; --paper:#fffdfc;
+  --str:#a52f3c; --dex:#367455; --con:#956025; --int:#315d8b; --wis:#6e5489; --cha:#9b4776;
+}
+body{font-family:Arial,Helvetica,sans-serif;line-height:1.18}
+h1,h2,h3,.stat .big,.ab .name,.ab .mod{font-family:Arial,Helvetica,sans-serif}
+.box{border-radius:0;border-color:var(--line);box-shadow:0 .2mm .5mm rgba(41,35,38,.07)}
+.box h2{color:var(--accent);text-transform:uppercase;letter-spacing:.055em;border-bottom:2px solid var(--accent)}
+.head{border-bottom:2px solid var(--accent)}
+.name h1,.turn h3,.feat p b{color:var(--accent)}
+.ab{border-radius:0;border-left:1.2mm solid var(--accent)}
+.ab li{border-top-style:solid;border-top-color:#d4c7c8}
+.dc,.coins div{border-radius:0;border-color:var(--line)}
+.dot{border-radius:0}
