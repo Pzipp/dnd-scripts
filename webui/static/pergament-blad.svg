@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="520" height="520" viewBox="0 0 520 520">
+  <defs>
+    <filter id="grain">
+      <feTurbulence type="fractalNoise" baseFrequency=".68" numOctaves="2" seed="7"/>
+      <feColorMatrix values="0 0 0 0 .38  0 0 0 0 .43  0 0 0 0 .30  0 0 0 .10 0"/>
+    </filter>
+    <pattern id="fibres" width="37" height="41" patternUnits="userSpaceOnUse">
+      <path d="M4 9l7 -2M24 26l5 1M12 37l3 -1" stroke="#777d58" stroke-width=".7" opacity=".18"/>
+    </pattern>
+  </defs>
+  <rect width="520" height="520" fill="#e5e4cc"/>
+  <rect width="520" height="520" filter="url(#grain)" opacity=".2"/>
+  <rect width="520" height="520" fill="url(#fibres)"/>
+  <g fill="none" stroke="#607958" stroke-width="1.2" opacity=".18" stroke-linecap="round">
+    <path d="M-15 510C95 410 35 315 135 220S180 80 240 10"/>
+    <path d="M57 442C17 414 16 381 24 359C55 367 72 399 57 442Z"/>
+    <path d="M92 377C54 344 62 310 78 291C108 315 115 346 92 377Z"/>
+    <path d="M128 306C95 277 105 246 124 229C150 255 151 281 128 306Z"/>
+    <path d="M160 234C138 205 149 177 168 163C190 187 184 215 160 234Z"/>
+    <path d="M69 429C94 399 123 400 142 411C123 439 93 447 69 429Z"/>
+    <path d="M105 359C133 331 163 338 179 351C158 376 128 379 105 359Z"/>
+    <path d="M142 286C166 261 194 269 207 281C188 303 163 306 142 286Z"/>
+    <path d="M184 207C204 186 229 191 241 203C224 224 203 228 184 207Z"/>
+  </g>
+</svg>
