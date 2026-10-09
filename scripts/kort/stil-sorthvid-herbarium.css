@@ -1,0 +1,12 @@
+/* Herbarium — monochrome, hand-drawn botanical feel. Load after spellkort.css. */
+:root { --paper:#fff; --ink:#292929; --ink-2:#5c5c5c; --hair:#b5b5b0; --ground:#f0f0ec; }
+.sheet { background:#fff; }
+.card { background:#fff; }
+.frame { border-radius:3mm 1.5mm 3mm 1.5mm; border-width:.4mm; }
+.frame::before { inset:1.2mm; border-radius:2.3mm 1mm 2.3mm 1mm; border-style:dashed; border-width:.12mm; }
+.kicker { border-bottom-style:dotted; }
+.stats { border-radius:1mm; overflow:hidden; }
+.stats div:nth-child(odd) { background:#f7f7f4; }
+.tag { border-radius:1mm 3mm 1mm 3mm; }
+.badge { border-radius:42% 58% 50% 50%; box-shadow:0 0 0 .45mm #fff, 0 0 0 .65mm var(--ink); }
+.orn { font-size:7pt; }
