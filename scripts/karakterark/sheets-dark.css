@@ -1,0 +1,18 @@
+/* Mørk fantasy: mørke paneler med lys tekst og gyldne detaljer.
+   Beregnet til skærm og farveprint; bruger mere blæk end de lyse temaer. */
+:root{
+  --parch:#302b38; --ink:#f2e8d7; --muted:#c4b39b; --accent:#e0b766; --line:#78654c; --paper:#211e27;
+  --str:#ef8c82; --dex:#9ed6a3; --con:#e7b878; --int:#9ec7f3; --wis:#c4a4ec; --cha:#eea6ce;
+}
+.box{box-shadow:inset 0 0 0 .25mm rgba(224,183,102,.16);border-radius:1mm}
+.box h2{color:var(--accent);border-bottom-color:var(--line)}
+.box h2 em,.tag,.legend,.stat .lbl,.ab .score,.ab li,.kv,.small,.foot{color:var(--muted)}
+.head{border-bottom-color:var(--accent)}
+.name h1,.turn h3,.feat p b{color:var(--accent)}
+.dot,.cbx{background:var(--paper);border-color:var(--ink)}
+.dot.p{background:var(--ink)}
+.dot.e{background:var(--ink);box-shadow:0 0 0 .6mm var(--parch),0 0 0 1mm var(--ink)}
+td,th{border-bottom-color:var(--line)}
+.dc,.coins div{border-color:var(--line)}
+.coins span{color:var(--accent)}
+.facts dd{border-bottom-color:var(--line)}
