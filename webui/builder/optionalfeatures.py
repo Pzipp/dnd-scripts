@@ -83,7 +83,10 @@ def meets_prerequisites(feature: dict, class_name: str, subclass_name: str | Non
                         satisfied = satisfied or _uid_name(req) in {n.lower() for n in known_spells}
                     elif isinstance(req, dict) and isinstance(req.get("choose"), str):
                         parsed = spell_grants.parse_filter(req["choose"])
-                        names = {s["name"].lower() for s in spell_grants.spells_for_filter(parsed, sources)} if parsed else set()
+                        pool = spell_grants.spells_for_filter(parsed, sources) if parsed else []
+                        if "deals damage" in str(req.get("entrySummary") or req.get("entry") or "").lower():
+                            pool = [s for s in pool if s.get("damageInflict")]  # Agonizing Blast: et cantrip, der gør skade
+                        names = {s["name"].lower() for s in pool}
                         satisfied = satisfied or bool(names & {n.lower() for n in known_spells})
                 ok = ok and satisfied
             # item / otherSummary / patron: kan ikke afgøres af valgene her og regnes som opfyldt
@@ -132,6 +135,19 @@ def build(class_obj: dict, subclass_obj: dict | None, class_name: str, class_lev
                     })
                     pick_no += 1
     return result
+
+
+def feat_slots(feature: dict, level: int) -> list[dict]:
+    """Feats en valgt feature giver (`featProgression`, fx Lessons of the First Ones: ét Origin feat):
+    [{suffix, label, category}]. Progressionen er {'*': n} (n uanset niveau) eller {niveau: n}."""
+    out = []
+    for prog in feature.get("featProgression") or []:
+        table = prog.get("progression")
+        count = table["*"] if isinstance(table, dict) and "*" in table else _count(table, level)
+        category = (prog.get("category") or [None])[0]
+        for n in range(1, int(count or 0) + 1):
+            out.append({"suffix": f"{_slug(feature['name'])}_{n}", "label": f"{feature['name']}: {prog.get('name', 'Feat')}", "category": category})
+    return out
 
 
 def granted(feature: dict, stored: dict, level: int, sources: set[str], origin: str, ability: str | None = None) -> list[dict]:

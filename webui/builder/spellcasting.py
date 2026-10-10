@@ -147,6 +147,7 @@ def build(class_obj: dict, subclass_obj: dict | None, class_name: str, class_lev
         result["picks"].append(variant)
         chosen = stored.get("subclass_variant")
         sub_blocks = [b for b in sub_blocks if b["name"] == chosen]
+    has_spellbook = kind == "class" and bool(class_obj.get("spellsKnownProgressionFixed"))
     always_names: set[str] = set()
     expanded: list[dict] = []
     pick_no = 0
@@ -163,6 +164,8 @@ def build(class_obj: dict, subclass_obj: dict | None, class_name: str, class_lev
                     always_names.add(info["name"])
                 else:
                     pool = [s for s in _filter_pool(item["value"], sources)]
+                    if has_spellbook and item["addition"] == "known":
+                        pool = [s for s in pool if s["level"] >= 1]  # føjes til spellbogen (Evocation Savant): cantrips står ikke i den
                     result["picks"].append({
                         "id": f"sub_spell_{pick_no}", "kind": "extra", "title": "Ekstra spell fra subklassen" if owner == "subklasse" else "Ekstra spell",
                         "count": item["count"], "options": _merge(pool), "addition": item["addition"],

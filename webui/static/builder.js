@@ -321,7 +321,7 @@ function renderSpellcasting(k, base) {
 function renderOptionalFeatures(k, base) {
   const picks = k.optional_features || [];
   if (!picks.length) return "";
-  return picks.map((p) => renderSpellPick(`${base}.choices.${p.id}`, p)).join("");
+  return picks.map((p) => renderSpellPick(`${base}.choices.${p.id}`, p) + (p.feat_slots || []).map(renderFeatSlot).join("")).join("");
 }
 
 function renderSpellPick(path, p) {

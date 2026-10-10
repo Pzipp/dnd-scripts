@@ -755,12 +755,15 @@ def _expertise_choice(data: dict, cid: str, class_name: str, feature: dict, text
         for okey, values in oentry.get("choices", {}).items():
             if (okey.startswith("expertise_") or okey == "scholar") and not (ocid == cid and okey == key):
                 taken.update(values)
+    for feat in (data.get("feats") or {}).values():  # Expertise fra et feat (Skill Expert) kan ikke tages én gang til
+        value = ((feat or {}).get("choices") or {}).get("expertise")
+        taken.update(v.lower() for v in (value if isinstance(value, list) else [value]) if v)
     pool = [s for s in proficient if s in _SCHOLAR_SKILLS] if key == "scholar" else proficient
     title = "Scholar (1 skill, kun Arcana, History, Investigation, Medicine, Nature, Religion)" if key == "scholar" \
         else f"Expertise ({count} skill{'s' if count > 1 else ''}, blandt dine proficiencies uden Expertise)"
     return {
         "id": key, "title": title, "options": [x for x in pool if x not in taken],
-        "chosen": data["classes"][cid]["choices"].get(key, []), "count": count,
+        "chosen": data["classes"][cid]["choices"].get(key, [])[:count], "count": count,
     }
 
 
@@ -839,7 +842,21 @@ def _character_weapon_predicate(data: dict, sources: set[str]):
         if obj:
             prof = obj.get("startingProficiencies", {}) if cid == primary else obj.get("multiclassing", {}).get("proficienciesGained", {})
             preds.append(_weapon_prof_predicate(prof))
-    return lambda w: any(p(w) for p in preds)
+    # Træning fra race/afstamning og valgte feats (faste tildelinger): 'simple'/'martial' eller et våbennavn.
+    granted: list[str] = []
+    race = data.get("race") or {}
+    race_obj = e.get_race(race["name"], {race["source"]} if race.get("source") else sources) if race.get("name") and race["name"] != OTHER else None
+    if race_obj:
+        granted += races.fixed_proficiencies(races.effective(race_obj, (race.get("choices") or {}).get("lineage"), sources))["weapons"]
+    for entry in (data.get("feats") or {}).values():
+        feat = e.get_feat(entry["name"], {entry["source"]} if entry.get("source") else sources) if entry and entry.get("name") else None
+        if feat:
+            granted += feat_rules.fixed_grants(feat)["weapons"]
+    granted = {g.split("|")[0].lower() for g in granted}
+
+    def by_grant(w: dict) -> bool:
+        return w.get("weaponCategory") in granted or w["name"].lower() in granted
+    return lambda w: by_grant(w) or any(p(w) for p in preds)
 
 
 def _spell_use_text(item: dict) -> str:
@@ -1037,6 +1054,20 @@ def _background_fixed_feat(data: dict, sources: set[str]) -> tuple[dict, dict] |
     return feat, preset
 
 
+def _prune_expertise(data: dict, sources: set[str]) -> None:
+    """Fjerner valgt Expertise på skills, karakteren ikke længere er trænet i (skill-valg ændret, anden baggrund)."""
+    bg = data.get("background") or {}
+    background_obj = e.get_background(bg["name"], {bg["source"]} if bg.get("source") else sources) if bg.get("name") else None
+    proficient = set(_proficient_skills(data, background_obj))
+    for entry in (data.get("classes") or {}).values():
+        choices = entry.get("choices") or {}
+        for key, values in list(choices.items()):
+            if (key.startswith("expertise_") or key == "scholar") and isinstance(values, list):
+                kept = [v for v in values if v in proficient]
+                if kept != values:
+                    choices[key] = kept
+
+
 def normalize(data: dict) -> dict:
     """Udfylder det, der er afledt af andre valg: en baggrunds faste feat står som et feat-slot
     (`feats.background`), så dens undervalg (Skilled: 3 skills/tools, Magic Initiate: spells,
@@ -1056,6 +1087,7 @@ def normalize(data: dict) -> dict:
         entry.setdefault("choices", {}).update(preset)
         feats["background"] = entry
     _migrate_known_spells(data, sources)
+    _prune_expertise(data, sources)
     return data
 
 
@@ -1232,6 +1264,15 @@ def state(data: dict) -> dict:
                 merged.sort(key=lambda f: f["level"])
                 features = merged
             optional_state = _optional_features_state(class_obj, subclass_obj, class_name, class_level, sources, entry.get("choices") or {}, cid, missing, known_spells)
+            for pick in optional_state:
+                if pick["kind"] != "optional":
+                    continue
+                pick["feat_slots"] = []
+                for label in pick["chosen"]:
+                    option = next((o for o in pick["options"] if o["name"] == label and not o.get("unmet")), None)
+                    feature = next((f for f in e.optional_features(sources) if f["name"] == option["feature"] and f["source"] == option["source"]), None) if option else None
+                    for fs in optionalfeatures.feat_slots(feature or {}, class_level):
+                        pick["feat_slots"].append(_add_feat_slot(f"{cid}_{fs['suffix']}", f"{class_name}: {fs['label']}", fs["category"]))
             if is_caster:
                 spellcasting_state = _spellcasting_state(class_obj, subclass_obj, class_name, class_level, sources, entry.get("choices") or {}, cid, missing)
             if skills_count and len(entry["choices"].get("skills", [])) < skills_count:
