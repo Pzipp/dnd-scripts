@@ -16,14 +16,14 @@ classes:
   level: 6
   subclass: Gloom Stalker
 abilities:
-  STR: 17
+  STR: 16
   DEX: 15
-  CON: 19
+  CON: 20
   INT: 20
   WIS: 20
   CHA: 17
 proficiency_bonus: 6
-hp: 175
+hp: 192
 hit_dice:
 - die: 10
   count: 6

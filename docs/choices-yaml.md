@@ -118,6 +118,15 @@ settings:                  # PR. KARAKTER, ikke delt mellem karakterer
   half_feats: false        # husregel-switch, se model._feat_sub_choices
 ```
 
+### Klassevalg: `skills`, `expertise_<niveau>`, `scholar`, `weapon_mastery`
+
+Under `classes.<id>.choices`. Antal og muligheder læses fra den valgte klasse:
+
+* `skills`: klassens start-skills.
+* `expertise_<niveau>`: ét valg pr. feature, der giver Expertise, vist under featuren (Rogue `expertise_1` og `expertise_6`, Bard 2 og 9, Ranger `expertise_2` (Deft Explorer, 1 skill) og `expertise_9`). Antal fra featurens tekst. Muligheder: karakterens trænede skills, uden dem der allerede har Expertise i et andet valg. Valg for features, karakteren ikke har nået, ignoreres.
+* `scholar`: Wizards `Scholar` (1 skill, kun Arcana, History, Investigation, Medicine, Nature, Religion).
+* `weapon_mastery`: våbennavne. Antal fra klassens tabelkolonne, ellers fra feature-teksten. Muligheder efter teksten: "Melee" (Barbarian) = kun nærkamp, "proficiency" (Rogue, Paladin, Ranger) = våben klassernes træning dækker, ellers alle Simple og Martial (Fighter).
+
 ### Samlet niveau er ikke gemt
 
 Der er intet `level`-felt for karakteren som helhed. Det regnes altid som

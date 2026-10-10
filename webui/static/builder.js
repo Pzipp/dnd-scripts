@@ -267,6 +267,7 @@ function renderClasses(c) {
             <div class="ftext">${esc(f.text)}</div>
             ${f.feat_slot ? renderFeatSlot(f.feat_slot) : ""}
             ${f.weapon_choice ? renderWeaponChoice(`${base}.choices.weapon_mastery`, f.weapon_choice) : ""}
+            ${f.expertise_choice ? renderWeaponChoice(`${base}.choices.${f.expertise_choice.id}`, f.expertise_choice) : ""}
           </li>`).join("")}</ul>`
       : "";
     const spellsBlock = k.is_caster

@@ -686,16 +686,138 @@ def _feature_feat_category(feature: dict) -> str | None:
     return m.group(1) if m else None
 
 
+def _proficient_skills(data: dict, background_obj: dict | None) -> list[str]:
+    """Alle skills karakteren er trænet i (klasse-, race-, feat-valg + baggrundens
+    faste) - de eneste, Expertise kan vælges blandt."""
+    found: set[str] = set()
+    blocks = [data.get("race", {}).get("choices", {}), data.get("background", {}).get("choices", {})]
+    blocks += [c.get("choices", {}) for c in data.get("classes", {}).values()]
+    blocks += [f.get("choices", {}) for f in data.get("feats", {}).values() if f]
+    for block in blocks:
+        for key in ("skill", "skills", "skill_any"):
+            value = block.get(key)
+            found.update(v.lower() for v in (value if isinstance(value, list) else [value]) if v)
+    if background_obj:
+        found.update(k for k, v in (background_obj.get("skillProficiencies") or [{}])[0].items() if v)
+    return [s for s in ALL_SKILLS if s in found]
+
+
+_SCHOLAR_SKILLS = ["arcana", "history", "investigation", "medicine", "nature", "religion"]
+
+
+def _expertise_keys(class_name: str, feature: dict) -> str | None:
+    """Choices-nøglen for en feature, der giver Expertise (ellers None):
+    'expertise_<niveau>' for Expertise/Deft Explorer, 'scholar' for Wizards Scholar."""
+    if feature["name"] in ("Expertise", "Deft Explorer"):
+        return f"expertise_{feature['level']}"
+    if class_name == "Wizard" and feature["name"] == "Scholar":
+        return "scholar"
+    return None
+
+
+def _expertise_choice(data: dict, cid: str, class_name: str, feature: dict, text: str, proficient: list[str]) -> dict | None:
+    """Ét Expertise-valg pr. feature (Rogue niv. 1 og 6, Bard 2 og 9, Ranger
+    Deft Explorer 2 og Expertise 9, Wizard Scholar). Antal fra featurens tekst
+    (Deft Explorer og Scholar: 1), Scholar kun 6 faste skills. En skill kan kun
+    få Expertise én gang på tværs af alle valg og klasser."""
+    key = _expertise_keys(class_name, feature)
+    if not key:
+        return None
+    if key == "scholar" or feature["name"] == "Deft Explorer":
+        count = 1
+    else:
+        m = re.search(r"\b(one|two|three)\b", text, re.I)
+        count = _NUMBER_WORDS[m.group(1).lower()] if m else 2
+    taken = set()
+    for ocid, oentry in data.get("classes", {}).items():
+        for okey, values in oentry.get("choices", {}).items():
+            if (okey.startswith("expertise_") or okey == "scholar") and not (ocid == cid and okey == key):
+                taken.update(values)
+    pool = [s for s in proficient if s in _SCHOLAR_SKILLS] if key == "scholar" else proficient
+    title = "Scholar (1 skill, kun Arcana, History, Investigation, Medicine, Nature, Religion)" if key == "scholar" \
+        else f"Expertise ({count} skill{'s' if count > 1 else ''}, blandt dine proficiencies uden Expertise)"
+    return {
+        "id": key, "title": title, "options": [x for x in pool if x not in taken],
+        "chosen": data["classes"][cid]["choices"].get(key, []), "count": count,
+    }
+
+
 def _slug(name: str) -> str:
     return re.sub(r"[^a-z0-9]", "", name.lower())
 
 
-def _weapon_mastery_choice(class_obj: dict, level: int, sources: set[str]) -> dict | None:
+_NUMBER_WORDS = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6}
+
+
+def _weapon_mastery_count(class_obj: dict, level: int, feature_text: str) -> int | None:
+    """Antal våben: klassens egen tabelkolonne (Fighter, Barbarian...), ellers
+    - for klasser uden kolonne, fx Rogue - tallet i feature-teksten
+    ('mastery properties of two kinds of weapons')."""
     count = e.class_table_value(class_obj, "Weapon Mastery", level)
+    if count:
+        return count
+    m = re.search(r"\b(one|two|three|four|five|six)\s+kinds? of\b", feature_text, re.I)
+    return _NUMBER_WORDS[m.group(1).lower()] if m else None
+
+
+_PROPERTY_CODES = {"light": "L", "finesse": "F", "heavy": "H", "reach": "R", "thrown": "T", "versatile": "V"}
+
+
+def _weapon_prof_predicate(prof: dict):
+    """Fra en klasses startingProficiencies (primær) / proficienciesGained
+    (sekundær): (weapon_dict) -> bool. Forstår 'simple', 'martial' og
+    weaponProficiencies' fromFilter ('type=martial weapon|property=light;finesse')."""
+    rules = []  # (kategori, evt. mængde af property-koder)
+    for entry in prof.get("weaponProficiencies") or []:
+        if entry.get("simple"):
+            rules.append(("simple", None))
+        if entry.get("martial"):
+            rules.append(("martial", None))
+        filt = (entry.get("all") or {}).get("fromFilter", "")
+        if filt:
+            parts = dict(p.split("=", 1) for p in filt.split("|") if "=" in p)
+            props = {_PROPERTY_CODES[x] for x in parts.get("property", "").split(";") if x in _PROPERTY_CODES}
+            rules.append(("martial" if "martial" in parts.get("type", "") else "simple", props or None))
+    if not rules:
+        for w in prof.get("weapons") or []:
+            low = str(w).lower()
+            if low.startswith("simple"):
+                rules.append(("simple", None))
+            elif low.startswith("martial"):
+                rules.append(("martial", None))
+
+    def ok(weapon: dict) -> bool:
+        codes = {(p if isinstance(p, str) else p.get("uid", "")).split("|")[0] for p in weapon.get("property", [])}
+        return any(weapon.get("weaponCategory") == cat and (props is None or props & codes) for cat, props in rules)
+    return ok
+
+
+def _weapon_mastery_choice(class_obj: dict, level: int, sources: set[str], feature_text: str = "", proficient=None) -> dict | None:
+    """Antal fra tabelkolonne/feature-tekst; mulige våben efter feature-teksten:
+    'Simple or Martial Melee' = kun nærkamp, 'Simple or Martial' = alle,
+    'with which you have proficiency' = kun våben karakteren er trænet i."""
+    count = _weapon_mastery_count(class_obj, level, feature_text)
     if not count:
         return None
-    weapon_names = sorted(w["name"] for w in e.weapons(sources))
+    pool = e.weapons(sources)
+    if "proficiency" in feature_text and proficient:
+        pool = [w for w in pool if proficient(w)]
+    elif "Melee" in feature_text:
+        pool = [w for w in pool if (w.get("type") or "").startswith("M")]
+    weapon_names = sorted({w["name"] for w in pool})
     return {"id": "weapon_mastery", "title": f"Weapon Mastery ({count} våben)", "options": weapon_names, "multiple": True, "count": count}
+
+
+def _character_weapon_predicate(data: dict, sources: set[str]):
+    """Union af alle karakterens klassers våbentræning (primær = start-, øvrige = multiclass-træning)."""
+    preds = []
+    primary = primary_class_id(data)
+    for cid, entry in data.get("classes", {}).items():
+        obj = e.get_class(entry.get("name"), {entry.get("source")} if entry.get("source") else sources) if entry.get("name") else None
+        if obj:
+            prof = obj.get("startingProficiencies", {}) if cid == primary else obj.get("multiclassing", {}).get("proficienciesGained", {})
+            preds.append(_weapon_prof_predicate(prof))
+    return lambda w: any(p(w) for p in preds)
 
 
 def state(data: dict) -> dict:
@@ -776,6 +898,10 @@ def state(data: dict) -> dict:
     if primary_entry.get("name") and not any(c["name"] == primary_entry["name"] for c in class_entries):
         class_entries.append({"name": primary_entry["name"], "source": primary_entry.get("source") or "XPHB"})
     class_options = _label_options(class_entries)
+    _bg_name, _bg_source = data["background"].get("name"), data["background"].get("source")
+    _background_obj = e.get_background(_bg_name, {_bg_source} if _bg_source else sources) if _bg_name else None
+    _weapon_proficient = _character_weapon_predicate(data, sources)
+    _proficient = _proficient_skills(data, _background_obj)
     classes_state = []
     for cid, entry in data.get("classes", {}).items():
         class_name = entry.get("name")
@@ -842,17 +968,20 @@ def state(data: dict) -> dict:
             if category:
                 feat_slot = _add_feat_slot(f"{cid}_{f['level']}_{_slug(f['name'])}", f"{class_name} niveau {f['level']}", category)
             if f["name"] == "Weapon Mastery" and class_obj:
-                weapon_choice = _weapon_mastery_choice(class_obj, class_level, sources)
+                weapon_choice = _weapon_mastery_choice(class_obj, class_level, sources, e.render_text(f.get("entries", [])), _weapon_proficient)
                 if weapon_choice:
                     stored = entry["choices"].get("weapon_mastery", [])
                     weapon_choice["chosen"] = stored
                     if len(stored) < weapon_choice["count"]:
                         missing.append(f"classes.{cid}.choices.weapon_mastery")
+            f_text = e.render_text(f.get("entries", []))
+            expertise_choice = _expertise_choice(data, cid, class_name, f, f_text, _proficient) if class_obj else None
+            if expertise_choice and len(expertise_choice["chosen"]) < expertise_choice["count"]:
+                missing.append(f"classes.{cid}.choices.{expertise_choice['id']}")
             features_out.append({
-                "name": f["name"], "level": f["level"], "text": e.render_text(f.get("entries", [])),
-                "feat_slot": feat_slot, "weapon_choice": weapon_choice,
+                "name": f["name"], "level": f["level"], "text": f_text,
+                "feat_slot": feat_slot, "weapon_choice": weapon_choice, "expertise_choice": expertise_choice,
             })
-
         classes_state.append({
             "id": cid, "name": class_name, "source": class_source, "level": class_level,
             "is_primary": is_primary_class, "hit_die": (class_obj or {}).get("hd", {}).get("faces", 8),

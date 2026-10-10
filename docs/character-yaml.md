@@ -38,7 +38,7 @@ expertise: []
 tools: ["Smith's Tools"]       # flad liste - IKKE grupperet efter evne, se nedenfor
 languages: Common, Draconic, Elvish  # Common (fast) + languages.known - se character_yaml._languages()
 can_use: {armor: "light, medium, heavy, shields", weapons: "simple, martial"}
-masteries: []                  # ikke udledt endnu, se nedenfor
+masteries: [[Vex, Shortsword]]  # [egenskab, våben] fra classes.*.choices.weapon_mastery - se character_yaml._masteries()
 feats: [{name: Tavern Brawler, source: XPHB}]
 spells_known: [{name: Fire Bolt, source: XPHB}]
 class_features: [{class: Fighter, name: Action Surge, source: XPHB, level: 2}]
@@ -86,9 +86,7 @@ altid i `character_yaml.py`, aldrig i renderen.
   `vaerktoej: {DEX: [...]}`. 5etools' egne data har ikke en sikker,
   opslåelig "hvilken evne styrer dette værktøj"-regel, og Print-fanen viser
   derfor (endnu) ikke værktøj under evne-boksen.
-* **`masteries` udledes ikke endnu.** At afgøre hvilken Weapon Mastery-
-  egenskab et valgt våben faktisk har, kræver et opslag pr. våben i
-  5etools' `items-base.json`, som ikke er bygget endnu.
+* **`masteries`** udledes af de valgte Weapon Mastery-våben; egenskaben slås op i `mastery` på våbnet i 5etools' `items-base.json`. `expertise` kommer fra klassens `choices.expertise`.
 * **HP/Hit Dice bruger nu HVER klasses egen hit die** (rettet - var tidligere
   kun primærklassens). `choices.yaml`s `hp_rolls` er pr. klasse (se
   [choices-yaml.md](choices-yaml.md)): PRIMÆRklassens niveau 1 er implicit

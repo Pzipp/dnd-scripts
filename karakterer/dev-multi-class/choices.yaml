@@ -26,7 +26,9 @@ background:
   source: XPHB
   choices:
     ability_split:
-      type: 1-1-1
+      type: 2-1
+      plus2: con
+      plus1: wis
 abilities:
   method: roll
   rolls: {}

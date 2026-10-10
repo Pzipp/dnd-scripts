@@ -78,3 +78,32 @@ samlet herfra, kommentarerne i filen selv er urørt.
   [character-yaml.md](character-yaml.md#afledte-felter-med-et-kendt-gap).
 - Bekræftet OK som manuelt felt, ikke en todo: Snigangreb-reglen
   (`rules`-boksen) og Money-boksen.
+
+## Klassevalg: Expertise og Weapon Mastery - kendte huller
+
+Bygget i `model._expertise_choices()` / `model._weapon_mastery_choice()`,
+afledt i `character_yaml._masteries()` og `expertise`. Dækker Rogue, Bard,
+Ranger (Deft Explorer + Expertise), Wizard (Scholar), Fighter, Barbarian,
+Paladin. Hvad der kunne udbygges:
+
+- **Expertise-antal:** maks. håndhæves ikke (kun "for få" meldes som `missing`). Valg for en feature, karakteren ikke har nået, ignoreres i stedet for at blive slettet.
+- **Expertise vs. proficiencies:** Fjernes en skill-proficiency (eller
+  skiftes baggrund), ryddes en valgt Expertise på den ikke automatisk.
+- **Expertise fra andre kilder:** Feats med Expertise (fx Skill Expert)
+  deduperes ikke mod klassernes Expertise. Subclass-/species-features med
+  Expertise opdages kun, hvis de hedder "Expertise", "Deft Explorer" eller
+  "Scholar" (navnematch, ingen generel regel i 5etools-data).
+- **Weapon Mastery, trænede våben:** Filteret ("with which you have
+  proficiency") bruger kun klassernes egen våbentræning. Træning fra race,
+  baggrund eller feats (fx Weapon Master) tælles ikke med. Klasser, hvis
+  feature-tekst hverken siger "proficiency" eller "Melee", får alle
+  Simple+Martial våben.
+- **Weapon Mastery, skift:** Bytte våben ved Long Rest er ikke modelleret
+  (kun ét aktuelt valg). Mastery-egenskabernes regeltekst vises ikke på
+  arket, kun navnet.
+- **Homebrew-våben** uden `mastery`-felt giver ingen par i `masteries`.
+- **Ingen automatiske tests** af valgene; kun manuelt prøvet mod
+  Rogue/Bard/Ranger/Wizard/Barbarian/Fighter/Paladin.
+- **Baggrunds-feat (fx Alert fra Criminal)** kommer stadig ikke med i
+  `feats`/initiativ for baggrunde med et fast feat.
+- `dnd.py tjek` kender ikke de nye (character/choices/sheets-)karakterer.

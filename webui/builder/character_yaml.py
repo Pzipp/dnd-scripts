@@ -295,6 +295,20 @@ def _collect(data: dict, *keys: str) -> list[str]:
     return out
 
 
+def _masteries(data: dict, sources: set[str]) -> list[list[str]]:
+    """[[mastery-egenskab, våben], ...] ud fra hver klasses valgte Weapon
+    Mastery-våben; egenskaben slås op på våbnet i items-base ('Vex|XPHB' -> Vex)."""
+    weapons = {w["name"]: w for w in e.weapons(sources)}
+    out = []
+    for entry in data.get("classes", {}).values():
+        for name in entry.get("choices", {}).get("weapon_mastery", []):
+            for prop in (weapons.get(name) or {}).get("mastery", []):
+                pair = [prop.split("|")[0], name]
+                if pair not in out:
+                    out.append(pair)
+    return out
+
+
 def derive_from_state(data: dict, state: dict) -> dict:
     """Bygger character.yamls indhold ud fra choices.yaml (data) og det
     allerede beregnede model.state(data) (state) - ingen ny regelberegning,
@@ -337,7 +351,10 @@ def derive_from_state(data: dict, state: dict) -> dict:
 
     skills = sorted({*(s.lower() for s in _collect(data, "skill", "skills", "skill_any")), *fixed_skills})
     tools = sorted({*_collect(data, "tool", "instrument"), *fixed_tools})
-    expertise = sorted(set(_collect(data, "expertise")))
+    expertise = sorted({
+        skill for c in state.get("classes", []) for f in c.get("features", [])
+        if f.get("expertise_choice") for skill in f["expertise_choice"]["chosen"]
+    })
 
     classes_out = [
         {"name": c.get("name"), "source": c.get("source"), "level": c.get("level"), "subclass": c.get("subclass")}
@@ -418,7 +435,7 @@ def derive_from_state(data: dict, state: dict) -> dict:
         "tools": tools,
         "languages": _languages(data),  # se _languages() - klasse-/feature-tildelte ekstra sprog er IKKE talt med, kendt gap
         "can_use": can_use,
-        "masteries": [],  # se docs/character-yaml.md: ikke udledt endnu (mangler sikker opslagsvej til mastery pr. våben)
+        "masteries": _masteries(data, sources),
         "feats": feats,
         "spells_known": spells_known,
         "class_features": class_features,
