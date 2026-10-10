@@ -25,6 +25,17 @@
     </p>
     <div id="source-list" class="source-list"><p>Henter...</p></div>
   </section>
+  <section class="step">
+    <h2>Ældre racer</h2>
+    <label style="display:flex;align-items:center;gap:.5rem;font-size:.9rem">
+      <input type="checkbox" id="race-ability">
+      Tæl ældre racers egne evnepoint med (fx PHB Dwarf +2 CON)
+    </label>
+    <p style="font-size:.8rem;color:var(--muted);margin-top:.3rem">
+      2024 flyttede evnebonussen fra racen til baggrunden. Slået fra som standard, så en ældre race
+      ikke giver dobbelte evnepoint sammen med baggrunden. Gælder kun racer fra ældre kilder.
+    </p>
+  </section>
   <button class="btn" id="save-btn">Gem</button>
   <span id="save-msg" style="margin-left:.6rem;color:var(--muted);font-size:.85rem"></span>
 </main>
@@ -40,6 +51,7 @@ async function load() {
   }
   const allowed = new Set(data.allowed);
   const entries = Object.entries(data.all).sort((a, b) => a[0].localeCompare(b[0]));
+  document.getElementById("race-ability").checked = !!data.race_ability;
   document.getElementById("source-list").innerHTML = entries.map(([code, title]) => `
     <label>
       <input type="checkbox" value="${code}" ${allowed.has(code) ? "checked" : ""} ${code === "XPHB" ? "disabled" : ""}>
@@ -50,9 +62,10 @@ document.getElementById("save-btn").addEventListener("click", async () => {
   const boxes = document.querySelectorAll("#source-list input[type=checkbox]");
   const allowed = Array.from(boxes).filter((b) => b.checked).map((b) => b.value);
   if (!allowed.includes("XPHB")) allowed.push("XPHB");
+  const race_ability = document.getElementById("race-ability").checked;
   const res = await fetch("/api/builder/settings", {
     method: "POST", headers: {"content-type": "application/json"},
-    body: JSON.stringify({name: NAME, allowed}),
+    body: JSON.stringify({name: NAME, allowed, race_ability}),
   });
   const data = await res.json();
   document.getElementById("save-msg").textContent = data.error ? data.error : "Gemt.";

@@ -68,12 +68,10 @@ for effekt-udtræks-designet.
   Legacies-tabellen siger 60 ft for alle tre Legacies. Byggeren læser dataene
   uændret (en Abyssal Tiefling får derfor 120 ft) og har bevidst ingen
   omvej; fjernes, når 5etools er rettet. Afklar mod bogen, inden der meldes.
-- **Ikke bygget endnu (races):** `subrace`-listen (ældre kilder: High Elf,
-  Hill Dwarf osv., 98 poster med egen `ability`/`speed`/`additionalSpells`)
-  og racers egen `ability` (152 stk. i ældre kilder, tælles ikke med i
-  evnescorerne). Dertil `languageProficiencies`, `weaponProficiencies`,
-  `armorProficiencies`, `immune`, `vulnerable` og `conditionImmune` på racer.
-  Racer fra XPHB er dækket.
+- **Ældre racer, bevidst ikke dækket:** `languageProficiencies` (sprog vælges i
+  byggerens egen dialog efter 2024-reglen) og de 17 racer med `_copy`. Subraces,
+  racers `ability` (indstilling `race_ability`), armor-/weaponProficiencies,
+  immune/vulnerable og Variant Humans feat er bygget.
 - **Dwarven Toughness (+1 HP pr. level) mangler i HP.** Racen har intet
   struktureret felt for det; effekten står kun i trækkets tekst. Den findes
   hverken i `bibliotek/_effects.yaml` eller `_descriptions.yaml`, så

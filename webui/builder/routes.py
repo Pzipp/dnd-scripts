@@ -379,6 +379,7 @@ def api_settings():
         "all": e5tools.all_sources(),
         "allowed": sorted(char_settings.get("allowed_sources") or settings.DEFAULT_SOURCES),
         "default": settings.DEFAULT_SOURCES,
+        "race_ability": char_settings.get("race_ability", settings.DEFAULT_RACE_ABILITY),
     })
 
 
@@ -396,6 +397,6 @@ def api_set_settings():
     if not isinstance(allowed, list) or not allowed:
         return jsonify({"error": "Vælg mindst én kilde."}), 400
     data = model.load(character_dir)
-    data["settings"] = {"allowed_sources": sorted(allowed)}
+    data["settings"] = {"allowed_sources": sorted(allowed), "race_ability": bool(payload.get("race_ability", False))}
     _save_choices(character_dir, data)
-    return jsonify({"allowed": data["settings"]["allowed_sources"]})
+    return jsonify({"allowed": data["settings"]["allowed_sources"], "race_ability": data["settings"]["race_ability"]})

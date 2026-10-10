@@ -42,6 +42,9 @@ size: Medium                   # racens størrelse, eller det valgte (race.choic
 speeds: {walk: 35}             # ft; også fly/swim/climb, hvis racen har dem
 senses: {darkvision: 60, blindsight: 10}  # ft, fra race/afstamning og valgte feats - se character_yaml._feat_grants()
 resistances: [cold, fire]      # fra race/afstamning (fast eller valgt) og valgte feats
+immunities: []                 # race: immune / vulnerable / conditionImmune (faste, strenge)
+vulnerabilities: []
+condition_immunities: []
 granted_spells:                # spells race/afstamning og feats giver på karakterens nuværende niveau
 - {name: Faerie Fire, source: XPHB, cantrip: false, addition: innate, ability: WIS, recharge: long_rest, uses: '1', from: "race: Elf"}
 masteries: [[Vex, Shortsword]]  # [egenskab, våben] fra classes.*.choices.weapon_mastery - se character_yaml._masteries()
@@ -61,7 +64,13 @@ Alt læses fra racens strukturerede 5etools-felter (`webui/builder/races.py`):
 * `darkvision`/`blindsight` → `senses`. `speed` (tal, eller `{walk, fly, swim}` hvor `true` = lig walk) → `speeds`. `size` med flere bogstaver (`["S","M"]`) er et valg → `size`.
 * `resist`: faste (`["necrotic"]`) og `{choose: {from}}` (valg, `race.choices.resist`) → `resistances`.
 * `additionalSpells` → `granted_spells` (også for valgte feats, se nedenfor; `from` siger hvorfra, `addition` er `known`/`innate`/`prepared`), læst af `webui/builder/spell_grants.py`: `known`/`innate`/`prepared`, niveaunøgler (spellen låses op på karakterniveau 1/3/5), brugsnøgler (`daily: {"1": ...}` = 1 pr. Long Rest, `"1e"` = 1 pr. spell, `"pb"` = PB gange), `choose`-filtre (valg `spell_<n>`) og spellcasting-evne (`{choose: [int, wis, cha]}` → `race.choices.spell_ability`). Kun spells op til karakterens niveau tages med.
-* `skillProficiencies` og `toolProficiencies` følger samme regler som for feats (`true` = fast, tal/`choose` = valg).
+* `skillProficiencies` og `toolProficiencies` følger samme regler som for feats (`true` = fast, tal/`choose` = valg). `armorProficiencies`/`weaponProficiencies` (`true`) lægges i `can_use`. `immune`/`vulnerable`/`conditionImmune` → `immunities`/`vulnerabilities`/`condition_immunities`. `feats: [{any: 1}]` (Variant Human) giver ét valgfrit feat (ikke Epic Boon/Fighting Style).
+
+### Ældre kilder (PHB 2014, MPMM, VGM m.fl.)
+
+* **Subraces.** Ældre racer har deres afstamninger som `subrace`-poster (`raceName` + `raceSource`), filtreret på de tilladte kilder. De lægges ovenpå racen efter 5etools' regler (`races.merge_subrace`): `ability` flettes pr. position (eller erstattes ved `overwrite.ability`), `entries` lægges til, `traitTags`/`languageProficiencies` lægges til (eller erstattes), `skillProficiencies` flettes, og alt andet (speed, darkvision, additionalSpells, armor-/weaponProficiencies, resist) erstattes af subracens egne felter. En subrace uden navn hedder `Standard` (grundvarianten, fx Human: +1 på alt). Valget er det samme `race.choices.lineage` som for `_versions`.
+* **Racers evnepoint** (`ability`: `{con: 2}`, negative tal, `choose: {from, count, amount}`, `weighted: [2, 1]`) tælles KUN med, når indstillingen pr. karakter `race_ability` er slået til (2024 flyttede dem til baggrunden, så de ville ellers tælle dobbelt). Valgene er `ability_option` (flere blokke), `ability_pick` (liste) og `ability_w<n>` (vægtet, n'te vægt). `lineage: "VRGR"` uden egen ability giver frit +2/+1 eller +1/+1/+1, som 5etools selv gør.
+* **Ikke dækket:** `languageProficiencies` på racer (sprog vælges i byggerens egen sprog-dialog efter 2024-reglen), og racer med `_copy` (17 stk.).
 
 Baggrunde følger samme tool-regler: `anyGamingSet: 1` (Guard, Noble, Soldier), `anyArtisansTool` (Artisan) og `anyMusicalInstrument` (Entertainer) er VALG (`background.choices.gaming_set` / `artisan_tool` / `instrument`), ikke faste værktøjer.
 

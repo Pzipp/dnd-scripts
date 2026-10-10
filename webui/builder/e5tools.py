@@ -251,6 +251,15 @@ def races(sources: set[str]) -> list[dict]:
     return [r for r in all_races if r.get("source") in sources]
 
 
+def subraces(race: dict, sources: set[str] | None = None) -> list[dict]:
+    """Subraces (ældre kilder) til en race: poster i races.json's `subrace`-liste med samme
+    raceName/raceSource. En subrace uden navn er racens grundvariant (Human: +1 på alt)."""
+    all_sub = _load("races.json").get("subrace", []) + _homebrew_entries("subrace")
+    return [sr for sr in all_sub
+            if sr.get("raceName") == race.get("name") and sr.get("raceSource", race.get("source")) == race.get("source")
+            and (sources is None or sr.get("source", race.get("source")) in sources)]
+
+
 def get_race(name: str, sources: set[str]) -> dict | None:
     for r in races(sources):
         if r.get("name") == name:
@@ -281,6 +290,12 @@ def get_feat(name: str, sources: set[str]) -> dict | None:
         if f.get("source") in sources and f.get("name") == name:
             return f
     return None
+
+
+def feats_any(sources: set[str]) -> list[dict]:
+    """Alle feats et "feats: [{any: 1}]" kan vælge blandt (Variant Human): ikke Epic Boons og Fighting Styles,
+    som kun gives af en klassefeature. Ældre feats har ingen `category`."""
+    return [f for f in _all_feats() if f.get("source") in sources and not str(f.get("category") or "").startswith(("EB", "FS"))]
 
 
 def feats_by_category(category: str, sources: set[str]) -> list[dict]:

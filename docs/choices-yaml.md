@@ -115,6 +115,7 @@ languages:
 
 settings:                  # PR. KARAKTER, ikke delt mellem karakterer
   allowed_sources: [XPHB]  # hvilke 5etools-kildekoder der må slås op i for DENNE karakter
+  race_ability: false      # tæl ældre racers egne evnepoint med (2024 flyttede dem til baggrunden)
 ```
 
 ### Klassevalg: `skills`, `expertise_<niveau>`, `scholar`, `weapon_mastery`
@@ -162,6 +163,7 @@ autoritative liste):
 | `lineage` | tekst | Racens afstamning = valgt `_versions`-version, som kortnavn (`Drow`, `Wood Elf`, `Abyssal`, `Forest Gnome`, `Cloud`, `Gold`). Ældre kilder uden `_versions`: navnet på en `additionalSpells`-blok. Kun på `race.choices` |
 | `size` | tekst | Størrelse, når racen kan vælge (`Small`/`Medium`). Kun på `race.choices` |
 | `spell_ability` | `INT`\|`WIS`\|`CHA` | Spellcasting-evne for racens spells. Kun på `race.choices` |
+| `ability_option` / `ability_pick` / `ability_w<n>` | tekst / liste / `STR`... | Ældre racers evnepoint (kun med `race_ability`): valgt variant, valgte evner, vægtede evner. Kun på `race.choices` |
 | `ability` | `STR`\|`DEX`\|... | Feat'ets evne-valg: +`amount` (normalt 1) til evnen, loft 20 eller feat'ets `max`. Styrer også saving throw-træning (Resilient) og spellcasting-evne (`inherit`), når feat'et siger det |
 | `save` | `STR`\|... | Saving throw-træning valgt for sig selv, når feat'et ikke kobler den til `ability` |
 | `asi` | `{mode: '1'|'2', ability1, ability2}` | Ability Score Improvement: `mode '2'` = +1 til to evner, `'1'` = +2 til én |

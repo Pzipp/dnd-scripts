@@ -138,8 +138,8 @@ def _dependent_fields(path: str, data: dict) -> list[str]:
         return deps
     if path == "race.choices.lineage":
         # En anden afstamning har andre resistance-/spell-muligheder og -størrelse.
-        stale = ("resist", "spell_ability", "size")
-        return [f"race.choices.{k}" for k in (data.get("race", {}).get("choices") or {}) if k in stale or k.startswith(("spell_", "b0_", "b1_"))]
+        stale = ("resist", "spell_ability", "size", "ability_option", "ability_pick")
+        return [f"race.choices.{k}" for k in (data.get("race", {}).get("choices") or {}) if k in stale or k.startswith(("spell_", "b0_", "b1_", "ability_w"))]
     if path == "background.name":
         return ["background.choices", "equipment.background_package", "feats.background"]
     if path.startswith("feats.") and path.endswith(".name"):
@@ -273,6 +273,8 @@ def _feat_grant(obj: dict | None) -> dict | None:
     if "anyFromCategory" in grant:
         c = grant["anyFromCategory"]
         return {"type": "choice", "category": (c.get("category") or ["G"])[0], "count": c.get("count", 1)}
+    if "any" in grant:  # Variant Human: ét hvilket som helst feat
+        return {"type": "choice", "category": None, "count": grant["any"]}
     feat_id = next(iter(grant), None)
     return {"type": "fixed", "id": feat_id} if feat_id else None
 
@@ -917,7 +919,36 @@ def _race_spell_choices(eff: dict, sources: set[str], stored: dict) -> list[dict
     return choices
 
 
-def _race_sub_choices(base: dict, eff: dict, stored: dict, sources: set[str]) -> list[dict]:
+def _race_ability_choices(eff: dict, stored: dict) -> list[dict]:
+    """Valg for racens egen evnebonus (ældre kilder, kun når indstillingen race_ability er slået til):
+    variant (flere blokke), frie evner (`choose.from`, `count`) og vægtede evner (+2/+1 eller +1/+1/+1);
+    faste bonusser vises som information."""
+    blocks = races.ability_alternatives(eff)
+    if not blocks:
+        return []
+    choices = []
+    labels = [races.ability_label(b) for b in blocks]
+    if len(blocks) > 1:
+        choices.append({"id": "ability_option", "title": "Racens evnebonus (variant)", "options": labels, "multiple": False})
+        if stored.get("ability_option") not in labels:
+            return choices
+        block = blocks[labels.index(stored["ability_option"])]
+    else:
+        block = blocks[0]
+    fixed = [f"{'+' if v > 0 else ''}{v} {k.upper()}" for k, v in block.items() if k in races.ABILITY_KEYS]
+    if fixed:
+        choices.append({"id": "ability_fixed", "title": "Racens evnebonus (automatisk)", "fixed": True, "options": fixed, "multiple": len(fixed) > 1})
+    choose = block.get("choose") or {}
+    if choose.get("weighted"):
+        for i, weight in enumerate(choose["weighted"]["weights"]):
+            choices.append({"id": f"ability_w{i}", "title": f"Evne {'+' if weight > 0 else ''}{weight}", "options": [a.upper() for a in choose["weighted"]["from"]], "multiple": False})
+    elif choose.get("from"):
+        n, amount = choose.get("count", 1), choose.get("amount", 1)
+        choices.append({"id": "ability_pick", "title": f"Evne +{amount} ({n} forskellige)" if n > 1 else f"Evne +{amount}", "options": [a.upper() for a in choose["from"]], "multiple": n > 1, "count": n})
+    return choices
+
+
+def _race_sub_choices(base: dict, eff: dict, stored: dict, sources: set[str], with_ability: bool = False) -> list[dict]:
     """Alle valg en race giver, læst fra 5etools' felter (se races.py): skill, afstamning (= version),
     størrelse, resistance, værktøj og spells. Felter afstamningen ændrer læses fra den valgte version;
     så længe en race med afstamninger ikke har fået en valgt, vises kun afstamnings-valget først."""
@@ -925,7 +956,7 @@ def _race_sub_choices(base: dict, eff: dict, stored: dict, sources: set[str]) ->
     skills_from, count = _skills_from_choose(eff.get("skillProficiencies"))
     if skills_from:
         choices.append({"id": "skill", "title": f"Skill ({count})", "options": skills_from, "multiple": count > 1, "count": count})
-    lineage_options = [label for label, _v in races.lineages(base)]
+    lineage_options = [label for label, _v in races.lineages(base, sources)]
     if not lineage_options:
         # Ældre kilder: afstamningen er navnet på en additionalSpells-blok.
         named = [b["name"] for b in base.get("additionalSpells") or [] if b.get("name")]
@@ -943,6 +974,8 @@ def _race_sub_choices(base: dict, eff: dict, stored: dict, sources: set[str]) ->
         choices.append({"id": "resist", "title": f"Resistance ({n})" if n > 1 else "Resistance", "options": [r.capitalize() for r in resist["from"]], "multiple": n > 1, "count": n})
     choices += _tool_choices(eff.get("toolProficiencies"), sources)
     if not pending:
+        if with_ability:
+            choices += _race_ability_choices(eff, stored)
         choices += _race_spell_choices(eff, sources, stored)
     return choices
 
@@ -966,12 +999,12 @@ def state(data: dict) -> dict:
     race_obj = e.get_race(race_name, {race_source} if race_source else sources) if (race_name and race_name != OTHER) else None
     race_options = _label_options([{"name": r["name"], "source": r["source"]} for r in e.races(sources)]) + [{"name": OTHER, "source": None, "label": OTHER}]
     race_sub_choices = []
-    race_grant = _feat_grant(race_obj)
+    race_stored = data["race"].get("choices") or {}
+    race_eff = races.effective(race_obj, race_stored.get("lineage"), sources) if race_obj else None
+    race_grant = _feat_grant(race_eff)  # den valgte afstamnings feats (Variant Human: ét valgfrit feat)
     race_traits = []
     if race_obj:
-        race_stored = data["race"].get("choices") or {}
-        race_eff = races.effective(race_obj, race_stored.get("lineage"))
-        race_sub_choices = _race_sub_choices(race_obj, race_eff, race_stored, sources)
+        race_sub_choices = _race_sub_choices(race_obj, race_eff, race_stored, sources, with_ability=char_settings.get("race_ability", settings.DEFAULT_RACE_ABILITY))
         for sc in race_sub_choices:
             if not _sub_choice_complete(sc, race_stored.get(sc["id"])):
                 missing.append(f"race.choices.{sc['id']}")
@@ -982,7 +1015,8 @@ def state(data: dict) -> dict:
         missing.append("race.name")
 
     def _add_feat_slot(key: str, label: str, category: str) -> dict:
-        candidates = [ft for ft in e.feats_by_category(category, sources) if _meets_prerequisite(ft, level, assigned_abilities, has_spellcasting, armor_profs)]
+        pool = e.feats_by_category(category, sources) if category else e.feats_any(sources)
+        candidates = [ft for ft in pool if _meets_prerequisite(ft, level, assigned_abilities, has_spellcasting, armor_profs)]
         chosen = data["feats"].get(key)
         # Et allerede valgt feat holdes altid i options, selvom det ikke længere
         # ville kvalificere (fx niveau faldt, eller en skærpet forudsætning som

@@ -53,6 +53,7 @@ from . import effects
 from . import feat_rules
 from . import model
 from . import races
+from . import settings
 from . import spell_grants
 
 # D&D 2024 (PHB)-reglens faste Proficiency Bonus pr. level - ikke noget nogen
@@ -200,6 +201,9 @@ def empty_character_sheet() -> dict:
         "speeds": {"walk": 30},
         "senses": {},
         "resistances": [],
+        "immunities": [],
+        "vulnerabilities": [],
+        "condition_immunities": [],
         "granted_spells": [],
         "masteries": [],
         "feats": [],
@@ -303,6 +307,15 @@ def _ability_bonuses(data: dict, state: dict, sources: set[str]) -> dict[str, in
     elif split.get("type") == "1-1-1":
         for ability in state.get("background", {}).get("ability_options") or []:
             bonuses[ability.upper()] += 1
+
+    if data.get("settings", {}).get("race_ability", settings.DEFAULT_RACE_ABILITY):
+        race_name, race_source = data["race"].get("name"), data["race"].get("source")
+        race_obj = e.get_race(race_name, {race_source} if race_source else sources) if (race_name and race_name != model.OTHER) else None
+        stored = data["race"].get("choices") or {}
+        if race_obj and not races.needs_lineage(race_obj, stored.get("lineage"), sources):
+            for ability, amount in races.ability_bonus(races.effective(race_obj, stored.get("lineage"), sources), stored).items():
+                if ability in bonuses:
+                    bonuses[ability] += amount
 
     for feat_entry, feat_obj in _chosen_feats(data, sources):
         asi = (feat_entry.get("choices") or {}).get("asi")
@@ -488,7 +501,7 @@ def derive_from_state(data: dict, state: dict) -> dict:
     background_obj = e.get_background(background_name, {background_source} if background_source else sources) if background_name else None
     race_obj = e.get_race(race_name, {race_source} if race_source else sources) if (race_name and race_name != model.OTHER) else None
     race_stored = data["race"].get("choices") or {}
-    race_eff = races.effective(race_obj, race_stored.get("lineage")) if race_obj else {}
+    race_eff = races.effective(race_obj, race_stored.get("lineage"), sources) if race_obj else {}
     speeds = races.speeds(race_eff) if race_obj else {"walk": 30}
     speed = speeds["walk"]
 
@@ -536,7 +549,8 @@ def derive_from_state(data: dict, state: dict) -> dict:
             can_use["armor"] = ", ".join(e.clean_text(a) for a in sp["armor"])
         if sp.get("weapons"):
             can_use["weapons"] = ", ".join(e.clean_text(w) for w in sp["weapons"])
-    for key, extra in (("armor", feat_rules.armor_text(feat_grants["armor"])), ("weapons", feat_rules.weapon_text(feat_grants["weapons"]))):
+    race_prof = races.fixed_proficiencies(race_eff)
+    for key, extra in (("armor", feat_rules.armor_text([*race_prof["armor"], *feat_grants["armor"]])), ("weapons", feat_rules.weapon_text([*race_prof["weapons"], *feat_grants["weapons"]]))):
         if extra:
             can_use[key] = ", ".join(dict.fromkeys([*filter(None, [can_use.get(key)]), *extra]))
 
@@ -607,6 +621,9 @@ def derive_from_state(data: dict, state: dict) -> dict:
         "speeds": speeds,  # {'walk': 30, 'fly': 30, ...} i ft
         "senses": senses,  # {'darkvision': 60, 'blindsight': 10, ...} i ft, fra race/afstamning og feats
         "resistances": resistances,  # fra race/afstamning og feats
+        "immunities": races.fixed_other(race_eff)["immune"],
+        "vulnerabilities": races.fixed_other(race_eff)["vulnerable"],
+        "condition_immunities": races.fixed_other(race_eff)["conditionImmune"],
         "granted_spells": granted_spells,
         "masteries": _masteries(data, sources),
         "feats": feats,
