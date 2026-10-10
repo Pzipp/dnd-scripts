@@ -53,5 +53,15 @@ tilføjes. Feats der er forsvundet fra kilden meldes, men slettes ikke. Feats ma
 | `links` | `requires`, `replaces`, `duplicatesWith`: andre feats/features, så arket ikke viser samme regel to gange |
 | `notes` | Frie redaktionsnoter. Vises ikke på noget print |
 
+### Konventioner opfundet i batch 1
+
+* `{choice: <id>}` som værdi peger på en post i `playerChoices` (fx `trainingGranted.tools`, `spellGrants.list`, `spellGrants.ability`). `playerChoices.id` navngives `<feat>-<valg>`.
+* `playerChoices.options: []` betyder "slås op i en liste" (fx spell-listen), ikke "ingen muligheder".
+* `spellGrants.alwaysPrepared: true`: spellen er altid forberedt. `noSlot` er antal gange pr. `recharge` uden spell slot.
+* `statChanges.damage` er et objekt pr. angrebstype (`unarmedStrike: 1d4{+STR}`). Formler kan ikke udtrykke level eller en Hit Die; i så fald står de som tekst, og tallet ligger i `hpPerLevel` el.lign.
+* `grantsActions.formula` er den ene formel, handlingen bruger. `uses` er antal anvendelser. Deler to handlinger samme pulje, bruges `resources` til puljen.
+* Tekst-regler uden eget felt (Spell Change, Repeatable, rabatter) står kun i `descriptionSheetDa` og `notes`.
+* Danske `nameDa` er forslag, indtil de er gennemgået (`translationStatus: reviewed`).
+
 Værdier i felterne følger navnekonventionen: engelske regelnavne står alene (`Dash`,
 `Stealth`, `Fire`), forklarende tekst er dansk.

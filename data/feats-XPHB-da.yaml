@@ -147,27 +147,38 @@ feat:
     - Immediately after you roll {@variantrule Initiative|XPHB}, you can swap your {@variantrule Initiative|XPHB}
       with the {@variantrule Initiative|XPHB} of one willing ally in the same combat. You can't make this
       swap if you or the ally has the {@condition Incapacitated|XPHB} condition.
-  translationStatus: notStarted
-  nameDa: null
+  translationStatus: draft
+  nameDa: Årvågen
   prerequisiteDa: null
-  descriptionSheetDa: null
-  descriptionShortDa: null
+  descriptionSheetDa: <b>Initiative Proficiency.</b> Når du slår Initiative, kan du lægge din Proficiency
+    Bonus til slaget. <b>Initiative Swap.</b> Lige efter du har slået Initiative, kan du bytte din Initiative
+    med en villig allieret i samme kamp. Du kan ikke bytte, hvis du eller den allierede har tilstanden
+    Incapacitated.
+  descriptionShortDa: +PB til Initiative. Byt Initiative med en villig allieret lige efter slaget (ikke
+    hvis Incapacitated).
   card:
     front:
-      title: null
-      subtitle: null
-      kicker: null
-      text: null
+      title: Alert
+      subtitle: Årvågen
+      kicker: Origin Feat
+      text: 'Initiative: <b>d20 + DEX + PB</b>. Lige efter slaget kan du bytte Initiative med en villig
+        allieret.'
     back:
-      text: null
-      note: null
+      text: <b>Initiative Swap:</b> Byt din Initiative med Initiative for én villig allieret i samme kamp,
+        umiddelbart efter du har slået Initiative.
+      note: Ingen bytning, hvis du eller den allierede er Incapacitated.
   sheet:
-    section: null
+    section: features
     show: true
     tag: null
-  grantsActions: *id001
+  grantsActions:
+  - type: free
+    name: Initiative Swap
+    short: Lige efter dit Initiative-slag; byt Initiative med en villig allieret (ingen af jer Incapacitated).
+    recharge: initiative
   modifiesActions: *id002
-  statChanges: {}
+  statChanges:
+    initiative: '{+PB}'
   trainingGranted: {}
   sensesGranted: {}
   resistancesGranted: {}
@@ -179,7 +190,8 @@ feat:
     requires: *id006
     replaces: *id007
     duplicatesWith: *id008
-  notes: null
+  notes: 'recharge: initiative bruges, fordi bytningen kun kan ske lige efter et Initiative-slag (reglen
+    siger ikke eksplicit en begrænsning pr. kamp, men muligheden opstår kun dér).'
 - name: Archery
   source: XPHB
   page: 209
@@ -1340,39 +1352,72 @@ feat:
         - '{@item Basket|XPHB}, {@item Rope|XPHB}, {@item Net|XPHB}, {@item Tent|XPHB}'
       - - '{@item Woodcarver''s Tools|XPHB}'
         - '{@item Club|XPHB}, {@item Greatclub|XPHB}, {@item Quarterstaff|XPHB}'
-  translationStatus: notStarted
-  nameDa: null
+  translationStatus: draft
+  nameDa: Håndværker
   prerequisiteDa: null
-  descriptionSheetDa: null
-  descriptionShortDa: null
+  descriptionSheetDa: '<b>Tool Proficiency.</b> Du får Proficiency med tre forskellige Artisan''s Tools
+    efter eget valg fra tabellen Fast Crafting. <b>Discount.</b> Når du køber en ikke-magisk genstand,
+    får du 20 procent rabat på den. <b>Fast Crafting.</b> Når du afslutter en Long Rest, kan du fremstille
+    én genstand fra tabellen Fast Crafting, forudsat at du har de tilhørende Artisan''s Tools og Proficiency
+    med dem. Genstanden holder, til du afslutter din næste Long Rest; så falder den fra hinanden. Carpenter''s
+    Tools: Ladder, Torch. Leatherworker''s Tools: Crossbow Bolt Case, Map or Scroll Case, Pouch. Mason''s
+    Tools: Block and Tackle. Potter''s Tools: Jug, Lamp. Smith''s Tools: Ball Bearings, Bucket, Caltrops,
+    Grappling Hook, Iron Pot. Tinker''s Tools: Bell, Shovel, Tinderbox. Weaver''s Tools: Basket, Rope,
+    Net, Tent. Woodcarver''s Tools: Club, Greatclub, Quarterstaff.'
+  descriptionShortDa: 3 Artisan's Tools, 20 % rabat på ikke-magiske ting, lav 1 midlertidig genstand efter
+    hver Long Rest.
   card:
     front:
-      title: null
-      subtitle: null
-      kicker: null
-      text: null
+      title: Crafter
+      subtitle: Håndværker
+      kicker: Origin Feat
+      text: 'Proficiency med 3 Artisan''s Tools. 20 % rabat på ikke-magiske genstande. Efter en Long Rest:
+        lav 1 genstand fra Fast Crafting-tabellen.'
     back:
-      text: null
-      note: null
+      text: '<b>Fast Crafting</b> (kræver værktøjet og Proficiency med det): Carpenter''s: Ladder, Torch
+        · Leatherworker''s: Crossbow Bolt Case, Map or Scroll Case, Pouch · Mason''s: Block and Tackle
+        · Potter''s: Jug, Lamp · Smith''s: Ball Bearings, Bucket, Caltrops, Grappling Hook, Iron Pot ·
+        Tinker''s: Bell, Shovel, Tinderbox · Weaver''s: Basket, Rope, Net, Tent · Woodcarver''s: Club,
+        Greatclub, Quarterstaff'
+      note: Genstanden falder fra hinanden, når du afslutter din næste Long Rest.
   sheet:
-    section: null
+    section: features
     show: true
-    tag: null
+    tag: 1/lang pause
   grantsActions: *id001
   modifiesActions: *id002
   statChanges: {}
-  trainingGranted: {}
+  trainingGranted:
+    tools:
+    - choice: craftingTools
   sensesGranted: {}
   resistancesGranted: {}
   languagesGranted: *id003
   spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  resources:
+  - name: Fast Crafting
+    count: 1
+    recharge: long_rest
+  playerChoices:
+  - id: craftingTools
+    title: Vælg tre forskellige Artisan's Tools
+    count: 3
+    options:
+    - Carpenter's Tools
+    - Leatherworker's Tools
+    - Mason's Tools
+    - Potter's Tools
+    - Smith's Tools
+    - Tinker's Tools
+    - Weaver's Tools
+    - Woodcarver's Tools
   links:
     requires: *id006
     replaces: *id007
     duplicatesWith: *id008
-  notes: null
+  notes: 'Fast Crafting sker "når du afslutter en Long Rest", ikke som et frit antal brug; resource 1/long_rest
+    er blot en huskeboks. trainingGranted.tools henviser til playerChoices via {choice: id} (ny konvention).
+    Discount har intet felt i skemaet og står kun i teksten.'
 - name: Crossbow Expert
   source: XPHB
   page: 203
@@ -2117,26 +2162,46 @@ feat:
       a spell or with this feat's Battle Medic benefit, you can reroll the die if it rolls a 1, and you
       must use the new roll.
   hasFluffImages: true
-  translationStatus: notStarted
-  nameDa: null
+  translationStatus: draft
+  nameDa: Helbreder
   prerequisiteDa: null
-  descriptionSheetDa: null
-  descriptionShortDa: null
+  descriptionSheetDa: <b>Battle Medic.</b> Har du et Healer's Kit, kan du bruge én anvendelse af det og
+    pleje et væsen inden for 5 ft af dig som en Utilize-handling. Væsenet kan bruge én af sine Hit Point
+    Dice, og du slår så den terning. Væsenet genvinder Hit Points lig med slaget plus din Proficiency
+    Bonus. <b>Healing Rerolls.</b> Når du slår en terning for at bestemme, hvor mange Hit Points du giver
+    tilbage med en besværgelse eller med Battle Medic, kan du slå om, hvis terningen viser 1, og du skal
+    bruge det nye slag.
+  descriptionShortDa: 'Utilize + Healer''s Kit: væsen inden for 5 ft bruger 1 Hit Point Die og genvinder
+    terning + PB. Slå 1''ere om ved heling.'
   card:
     front:
-      title: null
-      subtitle: null
-      kicker: null
-      text: null
+      title: Healer
+      subtitle: Helbreder
+      kicker: Origin Feat · Utilize (Action)
+      text: Brug 1 anvendelse af et Healer's Kit på et væsen inden for 5 ft. Det bruger 1 Hit Point Die
+        og genvinder <b>Hit Point Die + PB</b> Hit Points.
     back:
-      text: null
-      note: null
+      text: <b>Healing Rerolls:</b> Når du slår en terning for Hit Points, du giver tilbage med en besværgelse
+        eller med Battle Medic, kan du slå en 1'er om. Du skal bruge det nye slag.
+      note: Væsenet vælger selv, om det vil bruge sin Hit Point Die. Det er dig, der slår terningen.
   sheet:
-    section: null
+    section: actions
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
+  grantsActions:
+  - type: action
+    name: Battle Medic
+    short: Utilize, Healer's Kit (1 anvendelse), 5 ft. Målet bruger 1 Hit Point Die og genvinder terning
+      + PB.
+    formula: Hit Point Die + PB
+  - type: passive
+    name: Healing Rerolls
+    short: Slå 1'ere om på helingsterninger fra besværgelser og Battle Medic; brug det nye slag.
+  modifiesActions:
+  - action: Utilize
+    from: action
+    to: action
+    effect: Med et Healer's Kit kan Utilize bruges til Battle Medic.
   statChanges: {}
   trainingGranted: {}
   sensesGranted: {}
@@ -2149,7 +2214,9 @@ feat:
     requires: *id006
     replaces: *id007
     duplicatesWith: *id008
-  notes: null
+  notes: formula er ren tekst, da Hit Point Die afhænger af målets klasse og ikke kan udtrykkes i {...}-syntaksen.
+    Healer's Kit-anvendelser er udstyr, ikke en feat-ressource, så ingen resources. modifiesActions-posten
+    er måske overflødig ved siden af grantsActions; fjern den, hvis arket ellers viser reglen to gange.
 - name: Heavily Armored
   source: XPHB
   page: 204
@@ -2501,25 +2568,43 @@ feat:
     entries:
     - When a creature rolls a {@dice d20} for an attack roll against you, you can spend 1 Luck Point to
       impose {@variantrule Disadvantage|XPHB} on that roll.
-  translationStatus: notStarted
-  nameDa: null
+  translationStatus: draft
+  nameDa: Heldig
   prerequisiteDa: null
-  descriptionSheetDa: null
-  descriptionShortDa: null
+  descriptionSheetDa: <b>Luck Points.</b> Du har et antal Luck Points lig med din Proficiency Bonus og
+    kan bruge dem på fordelene nedenfor. Du genvinder brugte Luck Points, når du afslutter en Long Rest.
+    <b>Advantage.</b> Når du slår en d20 til en D20 Test, kan du bruge 1 Luck Point til at give dig selv
+    Advantage på slaget. <b>Disadvantage.</b> Når et væsen slår en d20 til et angrebsslag mod dig, kan
+    du bruge 1 Luck Point til at give det Disadvantage på slaget.
+  descriptionShortDa: PB Luck Points pr. Long Rest. 1 point giver dig Advantage på en D20 Test eller angriberen
+    Disadvantage.
   card:
     front:
-      title: null
-      subtitle: null
-      kicker: null
-      text: null
+      title: Lucky
+      subtitle: Heldig
+      kicker: Origin Feat
+      text: '<b>PB Luck Points</b> pr. Long Rest. Brug 1 point: Advantage på din egen D20 Test, eller
+        Disadvantage på et angrebsslag mod dig.'
     back:
-      text: null
-      note: null
+      text: <b>Advantage:</b> Når du slår d20 til en D20 Test (angrebsslag, ability check, saving throw),
+        kan du bruge 1 Luck Point og få Advantage. <b>Disadvantage:</b> Når et væsen slår d20 til et angrebsslag
+        mod dig, kan du bruge 1 Luck Point og give det Disadvantage.
+      note: Alle Luck Points kommer tilbage efter en Long Rest.
   sheet:
-    section: null
+    section: features
     show: true
-    tag: null
-  grantsActions: *id001
+    tag: PB/lang pause
+  grantsActions:
+  - type: free
+    name: Advantage
+    short: 1 Luck Point, når du slår d20 til en D20 Test. Du får Advantage.
+    uses: '{PB}'
+    recharge: long_rest
+  - type: free
+    name: Disadvantage
+    short: 1 Luck Point, når et væsen slår d20 til et angrebsslag mod dig. Det får Disadvantage.
+    uses: '{PB}'
+    recharge: long_rest
   modifiesActions: *id002
   statChanges: {}
   trainingGranted: {}
@@ -2527,13 +2612,18 @@ feat:
   resistancesGranted: {}
   languagesGranted: *id003
   spellGrants: {}
-  resources: *id004
+  resources:
+  - name: Luck Points
+    count: '{PB}'
+    recharge: long_rest
   playerChoices: *id005
   links:
     requires: *id006
     replaces: *id007
     duplicatesWith: *id008
-  notes: null
+  notes: 'De to handlinger deler samme pulje (resources: Luck Points); uses er gentaget for overblik,
+    men der er kun PB point i alt. "angrebsslag, ability check, saving throw" på kortets bagside er definitionen
+    af D20 Test i PHB 2024, ikke tekst fra feat''en.'
 - name: Mage Slayer
   source: XPHB
   page: 205
@@ -2779,24 +2869,35 @@ feat:
         _:
         - choose: level=0|class=Wizard
           count: 2
-  translationStatus: notStarted
-  nameDa: null
+  translationStatus: draft
+  nameDa: Magisk lærling
   prerequisiteDa: null
-  descriptionSheetDa: null
-  descriptionShortDa: null
+  descriptionSheetDa: <b>Two Cantrips.</b> Du lærer to Cantrips efter eget valg fra Cleric-, Druid- eller
+    Wizard-listen. Intelligence, Wisdom eller Charisma er din spellcasting ability for denne feats besværgelser
+    (vælges, når du tager feat'en). <b>Level 1 Spell.</b> Vælg en level 1-besværgelse fra samme liste
+    som dine Cantrips. Du har den altid forberedt. Du kan kaste den én gang uden spell slot og får muligheden
+    igen, når du afslutter en Long Rest. Du kan også kaste den med de spell slots, du har. <b>Spell Change.</b>
+    Hver gang du stiger et level, kan du udskifte én af de besværgelser, du valgte med denne feat, med
+    en anden af samme level fra den valgte liste. <b>Repeatable.</b> Du kan tage feat'en flere gange,
+    men skal vælge en ny liste hver gang.
+  descriptionShortDa: 2 Cantrips + 1 level 1-spell fra Cleric, Druid eller Wizard; spell'en 1 gang gratis
+    pr. Long Rest.
   card:
     front:
-      title: null
-      subtitle: null
-      kicker: null
-      text: null
+      title: Magic Initiate
+      subtitle: Magisk lærling
+      kicker: Origin Feat · Kan tages flere gange
+      text: 2 Cantrips + 1 level 1-besværgelse fra <b>Cleric</b>, <b>Druid</b> eller <b>Wizard</b>. Level
+        1-besværgelsen er altid forberedt og kan kastes 1 gang uden spell slot pr. Long Rest.
     back:
-      text: null
-      note: null
+      text: 'Spellcasting ability: Intelligence, Wisdom eller Charisma (vælges, når du tager feat''en).
+        Level 1-besværgelsen kan også kastes med dine egne spell slots. <b>Spell Change:</b> Ved hvert
+        nyt level kan du udskifte én af feat''ens besværgelser med en anden af samme level fra samme liste.'
+      note: Tager du feat'en igen, skal du vælge en anden liste.
   sheet:
-    section: null
+    section: magic
     show: true
-    tag: null
+    tag: 1/lang pause
   grantsActions: *id001
   modifiesActions: *id002
   statChanges: {}
@@ -2804,14 +2905,51 @@ feat:
   sensesGranted: {}
   resistancesGranted: {}
   languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  spellGrants:
+    cantrips: 2
+    spells: 1
+    list:
+      choice: spellList
+    ability:
+      choice: spellAbility
+    alwaysPrepared: true
+    noSlot: 1
+    recharge: long_rest
+  resources:
+  - name: Level 1-besværgelse uden spell slot
+    count: 1
+    recharge: long_rest
+  playerChoices:
+  - id: spellList
+    title: Vælg spell-liste
+    count: 1
+    options:
+    - Cleric
+    - Druid
+    - Wizard
+  - id: spellAbility
+    title: Vælg spellcasting ability
+    count: 1
+    options:
+    - Intelligence
+    - Wisdom
+    - Charisma
+  - id: cantrips
+    title: Vælg to Cantrips fra den valgte liste
+    count: 2
+    options: []
+  - id: level1Spell
+    title: Vælg én level 1-besværgelse fra den valgte liste
+    count: 1
+    options: []
   links:
     requires: *id006
     replaces: *id007
     duplicatesWith: *id008
-  notes: null
+  notes: 'repeatable: hver gang er en separat post med egen liste og ability. alwaysPrepared er en ny
+    nøgle i spellGrants. list/ability henviser til playerChoices via {choice: id}. options: [] for cantrips/level1Spell
+    betyder "slås op i spell-listen" (5etools'' additionalSpells har filteret level=0|class=X). Spell
+    Change er kun beskrevet i tekst, intet felt.'
 - name: Martial Weapon Training
   source: XPHB
   page: 205
@@ -3055,39 +3193,61 @@ feat:
       a song on a {@item Musical Instrument|XPHB} with which you have proficiency and give {@variantrule
       Heroic Inspiration|XPHB} to allies who hear the song. The number of allies you can affect in this
       way equals your {@variantrule Proficiency|XPHB|Proficiency Bonus}.
-  translationStatus: notStarted
-  nameDa: null
+  translationStatus: draft
+  nameDa: Musiker
   prerequisiteDa: null
-  descriptionSheetDa: null
-  descriptionShortDa: null
+  descriptionSheetDa: <b>Instrumenttræning.</b> Du får proficiency med tre Musical Instruments efter eget
+    valg. <b>Opmuntrende sang.</b> Når du afslutter en Short Rest eller Long Rest, kan du spille en sang
+    på et Musical Instrument, du har proficiency med, og give Heroic Inspiration til allierede, der hører
+    sangen. Antallet af allierede er lig din Proficiency Bonus.
+  descriptionShortDa: Proficiency med 3 Musical Instruments. Efter Short/Long Rest giver en sang Heroic
+    Inspiration til PB allierede.
   card:
     front:
-      title: null
-      subtitle: null
-      kicker: null
-      text: null
+      title: Musician
+      subtitle: Musiker
+      kicker: Origin Feat · PHB s. 201
+      text: Når du afslutter en <b>Short Rest</b> eller <b>Long Rest</b>, kan du spille en sang og give
+        <b>Heroic Inspiration</b> til PB allierede, der hører den.
     back:
-      text: null
-      note: null
+      text: Du skal spille på et Musical Instrument, du har proficiency med. Feat'en giver proficiency
+        med tre Musical Instruments efter eget valg.
+      note: 'Antal allierede: PB.'
   sheet:
-    section: null
+    section: features
     show: true
-    tag: null
-  grantsActions: *id001
+    tag: Short/Long Rest
+  grantsActions:
+  - type: free
+    name: Encouraging Song
+    short: Efter Short/Long Rest - giv Heroic Inspiration til PB allierede, der hører sangen.
+    recharge: short_rest
+    formula: '{PB}'
   modifiesActions: *id002
   statChanges: {}
-  trainingGranted: {}
+  trainingGranted:
+    tools:
+    - Musical Instrument (valgfrit)
+    - Musical Instrument (valgfrit)
+    - Musical Instrument (valgfrit)
   sensesGranted: {}
   resistancesGranted: {}
   languagesGranted: *id003
   spellGrants: {}
   resources: *id004
-  playerChoices: *id005
+  playerChoices:
+  - id: musician-instruments
+    title: Vælg tre Musical Instruments
+    count: 3
+    options:
+    - Musical Instrument
   links:
     requires: *id006
     replaces: *id007
     duplicatesWith: *id008
-  notes: null
+  notes: 'formula i grantsActions er antal allierede, ikke antal anvendelser. Reglen har ingen begrænsning
+    ud over "når du afslutter en Short eller Long Rest", derfor recharge: short_rest og ingen uses/resources.
+    trainingGranted.tools er pladsholdere for valget i playerChoices.'
 - name: Observant
   source: XPHB
   page: 205
@@ -3552,25 +3712,33 @@ feat:
   entries:
   - You've trained to deal particularly damaging strikes. Once per turn when you hit a target with a weapon,
     you can roll the weapon's damage dice twice and use either roll against the target.
-  translationStatus: notStarted
-  nameDa: null
+  translationStatus: draft
+  nameDa: Brutal angriber
   prerequisiteDa: null
-  descriptionSheetDa: null
-  descriptionShortDa: null
+  descriptionSheetDa: Du er trænet i at slå særligt hårde slag. Én gang pr. tur, når du rammer et mål
+    med et våben, kan du slå våbnets skadesterninger to gange og bruge et af slagene mod målet.
+  descriptionShortDa: 1 gang pr. tur ved våbentræf - slå våbnets skadesterninger to gange og brug et af
+    resultaterne.
   card:
     front:
-      title: null
-      subtitle: null
-      kicker: null
-      text: null
+      title: Savage Attacker
+      subtitle: Brutal angriber
+      kicker: Origin Feat · PHB s. 201
+      text: Én gang pr. tur, når du rammer med et våben, slår du våbnets skadesterninger <b>to gange</b>
+        og bruger et af slagene.
     back:
-      text: null
-      note: null
+      text: Gælder kun våbnets egne skadesterninger, når du rammer et mål med et våben.
+      note: 1 gang pr. tur.
   sheet:
-    section: null
+    section: features
     show: true
-    tag: null
-  grantsActions: *id001
+    tag: 1/tur
+  grantsActions:
+  - type: passive
+    name: Savage Attacker
+    short: Ved våbentræf - slå våbnets skadesterninger to gange, brug et af slagene.
+    uses: 1
+    recharge: turn
   modifiesActions: *id002
   statChanges: {}
   trainingGranted: {}
@@ -3584,7 +3752,8 @@ feat:
     requires: *id006
     replaces: *id007
     duplicatesWith: *id008
-  notes: null
+  notes: Reglen siger "use either roll"; jeg har oversat til "et af slagene" (spilleren vælger). Om ekstra
+    skadesterninger (fx Sneak Attack) er med, står ikke i feat'en, kun "the weapon's damage dice".
 - name: Sentinel
   source: XPHB
   page: 207
@@ -3915,22 +4084,24 @@ feat:
     name: Repeatable
     entries:
     - You can take this feat more than once.
-  translationStatus: notStarted
-  nameDa: null
+  translationStatus: draft
+  nameDa: Dygtig
   prerequisiteDa: null
-  descriptionSheetDa: null
-  descriptionShortDa: null
+  descriptionSheetDa: Du får proficiency i en valgfri kombination af tre skills eller tools. <b>Kan gentages.</b>
+    Du kan tage denne feat mere end én gang.
+  descriptionShortDa: Proficiency i 3 valgfrie skills eller tools i enhver kombination. Kan tages flere
+    gange.
   card:
     front:
-      title: null
-      subtitle: null
-      kicker: null
-      text: null
+      title: Skilled
+      subtitle: Dygtig
+      kicker: Origin Feat · PHB s. 201
+      text: Du får proficiency i <b>tre</b> skills eller tools efter eget valg, i enhver kombination.
     back:
-      text: null
+      text: Du kan tage denne feat mere end én gang.
       note: null
   sheet:
-    section: null
+    section: features
     show: true
     tag: null
   grantsActions: *id001
@@ -3942,12 +4113,20 @@ feat:
   languagesGranted: *id003
   spellGrants: {}
   resources: *id004
-  playerChoices: *id005
+  playerChoices:
+  - id: skilled-proficiencies
+    title: Vælg tre skills eller tools
+    count: 3
+    options:
+    - Skill
+    - Tool
   links:
     requires: *id006
     replaces: *id007
     duplicatesWith: *id008
-  notes: null
+  notes: Kan gentages (repeatable). Valgene skal ende i trainingGranted.skills/tools på karakteren. Måske
+    bør sheet.show være false, da effekten kun er proficiencies, der vises andre steder på arket; lod
+    den stå true, så valget kan ses.
 - name: Skulker
   source: XPHB
   page: 208
@@ -4224,28 +4403,48 @@ feat:
     - When you hit a creature with an {@variantrule Unarmed Strike|XPHB} as part of the {@action Attack|XPHB}
       action on your turn, you can deal damage to the target and also push it 5 feet away from you. You
       can use this benefit only once per turn.
-  translationStatus: notStarted
-  nameDa: null
+  translationStatus: draft
+  nameDa: Kroslagsbror
   prerequisiteDa: null
-  descriptionSheetDa: null
-  descriptionShortDa: null
+  descriptionSheetDa: <b>Forbedret ubevæbnet slag.</b> Når du rammer med dit Unarmed Strike og giver skade,
+    kan du give Bludgeoning-skade lig 1d4 + din Strength-modifier i stedet for den normale skade. <b>Omslag
+    af skade.</b> Når du slår en skadesterning for dit Unarmed Strike, kan du slå om, hvis den viser 1,
+    og du skal bruge det nye slag. <b>Improviserede våben.</b> Du har proficiency med improvised weapons.
+    <b>Skub.</b> Når du rammer et væsen med et Unarmed Strike som del af Attack-handlingen på din tur,
+    kan du give skade og samtidig skubbe det 5 ft væk fra dig. Kun én gang pr. tur.
+  descriptionShortDa: Unarmed Strike giver 1d4 + STR Bludgeoning, slå 1'ere om. Skub 5 ft 1/tur. Proficiency
+    med improvised weapons.
   card:
     front:
-      title: null
-      subtitle: null
-      kicker: null
-      text: null
+      title: Tavern Brawler
+      subtitle: Kroslagsbror
+      kicker: Origin Feat · PHB s. 202
+      text: Dit Unarmed Strike giver <b>1d4 + STR</b> Bludgeoning. Viser skadesterningen 1, slår du om
+        (du skal bruge det nye slag).
     back:
-      text: null
-      note: null
+      text: '<b>Skub</b>: Rammer du et væsen med Unarmed Strike som del af Attack-handlingen på din tur,
+        kan du give skade og skubbe det 5 ft væk. 1 gang pr. tur.'
+      note: Du har proficiency med improvised weapons.
   sheet:
-    section: null
+    section: features
     show: true
-    tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
+    tag: Skub 1/tur
+  grantsActions:
+  - type: passive
+    name: Push
+    short: Unarmed Strike som del af Attack-handlingen på din tur - giv skade og skub målet 5 ft væk.
+    uses: 1
+    recharge: turn
+  modifiesActions:
+  - action: Unarmed Strike
+    effect: Ved træf og skade - Bludgeoning 1d4{+STR} i stedet for normal skade. Slå skadesterninger om,
+      der viser 1 (brug det nye slag).
+  statChanges:
+    damage:
+      unarmedStrike: 1d4{+STR}
+  trainingGranted:
+    weapons:
+    - Improvised Weapons
   sensesGranted: {}
   resistancesGranted: {}
   languagesGranted: *id003
@@ -4256,7 +4455,9 @@ feat:
     requires: *id006
     replaces: *id007
     duplicatesWith: *id008
-  notes: null
+  notes: nameDa "Kroslagsbror" er et forslag. Skadeformlen 1d4{+STR} blander terning og {…}-udtryk; tjek
+    at generatoren kan læse det. statChanges.damage er gjort til et objekt med nøglen unarmedStrike (egen
+    nøgle). Feat'en har ingen modifiesActions.from/to, da handlingstypen ikke ændres.
 - name: Telekinetic
   source: XPHB
   page: 208
@@ -4441,27 +4642,32 @@ feat:
   - Your {@variantrule Hit Points|XPHB|Hit Point} maximum increases by an amount equal to twice your character
     level when you gain this feat. Whenever you gain a character level thereafter, your {@variantrule
     Hit Points|XPHB|Hit Point} maximum increases by an additional 2 {@variantrule Hit Points|XPHB}.
-  translationStatus: notStarted
-  nameDa: null
+  translationStatus: draft
+  nameDa: Hårdfør
   prerequisiteDa: null
-  descriptionSheetDa: null
-  descriptionShortDa: null
+  descriptionSheetDa: Dit maksimale antal Hit Points stiger med to gange dit character level, når du får
+    denne feat. Hver gang du derefter stiger et character level, stiger dit maksimale antal Hit Points
+    med yderligere 2.
+  descriptionShortDa: Max Hit Points +2 pr. character level (også for levels du allerede har).
   card:
     front:
-      title: null
-      subtitle: null
-      kicker: null
-      text: null
+      title: Tough
+      subtitle: Hårdfør
+      kicker: Origin Feat · PHB s. 202
+      text: Dit maksimale antal <b>Hit Points</b> stiger med <b>2 × level</b>.
     back:
-      text: null
+      text: Når du får feat'en, får du 2 Hit Points pr. character level, du har. Hvert nyt level derefter
+        giver 2 ekstra.
       note: null
   sheet:
-    section: null
-    show: true
+    section: features
+    show: false
     tag: null
   grantsActions: *id001
   modifiesActions: *id002
-  statChanges: {}
+  statChanges:
+    hp: 2 × character level (ved valg af feat)
+    hpPerLevel: 2
   trainingGranted: {}
   sensesGranted: {}
   resistancesGranted: {}
@@ -4473,7 +4679,10 @@ feat:
     requires: *id006
     replaces: *id007
     duplicatesWith: *id008
-  notes: null
+  notes: '{…}-syntaksen har ingen variabel for level, så statChanges.hp er skrevet som tekst. Samlet effekt
+    er +2 HP pr. character level, som hpPerLevel: 2 dækker, hvis generatoren ganger med level. sheet.show:
+    false, fordi effekten kun er et tal i Hit Points-feltet; slå til, hvis feat''en skal stå på listen
+    alligevel.'
 - name: Two-Weapon Fighting
   source: XPHB
   page: 210
