@@ -192,13 +192,17 @@ function renderSubChoices(basePath, subChoices, storedChoices) {
 // Et feat-slot (ASI, Fighting Style, Epic Boon, race/baggrunds feat-valg) -
 // bruges inline, lige der hvor den feature der giver det, står.
 function renderFeatSlot(slot) {
+  // Et fastlagt feat (fx baggrundens) kan ikke vælges om: kun navn, tekst og dets undervalg vises.
+  const picker = slot.fixed
+    ? `<div class="fname">${esc(slot.chosen?.name || "")}</div>`
+    : `<select data-field-combo="feats.${slot.key}" class="${cls(!slot.chosen)}">
+        <option value="|">Vælg...</option>
+        ${optionList(slot.options, slot.chosen?.name)}
+      </select>`;
   return `
     <div class="sub-choice">
       <span>${esc(slot.label)}</span>
-      <select data-field-combo="feats.${slot.key}" class="${cls(!slot.chosen)}">
-        <option value="|">Vælg...</option>
-        ${optionList(slot.options, slot.chosen?.name)}
-      </select>
+      ${picker}
       ${slot.chosen ? `<div class="feature-list" style="margin-top:.4rem"><div class="ftext">${esc(slot.text)}</div></div>` : ""}
       ${renderSubChoices(`feats.${slot.key}.choices`, slot.sub_choices, slot.chosen?.choices)}
     </div>`;
@@ -344,8 +348,7 @@ function renderBackground(c) {
     </label>
     ${abilityBlock}
     ${renderSubChoices("background.choices", b.sub_choices, c.background.choices)}
-    ${featBlock}
-    ${b.feat_slot ? renderFeatSlot(b.feat_slot) : ""}
+    ${b.feat_slot ? renderFeatSlot(b.feat_slot) : featBlock}
   `;
   return wrapDetails("background", sectionMissing("background.") || sectionMissing("feats.background"), "Baggrund", body);
 }

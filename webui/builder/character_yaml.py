@@ -514,8 +514,12 @@ def derive_from_state(data: dict, state: dict) -> dict:
     fixed_skills += feat_rules._true_keys(race_eff.get("skillProficiencies"))
     fixed_tools += feat_rules._true_keys(race_eff.get("toolProficiencies"))
 
-    skills = sorted({*(s.lower() for s in _collect(data, "skill", "skills", "skill_any")), *fixed_skills, *feat_grants["skills"]})
-    tools = sorted({*_collect(data, "tool", "instrument", "gaming_set", "artisan_tool", "tool_any"), *fixed_tools, *feat_grants["tools"]})
+    # `skill_any` (Skilled) er ét valg blandt skills OG værktøjer: skills er de små bogstaver-navne i ALL_SKILLS.
+    picked_any = _collect(data, "skill_any")
+    skill_any_skills = [p.lower() for p in picked_any if p.lower() in model.ALL_SKILLS]
+    skill_any_tools = [p for p in picked_any if p.lower() not in model.ALL_SKILLS]
+    skills = sorted({*(s.lower() for s in _collect(data, "skill", "skills")), *skill_any_skills, *fixed_skills, *feat_grants["skills"]})
+    tools = sorted({*_collect(data, "tool", "instrument", "gaming_set", "artisan_tool", "tool_any"), *skill_any_tools, *fixed_tools, *feat_grants["tools"]})
     expertise = sorted({
         skill for c in state.get("classes", []) for f in c.get("features", [])
         if f.get("expertise_choice") for skill in f["expertise_choice"]["chosen"]

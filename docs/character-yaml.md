@@ -74,6 +74,15 @@ Alt læses fra racens strukturerede 5etools-felter (`webui/builder/races.py`):
 
 Baggrunde følger samme tool-regler: `anyGamingSet: 1` (Guard, Noble, Soldier), `anyArtisansTool` (Artisan) og `anyMusicalInstrument` (Entertainer) er VALG (`background.choices.gaming_set` / `artisan_tool` / `instrument`), ikke faste værktøjer.
 
+## Baggrundens feat
+
+Hver XPHB-baggrund giver ét fast feat (`feats: [{"skilled|xphb": true}]`). Det står som feat-slottet
+`feats.background` i `choices.yaml` (udfyldes automatisk af `model.normalize()` og nulstilles, når baggrunden
+skifter) og giver karakteren alt, et valgt feat giver: undervalg, tools, skills, spells, beskrivelser.
+Skilled: tre valg blandt alle skills og værktøjer (`skill_any`, deles i `skills`/`tools` ud fra navnet).
+Crafter og Musician: værktøj/instrument. Varianter som `magic initiate; cleric|xphb` er Magic Initiate med
+spell-listen låst (valget `origin` vises fast); spellcasting-evne og spells vælges.
+
 ## Hvad feats giver karakteren
 
 Alt læses fra feat'ens strukturerede 5etools-felter (betydning: `webui/builder/feat_rules.py`),

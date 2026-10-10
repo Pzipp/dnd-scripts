@@ -75,7 +75,7 @@ def load(character_dir: Path) -> dict:
     data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     template = empty_character()
     template.update(data)
-    return template
+    return normalize(template)
 
 
 def save(character_dir: Path, data: dict) -> None:
@@ -980,12 +980,61 @@ def _race_sub_choices(base: dict, eff: dict, stored: dict, sources: set[str], wi
     return choices
 
 
+def _background_fixed_feat(data: dict, sources: set[str]) -> tuple[dict, dict] | None:
+    """Baggrundens faste feat (XPHB: hver baggrund giver ét): (5etools-feat, forudfyldte valg).
+    Feat-id'et er fx 'skilled|xphb' eller en variant, 'magic initiate; cleric|xphb', som er Magic
+    Initiate med spell-listen Cleric låst (valget `origin`)."""
+    bg = data.get("background") or {}
+    if not bg.get("name"):
+        return None
+    obj = e.get_background(bg["name"], {bg["source"]} if bg.get("source") else sources)
+    grant = _feat_grant(obj)
+    if not grant or grant["type"] != "fixed":
+        return None
+    name_part, _, source = grant["id"].partition("|")
+    variant = None
+    if ";" in name_part:
+        name_part, variant = (x.strip() for x in name_part.split(";", 1))
+    feat = e.get_feat(name_part.strip(), {source.strip().upper()} if source.strip() else sources)
+    if not feat:
+        return None
+    preset = {}
+    if variant:
+        for block in feat.get("additionalSpells") or []:
+            label = (block.get("name") or "").removesuffix(" Spells")
+            if label.lower() == variant.lower():
+                preset["origin"] = label
+    return feat, preset
+
+
+def normalize(data: dict) -> dict:
+    """Udfylder det, der er afledt af andre valg: en baggrunds faste feat står som et feat-slot
+    (`feats.background`), så dens undervalg (Skilled: 3 skills/tools, Magic Initiate: spells,
+    Crafter/Musician: værktøj) kan gemmes og giver karakteren det, de skal. Skifter feat'et,
+    nulstilles dens valg."""
+    if not e.available():
+        return data
+    sources = set((data.get("settings") or {}).get("allowed_sources") or settings.DEFAULT_SOURCES)
+    fixed = _background_fixed_feat(data, sources)
+    if fixed:
+        feat, preset = fixed
+        feats = data.setdefault("feats", {})
+        entry = feats.get("background") or {}
+        if entry.get("name") and (entry["name"] != feat["name"] or entry.get("source") != feat["source"]):
+            entry = {}  # et andet feat end før (ny baggrund): valgene hørte til det forrige
+        entry.update({"name": feat["name"], "source": feat["source"]})
+        entry.setdefault("choices", {}).update(preset)
+        feats["background"] = entry
+    return data
+
+
 def state(data: dict) -> dict:
     if not e.available():
         return {"choices": data, "e5tools_available": False, "missing": ["e5tools"]}
 
     char_settings = data.get("settings", {})
     sources = set(char_settings.get("allowed_sources") or settings.DEFAULT_SOURCES)
+    normalize(data)
     missing = []
     level = total_level(data)
     assigned_abilities = data["abilities"].get("assigned", {})
@@ -1014,8 +1063,8 @@ def state(data: dict) -> dict:
     if not race_name:
         missing.append("race.name")
 
-    def _add_feat_slot(key: str, label: str, category: str) -> dict:
-        pool = e.feats_by_category(category, sources) if category else e.feats_any(sources)
+    def _add_feat_slot(key: str, label: str, category: str | None, fixed: bool = False) -> dict:
+        pool = [] if fixed else (e.feats_by_category(category, sources) if category else e.feats_any(sources))
         candidates = [ft for ft in pool if _meets_prerequisite(ft, level, assigned_abilities, has_spellcasting, armor_profs)]
         chosen = data["feats"].get(key)
         # Et allerede valgt feat holdes altid i options, selvom det ikke længere
@@ -1023,23 +1072,30 @@ def state(data: dict) -> dict:
         # spellcasting2020 blev tilføjet senere) - ellers forsvinder valget fra
         # sin egen <select>, ser ud som uvalgt, og brugeren risikerer at rydde
         # det ved et uheld (samme fælde som multiclass-klassevælgeren havde).
-        if chosen and not any(ft["name"] == chosen["name"] for ft in candidates):
+        if chosen and not fixed and not any(ft["name"] == chosen["name"] for ft in candidates):
             existing = e.get_feat(chosen["name"], {chosen["source"]})
             if existing:
                 candidates = candidates + [existing]
         options = _label_options([{"name": ft["name"], "source": ft["source"]} for ft in candidates])
-        slot = {"key": key, "label": label, "options": options, "chosen": chosen, "text": "", "sub_choices": []}
+        slot = {"key": key, "label": label, "options": options, "chosen": chosen, "text": "", "sub_choices": [], "fixed": fixed}
         if chosen:
             feat_obj = e.get_feat(chosen["name"], {chosen["source"]})
             if feat_obj:
                 slot["text"] = e.render_text(feat_obj["entries"])
                 # Faste (ikke-valgfrie) evne-forbedringer (fx Durable: altid +1 CON).
-                fixed = feat_rules.fixed_ability(feat_obj)
-                if fixed:
-                    bumps = ", ".join(f"+{amount} {ab}" for ab, (amount, _cap) in fixed.items())
+                fixed_asi = feat_rules.fixed_ability(feat_obj)
+                if fixed_asi:
+                    bumps = ", ".join(f"+{amount} {ab}" for ab, (amount, _cap) in fixed_asi.items())
                     slot["text"] = f"Evne-forbedring: {bumps}.\n{slot['text']}"
                 stored = chosen.get("choices", {})
                 slot["sub_choices"] = _feat_sub_choices(feat_obj, sources, stored, level, known_spells)
+                if fixed:
+                    # Baggrundens feat har en bestemt variant (Magic Initiate: Cleric): den spell-liste kan ikke vælges om.
+                    slot["sub_choices"] = [
+                        {"id": "origin", "title": "Oprindelse (spell-liste, fastlagt af baggrunden)", "fixed": True, "options": [stored["origin"]], "multiple": False}
+                        if sc["id"] == "origin" and stored.get("origin") else sc
+                        for sc in slot["sub_choices"]
+                    ]
                 for sc in slot["sub_choices"]:
                     if not _sub_choice_complete(sc, stored.get(sc["id"])):
                         missing.append(f"feats.{key}.choices.{sc['id']}")
@@ -1171,11 +1227,11 @@ def state(data: dict) -> dict:
         for sc in background_sub_choices:
             if not _sub_choice_complete(sc, bg_stored.get(sc["id"])):
                 missing.append(f"background.choices.{sc['id']}")
+        fixed_feat = _background_fixed_feat(data, sources) if background_grant and background_grant["type"] == "fixed" else None
         if background_grant and background_grant["type"] == "fixed":
-            feat_obj = e.get_feat(background_grant["id"].split("|")[0].title(), sources)
             background_feat = {
-                "name": feat_obj["name"] if feat_obj else background_grant["id"],
-                "text": e.render_text(feat_obj["entries"]) if feat_obj else "",
+                "name": fixed_feat[0]["name"] if fixed_feat else background_grant["id"],
+                "text": e.render_text(fixed_feat[0]["entries"]) if fixed_feat else "",
             }
         ability = background_obj.get("ability") or []
         if len(ability) == 2:
@@ -1185,7 +1241,12 @@ def state(data: dict) -> dict:
     if not background_name:
         missing.append("background.name")
 
-    background_feat_slot = _add_feat_slot("background", f"Baggrund ({background_name})", background_grant["category"]) if background_grant and background_grant["type"] == "choice" else None
+    if background_grant and background_grant["type"] == "choice":
+        background_feat_slot = _add_feat_slot("background", f"Baggrund ({background_name})", background_grant["category"])
+    elif background_feat:
+        background_feat_slot = _add_feat_slot("background", f"Feat fra baggrunden ({background_name})", None, fixed=True)
+    else:
+        background_feat_slot = None
 
     # abilities
     method = data["abilities"].get("method")

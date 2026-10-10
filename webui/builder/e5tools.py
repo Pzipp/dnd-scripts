@@ -286,10 +286,10 @@ def _all_feats() -> list[dict]:
 
 
 def get_feat(name: str, sources: set[str]) -> dict | None:
-    for f in _all_feats():
-        if f.get("source") in sources and f.get("name") == name:
-            return f
-    return None
+    """Feat ud fra navn. Præcis match først; ellers uanset store/små bogstaver (baggrunde skriver
+    fx 'Skilled|xphb' og 'skilled|xphb' om samme feat)."""
+    pool = [f for f in _all_feats() if f.get("source") in sources]
+    return next((f for f in pool if f.get("name") == name), None) or next((f for f in pool if str(f.get("name", "")).lower() == str(name).lower()), None)
 
 
 def feats_any(sources: set[str]) -> list[dict]:
