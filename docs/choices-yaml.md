@@ -137,6 +137,22 @@ på KLASSENS niveau.
 Et valg er "mangler", hvis antallet ikke er præcis rigtigt, eller hvis en valgt spell ikke længere kan vælges
 (niveaufald, klasseskift): den vises i UI'et med rød markering, så den kan fjernes.
 
+### Valgfrie klassefeatures (`classes.<id>.choices.opt_*`)
+
+Metamagic (Sorcerer), Eldritch Invocations (Warlock), Maneuvers (Battle Master) m.fl. læses fra `optionalfeatures.json`
+(`webui/builder/optionalfeatures.py`). Antal og slags står i klassens/subklassens `optionalfeatureProgression`
+(Sorcerer: 2/4/6 på niveau 2/10/17; Warlock: en tabel pr. niveau; Battle Master: 3/5/7/9). Kun features, man kan
+vælge, tilbydes: rette `featureType`, tilladte kilder og opfyldte forudsætninger (klasse + niveau, en anden valgt
+feature, et kendt cantrip, ældre Pact Boons).
+
+| Nøgle | Form | Betydning |
+|---|---|---|
+| `opt_<navn>` | liste | Valgte features, fx `opt_metamagic`, `opt_eldritch-invocations`, `opt_maneuvers` |
+| `ofs_<feature>_<n>_<m>` | liste | Spells en valgt feature selv giver et valg af (Pact of the Tome: 3 cantrips, 2 rituals) |
+
+En valgt feature, hvis forudsætning ikke længere er opfyldt (fx Agonizing Blast uden et kendt cantrip), er ugyldig og
+markeres. Spells fra features (Armor of Shadows: Mage Armor) kommer i `granted_spells`, og sanser i `senses`.
+
 ### Klassevalg: `skills`, `expertise_<niveau>`, `scholar`, `weapon_mastery`
 
 Under `classes.<id>.choices`. Antal og muligheder læses fra den valgte klasse:

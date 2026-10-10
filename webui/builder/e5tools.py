@@ -292,6 +292,12 @@ def get_feat(name: str, sources: set[str]) -> dict | None:
     return next((f for f in pool if f.get("name") == name), None) or next((f for f in pool if str(f.get("name", "")).lower() == str(name).lower()), None)
 
 
+def optional_features(sources: set[str]) -> list[dict]:
+    """Valgfrie klassefeatures (Eldritch Invocations, Metamagic, Maneuvers, Pact Boons ...): optionalfeatures.json."""
+    pool = _load("optionalfeatures.json").get("optionalfeature", []) + _homebrew_entries("optionalfeature")
+    return [f for f in pool if f.get("source") in sources]
+
+
 def feats_any(sources: set[str]) -> list[dict]:
     """Alle feats et "feats: [{any: 1}]" kan vælge blandt (Variant Human): ikke Epic Boons og Fighting Styles,
     som kun gives af en klassefeature. Ældre feats har ingen `category`."""

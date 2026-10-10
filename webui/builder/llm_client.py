@@ -28,7 +28,7 @@ import yaml
 
 KIND_LABELS = {
     "feat": "feat", "spell": "besværgelse (spell)",
-    "class_feature": "klassefeature", "race_trait": "race-trait",
+    "class_feature": "klassefeature", "optional_feature": "valgfri klassefeature", "race_trait": "race-trait",
 }
 
 # target-listen for effects (se docs/llm-effect-extraction-prompt.md) - KUN

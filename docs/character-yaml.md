@@ -50,6 +50,7 @@ granted_spells:                # spells race/afstamning og feats giver på karak
 masteries: [[Vex, Shortsword]]  # [egenskab, våben] fra classes.*.choices.weapon_mastery - se character_yaml._masteries()
 feats: [{name: Tavern Brawler, source: XPHB}]
 spells_known: [{name: Fire Bolt, source: XPHB}]   # spillerens egne valg: cantrips, forberedte, arcanum, ekstra (ikke spellbogen)
+optional_features: [{name: Careful Spell, source: XPHB, types: [MM], class: Sorcerer}]   # valgte Metamagic/Invocations/Maneuvers
 spellcasting:                  # pr. caster-klasse (se "Klassens spellcasting")
 - {class: Wizard, subclass: Evoker, ability: INT, level: 5, save_dc: '{8+PB+INT}', attack: '{+PB+INT}', max_spell_level: 3,
    cantrips: [], spellbook: [], prepared: [], arcanum: {}, extra: [], variant: null, prepare_change: restLong}

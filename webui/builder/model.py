@@ -27,6 +27,7 @@ from . import e5tools as e
 from . import feat_rules
 from . import races
 from . import settings
+from . import optionalfeatures
 from . import spell_grants
 from . import spellcasting
 
@@ -142,7 +143,7 @@ def _dependent_fields(path: str, data: dict) -> list[str]:
         # En anden subklasse har andre ekstra spells (og evt. terræn-variant).
         cid = m.group(1)
         keys = ((data.get("classes", {}).get(cid) or {}).get("choices") or {})
-        return [f"classes.{cid}.choices.{k}" for k in keys if k == "subclass_variant" or k.startswith("sub_spell_")]
+        return [f"classes.{cid}.choices.{k}" for k in keys if k == "subclass_variant" or k.startswith(("sub_spell_", "opt_", "ofs_"))]
     if path == "race.choices.lineage":
         # En anden afstamning har andre resistance-/spell-muligheder og -størrelse.
         stale = ("resist", "spell_ability", "size", "ability_option", "ability_pick")
@@ -1075,6 +1076,22 @@ def _spellcasting_state(class_obj: dict, subclass_obj: dict | None, class_name: 
     return built
 
 
+def _optional_features_state(class_obj: dict, subclass_obj: dict | None, class_name: str, class_level: int, sources: set[str], stored: dict, cid: str, missing: list[str], known_spells: set[str]) -> list[dict]:
+    """Klassens valgfrie features (Metamagic, Eldritch Invocations, Maneuvers ...) til UI'et: præcis de, der kan
+    vælges, hvor mange, og hvad der er valgt. En valgt feature, hvis forudsætning ikke længere er opfyldt, står
+    som ugyldig; mangler der valg eller er der for mange, står det i `missing`."""
+    picks = optionalfeatures.build(class_obj, subclass_obj, class_name, class_level, sources, stored, known_spells)
+    for pick in picks:
+        raw = stored.get(pick["id"])
+        chosen = [raw] if isinstance(raw, str) and raw else list(raw or [])
+        options = {o["name"]: o for o in pick["options"]}
+        pick["chosen"] = chosen
+        pick["invalid"] = [n for n in chosen if n not in options or options[n].get("unmet")]
+        if len(chosen) != pick["count"] or pick["invalid"]:
+            missing.append(f"classes.{cid}.choices.{pick['id']}")
+    return picks
+
+
 def state(data: dict) -> dict:
     if not e.available():
         return {"choices": data, "e5tools_available": False, "missing": ["e5tools"]}
@@ -1177,6 +1194,7 @@ def state(data: dict) -> dict:
         is_caster = False
         subclass_obj = None
         spellcasting_state = None
+        optional_state = []
         extra_proficiencies = []
         if class_obj:
             # Multiclass (sekundær klasse) giver markant færre proficiencies end
@@ -1213,6 +1231,7 @@ def state(data: dict) -> dict:
                     merged += subclass_feats_by_level[leftover_level]
                 merged.sort(key=lambda f: f["level"])
                 features = merged
+            optional_state = _optional_features_state(class_obj, subclass_obj, class_name, class_level, sources, entry.get("choices") or {}, cid, missing, known_spells)
             if is_caster:
                 spellcasting_state = _spellcasting_state(class_obj, subclass_obj, class_name, class_level, sources, entry.get("choices") or {}, cid, missing)
             if skills_count and len(entry["choices"].get("skills", [])) < skills_count:
@@ -1252,7 +1271,7 @@ def state(data: dict) -> dict:
             "extra_proficiencies": extra_proficiencies,
             "subclass_options": subclass_options, "subclass_level": subclass_level, "subclass": entry.get("subclass"),
             "features": features_out,
-            "is_caster": is_caster, "spellcasting": spellcasting_state,
+            "is_caster": is_caster, "spellcasting": spellcasting_state, "optional_features": optional_state,
         })
     if not data.get("classes"):
         missing.append("classes")

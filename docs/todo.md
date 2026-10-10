@@ -84,6 +84,16 @@ for effekt-udtræks-designet.
   `granted_spells` (det gør kun racer). Samme læser (`spell_grants.py`) kan
   bruges.
 
+## Fra klasse-runden (spells og valgfrie features)
+
+- **Lessons of the First Ones** (invocation) giver et Origin feat (`featProgression`), men feat-slottet oprettes ikke.
+- **Ældre kilder (valgfrie features):** Elemental Disciplines, Infusions, Arcane Shots og runer bruger de samme
+  felter og tilbydes, men er ikke testet; Pact Boons som `pact`-forudsætning er kun afprøvet på XPHB.
+- **Agonizing Blast** kræver "et cantrip, der gør skade": der tjekkes kun, at et Warlock-cantrip er kendt, ikke at det gør skade.
+- **Spells fra valgfrie features** (Pact of the Tome) tæller ikke med i `spells_known`/kort, kun i `granted_spells`.
+- **Prepared Spells ved multiclass:** højeste spell-niveau regnes pr. klasse (dens egen tabel), ikke efter de samlede slots.
+- **Spellbog-kopiering** (Wizard: spells fundet i spil) er ikke modelleret ud over de 6 + 2 pr. niveau.
+
 ## Fra kommentarer i `karakterer/dev-wizzard/sheets.yaml`
 
 Brugeren har noteret idéer direkte i sheets.yaml ved den relevante boks -

@@ -274,7 +274,7 @@ function renderClasses(c) {
             ${f.expertise_choice ? renderWeaponChoice(`${base}.choices.${f.expertise_choice.id}`, f.expertise_choice) : ""}
           </li>`).join("")}</ul>`
       : "";
-    const spellsBlock = renderSpellcasting(k, base);
+    const spellsBlock = renderSpellcasting(k, base) + renderOptionalFeatures(k, base);
     const title = `<span>${esc(k.name || "Klasse")} ${k.is_primary ? '<span class="n">(primær - giver startudstyr)</span>' : ""}</span>
       <button type="button" class="btn secondary" data-remove-class="${k.id}">Fjern</button>`;
     const body = `
@@ -317,6 +317,13 @@ function renderSpellcasting(k, base) {
   return `<div class="sub-choice spellcasting"><span>Spells</span>${info}${picks}${grants}</div>`;
 }
 
+// Valgfrie klassefeatures (Metamagic, Eldritch Invocations, Maneuvers): kun dem, der kan vælges (forudsætninger opfyldt).
+function renderOptionalFeatures(k, base) {
+  const picks = k.optional_features || [];
+  if (!picks.length) return "";
+  return picks.map((p) => renderSpellPick(`${base}.choices.${p.id}`, p)).join("");
+}
+
 function renderSpellPick(path, p) {
   if (p.kind === "variant") {
     const current = p.chosen[0] || "";
@@ -330,14 +337,17 @@ function renderSpellPick(path, p) {
   const state = chosen.length === p.count && !(p.invalid || []).length ? "ok" : "bad";
   const byLevel = {};
   p.options.forEach((o) => (byLevel[o.level] = byLevel[o.level] || []).push(o));
+  const tips = {};
+  p.options.forEach((o) => { if (o.text) tips[o.name] = o.text; });
   const chip = (name, extra = "") =>
-    `<label data-field="${path}" data-multi="1" data-limit="${p.count}" data-value="${esc(name)}" class="${chosen.includes(name) ? "checked" : ""} ${!chosen.includes(name) && full ? "disabled" : ""} ${extra}"><input type="checkbox" ${chosen.includes(name) ? "checked" : ""}>${esc(name)}</label>`;
+    `<label data-field="${path}" data-multi="1" data-limit="${p.count}" data-value="${esc(name)}" title="${esc(tips[name] || "")}" class="${chosen.includes(name) ? "checked" : ""} ${!chosen.includes(name) && full ? "disabled" : ""} ${extra}"><input type="checkbox" ${chosen.includes(name) ? "checked" : ""}>${esc(name)}</label>`;
+  const heading = (lvl) => (lvl === "" ? "" : `<b>${lvl === "0" ? "Cantrips" : `Niveau ${lvl}`}</b>`);
   const groups = Object.keys(byLevel).sort((a, b) => a - b).map((lvl) =>
-    `<div class="spell-group"><b>${lvl === "0" ? "Cantrips" : `Niveau ${lvl}`}</b><div class="checklist">${byLevel[lvl].map((o) => chip(o.name)).join("")}</div></div>`).join("");
+    `<div class="spell-group">${p.kind === "optional" || p.kind === "feature_spell" ? "" : heading(lvl)}<div class="checklist">${byLevel[lvl].map((o) => chip(o.name)).join("")}</div></div>`).join("");
   const invalid = (p.invalid || []).length
     ? `<div class="spell-group bad"><b>Kan ikke længere vælges (fjern)</b><div class="checklist">${p.invalid.map((n) => chip(n, "invalid")).join("")}</div></div>`
     : "";
-  const empty = p.options.length ? "" : `<div class="ftext">Ingen spells at vælge endnu${p.kind === "prepared" ? " (vælg først spellbogen)" : ""}.</div>`;
+  const empty = p.options.length ? "" : `<div class="ftext">Intet at vælge endnu${p.kind === "prepared" ? " (vælg først spellbogen)" : ""}.</div>`;
   return `<div class="sub-choice"><span>${esc(p.title)} <span class="spell-counter ${state}">${chosen.length}/${p.count}</span></span>${empty}${groups}${invalid}</div>`;
 }
 

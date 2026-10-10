@@ -52,6 +52,7 @@ from . import e5tools as e
 from . import effects
 from . import feat_rules
 from . import model
+from . import optionalfeatures
 from . import races
 from . import settings
 from . import spell_grants
@@ -209,6 +210,7 @@ def empty_character_sheet() -> dict:
         "masteries": [],
         "feats": [],
         "spells_known": [],
+        "optional_features": [],
         "spellcasting": [],
         "spell_slots": [],
         "pact_slots": None,
@@ -380,6 +382,41 @@ def _size(race_eff: dict, stored: dict) -> str | None:
     if len(options) == 1:
         return options[0]
     return stored.get("size") if stored.get("size") in options else None
+
+
+def _class_optional_features(data: dict, sources: set[str]) -> tuple[list[dict], list[dict], dict[str, int]]:
+    """Valgte valgfrie klassefeatures (Metamagic, Invocations, Maneuvers ...): ([{name, source, types, class}],
+    spells de giver, sanser de giver). Kun gyldige valg tages med."""
+    features: list[dict] = []
+    granted: list[dict] = []
+    senses: dict[str, int] = {}
+    known = model.class_spell_names(data)
+    for entry in (data.get("classes") or {}).values():
+        class_name = entry.get("name")
+        class_obj = e.get_class(class_name, {entry["source"]} if entry.get("source") else sources) if class_name else None
+        if not class_obj:
+            continue
+        subclass_obj = next((x for x in e.subclasses(class_name, {class_obj["source"]}) if x.get("name") == entry.get("subclass")), None) if entry.get("subclass") else None
+        stored = entry.get("choices") or {}
+        for pick in optionalfeatures.build(class_obj, subclass_obj, class_name, entry.get("level", 1), sources, stored, known):
+            if pick["kind"] != "optional":
+                continue
+            options = {o["name"]: o for o in pick["options"]}
+            for label in stored.get(pick["id"]) or []:
+                option = options.get(label)
+                if not option or option.get("unmet"):
+                    continue
+                feature = next((f for f in e.optional_features(sources) if f["name"] == option["feature"] and f["source"] == option["source"]), None)
+                if not feature:
+                    continue
+                features.append({"name": feature["name"], "source": feature["source"], "types": list(feature.get("featureType") or []), "class": class_name})
+                ability = ((model._spellcasting_for(entry, sources) or {}).get("ability"))
+                granted += optionalfeatures.granted(feature, stored, entry.get("level", 1), sources, f"class: {class_name} ({feature['name']})", ability)
+                for block in feature.get("senses") or []:
+                    for sense, rng in block.items():
+                        if isinstance(rng, int):
+                            senses[sense] = max(senses.get(sense, 0), rng)
+    return features, granted, senses
 
 
 def _class_spellcasting(data: dict, sources: set[str]) -> tuple[list[dict], list[dict], list[int], dict | None]:
@@ -608,6 +645,10 @@ def derive_from_state(data: dict, state: dict) -> dict:
 
     spellcasting_blocks, class_granted, spell_slots, pact_slots = _class_spellcasting(data, sources)
     granted_spells += class_granted
+    optional_features, optional_granted, optional_senses = _class_optional_features(data, sources)
+    granted_spells += [{**g, "recharge": _RECHARGE_KEYS.get(g["recharge"], g["recharge"])} for g in optional_granted]
+    for sense, rng in optional_senses.items():
+        senses[sense] = max(senses.get(sense, 0), rng)
     # Spells spilleren selv har valgt (cantrips, forberedte, arcanum, ekstra). Spellbogen er en liste at vælge fra,
     # ikke noget, der skal have kort eller beskrivelse, og er derfor ikke med her.
     known_names = list(dict.fromkeys(n for b in spellcasting_blocks for n in [*b["cantrips"], *b["prepared"], *[x for v in b["arcanum"].values() for x in v], *b["extra"]]))
@@ -684,6 +725,7 @@ def derive_from_state(data: dict, state: dict) -> dict:
         "masteries": _masteries(data, sources),
         "feats": feats,
         "spells_known": spells_known,
+        "optional_features": optional_features,  # valgte Metamagic/Invocations/Maneuvers ...: {name, source, types, class}
         "spellcasting": spellcasting_blocks,  # pr. caster-klasse: evne, DC/angreb (formler), cantrips, spellbog, forberedte, arcanum
         "spell_slots": spell_slots,  # [slots pr. spell-niveau 1..] - samlet for alle klasser (multiclass-tabellen)
         "pact_slots": pact_slots,  # Warlock: {slots, level}
