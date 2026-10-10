@@ -77,9 +77,14 @@ top:
 `exclude` er til feats, du hellere vil beskrive i hånden et andet sted
 (fx et avanceret feat, der fortjener sin egen boks). En feat uden
 oversættelse endnu vises med sit engelske navn og tom tekst - ingen fejl,
-ingen opfundet tekst. Kun `feats` dækkes i dag - `class_features`/
-`spells_known`/`race_traits` er stadig ikke automatiserede (se
-[Afgrænsning](#afgrænsning)).
+ingen opfundet tekst. `type: features` dækker kun `feats`.
+
+`type: bonus_actions` med `auto: true` henter i stedet de feats,
+klassefeatures og race-traits, hvis danske beskrivelse nævner Bonus
+Action/bonushandling (klassefeatures får et `Niveau N`-tag). `exclude`
+virker som ovenfor. Entries uden beskrivelse endnu kan ikke genkendes og
+udelades, til de er beskrevet. `spells_known` er stadig ikke
+automatiseret (se [Afgrænsning](#afgrænsning)).
 
 ## Passive sanser
 
@@ -137,8 +142,9 @@ en dag migreres til `character.yaml`/`sheets.yaml`, kan
 
 ## Afgrænsning
 
-`feats` kan vises automatisk (se [Feats: manuel eller automatisk](#feats-manuel-eller-automatisk)
-ovenfor). `spells_known`/`class_features`/`race_traits` udfyldes stadig
-IKKE automatisk nogen steder - de skrives i hånden, ligesom i det gamle
+`feats` kan vises automatisk, og `bonus_actions` henter også klassefeatures
+og race-traits (se [Feats: manuel eller automatisk](#feats-manuel-eller-automatisk)
+ovenfor). `spells_known` og resten af `class_features`/`race_traits` udfyldes
+stadig IKKE automatisk nogen steder - de skrives i hånden, ligesom i det gamle
 system, eller dækkes slet ikke af selve arket (spells/klasseevner hører i
 dag til det separate kort-system, `kort.yaml`/`spellkort.py`).

@@ -382,14 +382,51 @@ def _auto_feat_items(character: dict, exclude: list[str]) -> list[dict]:
     return items
 
 
+_BONUS_ACTION_RE = re.compile(r"bonus\s*action|bonushandling", re.I)
+
+
+def _auto_bonus_action_items(character: dict, exclude: list[str]) -> list[dict]:
+    """items til bonus_actions-boksen med auto: true: de af karakterens feats,
+    klassefeatures og race-traits hvis (danske) beskrivelse nævner Bonus
+    Action/bonushandling. Samme opslagskæde som _auto_feat_items(); entries
+    uden beskrivelse endnu kan ikke genkendes og udelades."""
+    excluded = {n.lower() for n in exclude}
+    entries = (
+        [(f, None) for f in character.get("feats", [])]
+        + [(f, f"Niveau {f['level']}" if f.get("level") else None) for f in character.get("class_features", [])]
+        + [(t, None) for t in character.get("race_traits", [])]
+    )
+    items, seen = [], set()
+    for e, tag in entries:
+        key = e["name"].lower()
+        if key in excluded or key in seen:
+            continue
+        found = descriptions.lookup(e["name"], e.get("source"))
+        text = (found.get("description_da") if found else None) or ""
+        if not _BONUS_ACTION_RE.search(text):
+            continue
+        seen.add(key)
+        name_da = found.get("name_da")
+        item = {"name": f'{e["name"]} <i>· {name_da}</i>' if name_da else e["name"], "text": text}
+        if tag:
+            item["tag"] = tag
+        items.append(item)
+    return items
+
+
 def box_features(node, character, env):
     """Træk og bonus-handlinger: name, valgfri tag og text pr. item.
     auto: true bygger items automatisk fra character['feats'] i stedet for
     at læse node['items'] fra sheets.yaml - se _auto_feat_items(). exclude:
     [navn, ...] (kun relevant med auto: true) springer specifikke feats
-    over."""
+    over. bonus_actions-typen bruger i stedet _auto_bonus_action_items()."""
     o = [f'<h2>{node["title"]}</h2>']
-    items = _auto_feat_items(character, node.get("exclude", [])) if node.get("auto") else node.get("items", [])
+    if not node.get("auto"):
+        items = node.get("items", [])
+    elif node.get("type") == "bonus_actions":
+        items = _auto_bonus_action_items(character, node.get("exclude", []))
+    else:
+        items = _auto_feat_items(character, node.get("exclude", []))
     for i, t in enumerate(items):
         last = ' style="margin:0"' if i == len(items) - 1 else ""
         tag = f'<span class="tag">{t["tag"]}</span>' if t.get("tag") else ""
