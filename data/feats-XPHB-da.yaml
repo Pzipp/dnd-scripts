@@ -10,7 +10,7 @@ feat:
   - level: 4
   repeatable: true
   repeatableHidden: true
-  ability:
+  ability: &id001
   - choose:
       from:
       - str
@@ -56,20 +56,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: &id001 []
-  modifiesActions: &id002 []
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: &id003 []
-  spellGrants: {}
-  resources: &id004 []
-  playerChoices: &id005 []
+  grantsActions: &id002 []
+  modifiesActions: &id003 []
+  statChanges:
+    abilities: *id001
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: &id005 []
+  playerChoices: &id006 []
   links:
-    requires: &id006 []
-    replaces: &id007 []
-    duplicatesWith: &id008 []
+    requires: &id007 []
+    replaces: &id008 []
+    duplicatesWith: &id009 []
   notes: null
 - name: Actor
   source: XPHB
@@ -79,7 +87,7 @@ feat:
   - level: 4
     ability:
     - cha: 13
-  ability:
+  ability: &id004
   - cha: 1
   entries:
   - You gain the following benefits.
@@ -113,20 +121,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id004
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Alert
   source: XPHB
@@ -176,20 +192,28 @@ feat:
     name: Initiative Swap
     short: Lige efter dit Initiative-slag; byt Initiative med en villig allieret (ingen af jer Incapacitated).
     recharge: initiative
-  modifiesActions: *id002
+  modifiesActions: *id003
   statChanges:
+    abilities: null
     initiative: '{+PB}'
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: 'recharge: initiative bruges, fordi bytningen kun kan ske lige efter et Initiative-slag (reglen
     siger ikke eksplicit en begrænsning pr. kamp, men muligheden opstår kun dér).'
 - name: Archery
@@ -221,20 +245,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: null
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Athlete
   source: XPHB
@@ -247,7 +279,7 @@ feat:
   - level: 4
     ability:
     - dex: 13
-  ability:
+  ability: &id010
   - choose:
       from:
       - str
@@ -288,20 +320,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id010
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Blessed Warrior
   source: XPHB
@@ -311,7 +351,7 @@ feat:
   - otherSummary:
       entry: When Gaining the Level 2 Paladin "Fighting Style" Feature
       entrySummary: Special
-  additionalSpells:
+  additionalSpells: &id011
   - ability: cha
     known:
       _:
@@ -340,20 +380,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: null
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: *id011
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Blind Fighting
   source: XPHB
@@ -362,7 +410,7 @@ feat:
   prerequisite:
   - feature:
     - Fighting Style
-  senses:
+  senses: &id012
   - blindsight: 10
   entries:
   - You have {@sense Blindsight|XPHB} with a range of 10 feet.
@@ -384,20 +432,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: null
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: *id012
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Boon of Combat Prowess
   source: XPHB
@@ -407,7 +463,7 @@ feat:
   category: EB
   prerequisite:
   - level: 19
-  ability:
+  ability: &id013
   - choose:
       from:
       - str
@@ -442,20 +498,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id013
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Boon of Dimensional Travel
   source: XPHB
@@ -465,7 +529,7 @@ feat:
   category: EB
   prerequisite:
   - level: 19
-  ability:
+  ability: &id014
   - choose:
       from:
       - str
@@ -500,20 +564,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id014
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Boon of Energy Resistance
   source: XPHB
@@ -521,7 +593,7 @@ feat:
   category: EB
   prerequisite:
   - level: 19
-  ability:
+  ability: &id015
   - choose:
       from:
       - str
@@ -531,7 +603,7 @@ feat:
       - wis
       - cha
     max: 30
-  resist:
+  resist: &id016
   - choose:
       from:
       - acid
@@ -579,20 +651,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id015
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: *id016
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Boon of Fate
   source: XPHB
@@ -602,7 +682,7 @@ feat:
   category: EB
   prerequisite:
   - level: 19
-  ability:
+  ability: &id017
   - choose:
       from:
       - str
@@ -640,20 +720,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id017
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Boon of Fortitude
   source: XPHB
@@ -661,7 +749,7 @@ feat:
   category: EB
   prerequisite:
   - level: 19
-  ability:
+  ability: &id018
   - choose:
       from:
       - str
@@ -698,20 +786,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id018
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Boon of Irresistible Offense
   source: XPHB
@@ -721,7 +817,7 @@ feat:
   category: EB
   prerequisite:
   - level: 19
-  ability:
+  ability: &id019
   - choose:
       from:
       - str
@@ -757,20 +853,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id019
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Boon of Recovery
   source: XPHB
@@ -778,7 +882,7 @@ feat:
   category: EB
   prerequisite:
   - level: 19
-  ability:
+  ability: &id020
   - choose:
       from:
       - str
@@ -821,20 +925,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id020
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Boon of Skill
   source: XPHB
@@ -842,7 +954,7 @@ feat:
   category: EB
   prerequisite:
   - level: 19
-  ability:
+  ability: &id021
   - choose:
       from:
       - str
@@ -852,7 +964,7 @@ feat:
       - wis
       - cha
     max: 30
-  skillProficiencies:
+  skillProficiencies: &id022
   - athletics: true
     acrobatics: true
     sleight of hand: true
@@ -871,7 +983,7 @@ feat:
     intimidation: true
     performance: true
     persuasion: true
-  expertise:
+  expertise: &id023
   - anyProficientSkill: 1
   entries:
   - You gain the following benefits.
@@ -903,20 +1015,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id021
+  trainingGranted:
+    skills: *id022
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: *id023
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Boon of Speed
   source: XPHB
@@ -924,7 +1044,7 @@ feat:
   category: EB
   prerequisite:
   - level: 19
-  ability:
+  ability: &id024
   - choose:
       from:
       - str
@@ -965,20 +1085,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id024
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Boon of Spell Recall
   source: XPHB
@@ -989,7 +1117,7 @@ feat:
   prerequisite:
   - level: 19
     spellcasting2020: true
-  ability:
+  ability: &id025
   - choose:
       from:
       - int
@@ -1021,20 +1149,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id025
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Boon of the Night Spirit
   source: XPHB
@@ -1044,7 +1180,7 @@ feat:
   category: EB
   prerequisite:
   - level: 19
-  ability:
+  ability: &id026
   - choose:
       from:
       - str
@@ -1086,20 +1222,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id026
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Boon of Truesight
   source: XPHB
@@ -1109,7 +1253,7 @@ feat:
   category: EB
   prerequisite:
   - level: 19
-  ability:
+  ability: &id027
   - choose:
       from:
       - str
@@ -1119,7 +1263,7 @@ feat:
       - wis
       - cha
     max: 30
-  senses:
+  senses: &id028
   - truesight: 60
   entries:
   - You gain the following benefits.
@@ -1145,20 +1289,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id027
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: *id028
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Charger
   source: XPHB
@@ -1171,7 +1323,7 @@ feat:
   - level: 4
     ability:
     - dex: 13
-  ability:
+  ability: &id029
   - choose:
       from:
       - str
@@ -1209,20 +1361,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id029
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Chef
   source: XPHB
@@ -1230,12 +1390,12 @@ feat:
   category: G
   prerequisite:
   - level: 4
-  ability:
+  ability: &id030
   - choose:
       from:
       - con
       - wis
-  toolProficiencies:
+  toolProficiencies: &id031
   - cook's utensils: true
   entries:
   - You gain the following benefits.
@@ -1277,26 +1437,34 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id030
+  trainingGranted:
+    skills: null
+    tools: *id031
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Crafter
   source: XPHB
   page: 200
   category: O
-  toolProficiencies:
+  toolProficiencies: &id032
   - choose:
       from:
       - carpenter's tools
@@ -1384,16 +1552,22 @@ feat:
     section: features
     show: true
     tag: 1/lang pause
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: null
   trainingGranted:
-    tools:
-    - choice: craftingTools
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
+    skills: null
+    tools: *id032
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
   resources:
   - name: Fast Crafting
     count: 1
@@ -1412,9 +1586,9 @@ feat:
     - Weaver's Tools
     - Woodcarver's Tools
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: 'Fast Crafting sker "når du afslutter en Long Rest", ikke som et frit antal brug; resource 1/long_rest
     er blot en huskeboks. trainingGranted.tools henviser til playerChoices via {choice: id} (ny konvention).
     Discount har intet felt i skemaet og står kun i teksten.'
@@ -1426,7 +1600,7 @@ feat:
   - level: 4
     ability:
     - dex: 13
-  ability:
+  ability: &id033
   - dex: 1
   entries:
   - You gain the following benefits.
@@ -1466,20 +1640,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id033
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Crusher
   source: XPHB
@@ -1487,7 +1669,7 @@ feat:
   category: G
   prerequisite:
   - level: 4
-  ability:
+  ability: &id034
   - choose:
       from:
       - str
@@ -1522,20 +1704,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id034
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Defense
   source: XPHB
@@ -1566,20 +1756,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: null
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Defensive Duelist
   source: XPHB
@@ -1589,7 +1787,7 @@ feat:
   - level: 4
     ability:
     - dex: 13
-  ability:
+  ability: &id035
   - dex: 1
   entries:
   - You gain the following benefits.
@@ -1618,20 +1816,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id035
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Druidic Warrior
   source: XPHB
@@ -1641,7 +1847,7 @@ feat:
   - otherSummary:
       entry: When Gaining the Level 2 Ranger "Fighting Style" Feature
       entrySummary: Special
-  additionalSpells:
+  additionalSpells: &id036
   - ability: wis
     known:
       _:
@@ -1670,20 +1876,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: null
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: *id036
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Dual Wielder
   source: XPHB
@@ -1696,7 +1910,7 @@ feat:
   - level: 4
     ability:
     - dex: 13
-  ability:
+  ability: &id037
   - choose:
       from:
       - str
@@ -1734,20 +1948,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id037
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Dueling
   source: XPHB
@@ -1777,20 +1999,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: null
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Durable
   source: XPHB
@@ -1798,7 +2028,7 @@ feat:
   category: G
   prerequisite:
   - level: 4
-  ability:
+  ability: &id038
   - con: 1
   entries:
   - You gain the following benefits.
@@ -1829,20 +2059,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id038
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Elemental Adept
   source: XPHB
@@ -1853,7 +2091,7 @@ feat:
     spellcasting2020: true
   repeatable: true
   repeatableHidden: true
-  ability:
+  ability: &id039
   - choose:
       from:
       - int
@@ -1890,20 +2128,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id039
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Fey-Touched
   source: XPHB
@@ -1911,13 +2157,13 @@ feat:
   category: G
   prerequisite:
   - level: 4
-  ability:
+  ability: &id040
   - choose:
       from:
       - int
       - wis
       - cha
-  additionalSpells:
+  additionalSpells: &id041
   - ability: inherit
     innate:
       _:
@@ -1955,20 +2201,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id040
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: *id041
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Grappler
   source: XPHB
@@ -1983,7 +2237,7 @@ feat:
   - level: 4
     ability:
     - dex: 13
-  ability:
+  ability: &id042
   - choose:
       from:
       - str
@@ -2024,20 +2278,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id042
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Great Weapon Fighting
   source: XPHB
@@ -2070,20 +2332,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: null
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Great Weapon Master
   source: XPHB
@@ -2093,7 +2363,7 @@ feat:
   - level: 4
     ability:
     - str: 13
-  ability:
+  ability: &id043
   - str: 1
   entries:
   - You gain the following benefits.
@@ -2127,20 +2397,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id043
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Healer
   source: XPHB
@@ -2202,18 +2480,26 @@ feat:
     from: action
     to: action
     effect: Med et Healer's Kit kan Utilize bruges til Battle Medic.
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  statChanges:
+    abilities: null
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: formula er ren tekst, da Hit Point Die afhænger af målets klasse og ikke kan udtrykkes i {...}-syntaksen.
     Healer's Kit-anvendelser er udstyr, ikke en feat-ressource, så ingen resources. modifiesActions-posten
     er måske overflødig ved siden af grantsActions; fjern den, hvis arket ellers viser reglen to gange.
@@ -2225,12 +2511,12 @@ feat:
   - level: 4
     proficiency:
     - armor: medium
-  ability:
+  ability: &id044
   - choose:
       from:
       - con
       - str
-  armorProficiencies:
+  armorProficiencies: &id045
   - heavy: true
   entries:
   - You gain the following benefits.
@@ -2256,20 +2542,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id044
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: *id045
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Heavy Armor Master
   source: XPHB
@@ -2279,7 +2573,7 @@ feat:
   - level: 4
     proficiency:
     - armor: heavy
-  ability:
+  ability: &id046
   - choose:
       from:
       - con
@@ -2310,20 +2604,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id046
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Inspiring Leader
   source: XPHB
@@ -2336,7 +2638,7 @@ feat:
   - level: 4
     ability:
     - cha: 13
-  ability:
+  ability: &id047
   - choose:
       from:
       - wis
@@ -2369,20 +2671,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id047
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Interception
   source: XPHB
@@ -2414,20 +2724,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: null
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Keen Mind
   source: XPHB
@@ -2437,9 +2755,9 @@ feat:
   - level: 4
     ability:
     - int: 13
-  ability:
+  ability: &id048
   - int: 1
-  skillProficiencies:
+  skillProficiencies: &id049
   - choose:
       from:
       - arcana
@@ -2478,20 +2796,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id048
+  trainingGranted:
+    skills: *id049
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Lightly Armored
   source: XPHB
@@ -2499,12 +2825,12 @@ feat:
   category: G
   prerequisite:
   - level: 4
-  ability:
+  ability: &id050
   - choose:
       from:
       - str
       - dex
-  armorProficiencies:
+  armorProficiencies: &id051
   - light: true
     shield: true
   entries:
@@ -2531,20 +2857,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id050
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: *id051
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Lucky
   source: XPHB
@@ -2605,22 +2939,30 @@ feat:
     short: 1 Luck Point, når et væsen slår d20 til et angrebsslag mod dig. Det får Disadvantage.
     uses: '{PB}'
     recharge: long_rest
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
+  modifiesActions: *id003
+  statChanges:
+    abilities: null
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
   resources:
   - name: Luck Points
     count: '{PB}'
     recharge: long_rest
-  playerChoices: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: 'De to handlinger deler samme pulje (resources: Luck Points); uses er gentaget for overblik,
     men der er kun PB point i alt. "angrebsslag, ability check, saving throw" på kortets bagside er definitionen
     af D20 Test i PHB 2024, ikke tekst fra feat''en.'
@@ -2630,7 +2972,7 @@ feat:
   category: G
   prerequisite:
   - level: 4
-  ability:
+  ability: &id052
   - choose:
       from:
       - str
@@ -2666,20 +3008,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id052
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Magic Initiate
   source: XPHB
@@ -2689,7 +3039,7 @@ feat:
   category: O
   repeatable: true
   repeatableHidden: true
-  additionalSpells:
+  additionalSpells: &id053
   - name: Cleric Spells
     ability:
       choose:
@@ -2898,23 +3248,22 @@ feat:
     section: magic
     show: true
     tag: 1/lang pause
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants:
-    cantrips: 2
-    spells: 1
-    list:
-      choice: spellList
-    ability:
-      choice: spellAbility
-    alwaysPrepared: true
-    noSlot: 1
-    recharge: long_rest
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: null
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: *id053
   resources:
   - name: Level 1-besværgelse uden spell slot
     count: 1
@@ -2943,9 +3292,9 @@ feat:
     count: 1
     options: []
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: 'repeatable: hver gang er en separat post med egen liste og ability. alwaysPrepared er en ny
     nøgle i spellGrants. list/ability henviser til playerChoices via {choice: id}. options: [] for cantrips/level1Spell
     betyder "slås op i spell-listen" (5etools'' additionalSpells har filteret level=0|class=X). Spell
@@ -2956,12 +3305,12 @@ feat:
   category: G
   prerequisite:
   - level: 4
-  ability:
+  ability: &id054
   - choose:
       from:
       - str
       - dex
-  weaponProficiencies:
+  weaponProficiencies: &id055
   - martial: true
   entries:
   - You gain the following benefits.
@@ -2987,20 +3336,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id054
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: *id055
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Medium Armor Master
   source: XPHB
@@ -3010,7 +3367,7 @@ feat:
   - level: 4
     proficiency:
     - armor: medium
-  ability:
+  ability: &id056
   - choose:
       from:
       - str
@@ -3040,20 +3397,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id056
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Moderately Armored
   source: XPHB
@@ -3063,12 +3428,12 @@ feat:
   - level: 4
     proficiency:
     - armor: light
-  ability:
+  ability: &id057
   - choose:
       from:
       - str
       - dex
-  armorProficiencies:
+  armorProficiencies: &id058
   - medium: true
   entries:
   - You gain the following benefits.
@@ -3094,20 +3459,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id057
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: *id058
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Mounted Combatant
   source: XPHB
@@ -3115,7 +3488,7 @@ feat:
   category: G
   prerequisite:
   - level: 4
-  ability:
+  ability: &id059
   - choose:
       from:
       - str
@@ -3159,26 +3532,34 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id059
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Musician
   source: XPHB
   page: 201
   category: O
-  toolProficiencies:
+  toolProficiencies: &id060
   - anyMusicalInstrument: 3
   entries:
   - You gain the following benefits.
@@ -3223,18 +3604,22 @@ feat:
     short: Efter Short/Long Rest - giv Heroic Inspiration til PB allierede, der hører sangen.
     recharge: short_rest
     formula: '{PB}'
-  modifiesActions: *id002
-  statChanges: {}
+  modifiesActions: *id003
+  statChanges:
+    abilities: null
   trainingGranted:
-    tools:
-    - Musical Instrument (valgfrit)
-    - Musical Instrument (valgfrit)
-    - Musical Instrument (valgfrit)
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
+    skills: null
+    tools: *id060
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
   playerChoices:
   - id: musician-instruments
     title: Vælg tre Musical Instruments
@@ -3242,9 +3627,9 @@ feat:
     options:
     - Musical Instrument
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: 'formula i grantsActions er antal allierede, ikke antal anvendelser. Reglen har ingen begrænsning
     ud over "når du afslutter en Short eller Long Rest", derfor recharge: short_rest og ingen uses/resources.
     trainingGranted.tools er pladsholdere for valget i playerChoices.'
@@ -3259,12 +3644,12 @@ feat:
   - level: 4
     ability:
     - wis: 13
-  ability:
+  ability: &id061
   - choose:
       from:
       - int
       - wis
-  skillProficiencies:
+  skillProficiencies: &id062
   - choose:
       from:
       - insight
@@ -3300,20 +3685,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id061
+  trainingGranted:
+    skills: *id062
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Piercer
   source: XPHB
@@ -3321,7 +3714,7 @@ feat:
   category: G
   prerequisite:
   - level: 4
-  ability:
+  ability: &id063
   - choose:
       from:
       - str
@@ -3356,20 +3749,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id063
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Poisoner
   source: XPHB
@@ -3377,12 +3778,12 @@ feat:
   category: G
   prerequisite:
   - level: 4
-  ability:
+  ability: &id064
   - choose:
       from:
       - dex
       - int
-  toolProficiencies:
+  toolProficiencies: &id065
   - poisoner's kit: true
   entries:
   - You gain the following benefits.
@@ -3422,20 +3823,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id064
+  trainingGranted:
+    skills: null
+    tools: *id065
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Polearm Master
   source: XPHB
@@ -3448,7 +3857,7 @@ feat:
   - level: 4
     ability:
     - dex: 13
-  ability:
+  ability: &id066
   - choose:
       from:
       - dex
@@ -3488,20 +3897,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id066
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Protection
   source: XPHB
@@ -3533,20 +3950,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: null
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Resilient
   source: XPHB
@@ -3554,7 +3979,7 @@ feat:
   category: G
   prerequisite:
   - level: 4
-  ability:
+  ability: &id067
   - choose:
       from:
       - str
@@ -3566,7 +3991,7 @@ feat:
       amount: 1
       entry: Choose one ability in which you lack saving throw proficiency. Increase the chosen ability
         score by 1, to a maximum of 20.
-  savingThrowProficiencies:
+  savingThrowProficiencies: &id068
   - choose:
       from:
       - str
@@ -3599,20 +4024,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id067
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: *id068
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Ritual Caster
   source: XPHB
@@ -3628,13 +4061,13 @@ feat:
   - level: 4
     ability:
     - cha: 13
-  ability:
+  ability: &id069
   - choose:
       from:
       - int
       - wis
       - cha
-  additionalSpells:
+  additionalSpells: &id070
   - prepared:
       '1':
       - choose: level=1|components & miscellaneous=ritual
@@ -3688,20 +4121,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id069
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: *id070
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Savage Attacker
   source: XPHB
@@ -3739,19 +4180,27 @@ feat:
     short: Ved våbentræf - slå våbnets skadesterninger to gange, brug et af slagene.
     uses: 1
     recharge: turn
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  modifiesActions: *id003
+  statChanges:
+    abilities: null
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: Reglen siger "use either roll"; jeg har oversat til "et af slagene" (spilleren vælger). Om ekstra
     skadesterninger (fx Sneak Attack) er med, står ikke i feat'en, kun "the weapon's damage dice".
 - name: Sentinel
@@ -3765,7 +4214,7 @@ feat:
   - level: 4
     ability:
     - dex: 13
-  ability:
+  ability: &id071
   - choose:
       from:
       - str
@@ -3801,20 +4250,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id071
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Shadow-Touched
   source: XPHB
@@ -3822,13 +4279,13 @@ feat:
   category: G
   prerequisite:
   - level: 4
-  ability:
+  ability: &id072
   - choose:
       from:
       - int
       - wis
       - cha
-  additionalSpells:
+  additionalSpells: &id073
   - ability: inherit
     innate:
       _:
@@ -3865,20 +4322,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id072
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: *id073
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Sharpshooter
   source: XPHB
@@ -3888,7 +4353,7 @@ feat:
   - level: 4
     ability:
     - dex: 13
-  ability:
+  ability: &id074
   - dex: 1
   entries:
   - You gain the following benefits.
@@ -3925,20 +4390,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id074
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Shield Master
   source: XPHB
@@ -3948,7 +4421,7 @@ feat:
   - level: 4
     proficiency:
     - armor: shield
-  ability:
+  ability: &id075
   - str: 1
   entries:
   - You gain the following benefits.
@@ -3985,20 +4458,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id075
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Skill Expert
   source: XPHB
@@ -4006,7 +4487,7 @@ feat:
   category: G
   prerequisite:
   - level: 4
-  ability:
+  ability: &id076
   - choose:
       from:
       - str
@@ -4015,9 +4496,9 @@ feat:
       - int
       - wis
       - cha
-  skillProficiencies:
+  skillProficiencies: &id077
   - any: 1
-  expertise:
+  expertise: &id078
   - anyProficientSkill: 1
   entries:
   - You gain the following benefits.
@@ -4048,20 +4529,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id076
+  trainingGranted:
+    skills: *id077
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: *id078
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Skilled
   source: XPHB
@@ -4071,7 +4560,7 @@ feat:
   category: O
   repeatable: true
   repeatableHidden: true
-  skillToolLanguageProficiencies:
+  skillToolLanguageProficiencies: &id079
   - choose:
     - from:
       - anySkill
@@ -4104,15 +4593,23 @@ feat:
     section: features
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: null
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: *id079
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
   playerChoices:
   - id: skilled-proficiencies
     title: Vælg tre skills eller tools
@@ -4121,9 +4618,9 @@ feat:
     - Skill
     - Tool
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: Kan gentages (repeatable). Valgene skal ende i trainingGranted.skills/tools på karakteren. Måske
     bør sheet.show være false, da effekten kun er proficiencies, der vises andre steder på arket; lod
     den stå true, så valget kan ses.
@@ -4135,9 +4632,9 @@ feat:
   - level: 4
     ability:
     - dex: 13
-  ability:
+  ability: &id080
   - dex: 1
-  senses:
+  senses: &id081
   - blindsight: 10
   entries:
   - You gain the following benefits.
@@ -4173,20 +4670,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id080
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: *id081
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Slasher
   source: XPHB
@@ -4194,7 +4699,7 @@ feat:
   category: G
   prerequisite:
   - level: 4
-  ability:
+  ability: &id082
   - choose:
       from:
       - str
@@ -4229,20 +4734,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id082
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Speedy
   source: XPHB
@@ -4255,7 +4768,7 @@ feat:
   - level: 4
     ability:
     - con: 13
-  ability:
+  ability: &id083
   - choose:
       from:
       - dex
@@ -4296,20 +4809,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id083
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Spell Sniper
   source: XPHB
@@ -4318,7 +4839,7 @@ feat:
   prerequisite:
   - level: 4
     spellcasting2020: true
-  ability:
+  ability: &id084
   - choose:
       from:
       - int
@@ -4359,26 +4880,34 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id084
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Tavern Brawler
   source: XPHB
   page: 202
   category: O
-  weaponProficiencies:
+  weaponProficiencies: &id085
   - improvised: true
   entries:
   - You gain the following benefits.
@@ -4440,21 +4969,27 @@ feat:
     effect: Ved træf og skade - Bludgeoning 1d4{+STR} i stedet for normal skade. Slå skadesterninger om,
       der viser 1 (brug det nye slag).
   statChanges:
+    abilities: null
     damage:
       unarmedStrike: 1d4{+STR}
   trainingGranted:
-    weapons:
-    - Improvised Weapons
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+    skills: null
+    tools: null
+    armor: null
+    weapons: *id085
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: nameDa "Kroslagsbror" er et forslag. Skadeformlen 1d4{+STR} blander terning og {…}-udtryk; tjek
     at generatoren kan læse det. statChanges.damage er gjort til et objekt med nøglen unarmedStrike (egen
     nøgle). Feat'en har ingen modifiesActions.from/to, da handlingstypen ikke ændres.
@@ -4464,13 +4999,13 @@ feat:
   category: G
   prerequisite:
   - level: 4
-  ability:
+  ability: &id086
   - choose:
       from:
       - int
       - wis
       - cha
-  additionalSpells:
+  additionalSpells: &id087
   - ability: inherit
     known:
       _:
@@ -4509,20 +5044,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id086
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: *id087
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Telepathic
   source: XPHB
@@ -4530,13 +5073,13 @@ feat:
   category: G
   prerequisite:
   - level: 4
-  ability:
+  ability: &id088
   - choose:
       from:
       - int
       - wis
       - cha
-  additionalSpells:
+  additionalSpells: &id089
   - ability: inherit
     innate:
       _:
@@ -4576,20 +5119,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id088
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: *id089
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Thrown Weapon Fighting
   source: XPHB
@@ -4619,20 +5170,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: null
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Tough
   source: XPHB
@@ -4663,22 +5222,30 @@ feat:
     section: features
     show: false
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
+  grantsActions: *id002
+  modifiesActions: *id003
   statChanges:
+    abilities: null
     hp: 2 × character level (ved valg af feat)
     hpPerLevel: 2
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: '{…}-syntaksen har ingen variabel for level, så statChanges.hp er skrevet som tekst. Samlet effekt
     er +2 HP pr. character level, som hpPerLevel: 2 dækker, hvis generatoren ganger med level. sheet.show:
     false, fordi effekten kun er et tal i Hit Points-feltet; slå til, hvis feat''en skal stå på listen
@@ -4715,20 +5282,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: null
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Unarmed Fighting
   source: XPHB
@@ -4762,20 +5337,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: null
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: War Caster
   source: XPHB
@@ -4784,7 +5367,7 @@ feat:
   prerequisite:
   - level: 4
     spellcasting2020: true
-  ability:
+  ability: &id090
   - choose:
       from:
       - int
@@ -4827,20 +5410,28 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id090
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null
 - name: Weapon Master
   source: XPHB
@@ -4848,7 +5439,7 @@ feat:
   category: G
   prerequisite:
   - level: 4
-  ability:
+  ability: &id091
   - choose:
       from:
       - str
@@ -4880,18 +5471,26 @@ feat:
     section: null
     show: true
     tag: null
-  grantsActions: *id001
-  modifiesActions: *id002
-  statChanges: {}
-  trainingGranted: {}
-  sensesGranted: {}
-  resistancesGranted: {}
-  languagesGranted: *id003
-  spellGrants: {}
-  resources: *id004
-  playerChoices: *id005
+  grantsActions: *id002
+  modifiesActions: *id003
+  statChanges:
+    abilities: *id091
+  trainingGranted:
+    skills: null
+    tools: null
+    armor: null
+    weapons: null
+    saves: null
+    expertise: null
+    skillsToolsLanguages: null
+  sensesGranted: null
+  resistancesGranted: null
+  languagesGranted: null
+  spellGrants: null
+  resources: *id005
+  playerChoices: *id006
   links:
-    requires: *id006
-    replaces: *id007
-    duplicatesWith: *id008
+    requires: *id007
+    replaces: *id008
+    duplicatesWith: *id009
   notes: null

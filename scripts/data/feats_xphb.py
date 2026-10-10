@@ -8,6 +8,10 @@ Se docs/feats-xphb-da.md.
 
   * originalfelter - kopieres uændret fra 5etools og overskrives ved hver kørsel
   * egne felter - udfyldes i hånden/i batches og bevares ved genkørsel
+  * afledte egne felter (trainingGranted, sensesGranted, resistancesGranted,
+    languagesGranted, spellGrants, statChanges.abilities) hentes mekanisk fra
+    originalfelterne (skillProficiencies, senses, resist, additionalSpells, ability
+    osv.), er null hvis originalen mangler dem, og overskrives ved hver kørsel
 
 Feats matches på (name, source). Feats der ikke længere findes i kilden meldes,
 men slettes ikke.
@@ -30,6 +34,33 @@ UD = ROOT / "data" / "feats-XPHB-da.yaml"
 SOURCE = "XPHB"
 
 
+# Egne felter der AFLEDES mekanisk af 5etools' originalfelter (værdien kopieres uændret i
+# 5etools' format; null hvis originalfeltet mangler). De overskrives ved hver kørsel og
+# skal ikke rettes i hånden.
+TRAENING = {
+    "skills": "skillProficiencies",
+    "tools": "toolProficiencies",
+    "armor": "armorProficiencies",
+    "weapons": "weaponProficiencies",
+    "saves": "savingThrowProficiencies",
+    "expertise": "expertise",
+    "skillsToolsLanguages": "skillToolLanguageProficiencies",
+}
+AFLEDT = {
+    "sensesGranted": "senses",
+    "resistancesGranted": "resist",
+    "languagesGranted": "languageProficiencies",
+    "spellGrants": "additionalSpells",
+}
+
+
+def afled(f: dict, egne: dict) -> dict:
+    ud = {egen: f.get(orig) for egen, orig in AFLEDT.items()}
+    ud["trainingGranted"] = {egen: f.get(orig) for egen, orig in TRAENING.items()}
+    ud["statChanges"] = {**(egne.get("statChanges") or {}), "abilities": f.get("ability")}
+    return ud
+
+
 def egne_felter() -> dict:
     """Skabelon for vores egne felter. null/[]/{} = ikke udfyldt endnu."""
     return {
@@ -49,12 +80,12 @@ def egne_felter() -> dict:
         },
         "grantsActions": [],        # [{type, name, short, uses, recharge, formula}]
         "modifiesActions": [],      # [{action, from, to, effect}]
-        "statChanges": {},
-        "trainingGranted": {},
-        "sensesGranted": {},
-        "resistancesGranted": {},
-        "languagesGranted": [],
-        "spellGrants": {},
+        "statChanges": {"abilities": None},   # abilities afledes, resten i hånden
+        "trainingGranted": {k: None for k in TRAENING},
+        "sensesGranted": None,
+        "resistancesGranted": None,
+        "languagesGranted": None,
+        "spellGrants": None,
         "resources": [],            # [{name, count, recharge}]
         "playerChoices": [],        # [{id, title, count, options}]
         "links": {"requires": [], "replaces": [], "duplicatesWith": []},
@@ -92,7 +123,8 @@ def main() -> None:
         # Egne felter = alt i den gamle post, som ikke er et originalfelt (så også felter
         # tilføjet i hånden bevares); flettes ind i den nuværende skabelon.
         egne = {k: v for k, v in (gammel or {}).items() if k not in f}
-        resultat.append({**f, **flet(egne, skabelon), **{k: v for k, v in egne.items() if k not in skabelon}})
+        samlet = {**flet(egne, skabelon), **{k: v for k, v in egne.items() if k not in skabelon}}
+        resultat.append({**f, **samlet, **afled(f, samlet)})
     resultat += list(gamle.values())
 
     a.ud.parent.mkdir(parents=True, exist_ok=True)
