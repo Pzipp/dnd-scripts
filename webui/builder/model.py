@@ -25,7 +25,9 @@ import yaml
 
 from . import e5tools as e
 from . import feat_rules
+from . import races
 from . import settings
+from . import spell_grants
 
 OTHER = "Andet (hjemmelavet)"
 ABILITIES = ["STR", "DEX", "CON", "INT", "WIS", "CHA"]
@@ -134,6 +136,10 @@ def _dependent_fields(path: str, data: dict) -> list[str]:
         if cid == primary_class_id(data):
             deps.append("equipment.class_package")
         return deps
+    if path == "race.choices.lineage":
+        # En anden afstamning har andre resistance-/spell-muligheder og -størrelse.
+        stale = ("resist", "spell_ability", "size")
+        return [f"race.choices.{k}" for k in (data.get("race", {}).get("choices") or {}) if k in stale or k.startswith(("spell_", "b0_", "b1_"))]
     if path == "background.name":
         return ["background.choices", "equipment.background_package", "feats.background"]
     if path.startswith("feats.") and path.endswith(".name"):
@@ -392,6 +398,8 @@ def _sub_choice_complete(sc: dict, stored_value) -> bool:
         if stored_value["mode"] == "2":
             return bool(stored_value.get("ability1"))
         return bool(stored_value.get("ability1")) and bool(stored_value.get("ability2"))
+    if sc.get("count", 1) > 1 and isinstance(stored_value, list):
+        return len(stored_value) >= sc["count"]
     return bool(stored_value)
 
 
@@ -602,6 +610,53 @@ def _additional_spell_choices(feat_obj: dict, sources: set[str], stored: dict, l
     return choices
 
 
+# 5etools' tildelings-nøgler for "vælg et værktøj": hvilken gruppe, valgets id, titel og værktøjstyper.
+_TOOL_CATEGORIES = {
+    "anyMusicalInstrument": ("instrument", "Musikinstrument", {"INS"}),
+    "anyArtisansTool": ("artisan_tool", "Artisan's Tool", {"AT"}),
+    "anyGamingSet": ("gaming_set", "Gaming Set", {"GS"}),
+    "anyTool": ("tool_any", "Tool", {"AT", "INS", "GS", "T"}),
+    "any": ("tool_any", "Tool", {"AT", "INS", "GS", "T"}),
+}
+# Ord i `choose.from`, der betyder en hel gruppe i stedet for ét værktøj.
+_TOOL_WORDS = {
+    "musical instrument": "anyMusicalInstrument", "anyMusicalInstrument": "anyMusicalInstrument",
+    "gaming set": "anyGamingSet", "anyGamingSet": "anyGamingSet",
+    "anyArtisansTool": "anyArtisansTool", "artisan's tools": "anyArtisansTool",
+    "anyTool": "anyTool",
+}
+
+
+def _tool_pool(types: set[str], sources: set[str]) -> list[str]:
+    return sorted({t["name"] for t in e.tools(sources) if (t.get("type") or "").split("|")[0] in types})
+
+
+def _tool_choices(blocks, sources: set[str]) -> list[dict]:
+    """Værktøjsvalg fra et `toolProficiencies`-felt (feat, race, baggrund):
+    * `anyGamingSet: 1` / `anyArtisansTool: 1` / `anyMusicalInstrument: 1` / `any: 1`: vælg N frit
+      blandt gruppen. Hver gruppe har sit eget valg-id (gaming_set, artisan_tool, instrument, tool_any).
+    * `choose: {from: [...], count}`: navngivne værktøjer og/eller grupper (ældre baggrunde)."""
+    block = (blocks or [{}])[0]
+    choices = []
+    for key, (id_, label, types) in _TOOL_CATEGORIES.items():
+        n = block.get(key)
+        if isinstance(n, int) and not isinstance(n, bool) and n > 0:
+            choices.append({"id": id_, "title": f"{label} ({n})" if n > 1 else label, "options": _tool_pool(types, sources), "multiple": n > 1, "count": n})
+    choose = block.get("choose") or {}
+    if choose.get("from"):
+        n = choose.get("count", 1)
+        by_lower = {t["name"].lower(): t["name"] for t in e.tools(sources)}
+        options: list[str] = []
+        for entry in choose["from"]:
+            group = _TOOL_WORDS.get(entry)
+            if group:
+                options += _tool_pool(_TOOL_CATEGORIES[group][2], sources)
+            else:
+                options.append(by_lower.get(entry.lower(), entry[:1].upper() + entry[1:]))
+        choices.append({"id": "tool", "title": f"Tool ({n})" if n > 1 else "Tool", "options": sorted(dict.fromkeys(options)), "multiple": n > 1, "count": n})
+    return choices
+
+
 def _feat_sub_choices(feat_obj: dict, sources: set[str], stored: dict, level: int, known_spells: set[str]) -> list[dict]:
     """Et valgt feats egne undervalg, læst fra 5etools' strukturerede felter
     (se feat_rules.py for deres betydning). Kun det, dataene ikke siger,
@@ -655,15 +710,7 @@ def _feat_sub_choices(feat_obj: dict, sources: set[str], stored: dict, level: in
     if resist_choose.get("from"):
         n = resist_choose.get("count", 1)
         choices.append({"id": "resist", "title": f"Resistance ({n})", "options": [r.capitalize() for r in resist_choose["from"]], "multiple": n > 1})
-    tool_block = (feat_obj.get("toolProficiencies") or [{}])[0]
-    tool_choose = tool_block.get("choose", {})
-    if tool_choose.get("from"):
-        n = tool_choose.get("count", 1)
-        choices.append({"id": "tool", "title": f"Tool ({n})", "options": [t[:1].upper() + t[1:] for t in tool_choose["from"]], "multiple": n > 1})
-    if tool_block.get("anyMusicalInstrument"):
-        n = tool_block["anyMusicalInstrument"]
-        instrument_names = sorted({t["name"] for t in e.tools(sources) if (t.get("type") or "").split("|")[0] == "INS"})
-        choices.append({"id": "instrument", "title": f"Musikinstrument ({n}, blandt alle)", "options": instrument_names, "multiple": n > 1})
+    choices += _tool_choices(feat_obj.get("toolProficiencies"), sources)
     expertise = (feat_obj.get("expertise") or [{}])[0]
     if expertise.get("anyProficientSkill"):
         n = expertise["anyProficientSkill"]
@@ -822,6 +869,96 @@ def _character_weapon_predicate(data: dict, sources: set[str]):
     return lambda w: any(p(w) for p in preds)
 
 
+_RECHARGE_TEXT = {"daily": "pr. Long Rest", "restLong": "pr. Long Rest", "rest": "pr. Short Rest", "weekly": "pr. uge", "will": "efter ønske", "ritual": "som ritual"}
+
+
+def _spell_use_text(item: dict) -> str:
+    """Kort dansk tekst for hvor tit en tildelt spell kan bruges, fx '1 pr. Long Rest' eller 'PB pr. Long Rest'."""
+    recharge = item.get("recharge")
+    if not recharge:
+        return "kendt" if item["addition"] == "known" else ("altid forberedt" if item["addition"] == "prepared" else "")
+    when = _RECHARGE_TEXT.get(recharge, recharge)
+    uses = item.get("uses")
+    if recharge in ("will", "ritual") or not uses:
+        return when
+    count = "PB" if uses == "pb" else uses.rstrip("e")
+    return f"{count} {when}" + (" hver" if uses.endswith("e") else "")
+
+
+def race_spell_blocks(eff: dict, stored: dict) -> list[dict]:
+    """additionalSpells-blokkene, der gælder for den valgte race/afstamning. Flere NAVNGIVNE
+    blokke (ældre kilder uden _versions) er alternativer: kun den valgte afstamnings blok gælder."""
+    blocks = eff.get("additionalSpells") or []
+    if len(blocks) > 1 and all(b.get("name") for b in blocks):
+        chosen = str(stored.get("lineage") or "").lower()
+        return [b for b in blocks if b["name"].lower() == chosen]
+    return blocks
+
+
+def _race_spell_choices(eff: dict, sources: set[str], stored: dict) -> list[dict]:
+    """Valg og faste spells fra racens (afstamningens) additionalSpells. Spells låses op på et
+    karakterniveau (cantrips på 1, større spells på 3 og 5); alle vises, med niveauet angivet."""
+    choices = []
+    blocks = race_spell_blocks(eff, stored)
+    for b_index, block in enumerate(blocks):
+        prefix = "" if len(blocks) == 1 else f"b{b_index}_"
+        abilities = spell_grants.ability_choice(block)
+        if abilities:
+            choices.append({"id": f"{prefix}spell_ability", "title": "Spellcasting-evne", "options": abilities, "multiple": False})
+        fixed_lines = []
+        pick = 0
+        for item in spell_grants.walk(block):
+            if item["kind"] == "choose":
+                parsed = _parse_spell_filter(item["value"])
+                spells = _spells_for_filter(parsed, sources) if parsed else []
+                title = f"Spell ({item['count']})" if item["count"] > 1 else "Spell"
+                id_ = f"{prefix}spell_{pick}"
+                pick += 1
+                if not spells:
+                    choices.append(_unknown_choice(id_, title))
+                else:
+                    choices.append({"id": id_, "title": title, "options": [sp["name"] for sp in spells], "multiple": item["count"] > 1, "count": item["count"]})
+                continue
+            uid = spell_grants.parse_uid(item["value"])
+            spell = e.get_spell(uid["name"], sources) or e.get_spell(uid["name"], {"XPHB"})
+            name = spell["name"] if spell else uid["name"].title()
+            extra = [t for t in ("cantrip" if uid["cantrip"] else "", f"fra level {item['level']}" if item["level"] > 1 else "", _spell_use_text(item)) if t]
+            fixed_lines.append(f"{name} ({', '.join(extra)})" if extra else name)
+        if fixed_lines:
+            choices.append({"id": f"{prefix}spell_fixed", "title": "Spells (automatisk)", "fixed": True, "options": fixed_lines, "multiple": len(fixed_lines) > 1})
+    return choices
+
+
+def _race_sub_choices(base: dict, eff: dict, stored: dict, sources: set[str]) -> list[dict]:
+    """Alle valg en race giver, læst fra 5etools' felter (se races.py): skill, afstamning (= version),
+    størrelse, resistance, værktøj og spells. Felter afstamningen ændrer læses fra den valgte version;
+    så længe en race med afstamninger ikke har fået en valgt, vises kun afstamnings-valget først."""
+    choices = []
+    skills_from, count = _skills_from_choose(eff.get("skillProficiencies"))
+    if skills_from:
+        choices.append({"id": "skill", "title": f"Skill ({count})", "options": skills_from, "multiple": count > 1, "count": count})
+    lineage_options = [label for label, _v in races.lineages(base)]
+    if not lineage_options:
+        # Ældre kilder: afstamningen er navnet på en additionalSpells-blok.
+        named = [b["name"] for b in base.get("additionalSpells") or [] if b.get("name")]
+        if named:
+            lineage_options = named
+    if lineage_options:
+        choices.append({"id": "lineage", "title": "Afstamning (Lineage)", "options": lineage_options, "multiple": False})
+    pending = bool(lineage_options) and not any(str(stored.get("lineage") or "").lower() == o.lower() for o in lineage_options)
+    sizes = races.size_options(eff)
+    if len(sizes) > 1:
+        choices.append({"id": "size", "title": "Størrelse (Size)", "options": sizes, "multiple": False})
+    resist = races.resist_choice(eff)
+    if resist and not pending:
+        n = resist.get("count", 1)
+        choices.append({"id": "resist", "title": f"Resistance ({n})" if n > 1 else "Resistance", "options": [r.capitalize() for r in resist["from"]], "multiple": n > 1, "count": n})
+    choices += _tool_choices(eff.get("toolProficiencies"), sources)
+    if not pending:
+        choices += _race_spell_choices(eff, sources, stored)
+    return choices
+
+
 def state(data: dict) -> dict:
     if not e.available():
         return {"choices": data, "e5tools_available": False, "missing": ["e5tools"]}
@@ -844,14 +981,13 @@ def state(data: dict) -> dict:
     race_grant = _feat_grant(race_obj)
     race_traits = []
     if race_obj:
-        skills_from, count = _skills_from_choose(race_obj.get("skillProficiencies"))
-        if skills_from:
-            race_sub_choices.append({"id": "skill", "title": f"Skill ({count})", "options": skills_from, "multiple": count > 1})
-        for lineage in race_obj.get("additionalSpells", []) or []:
-            if lineage.get("name"):
-                race_sub_choices.append({"id": "lineage", "title": "Lineage", "options": [s["name"] for s in race_obj["additionalSpells"]]})
-                break
-        for trait in race_obj.get("entries", []) or []:
+        race_stored = data["race"].get("choices") or {}
+        race_eff = races.effective(race_obj, race_stored.get("lineage"))
+        race_sub_choices = _race_sub_choices(race_obj, race_eff, race_stored, sources)
+        for sc in race_sub_choices:
+            if not _sub_choice_complete(sc, race_stored.get(sc["id"])):
+                missing.append(f"race.choices.{sc['id']}")
+        for trait in race_eff.get("entries", []) or []:
             if isinstance(trait, dict) and trait.get("name"):
                 race_traits.append({"name": trait["name"], "text": e.render_text(trait.get("entries", []))})
     if not race_name:
@@ -1003,7 +1139,16 @@ def state(data: dict) -> dict:
     background_feat = None
     background_abilities = []
     background_grant = _feat_grant(background_obj)
+    background_sub_choices = []
     if background_obj:
+        bg_stored = data["background"].get("choices") or {}
+        bg_skills, bg_count = _skills_from_choose(background_obj.get("skillProficiencies"))
+        if bg_skills:
+            background_sub_choices.append({"id": "skill", "title": f"Skill ({bg_count})", "options": bg_skills, "multiple": bg_count > 1, "count": bg_count})
+        background_sub_choices += _tool_choices(background_obj.get("toolProficiencies"), sources)
+        for sc in background_sub_choices:
+            if not _sub_choice_complete(sc, bg_stored.get(sc["id"])):
+                missing.append(f"background.choices.{sc['id']}")
         if background_grant and background_grant["type"] == "fixed":
             feat_obj = e.get_feat(background_grant["id"].split("|")[0].title(), sources)
             background_feat = {
@@ -1086,7 +1231,7 @@ def state(data: dict) -> dict:
         "classes": classes_state,
         "background": {
             "options": background_options, "feat": background_feat, "ability_options": background_abilities,
-            "feat_slot": background_feat_slot,
+            "feat_slot": background_feat_slot, "sub_choices": background_sub_choices,
         },
         "hp_levels": hp_levels,
         "equipment": {"class_packages": class_packages, "background_packages": background_packages, "armor_options": armor_options},

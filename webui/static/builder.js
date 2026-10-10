@@ -343,6 +343,7 @@ function renderBackground(c) {
       </select>
     </label>
     ${abilityBlock}
+    ${renderSubChoices("background.choices", b.sub_choices, c.background.choices)}
     ${featBlock}
     ${b.feat_slot ? renderFeatSlot(b.feat_slot) : ""}
   `;

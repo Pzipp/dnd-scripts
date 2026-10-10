@@ -38,8 +38,12 @@ expertise: []
 tools: ["Smith's Tools"]       # flad liste - IKKE grupperet efter evne, se nedenfor
 languages: Common, Draconic, Elvish  # Common (fast) + languages.known - se character_yaml._languages()
 can_use: {armor: "light, medium, heavy, shields", weapons: "simple, martial"}
-senses: {blindsight: 10}       # ft, fra valgte feats (5etools' senses) - se character_yaml._feat_grants()
-resistances: [cold, fire]      # fra valgte feats (5etools' resist, fast eller valgt)
+size: Medium                   # racens størrelse, eller det valgte (race.choices.size)
+speeds: {walk: 35}             # ft; også fly/swim/climb, hvis racen har dem
+senses: {darkvision: 60, blindsight: 10}  # ft, fra race/afstamning og valgte feats - se character_yaml._feat_grants()
+resistances: [cold, fire]      # fra race/afstamning (fast eller valgt) og valgte feats
+granted_spells:                # spells racen/afstamningen giver på karakterens nuværende niveau
+- {name: Faerie Fire, source: XPHB, cantrip: false, ability: WIS, recharge: long_rest, uses: '1'}
 masteries: [[Vex, Shortsword]]  # [egenskab, våben] fra classes.*.choices.weapon_mastery - se character_yaml._masteries()
 feats: [{name: Tavern Brawler, source: XPHB}]
 spells_known: [{name: Fire Bolt, source: XPHB}]
@@ -48,6 +52,18 @@ race_traits: [{name: Darkvision, source: XPHB}]
 extra_training: []
 summary: [[Klasse, Fighter 5], [Art, Human], [Baggrund, Soldier]]
 ```
+
+## Hvad racen giver karakteren
+
+Alt læses fra racens strukturerede 5etools-felter (`webui/builder/races.py`):
+
+* **Afstamning = version.** Elf (Drow/High Elf/Wood Elf), Tiefling (Abyssal/Chthonic/Infernal), Gnome (Forest/Rock), Goliath (6 giganter) og Dragonborn (10 farver) har `_versions`. Hver version er en fuld race, der udfoldes efter 5etools' egne regler (`webui/builder/versions.py`: versionens felter afløser racens, `_mod` retter `entries`, skabeloner fyldes med `{{variabler}}`). Valget gemmes som `race.choices.lineage` (kortnavnet, fx `Drow`), og den valgte versions felter afløser racens: Darkvision 120 (Drow), speed 35 (Wood Elf), resistance og spells (Tiefling-Legacy), skadetype (Dragonborn). Indtil en afstamning er valgt, vises kun afstamnings-valget og racens fælles træk.
+* `darkvision`/`blindsight` → `senses`. `speed` (tal, eller `{walk, fly, swim}` hvor `true` = lig walk) → `speeds`. `size` med flere bogstaver (`["S","M"]`) er et valg → `size`.
+* `resist`: faste (`["necrotic"]`) og `{choose: {from}}` (valg, `race.choices.resist`) → `resistances`.
+* `additionalSpells` → `granted_spells`, læst af `webui/builder/spell_grants.py`: `known`/`innate`/`prepared`, niveaunøgler (spellen låses op på karakterniveau 1/3/5), brugsnøgler (`daily: {"1": ...}` = 1 pr. Long Rest, `"1e"` = 1 pr. spell, `"pb"` = PB gange), `choose`-filtre (valg `spell_<n>`) og spellcasting-evne (`{choose: [int, wis, cha]}` → `race.choices.spell_ability`). Kun spells op til karakterens niveau tages med.
+* `skillProficiencies` og `toolProficiencies` følger samme regler som for feats (`true` = fast, tal/`choose` = valg).
+
+Baggrunde følger samme tool-regler: `anyGamingSet: 1` (Guard, Noble, Soldier), `anyArtisansTool` (Artisan) og `anyMusicalInstrument` (Entertainer) er VALG (`background.choices.gaming_set` / `artisan_tool` / `instrument`), ikke faste værktøjer.
 
 ## Hvad feats giver karakteren
 

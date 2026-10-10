@@ -61,6 +61,25 @@ for effekt-udtræks-designet.
 - **Det gamle `karakterark.py`-system** (8 rigtige spillere) - urørt;
   fjernelse er en erklæret fremtidig hensigt, ikke besluttet endnu.
 
+## Fra gennemgangen af `races.json`
+
+- **Datafejl i 5etools, meldes upstream (github):** `Tiefling; Abyssal Legacy`
+  har `darkvision: 120`, men racens egen Darkvision-tekst og Fiendish
+  Legacies-tabellen siger 60 ft for alle tre Legacies. Byggeren læser dataene
+  uændret (en Abyssal Tiefling får derfor 120 ft) og har bevidst ingen
+  omvej; fjernes, når 5etools er rettet. Afklar mod bogen, inden der meldes.
+- **Ikke bygget endnu (races):** `subrace`-listen (ældre kilder: High Elf,
+  Hill Dwarf osv., 98 poster med egen `ability`/`speed`/`additionalSpells`)
+  og racers egen `ability` (152 stk. i ældre kilder, tælles ikke med i
+  evnescorerne). Dertil `languageProficiencies`, `weaponProficiencies`,
+  `armorProficiencies`, `immune`, `vulnerable` og `conditionImmune` på racer.
+  Racer fra XPHB er dækket.
+- **Kun i teksten:** Dwarven Toughness (+1 HP pr. level) og lignende
+  race-træk har intet struktureret felt.
+- **Feats' `additionalSpells`** giver valg i byggeren, men lægges ikke i
+  `granted_spells` (det gør kun racer). Samme læser (`spell_grants.py`) kan
+  bruges.
+
 ## Fra kommentarer i `karakterer/dev-wizzard/sheets.yaml`
 
 Brugeren har noteret idéer direkte i sheets.yaml ved den relevante boks -

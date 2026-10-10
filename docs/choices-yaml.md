@@ -159,7 +159,9 @@ autoritative liste):
 | `skill` | tekst | Et enkelt skill-valg |
 | `skills` | liste af tekst | Flere skill-valg (fx klassens startskills) |
 | `skill_any` | tekst | Skill valgt fra en helt fri pulje (fx Skilled) |
-| `lineage` | tekst | Race-givet spell-liste-valg (fx visse lineage/subrace-spells) - kun på `race.choices` |
+| `lineage` | tekst | Racens afstamning = valgt `_versions`-version, som kortnavn (`Drow`, `Wood Elf`, `Abyssal`, `Forest Gnome`, `Cloud`, `Gold`). Ældre kilder uden `_versions`: navnet på en `additionalSpells`-blok. Kun på `race.choices` |
+| `size` | tekst | Størrelse, når racen kan vælge (`Small`/`Medium`). Kun på `race.choices` |
+| `spell_ability` | `INT`\|`WIS`\|`CHA` | Spellcasting-evne for racens spells. Kun på `race.choices` |
 | `ability` | `STR`\|`DEX`\|... | Feat'ets evne-valg: +`amount` (normalt 1) til evnen, loft 20 eller feat'ets `max`. Styrer også saving throw-træning (Resilient) og spellcasting-evne (`inherit`), når feat'et siger det |
 | `save` | `STR`\|... | Saving throw-træning valgt for sig selv, når feat'et ikke kobler den til `ability` |
 | `asi` | `{mode: '1'|'2', ability1, ability2}` | Ability Score Improvement: `mode '2'` = +1 til to evner, `'1'` = +2 til én |
@@ -168,8 +170,9 @@ autoritative liste):
 | `weapon_mastery` | liste af tekst | Klassens egne Weapon Mastery-valg |
 | `damage_type` | tekst | Elemental Adepts skadetype |
 | `resist` | tekst | Resistance-valg (fx Epic Boons) |
-| `tool` | tekst | Tool-proficiency-valg |
-| `instrument` | tekst | Musikinstrument-valg |
+| `tool` | tekst/liste | Valg af navngivne værktøjer (`choose.from`) |
+| `gaming_set` / `artisan_tool` / `tool_any` | tekst/liste | Fri valg af Gaming Set / Artisan's Tool / hvilket som helst værktøj (`anyGamingSet`, `anyArtisansTool`, `anyTool`). Også på `background.choices` |
+| `instrument` | tekst/liste | Musikinstrument-valg (`anyMusicalInstrument`). Også på `background.choices` |
 | `expertise` | tekst | Expertise-valg |
 | `origin` | tekst | HVILKEN spell-liste et feat med flere alternativer bruger (fx Magic Initiate: Cleric/Druid/Wizard) - styrer hvilke `origin_*`-nøgler der derefter giver mening |
 | `spell_<n>` / `origin_spell_<n>` / `spell_prepared` / `b<n>_spell_<n>` osv. | tekst eller liste | Valgte spells fra et feats strukturerede spell-filter. Det eksakte id afhænger af hvor i feat'ets data-struktur filteret sidder - se `model._spell_choices_from_block()` |

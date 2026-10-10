@@ -52,6 +52,8 @@ from . import e5tools as e
 from . import effects
 from . import feat_rules
 from . import model
+from . import races
+from . import spell_grants
 
 # D&D 2024 (PHB)-reglens faste Proficiency Bonus pr. level - ikke noget nogen
 # vælger, derfor sikkert at opslå som tabel i stedet for at bede spilleren om det.
@@ -194,6 +196,11 @@ def empty_character_sheet() -> dict:
         "tools": [],
         "languages": "Common",
         "can_use": {},
+        "size": None,
+        "speeds": {"walk": 30},
+        "senses": {},
+        "resistances": [],
+        "granted_spells": [],
         "masteries": [],
         "feats": [],
         "spells_known": [],
@@ -347,6 +354,52 @@ def _masteries(data: dict, sources: set[str]) -> list[list[str]]:
     return out
 
 
+_RECHARGE_KEYS = {"daily": "long_rest", "restLong": "long_rest", "rest": "short_rest"}
+
+
+def _size(race_eff: dict, stored: dict) -> str | None:
+    """Karakterens størrelse: racens eneste, eller det valgte (race.choices.size)."""
+    options = races.size_options(race_eff)
+    if len(options) == 1:
+        return options[0]
+    return stored.get("size") if stored.get("size") in options else None
+
+
+def _race_granted_spells(race_eff: dict, stored: dict, level: int, sources: set[str]) -> list[dict]:
+    """De spells racen (den valgte afstamning) giver KARAKTEREN på det nuværende niveau: faste
+    spells og de valgte (race.choices.spell_<n>). Poster: {name, source, cantrip, ability,
+    recharge, uses}. Spells, der låses op på et højere niveau end karakterens, udelades."""
+    out = []
+    blocks = model.race_spell_blocks(race_eff, stored)
+    for b_index, block in enumerate(blocks):
+        prefix = "" if len(blocks) == 1 else f"b{b_index}_"
+        picked_ability = stored.get(f"{prefix}spell_ability")
+        ability = spell_grants.fixed_ability(block) or (picked_ability.upper() if isinstance(picked_ability, str) else None)
+        pick = 0
+        for item in spell_grants.walk(block):
+            if item["kind"] == "fixed":
+                uid = spell_grants.parse_uid(item["value"])
+                names, cantrip = [uid["name"]], uid["cantrip"]
+            else:
+                value = stored.get(f"{prefix}spell_{pick}")
+                pick += 1
+                names = [v for v in (value if isinstance(value, list) else [value]) if v]
+                cantrip = "level=0" in item["value"]
+            if item["level"] > level:
+                continue
+            for name in names:
+                spell = e.get_spell(name, sources) or e.get_spell(name, {"XPHB"})
+                out.append({
+                    "name": spell["name"] if spell else name.title(),
+                    "source": spell["source"] if spell else None,
+                    "cantrip": cantrip,
+                    "ability": ability,
+                    "recharge": _RECHARGE_KEYS.get(item["recharge"], item["recharge"]),
+                    "uses": item["uses"],
+                })
+    return out
+
+
 def derive_from_state(data: dict, state: dict) -> dict:
     """Bygger character.yamls indhold ud fra choices.yaml (data) og det
     allerede beregnede model.state(data) (state) - ingen ny regelberegning,
@@ -382,21 +435,34 @@ def derive_from_state(data: dict, state: dict) -> dict:
     background_name, background_source = data["background"].get("name"), data["background"].get("source")
     background_obj = e.get_background(background_name, {background_source} if background_source else sources) if background_name else None
     race_obj = e.get_race(race_name, {race_source} if race_source else sources) if (race_name and race_name != model.OTHER) else None
-    race_speed = (race_obj or {}).get("speed", 30)
-    speed = race_speed.get("walk", 30) if isinstance(race_speed, dict) else (race_speed or 30)
+    race_stored = data["race"].get("choices") or {}
+    race_eff = races.effective(race_obj, race_stored.get("lineage")) if race_obj else {}
+    speeds = races.speeds(race_eff) if race_obj else {"walk": 30}
+    speed = speeds["walk"]
 
     fixed_skills = []
     fixed_tools = []
     if background_obj:
-        fixed_skills = [k for k, v in (background_obj.get("skillProficiencies") or [{}])[0].items() if v]
-        fixed_tools = [k for k, v in (background_obj.get("toolProficiencies") or [{}])[0].items() if v]
+        # Kun `true` er en fast tildeling; et tal (anyGamingSet: 1) er et VALG og står i choices.
+        fixed_skills = [k for k, v in (background_obj.get("skillProficiencies") or [{}])[0].items() if v is True]
+        fixed_tools = [k for k, v in (background_obj.get("toolProficiencies") or [{}])[0].items() if v is True]
+    fixed_skills += feat_rules._true_keys(race_eff.get("skillProficiencies"))
+    fixed_tools += feat_rules._true_keys(race_eff.get("toolProficiencies"))
 
     skills = sorted({*(s.lower() for s in _collect(data, "skill", "skills", "skill_any")), *fixed_skills, *feat_grants["skills"]})
-    tools = sorted({*_collect(data, "tool", "instrument"), *fixed_tools, *feat_grants["tools"]})
+    tools = sorted({*_collect(data, "tool", "instrument", "gaming_set", "artisan_tool", "tool_any"), *fixed_tools, *feat_grants["tools"]})
     expertise = sorted({
         skill for c in state.get("classes", []) for f in c.get("features", [])
         if f.get("expertise_choice") for skill in f["expertise_choice"]["chosen"]
     } | {s.lower() for s in feat_grants["expertise"]})
+
+    senses = dict(races.fixed_senses(race_eff))
+    for sense, rng in feat_grants["senses"].items():
+        senses[sense] = max(senses.get(sense, 0), rng)
+    race_resist = races.fixed_resist(race_eff)
+    chosen_resist = race_stored.get("resist")
+    race_resist += [r for r in (chosen_resist if isinstance(chosen_resist, list) else [chosen_resist]) if r]
+    resistances = sorted({r.lower() for r in [*race_resist, *feat_grants["resist"]]})
 
     classes_out = [
         {"name": c.get("name"), "source": c.get("source"), "level": c.get("level"), "subclass": c.get("subclass")}
@@ -480,8 +546,11 @@ def derive_from_state(data: dict, state: dict) -> dict:
         "tools": tools,
         "languages": _languages(data),  # se _languages() - klasse-/feature-tildelte ekstra sprog er IKKE talt med, kendt gap
         "can_use": can_use,
-        "senses": feat_grants["senses"],  # {'blindsight': 10, ...} i ft, fra valgte feats
-        "resistances": sorted({r.lower() for r in feat_grants["resist"]}),  # fra valgte feats
+        "size": _size(race_eff, race_stored),
+        "speeds": speeds,  # {'walk': 30, 'fly': 30, ...} i ft
+        "senses": senses,  # {'darkvision': 60, 'blindsight': 10, ...} i ft, fra race/afstamning og feats
+        "resistances": resistances,  # fra race/afstamning og feats
+        "granted_spells": _race_granted_spells(race_eff, race_stored, total_level, sources) if race_obj else [],
         "masteries": _masteries(data, sources),
         "feats": feats,
         "spells_known": spells_known,
