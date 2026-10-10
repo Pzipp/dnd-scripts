@@ -7,6 +7,7 @@ Generatorerne. Du kører dem normalt via `python3 dnd.py ...` i roden af repoet 
 | `karakterark/` | Karakterark, 4 sider A4, farve og sort/hvid | [karakterark/README.md](karakterark/README.md) |
 | `kort/` | Spell-/evne-/udstyrskort, 63 × 88 mm, farve og sort/hvid | [kort/README.md](kort/README.md) |
 | `pdf/` | PDF ud fra HTML | [pdf/README.md](pdf/README.md) |
+| `data/` | Udtræk fra 5etools til `data/*.yaml` (`feats_xphb.py`), felter i [docs/feats-xphb-da.md](../docs/feats-xphb-da.md) | |
 | `faelles.py` | Fælles hjælpere (indlæs YAML/JSON, find filer, stile, outputstier) | |
 
 ## Fælles konventioner

@@ -31,6 +31,7 @@ python3 dnd.py tjek                           # byg alt; meld fejl i data. KØR 
 | `bibliotek/*.yaml` | Delte kort (id → kort) |
 | `scripts/karakterark/`, `scripts/kort/`, `scripts/pdf/` | Generatorer og CSS. Hver mappe har en README |
 | `scripts/faelles.py` | Fælles hjælpere (indlæsning, stile, stier) |
+| `data/feats-XPHB-da.yaml` | Alle XPHB-feats med danske felter til ark og kort. Lav/opdatér med `scripts/data/feats_xphb.py`. Format: `docs/feats-xphb-da.md` |
 | `docs/` | Formater og navnekonvention |
 
 ## Sådan laver du en ny karakter (arbejdsgang)
