@@ -38,6 +38,8 @@ expertise: []
 tools: ["Smith's Tools"]       # flad liste - IKKE grupperet efter evne, se nedenfor
 languages: Common, Draconic, Elvish  # Common (fast) + languages.known - se character_yaml._languages()
 can_use: {armor: "light, medium, heavy, shields", weapons: "simple, martial"}
+senses: {blindsight: 10}       # ft, fra valgte feats (5etools' senses) - se character_yaml._feat_grants()
+resistances: [cold, fire]      # fra valgte feats (5etools' resist, fast eller valgt)
 masteries: [[Vex, Shortsword]]  # [egenskab, våben] fra classes.*.choices.weapon_mastery - se character_yaml._masteries()
 feats: [{name: Tavern Brawler, source: XPHB}]
 spells_known: [{name: Fire Bolt, source: XPHB}]
@@ -46,6 +48,20 @@ race_traits: [{name: Darkvision, source: XPHB}]
 extra_training: []
 summary: [[Klasse, Fighter 5], [Art, Human], [Baggrund, Soldier]]
 ```
+
+## Hvad feats giver karakteren
+
+Alt læses fra feat'ens strukturerede 5etools-felter (betydning: `webui/builder/feat_rules.py`),
+ikke fra teksten, og kommer fra den kilde (bog), feat'et er valgt fra:
+
+* `ability` → evnescorer. Fast (`{con: 1}`) og valgt (`choose`, gemt som `choices.ability`). Loftet er 20; `max` på feat'et hæver det for den valgte evne (Epic Boons: 30). En grundscore over loftet røres ikke. Ability Score Improvement har sin egen +2/+1-dialog (`choices.asi`).
+* `savingThrowProficiencies` → `saves`. Er `from`-listen den samme som `ability`'s (Resilient), styrer ét valg både +1 og save-træning.
+* `skillProficiencies`, `toolProficiencies` → `skills`, `tools` (faste tildelinger + valgene `skill`, `skill_any`, `tool`, `instrument`). `expertise` → `expertise` (valget `expertise`).
+* `armorProficiencies`, `weaponProficiencies` → tilføjes til `can_use`.
+* `senses` → `senses`. `resist` (fast eller valgt) → `resistances`.
+* `prerequisite` afgør hvilke feats der tilbydes: `level`, `ability`, `spellcasting2020` og `proficiency` (rustningstræning fra klasserne og valgte feats). `feature` og `otherSummary` er opfyldt af det slot, der tilbyder feat'et.
+
+Kun det, dataene ikke siger, har navne-undtagelser i `model._feat_sub_choices()`: Weapon Master og Elemental Adept (valget står kun i teksten).
 
 ## Afledte felter med et kendt gap
 

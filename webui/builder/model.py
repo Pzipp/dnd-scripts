@@ -24,6 +24,7 @@ from pathlib import Path
 import yaml
 
 from . import e5tools as e
+from . import feat_rules
 from . import settings
 
 OTHER = "Andet (hjemmelavet)"
@@ -44,7 +45,7 @@ def empty_character() -> dict:
         "languages": {"known": []},  # PHB 2024 kap. 2: Common (fast) + 2 valgt/rullet fra Standard Languages-tabellen
         # Pr. karakter, ikke delt - to gruppemedlemmer kan have forskellige
         # tilladte kilder/husregler i gang samtidig.
-        "settings": {"allowed_sources": list(settings.DEFAULT_SOURCES), "half_feats": settings.DEFAULT_HALF_FEATS},
+        "settings": {"allowed_sources": list(settings.DEFAULT_SOURCES)},
     }
 
 
@@ -270,10 +271,12 @@ def _feat_grant(obj: dict | None) -> dict | None:
     return {"type": "fixed", "id": feat_id} if feat_id else None
 
 
-def _meets_prerequisite(feat: dict, level: int, assigned: dict, has_spellcasting: bool) -> bool:
+def _meets_prerequisite(feat: dict, level: int, assigned: dict, has_spellcasting: bool, armor_profs: frozenset = frozenset()) -> bool:
     """prerequisite er en liste af ALTERNATIVER (opfyld én); inden i ét alternativ
-    skal niveau, evt. spellcasting2020-krav (Spellcasting/Pact Magic feature) OG
-    alle evne-krav være opfyldt."""
+    skal niveau, evt. spellcasting2020-krav (Spellcasting/Pact Magic feature),
+    rustningstræning (`proficiency`, fx Heavily Armored kræver Medium) OG alle
+    evne-krav være opfyldt. `feature` (Fighting Style) og `otherSummary` er
+    allerede opfyldt, når feat'et tilbydes i det slot, der giver dem."""
     prereqs = feat.get("prerequisite")
     if not prereqs:
         return True
@@ -282,6 +285,8 @@ def _meets_prerequisite(feat: dict, level: int, assigned: dict, has_spellcasting
             continue
         if alt.get("spellcasting2020") and not has_spellcasting:
             continue
+        if any(a not in armor_profs for a in feat_rules.required_armor(alt)):
+            continue
         if all(
             (assigned.get(ability.upper()) or 0) >= minimum
             for req in (alt.get("ability") or [])
@@ -289,6 +294,25 @@ def _meets_prerequisite(feat: dict, level: int, assigned: dict, has_spellcasting
         ):
             return True
     return False
+
+
+def _armor_proficiencies(data: dict, sources: set[str]) -> frozenset:
+    """Rustningstræning (light/medium/heavy/shield) fra karakterens klasser (primær = start-,
+    øvrige = multiclass-træning) og fra valgte feats' faste armorProficiencies."""
+    out: set[str] = set()
+    primary = primary_class_id(data)
+    for cid, entry in data.get("classes", {}).items():
+        obj = e.get_class(entry.get("name"), {entry.get("source")} if entry.get("source") else sources) if entry.get("name") else None
+        if not obj:
+            continue
+        prof = obj.get("startingProficiencies", {}) if cid == primary else obj.get("multiclassing", {}).get("proficienciesGained", {})
+        out |= set(feat_rules._true_keys(prof.get("armorProficiencies")))
+    for chosen in (data.get("feats") or {}).values():
+        if chosen and chosen.get("name"):
+            feat_obj = e.get_feat(chosen["name"], {chosen["source"]} if chosen.get("source") else sources)
+            if feat_obj:
+                out |= set(feat_rules.fixed_grants(feat_obj)["armor"])
+    return frozenset(out)
 
 
 def _class_has_spellcasting(entry: dict, sources: set[str]) -> bool:
@@ -578,15 +602,11 @@ def _additional_spell_choices(feat_obj: dict, sources: set[str], stored: dict, l
     return choices
 
 
-def _feat_sub_choices(feat_obj: dict, sources: set[str], stored: dict, level: int, half_feats: bool, known_spells: set[str]) -> list[dict]:
-    """Et valgt feats egne undervalg. Feat-JSON'ens 'ability'-felt er IKKE
-    generelt pålideligt - det optræder på feats hvor selve teksten slet ikke
-    giver en evne-forbedring (fx Weapon Master), så det bruges ikke generisk
-    for alle feats. For Epic Boons (category EB) er feltet derimod altid
-    korrekt: alle Epic Boons giver +1 til én evne, op til 30 - det er en
-    fast regel for hele kategorien (nævnt i reglerne for Epic Boons som
-    helhed, ikke gentaget i hver enkelt boons egen tekst), så her bruges
-    kategori-koden som det pålidelige signal i stedet for feat-navnet."""
+def _feat_sub_choices(feat_obj: dict, sources: set[str], stored: dict, level: int, known_spells: set[str]) -> list[dict]:
+    """Et valgt feats egne undervalg, læst fra 5etools' strukturerede felter
+    (se feat_rules.py for deres betydning). Kun det, dataene ikke siger,
+    har navne-undtagelser: Weapon Master og Elemental Adept (valget står kun
+    i feat'ens tekst) og Ability Score Improvement (egen +2/+1-dialog)."""
     choices = []
     skills_from, count = _skills_from_choose(feat_obj.get("skillProficiencies"))
     if skills_from:
@@ -616,39 +636,21 @@ def _feat_sub_choices(feat_obj: dict, sources: set[str], stored: dict, level: in
         # struktureret choose-felt (modsat fx Epic Boons' resist-valg) - ingen
         # systematisk måde at opdage det på, derfor specialhåndteret som Weapon Master.
         choices.append({"id": "damage_type", "title": "Skadetype (Energy Mastery)", "options": ["Acid", "Cold", "Fire", "Lightning", "Thunder"], "multiple": False})
-    if feat_obj.get("name") == "Resilient":
-        # Ability-feltets 'entry'-tekst siger eksplicit "choose one ability in
-        # which you lack saving throw proficiency, increase..." - det er en del
-        # af Resilients EGEN tekst, ikke den omstridte "alle General-feats er
-        # half-feats"-regel, så det gælder uanset half_feats-indstillingen.
-        # ÉT valg giver BÅDE +1 og saving throw-træning i samme evne.
-        save_choose = (feat_obj.get("savingThrowProficiencies") or [{}])[0].get("choose", {})
-        if save_choose.get("from"):
-            choices.append({"id": "ability", "title": "Evne (+1 og saving throw-træning)", "options": [a.upper() for a in save_choose["from"]], "multiple": False})
-    elif feat_obj.get("name") == "Cold Caster":
-        # Egen tekst: "The spell's spellcasting ability is the ability
-        # increased by this feat" - ÉT valg styrer BÅDE +1-forbedringen og
-        # cantrippets spellcasting-evne, ikke to separate valg (feltet står
-        # identisk gentaget i begge additionalSpells-blokke) - uafhængig af
-        # half_feats, ligesom Resilient, fordi det er feat'ets egen tekst.
-        ability_choose = (feat_obj.get("ability") or [{}])[0].get("choose", {})
-        if ability_choose.get("from"):
-            choices.append({"id": "ability", "title": "Evne (+1 og spellcasting-evne)", "options": [a.upper() for a in ability_choose["from"]], "multiple": False})
-    elif feat_obj.get("category") == "EB":
-        # Epic Boons' +1-regel er udiskutabel RAW (nævnt i kategoriens egen
-        # intro-tekst), uafhængig af half_feats-indstillingen, som kun gælder
-        # det omstridte "alle General-feats er half-feats"-spørgsmål.
-        ability_choose = (feat_obj.get("ability") or [{}])[0].get("choose", {})
-        if ability_choose.get("from"):
-            choices.append({"id": "ability", "title": "Evne-forbedring (+1, op til 30)", "options": [a.upper() for a in ability_choose["from"]], "multiple": False})
-    elif half_feats and feat_obj.get("category") == "G" and feat_obj.get("name") != "Ability Score Improvement":
-        # Om General-feats generelt er half-feats (ud over dem der selv
-        # nævner det, som Resilient) er en husregel-diskussion, ikke en
-        # fastlagt del af reglerne her - derfor styret af indstillingen
-        # half_feats (pr. karakter, default fra), ikke altid aktiv.
-        ability_choose = (feat_obj.get("ability") or [{}])[0].get("choose", {})
-        if ability_choose.get("from"):
-            choices.append({"id": "ability", "title": "Evne-forbedring (+1)", "options": [a.upper() for a in ability_choose["from"]], "multiple": False})
+    ability = feat_rules.ability_choice(feat_obj)
+    if ability:
+        # ÉT valg kan styre flere ting: +1 til evnen, og hvis feat'et siger det
+        # (samme evne-liste i savingThrowProficiencies, eller additionalSpells.
+        # ability == "inherit"), også saving throw-træning og spellcasting-evne.
+        parts = [f"+{ability['amount']}"]
+        if feat_rules.saves_linked_to_ability(feat_obj):
+            parts.append("saving throw-træning")
+        if feat_rules.spell_ability_from_choice(feat_obj):
+            parts.append("spellcasting-evne")
+        title = "Evne (" + " og ".join(parts) + (f", op til {ability['max']})" if ability["max"] != feat_rules.DEFAULT_ABILITY_MAX else ")")
+        choices.append({"id": "ability", "title": title, "options": ability["from"], "multiple": False})
+    save_from = feat_rules._choose_from(feat_obj.get("savingThrowProficiencies"))
+    if save_from and not feat_rules.saves_linked_to_ability(feat_obj):
+        choices.append({"id": "save", "title": "Saving throw-træning", "options": [a.upper() for a in save_from], "multiple": False})
     resist_choose = (feat_obj.get("resist") or [{}])[0].get("choose", {})
     if resist_choose.get("from"):
         n = resist_choose.get("count", 1)
@@ -826,12 +828,12 @@ def state(data: dict) -> dict:
 
     char_settings = data.get("settings", {})
     sources = set(char_settings.get("allowed_sources") or settings.DEFAULT_SOURCES)
-    half_feats = char_settings.get("half_feats", settings.DEFAULT_HALF_FEATS)
     missing = []
     level = total_level(data)
     assigned_abilities = data["abilities"].get("assigned", {})
     has_spellcasting = any(_class_has_spellcasting(entry, sources) for entry in data.get("classes", {}).values())
     known_spells = set(data.get("spells", {}).get("known") or [])
+    armor_profs = _armor_proficiencies(data, sources)
 
     # race
     race_name = data["race"].get("name")
@@ -856,7 +858,7 @@ def state(data: dict) -> dict:
         missing.append("race.name")
 
     def _add_feat_slot(key: str, label: str, category: str) -> dict:
-        candidates = [ft for ft in e.feats_by_category(category, sources) if _meets_prerequisite(ft, level, assigned_abilities, has_spellcasting)]
+        candidates = [ft for ft in e.feats_by_category(category, sources) if _meets_prerequisite(ft, level, assigned_abilities, has_spellcasting, armor_profs)]
         chosen = data["feats"].get(key)
         # Et allerede valgt feat holdes altid i options, selvom det ikke længere
         # ville kvalificere (fx niveau faldt, eller en skærpet forudsætning som
@@ -873,15 +875,13 @@ def state(data: dict) -> dict:
             feat_obj = e.get_feat(chosen["name"], {chosen["source"]})
             if feat_obj:
                 slot["text"] = e.render_text(feat_obj["entries"])
-                # Faste (ikke-valgfrie) evne-forbedringer (fx Durable: altid +1
-                # CON) hører til den omstridte "General-feats er half-feats"-
-                # regel (se half_feats ovenfor), så de vises kun når den er slået til.
-                fixed_ability = (feat_obj.get("ability") or [{}])[0]
-                if half_feats and feat_obj.get("category") == "G" and fixed_ability and not fixed_ability.get("choose"):
-                    bumps = ", ".join(f"+{v} {k.upper()}" for k, v in fixed_ability.items())
+                # Faste (ikke-valgfrie) evne-forbedringer (fx Durable: altid +1 CON).
+                fixed = feat_rules.fixed_ability(feat_obj)
+                if fixed:
+                    bumps = ", ".join(f"+{amount} {ab}" for ab, (amount, _cap) in fixed.items())
                     slot["text"] = f"Evne-forbedring: {bumps}.\n{slot['text']}"
                 stored = chosen.get("choices", {})
-                slot["sub_choices"] = _feat_sub_choices(feat_obj, sources, stored, level, half_feats, known_spells)
+                slot["sub_choices"] = _feat_sub_choices(feat_obj, sources, stored, level, known_spells)
                 for sc in slot["sub_choices"]:
                     if not _sub_choice_complete(sc, stored.get(sc["id"])):
                         missing.append(f"feats.{key}.choices.{sc['id']}")

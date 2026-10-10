@@ -25,18 +25,6 @@
     </p>
     <div id="source-list" class="source-list"><p>Henter...</p></div>
   </section>
-  <section class="step">
-    <h2>Husregler</h2>
-    <label style="display:flex;align-items:center;gap:.5rem;font-size:.9rem">
-      <input type="checkbox" id="half-feats">
-      Half-feats: General-feats giver også +1 til en evne
-    </label>
-    <p style="font-size:.8rem;color:var(--muted);margin-top:.3rem">
-      Ikke en fastlagt regel her - kun en mulig husregel. Slået fra som standard.
-      Epic Boons' egen +1-regel og Resilients egen evne/saving throw-valg er uafhængige af denne
-      indstilling og gælder altid.
-    </p>
-  </section>
   <button class="btn" id="save-btn">Gem</button>
   <span id="save-msg" style="margin-left:.6rem;color:var(--muted);font-size:.85rem"></span>
 </main>
@@ -57,16 +45,14 @@ async function load() {
       <input type="checkbox" value="${code}" ${allowed.has(code) ? "checked" : ""} ${code === "XPHB" ? "disabled" : ""}>
       <span class="code">${code}</span> ${title}
     </label>`).join("");
-  document.getElementById("half-feats").checked = !!data.half_feats;
 }
 document.getElementById("save-btn").addEventListener("click", async () => {
   const boxes = document.querySelectorAll("#source-list input[type=checkbox]");
   const allowed = Array.from(boxes).filter((b) => b.checked).map((b) => b.value);
   if (!allowed.includes("XPHB")) allowed.push("XPHB");
-  const half_feats = document.getElementById("half-feats").checked;
   const res = await fetch("/api/builder/settings", {
     method: "POST", headers: {"content-type": "application/json"},
-    body: JSON.stringify({name: NAME, allowed, half_feats}),
+    body: JSON.stringify({name: NAME, allowed}),
   });
   const data = await res.json();
   document.getElementById("save-msg").textContent = data.error ? data.error : "Gemt.";

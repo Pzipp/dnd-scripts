@@ -115,7 +115,6 @@ languages:
 
 settings:                  # PR. KARAKTER, ikke delt mellem karakterer
   allowed_sources: [XPHB]  # hvilke 5etools-kildekoder der må slås op i for DENNE karakter
-  half_feats: false        # husregel-switch, se model._feat_sub_choices
 ```
 
 ### Klassevalg: `skills`, `expertise_<niveau>`, `scholar`, `weapon_mastery`
@@ -161,7 +160,8 @@ autoritative liste):
 | `skills` | liste af tekst | Flere skill-valg (fx klassens startskills) |
 | `skill_any` | tekst | Skill valgt fra en helt fri pulje (fx Skilled) |
 | `lineage` | tekst | Race-givet spell-liste-valg (fx visse lineage/subrace-spells) - kun på `race.choices` |
-| `ability` | `STR`\|`DEX`\|... | Et evne-valg |
+| `ability` | `STR`\|`DEX`\|... | Feat'ets evne-valg: +`amount` (normalt 1) til evnen, loft 20 eller feat'ets `max`. Styrer også saving throw-træning (Resilient) og spellcasting-evne (`inherit`), når feat'et siger det |
+| `save` | `STR`\|... | Saving throw-træning valgt for sig selv, når feat'et ikke kobler den til `ability` |
 | `asi` | `{mode: '1'|'2', ability1, ability2}` | Ability Score Improvement: `mode '2'` = +1 til to evner, `'1'` = +2 til én |
 | `ability_split` | `{type: '2-1'|'1-1-1', plus2, plus1}` | Baggrundens evne-bonus-fordeling |
 | `weapon` | tekst | Weapon Mastery-våbnet for Weapon Master-feat'et |

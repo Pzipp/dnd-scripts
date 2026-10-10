@@ -50,6 +50,7 @@ import yaml
 
 from . import e5tools as e
 from . import effects
+from . import feat_rules
 from . import model
 
 # D&D 2024 (PHB)-reglens faste Proficiency Bonus pr. level - ikke noget nogen
@@ -234,14 +235,56 @@ def _all_choice_blocks(data: dict) -> list[dict]:
     return blocks
 
 
+def _chosen_feats(data: dict, sources: set[str]):
+    """(slot-post, 5etools-feat) for hvert valgt feat; kilden er den, der er gemt på valget."""
+    for entry in (data.get("feats") or {}).values():
+        if not entry or not entry.get("name"):
+            continue
+        obj = e.get_feat(entry["name"], {entry["source"]} if entry.get("source") else sources)
+        if obj:
+            yield entry, obj
+
+
+def _ability_caps(data: dict, sources: set[str]) -> dict[str, int]:
+    """Loft pr. evne: 20, men et feat kan hæve det (Epic Boons: 30) for den evne, det giver bonus til."""
+    caps = {a: feat_rules.DEFAULT_ABILITY_MAX for a in model.ABILITIES}
+    for entry, obj in _chosen_feats(data, sources):
+        for ability, (_amount, cap) in feat_rules.fixed_ability(obj).items():
+            caps[ability] = max(caps.get(ability, 0), cap)
+        choice = feat_rules.ability_choice(obj)
+        picked = (entry.get("choices") or {}).get("ability")
+        if choice and isinstance(picked, str) and picked.upper() in caps:
+            caps[picked.upper()] = max(caps[picked.upper()], choice["max"])
+    return caps
+
+
+def _feat_grants(data: dict, sources: set[str]) -> dict:
+    """Det de valgte feats giver karakteren: faste tildelinger (5etools' `true`-felter, senses,
+    resist) + de valg spilleren har truffet. Samlet pr. kategori."""
+    out = {"skills": [], "tools": [], "armor": [], "weapons": [], "saves": [], "senses": {}, "resist": [], "expertise": []}
+    for entry, obj in _chosen_feats(data, sources):
+        fixed = feat_rules.fixed_grants(obj)
+        for key in ("skills", "tools", "armor", "weapons", "saves", "resist"):
+            out[key] += fixed[key]
+        out["senses"].update(fixed["senses"])
+        chosen = entry.get("choices") or {}
+        if feat_rules.saves_linked_to_ability(obj) and isinstance(chosen.get("ability"), str):
+            out["saves"].append(chosen["ability"].lower())
+        if isinstance(chosen.get("save"), str):
+            out["saves"].append(chosen["save"].lower())
+        for key in ("resist", "expertise"):
+            value = chosen.get(key)
+            out[key] += [v for v in (value if isinstance(value, list) else [value]) if v]
+    return out
+
+
 def _ability_bonuses(data: dict, state: dict, sources: set[str]) -> dict[str, int]:
     """Evne-bonusser der IKKE er en del af grundscoren i abilities.assigned:
     baggrundens ability_split (2024-reglen flyttede racernes evne-bonus til
     baggrunden) og hver ASI-feats valgte +2/+1-fordeling (se
-    docs/choices-yaml.md#undervalg). Inkluderer også feats' FASTE
-    evne-forbedring (fx Durable: altid +1 CON), men kun når husreglen
-    half_feats er slået til - samme betingelse som model.py's egen
-    _add_feat_slot bruger til at vise den."""
+    docs/choices-yaml.md#undervalg). Inkluderer feats' FASTE evne-forbedring
+    (fx Durable: altid +1 CON) og det valgte evne-valg (fx Athlete, Resilient,
+    Epic Boons), læst fra feat'ets `ability`-felt (se feat_rules.py)."""
     bonuses = {a: 0 for a in model.ABILITIES}
 
     split = (data.get("background", {}).get("choices") or {}).get("ability_split") or {}
@@ -254,10 +297,7 @@ def _ability_bonuses(data: dict, state: dict, sources: set[str]) -> dict[str, in
         for ability in state.get("background", {}).get("ability_options") or []:
             bonuses[ability.upper()] += 1
 
-    half_feats = data.get("settings", {}).get("half_feats", False)
-    for feat_entry in data.get("feats", {}).values():
-        if not feat_entry or not feat_entry.get("name"):
-            continue
+    for feat_entry, feat_obj in _chosen_feats(data, sources):
         asi = (feat_entry.get("choices") or {}).get("asi")
         if asi:
             ability1, ability2 = (asi.get("ability1") or "").upper(), (asi.get("ability2") or "").upper()
@@ -268,15 +308,13 @@ def _ability_bonuses(data: dict, state: dict, sources: set[str]) -> dict[str, in
                     bonuses[ability1] += 1
                 if ability2 in bonuses:
                     bonuses[ability2] += 1
-        if half_feats:
-            feat_source = {feat_entry["source"]} if feat_entry.get("source") else sources
-            feat_obj = e.get_feat(feat_entry["name"], feat_source)
-            fixed_ability = (feat_obj or {}).get("ability") or [{}]
-            fixed_ability = fixed_ability[0]
-            if fixed_ability and not fixed_ability.get("choose"):
-                for ability, amount in fixed_ability.items():
-                    if ability.upper() in bonuses:
-                        bonuses[ability.upper()] += amount
+        for ability, (amount, _cap) in feat_rules.fixed_ability(feat_obj).items():
+            if ability in bonuses:
+                bonuses[ability] += amount
+        picked = (feat_entry.get("choices") or {}).get("ability")
+        choice = feat_rules.ability_choice(feat_obj)
+        if choice and isinstance(picked, str) and picked.upper() in bonuses:
+            bonuses[picked.upper()] += choice["amount"]
     return bonuses
 
 
@@ -327,14 +365,18 @@ def derive_from_state(data: dict, state: dict) -> dict:
     # state() beregnes før vi kan kende ability_options for '1-1-1'-fordelingen,
     # men den afhænger kun af baggrund/feats, ikke af selve evnescoren - rækkefølgen er ok.
     bonuses = _ability_bonuses(data, state, sources)
-    final_abilities = {a: assigned[a] + bonuses[a] for a in model.ABILITIES if a in assigned}
+    caps = _ability_caps(data, sources)
+    # Loftet (20, eller 30 for en Epic Boon) begrænser kun bonusserne; en grundscore over loftet røres ikke.
+    final_abilities = {a: max(assigned[a], min(assigned[a] + bonuses[a], caps[a])) for a in model.ABILITIES if a in assigned}
     con_mod = _mod(final_abilities.get("CON", 10))
     ac, ac_note = _ac(data, sources, _mod(final_abilities.get("DEX", 10)))
     hit_die = (primary_class_obj or {}).get("hd", {}).get("faces", 8)
     hit_dice = _hit_dice_pool(data, sources)
     hp = _hp(data, primary_id, hit_die, con_mod, total_level) if assigned.get("CON") is not None else None
 
+    feat_grants = _feat_grants(data, sources)
     saves = [s.upper() for s in (primary_class_obj or {}).get("proficiency", [])]
+    saves += [s.upper() for s in feat_grants["saves"] if s.upper() not in saves]
 
     race_name, race_source = data["race"].get("name"), data["race"].get("source")
     background_name, background_source = data["background"].get("name"), data["background"].get("source")
@@ -349,12 +391,12 @@ def derive_from_state(data: dict, state: dict) -> dict:
         fixed_skills = [k for k, v in (background_obj.get("skillProficiencies") or [{}])[0].items() if v]
         fixed_tools = [k for k, v in (background_obj.get("toolProficiencies") or [{}])[0].items() if v]
 
-    skills = sorted({*(s.lower() for s in _collect(data, "skill", "skills", "skill_any")), *fixed_skills})
-    tools = sorted({*_collect(data, "tool", "instrument"), *fixed_tools})
+    skills = sorted({*(s.lower() for s in _collect(data, "skill", "skills", "skill_any")), *fixed_skills, *feat_grants["skills"]})
+    tools = sorted({*_collect(data, "tool", "instrument"), *fixed_tools, *feat_grants["tools"]})
     expertise = sorted({
         skill for c in state.get("classes", []) for f in c.get("features", [])
         if f.get("expertise_choice") for skill in f["expertise_choice"]["chosen"]
-    })
+    } | {s.lower() for s in feat_grants["expertise"]})
 
     classes_out = [
         {"name": c.get("name"), "source": c.get("source"), "level": c.get("level"), "subclass": c.get("subclass")}
@@ -371,6 +413,9 @@ def derive_from_state(data: dict, state: dict) -> dict:
             can_use["armor"] = ", ".join(e.clean_text(a) for a in sp["armor"])
         if sp.get("weapons"):
             can_use["weapons"] = ", ".join(e.clean_text(w) for w in sp["weapons"])
+    for key, extra in (("armor", feat_rules.armor_text(feat_grants["armor"])), ("weapons", feat_rules.weapon_text(feat_grants["weapons"]))):
+        if extra:
+            can_use[key] = ", ".join(dict.fromkeys([*filter(None, [can_use.get(key)]), *extra]))
 
     known_spell_names = data.get("spells", {}).get("known") or []
     spells_known = []
@@ -435,6 +480,8 @@ def derive_from_state(data: dict, state: dict) -> dict:
         "tools": tools,
         "languages": _languages(data),  # se _languages() - klasse-/feature-tildelte ekstra sprog er IKKE talt med, kendt gap
         "can_use": can_use,
+        "senses": feat_grants["senses"],  # {'blindsight': 10, ...} i ft, fra valgte feats
+        "resistances": sorted({r.lower() for r in feat_grants["resist"]}),  # fra valgte feats
         "masteries": _masteries(data, sources),
         "feats": feats,
         "spells_known": spells_known,
