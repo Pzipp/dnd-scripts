@@ -120,6 +120,10 @@ def _entries_from_character(character: dict) -> list[dict]:
         entries.append({"name": f["name"], "source": f.get("source"), "kind": "feat"})
     for s in character.get("spells_known", []):
         entries.append({"name": s["name"], "source": s.get("source"), "kind": "spell"})
+    for s in character.get("granted_spells", []):
+        # Racers/feats' tildelte spells får beskrivelse og kort-udkast som alle andre spells;
+        # dubletter (samme spell kendt OG tildelt) fjernes nedenfor.
+        entries.append({"name": s["name"], "source": s.get("source"), "kind": "spell"})
     for f in character.get("class_features", []):
         # class/level tages med her (ikke kun til lookup/cache-brug), så
         # cards.derive_kicker()/derive_scaling() kan bruge dem direkte uden

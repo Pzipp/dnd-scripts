@@ -869,20 +869,8 @@ def _character_weapon_predicate(data: dict, sources: set[str]):
     return lambda w: any(p(w) for p in preds)
 
 
-_RECHARGE_TEXT = {"daily": "pr. Long Rest", "restLong": "pr. Long Rest", "rest": "pr. Short Rest", "weekly": "pr. uge", "will": "efter ønske", "ritual": "som ritual"}
-
-
 def _spell_use_text(item: dict) -> str:
-    """Kort dansk tekst for hvor tit en tildelt spell kan bruges, fx '1 pr. Long Rest' eller 'PB pr. Long Rest'."""
-    recharge = item.get("recharge")
-    if not recharge:
-        return "kendt" if item["addition"] == "known" else ("altid forberedt" if item["addition"] == "prepared" else "")
-    when = _RECHARGE_TEXT.get(recharge, recharge)
-    uses = item.get("uses")
-    if recharge in ("will", "ritual") or not uses:
-        return when
-    count = "PB" if uses == "pb" else uses.rstrip("e")
-    return f"{count} {when}" + (" hver" if uses.endswith("e") else "")
+    return spell_grants.use_text(item["addition"], item.get("recharge"), item.get("uses"))
 
 
 def race_spell_blocks(eff: dict, stored: dict) -> list[dict]:

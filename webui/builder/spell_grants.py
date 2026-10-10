@@ -81,3 +81,22 @@ def ability_choice(block: dict) -> list[str] | None:
 def fixed_ability(block: dict) -> str | None:
     ability = block.get("ability")
     return ability.upper() if isinstance(ability, str) and ability != "inherit" else None
+
+
+_RECHARGE_TEXT = {
+    "daily": "pr. Long Rest", "restLong": "pr. Long Rest", "long_rest": "pr. Long Rest",
+    "rest": "pr. Short Rest", "short_rest": "pr. Short Rest",
+    "weekly": "pr. uge", "will": "efter ønske", "ritual": "som ritual",
+}
+
+
+def use_text(addition: str, recharge: str | None, uses: str | None) -> str:
+    """Kort dansk tekst for hvordan en tildelt spell bruges, fx '1 pr. Long Rest', 'PB pr. Long Rest',
+    'kendt' eller 'altid forberedt'. `recharge` kan være 5etools' nøgle (daily) eller den normaliserede (long_rest)."""
+    if not recharge:
+        return {"known": "kendt", "prepared": "altid forberedt"}.get(addition, "")
+    when = _RECHARGE_TEXT.get(recharge, recharge)
+    if recharge in ("will", "ritual") or not uses:
+        return when
+    count = "PB" if uses == "pb" else uses.rstrip("e")
+    return f"{count} {when}" + (" hver" if uses.endswith("e") else "")

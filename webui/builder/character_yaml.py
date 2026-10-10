@@ -365,38 +365,90 @@ def _size(race_eff: dict, stored: dict) -> str | None:
     return stored.get("size") if stored.get("size") in options else None
 
 
-def _race_granted_spells(race_eff: dict, stored: dict, level: int, sources: set[str]) -> list[dict]:
+def _spells_from_block(block: dict, ability: str | None, picked, level: int, sources: set[str], origin: str) -> list[dict]:
+    """Poster for én additionalSpells-blok: faste spells og de valgte. `picked(i)` giver den
+    gemte værdi for valg nr. i (ikke-prepared), `picked("prepared")` den samlede liste for
+    prepared-trinene (Ritual Caster). Spells, der låses op på et højere niveau end karakterens,
+    udelades. Poster: {name, source, cantrip, addition, ability, recharge, uses, from}."""
+    out = []
+    pick = 0
+    prepared_done = False
+    for item in spell_grants.walk(block):
+        if item["kind"] == "fixed":
+            uid = spell_grants.parse_uid(item["value"])
+            names, cantrip = [uid["name"]], uid["cantrip"]
+        elif item["addition"] == "prepared":
+            if prepared_done or item["level"] > level:
+                continue
+            prepared_done = True
+            value = picked("prepared")
+            names, cantrip = [v for v in (value if isinstance(value, list) else [value]) if v], False
+        else:
+            value = picked(pick)
+            pick += 1
+            names = [v for v in (value if isinstance(value, list) else [value]) if v]
+            cantrip = "level=0" in item["value"]
+        if item["level"] > level:
+            continue
+        for name in names:
+            spell = e.get_spell(name, sources) or e.get_spell(name, {"XPHB"})
+            out.append({
+                "name": spell["name"] if spell else name.title(),
+                "source": spell["source"] if spell else None,
+                "cantrip": cantrip,
+                "addition": item["addition"],
+                "ability": ability,
+                "recharge": _RECHARGE_KEYS.get(item["recharge"], item["recharge"]),
+                "uses": item["uses"],
+                "from": origin,
+            })
+    return out
+
+
+def _race_granted_spells(race_eff: dict, stored: dict, level: int, sources: set[str], race_name: str) -> list[dict]:
     """De spells racen (den valgte afstamning) giver KARAKTEREN på det nuværende niveau: faste
-    spells og de valgte (race.choices.spell_<n>). Poster: {name, source, cantrip, ability,
-    recharge, uses}. Spells, der låses op på et højere niveau end karakterens, udelades."""
+    spells og de valgte (race.choices.spell_<n>)."""
     out = []
     blocks = model.race_spell_blocks(race_eff, stored)
     for b_index, block in enumerate(blocks):
         prefix = "" if len(blocks) == 1 else f"b{b_index}_"
         picked_ability = stored.get(f"{prefix}spell_ability")
         ability = spell_grants.fixed_ability(block) or (picked_ability.upper() if isinstance(picked_ability, str) else None)
-        pick = 0
-        for item in spell_grants.walk(block):
-            if item["kind"] == "fixed":
-                uid = spell_grants.parse_uid(item["value"])
-                names, cantrip = [uid["name"]], uid["cantrip"]
-            else:
-                value = stored.get(f"{prefix}spell_{pick}")
-                pick += 1
-                names = [v for v in (value if isinstance(value, list) else [value]) if v]
-                cantrip = "level=0" in item["value"]
-            if item["level"] > level:
-                continue
-            for name in names:
-                spell = e.get_spell(name, sources) or e.get_spell(name, {"XPHB"})
-                out.append({
-                    "name": spell["name"] if spell else name.title(),
-                    "source": spell["source"] if spell else None,
-                    "cantrip": cantrip,
-                    "ability": ability,
-                    "recharge": _RECHARGE_KEYS.get(item["recharge"], item["recharge"]),
-                    "uses": item["uses"],
-                })
+        out += _spells_from_block(block, ability, lambda i, p=prefix: stored.get(f"{p}spell_{i}"), level, sources, f"race: {race_name}")
+    return out
+
+
+def _feat_granted_spells(entry: dict, feat_obj: dict, level: int, sources: set[str], known_spells: set[str]) -> list[dict]:
+    """Det valgte feats additionalSpells giver (samme valg-id'er som model._additional_spell_choices:
+    `origin` + `origin_`-præfiks for Magic Initiates navngivne blokke, `b<n>_` for flere ikke-navngivne
+    blokke, `spell_<n>`, `spell_prepared`, og `ability` / `<præfiks>ability` for spellcasting-evnen)."""
+    blocks = feat_obj.get("additionalSpells") or []
+    if not blocks:
+        return []
+    stored = entry.get("choices") or {}
+    origin = f"feat: {feat_obj['name']}"
+    if feat_obj.get("name") == "Cold Caster":
+        # Enten Ray of Frost, eller - hvis den allerede er kendt - en anden Wizard-cantrip.
+        blocks = [blocks[1] if "Ray of Frost" in known_spells else blocks[0]]
+    pairs: list[tuple[dict, str]]
+    if len(blocks) > 1 and all(b.get("name") for b in blocks):
+        chosen = stored.get("origin")
+        pairs = [(b, "origin_") for b in blocks if b["name"].removesuffix(" Spells") == chosen]
+    elif len(blocks) == 1:
+        pairs = [(blocks[0], "")]
+    else:
+        pairs = [(b, f"b{i}_") for i, b in enumerate(blocks)]
+    out = []
+    for block, prefix in pairs:
+        raw = block.get("ability")
+        if raw == "inherit":  # den evne, feat'et forhøjede
+            picked = stored.get("ability")
+        elif spell_grants.ability_choice(block):
+            picked = stored.get(f"{prefix}ability")
+        else:
+            picked = spell_grants.fixed_ability(block)
+        ability = picked.upper() if isinstance(picked, str) else None
+        out += _spells_from_block(block, ability, lambda i, p=prefix: stored.get(f"{p}spell_prepared" if i == "prepared" else f"{p}spell_{i}"), level, sources, origin)
     return out
 
 
@@ -463,6 +515,11 @@ def derive_from_state(data: dict, state: dict) -> dict:
     chosen_resist = race_stored.get("resist")
     race_resist += [r for r in (chosen_resist if isinstance(chosen_resist, list) else [chosen_resist]) if r]
     resistances = sorted({r.lower() for r in [*race_resist, *feat_grants["resist"]]})
+
+    known_spell_set = set(data.get("spells", {}).get("known") or [])
+    granted_spells = _race_granted_spells(race_eff, race_stored, total_level, sources, race_name) if race_obj else []
+    for feat_entry, feat_obj in _chosen_feats(data, sources):
+        granted_spells += _feat_granted_spells(feat_entry, feat_obj, total_level, sources, known_spell_set)
 
     classes_out = [
         {"name": c.get("name"), "source": c.get("source"), "level": c.get("level"), "subclass": c.get("subclass")}
@@ -550,7 +607,7 @@ def derive_from_state(data: dict, state: dict) -> dict:
         "speeds": speeds,  # {'walk': 30, 'fly': 30, ...} i ft
         "senses": senses,  # {'darkvision': 60, 'blindsight': 10, ...} i ft, fra race/afstamning og feats
         "resistances": resistances,  # fra race/afstamning og feats
-        "granted_spells": _race_granted_spells(race_eff, race_stored, total_level, sources) if race_obj else [],
+        "granted_spells": granted_spells,
         "masteries": _masteries(data, sources),
         "feats": feats,
         "spells_known": spells_known,

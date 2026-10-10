@@ -86,6 +86,18 @@ virker som ovenfor. Entries uden beskrivelse endnu kan ikke genkendes og
 udelades, til de er beskrevet. `spells_known` er stadig ikke
 automatiseret (se [Afgrænsning](#afgrænsning)).
 
+## Tildelte spells
+
+`type: granted_spells` viser automatisk de spells, race/afstamning og feats giver
+(`character.yaml`: `granted_spells`): navn, hvordan de bruges (`1 pr. Long Rest`,
+`PB pr. Long Rest`, `kendt`, `altid forberedt`), spellcasting-evne og hvorfra.
+Ingen `items` behøves, og boksen udelades, hvis karakteren ingen tildelte spells har.
+
+```yaml
+- type: granted_spells
+  title: Tildelte spells   # valgfri, ellers "Tildelte spells Granted spells"
+```
+
 ## Passive sanser
 
 `type: passive` beregner som standard alle tre passive sanser (Perception,

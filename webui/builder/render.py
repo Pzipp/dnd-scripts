@@ -19,6 +19,7 @@ import os
 import re
 
 from . import descriptions
+from . import spell_grants
 
 ABILITY_ROWS = [("STR", "Styrke", "str"), ("DEX", "Smidighed", "dex"), ("CON", "Udholdenhed", "con"),
                 ("INT", "Intelligens", "int"), ("WIS", "Visdom", "wis"), ("CHA", "Karisma", "cha")]
@@ -622,6 +623,21 @@ def box_magic(node, character, env):
     return o
 
 
+def box_granted_spells(node, character, env):
+    """Spells racen/afstamningen og feats giver automatisk (character.yaml: granted_spells):
+    navn, hvordan de bruges, og spellcasting-evne. Tom liste giver ingen boks."""
+    spells = character.get("granted_spells") or []
+    if not spells:
+        return ""
+    o = [_h2(node), '<ul class="t">']
+    for g in spells:
+        use = spell_grants.use_text(g.get("addition", ""), g.get("recharge"), g.get("uses"))
+        bits = [b for b in ("cantrip" if g.get("cantrip") else "", use, g.get("ability") or "") if b]
+        o.append(f'<li><b>{g["name"]}</b>' + (f' <em>· {", ".join(bits)}</em>' if bits else "") + f' <small>{g.get("from", "")}</small></li>')
+    o.append("</ul>")
+    return "".join(o)
+
+
 def _box(fn, title=None, card=True, small=False) -> dict:
     return {"fn": fn, "title": title, "card": card, "small": small}
 
@@ -635,6 +651,7 @@ REGISTRY = {
     "passive": _box(box_passive),
     "languages": _box(box_languages, small=True),
     "magic": _box(box_magic, "Magi <i>Spellcasting</i>"),
+    "granted_spells": _box(box_granted_spells, "Tildelte spells <i>Granted spells</i>", small=True),
     "attacks": _box(box_attacks),
     "rules": _box(box_rules, small=True),
     "features": _box(box_features, small=True),
