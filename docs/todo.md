@@ -74,8 +74,14 @@ for effekt-udtræks-designet.
   evnescorerne). Dertil `languageProficiencies`, `weaponProficiencies`,
   `armorProficiencies`, `immune`, `vulnerable` og `conditionImmune` på racer.
   Racer fra XPHB er dækket.
-- **Kun i teksten:** Dwarven Toughness (+1 HP pr. level) og lignende
-  race-træk har intet struktureret felt.
+- **Dwarven Toughness (+1 HP pr. level) mangler i HP.** Racen har intet
+  struktureret felt for det; effekten står kun i trækkets tekst. Den findes
+  hverken i `bibliotek/_effects.yaml` eller `_descriptions.yaml`, så
+  `character_yaml._apply_effects()` kender den ikke (en Dwarf får altså for få
+  HP). Effekt-udtrækket (`effects.py`, `hp_per_level` på `race_trait`) kan løse
+  det, når Print-fanens "generér manglende beskrivelser" køres for en Dwarf.
+  Afklar, om det skal være den vej, eller en fast håndskrevet regel. Gælder
+  tilsvarende andre race-træk, der kun er tekst.
 - **Feats' `additionalSpells`** giver valg i byggeren, men lægges ikke i
   `granted_spells` (det gør kun racer). Samme læser (`spell_grants.py`) kan
   bruges.
