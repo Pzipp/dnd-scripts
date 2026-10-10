@@ -274,14 +274,7 @@ function renderClasses(c) {
             ${f.expertise_choice ? renderWeaponChoice(`${base}.choices.${f.expertise_choice.id}`, f.expertise_choice) : ""}
           </li>`).join("")}</ul>`
       : "";
-    const spellsBlock = k.is_caster
-      ? `<div class="sub-choice"><span>Spells</span><div class="checklist">
-          ${k.spell_options.map((s) => {
-            const known = (c.spells.known || []).includes(s);
-            return `<label data-field="spells.known" data-multi="1" data-value="${esc(s)}" class="${known ? "checked" : ""}"><input type="checkbox" ${known ? "checked" : ""}>${esc(s)}</label>`;
-          }).join("")}
-        </div></div>`
-      : "";
+    const spellsBlock = renderSpellcasting(k, base);
     const title = `<span>${esc(k.name || "Klasse")} ${k.is_primary ? '<span class="n">(primær - giver startudstyr)</span>' : ""}</span>
       <button type="button" class="btn secondary" data-remove-class="${k.id}">Fjern</button>`;
     const body = `
@@ -307,6 +300,45 @@ function renderClasses(c) {
   }).join("");
   const notice = isMissing("classes") ? `<p class="missing-banner">Mindst én klasse kræves.</p>` : "";
   return `${notice}${blocks}<button type="button" class="btn" id="add-class-btn">+ Tilføj klasse</button>`;
+}
+
+// Spellcasting pr. klasse: hvert valg viser KUN de spells, der kan vælges (klassens liste, højst det spell-niveau
+// klassen har slots til, ikke de altid-forberedte), og hvor mange der skal vælges. Se spellcasting.py.
+function renderSpellcasting(k, base) {
+  const sc = k.spellcasting;
+  if (!sc) return "";
+  const slots = (sc.slots || []).map((n, i) => (n ? `${i + 1}. niveau: ${n}` : "")).filter(Boolean).join(" · ");
+  const pact = sc.pact ? `Pact Magic: ${sc.pact.slots} slots af ${sc.pact.level}. niveau` : "";
+  const info = `<div class="ftext">Spellcasting-evne <b>${esc(sc.ability)}</b> · højeste spell-niveau <b>${sc.max_spell_level}</b>${slots || pact ? ` · ${esc(pact || slots)}` : ""}${sc.prepare_change === "restLong" ? " · forberedte spells skiftes efter en Long Rest" : sc.prepare_change === "level" ? " · forberedte spells skiftes ved level-stigning" : ""}</div>`;
+  const grants = (sc.grants || []).length
+    ? `<div class="sub-choice"><span>Altid forberedt / kendt (tæller ikke med)</span><div class="ftext">${sc.grants.map((g) => esc(g.name)).join(", ")}</div></div>`
+    : "";
+  const picks = sc.picks.map((p) => renderSpellPick(`${base}.choices.${p.id}`, p)).join("");
+  return `<div class="sub-choice spellcasting"><span>Spells</span>${info}${picks}${grants}</div>`;
+}
+
+function renderSpellPick(path, p) {
+  if (p.kind === "variant") {
+    const current = p.chosen[0] || "";
+    return `<div class="sub-choice field"><label class="field"><span>${esc(p.title)}</span>
+      <select data-field="${path}"><option value="">Vælg...</option>
+      ${p.options.map((o) => `<option value="${esc(o.name)}" ${o.name === current ? "selected" : ""}>${esc(o.name)}</option>`).join("")}
+      </select></label></div>`;
+  }
+  const chosen = p.chosen || [];
+  const full = chosen.length >= p.count;
+  const state = chosen.length === p.count && !(p.invalid || []).length ? "ok" : "bad";
+  const byLevel = {};
+  p.options.forEach((o) => (byLevel[o.level] = byLevel[o.level] || []).push(o));
+  const chip = (name, extra = "") =>
+    `<label data-field="${path}" data-multi="1" data-limit="${p.count}" data-value="${esc(name)}" class="${chosen.includes(name) ? "checked" : ""} ${!chosen.includes(name) && full ? "disabled" : ""} ${extra}"><input type="checkbox" ${chosen.includes(name) ? "checked" : ""}>${esc(name)}</label>`;
+  const groups = Object.keys(byLevel).sort((a, b) => a - b).map((lvl) =>
+    `<div class="spell-group"><b>${lvl === "0" ? "Cantrips" : `Niveau ${lvl}`}</b><div class="checklist">${byLevel[lvl].map((o) => chip(o.name)).join("")}</div></div>`).join("");
+  const invalid = (p.invalid || []).length
+    ? `<div class="spell-group bad"><b>Kan ikke længere vælges (fjern)</b><div class="checklist">${p.invalid.map((n) => chip(n, "invalid")).join("")}</div></div>`
+    : "";
+  const empty = p.options.length ? "" : `<div class="ftext">Ingen spells at vælge endnu${p.kind === "prepared" ? " (vælg først spellbogen)" : ""}.</div>`;
+  return `<div class="sub-choice"><span>${esc(p.title)} <span class="spell-counter ${state}">${chosen.length}/${p.count}</span></span>${empty}${groups}${invalid}</div>`;
 }
 
 function renderBackground(c) {
@@ -792,6 +824,8 @@ function wireEvents() {
       const path = chip.dataset.field;
       const val = chip.dataset.value;
       const current = getPath(state.choices, path) || [];
+      const limit = Number(chip.dataset.limit || 0);
+      if (limit && !current.includes(val) && current.length >= limit) return; // allerede fuldt antal valgt
       const next = current.includes(val) ? current.filter((v) => v !== val) : [...current, val];
       answer({ [path]: next });
       return;

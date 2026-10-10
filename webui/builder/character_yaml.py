@@ -55,6 +55,7 @@ from . import model
 from . import races
 from . import settings
 from . import spell_grants
+from . import spellcasting
 
 # D&D 2024 (PHB)-reglens faste Proficiency Bonus pr. level - ikke noget nogen
 # vælger, derfor sikkert at opslå som tabel i stedet for at bede spilleren om det.
@@ -208,6 +209,9 @@ def empty_character_sheet() -> dict:
         "masteries": [],
         "feats": [],
         "spells_known": [],
+        "spellcasting": [],
+        "spell_slots": [],
+        "pact_slots": None,
         "class_features": [],
         "race_traits": [],
         "extra_training": [],
@@ -378,6 +382,50 @@ def _size(race_eff: dict, stored: dict) -> str | None:
     return stored.get("size") if stored.get("size") in options else None
 
 
+def _class_spellcasting(data: dict, sources: set[str]) -> tuple[list[dict], list[dict], list[int], dict | None]:
+    """Spellcasting pr. klasse ud fra valgene: ([{class, ability, cantrips, prepared, spellbook, arcanum, extra, ...}],
+    tildelte spells fra klasse/subklasse, samlede slots, pact-slots). Se spellcasting.py for reglerne."""
+    blocks: list[dict] = []
+    granted: list[dict] = []
+    casters: list[dict] = []
+    pact_slots = None
+    for entry in (data.get("classes") or {}).values():
+        if not entry.get("name"):
+            continue
+        built = model._spellcasting_for(entry, sources)
+        if not built:
+            continue
+        stored = entry.get("choices") or {}
+        level = entry.get("level", 1)
+        label = f"class: {entry['name']}" + (f" ({entry['subclass']})" if entry.get("subclass") else "")
+
+        def picked(pick_id: str) -> list[str]:
+            raw = stored.get(pick_id)
+            return [raw] if isinstance(raw, str) and raw else [r for r in (raw or []) if r]
+
+        pick_ids = [p["id"] for p in built["picks"]]
+        valid = {p["id"]: [n for n in picked(p["id"]) if n not in spellcasting.stale(p, picked(p["id"]))] for p in built["picks"]}
+        arcanum = {pid.split("_", 1)[1]: valid[pid] for pid in pick_ids if pid.startswith("arcanum_") and valid[pid]}
+        extra = [n for pid in pick_ids if pid.startswith("sub_spell_") for n in valid[pid]]
+        blocks.append({
+            "class": entry["name"], "subclass": entry.get("subclass"), "ability": built["ability"], "level": level,
+            "save_dc": "{8+PB+%s}" % built["ability"], "attack": "{+PB+%s}" % built["ability"],
+            "cantrips": valid.get("cantrips", []), "spellbook": valid.get("spellbook", []), "prepared": valid.get("prepared", []),
+            "arcanum": arcanum, "extra": extra, "variant": stored.get("subclass_variant"),
+            "max_spell_level": built["max_spell_level"], "prepare_change": built["prepare_change"],
+        })
+        for g in built["grants"]:
+            granted.append({"name": g["name"], "source": g["source"], "cantrip": g["cantrip"], "addition": g["addition"], "ability": built["ability"],
+                            "recharge": _RECHARGE_KEYS.get(g["recharge"], g["recharge"]), "uses": g["uses"], "from": label})
+        if built.get("pact"):
+            pact_slots = built["pact"]
+        casters.append({"progression": built["progression"], "level": level, "row": built["slots"]})
+    slots = spellcasting.combined_slots(casters, sources)
+    while slots and slots[-1] == 0:
+        slots = slots[:-1]
+    return blocks, granted, slots, pact_slots
+
+
 def _spells_from_block(block: dict, ability: str | None, picked, level: int, sources: set[str], origin: str) -> list[dict]:
     """Poster for én additionalSpells-blok: faste spells og de valgte. `picked(i)` giver den
     gemte værdi for valg nr. i (ikke-prepared), `picked("prepared")` den samlede liste for
@@ -533,7 +581,7 @@ def derive_from_state(data: dict, state: dict) -> dict:
     race_resist += [r for r in (chosen_resist if isinstance(chosen_resist, list) else [chosen_resist]) if r]
     resistances = sorted({r.lower() for r in [*race_resist, *feat_grants["resist"]]})
 
-    known_spell_set = set(data.get("spells", {}).get("known") or [])
+    known_spell_set = model.class_spell_names(data)
     granted_spells = _race_granted_spells(race_eff, race_stored, total_level, sources, race_name) if race_obj else []
     for feat_entry, feat_obj in _chosen_feats(data, sources):
         granted_spells += _feat_granted_spells(feat_entry, feat_obj, total_level, sources, known_spell_set)
@@ -558,10 +606,14 @@ def derive_from_state(data: dict, state: dict) -> dict:
         if extra:
             can_use[key] = ", ".join(dict.fromkeys([*filter(None, [can_use.get(key)]), *extra]))
 
-    known_spell_names = data.get("spells", {}).get("known") or []
+    spellcasting_blocks, class_granted, spell_slots, pact_slots = _class_spellcasting(data, sources)
+    granted_spells += class_granted
+    # Spells spilleren selv har valgt (cantrips, forberedte, arcanum, ekstra). Spellbogen er en liste at vælge fra,
+    # ikke noget, der skal have kort eller beskrivelse, og er derfor ikke med her.
+    known_names = list(dict.fromkeys(n for b in spellcasting_blocks for n in [*b["cantrips"], *b["prepared"], *[x for v in b["arcanum"].values() for x in v], *b["extra"]]))
     spells_known = []
-    for name in known_spell_names:
-        spell = e.get_spell(name, sources)
+    for name in known_names:
+        spell = e.get_spell(name, sources) or e.get_spell(name, {"XPHB"})
         spells_known.append({"name": name, "source": spell["source"] if spell else None})
 
     feats = [
@@ -632,6 +684,9 @@ def derive_from_state(data: dict, state: dict) -> dict:
         "masteries": _masteries(data, sources),
         "feats": feats,
         "spells_known": spells_known,
+        "spellcasting": spellcasting_blocks,  # pr. caster-klasse: evne, DC/angreb (formler), cantrips, spellbog, forberedte, arcanum
+        "spell_slots": spell_slots,  # [slots pr. spell-niveau 1..] - samlet for alle klasser (multiclass-tabellen)
+        "pact_slots": pact_slots,  # Warlock: {slots, level}
         "class_features": class_features,
         "race_traits": race_traits,
         "extra_training": [],

@@ -28,6 +28,7 @@ from . import feat_rules
 from . import races
 from . import settings
 from . import spell_grants
+from . import spellcasting
 
 OTHER = "Andet (hjemmelavet)"
 ABILITIES = ["STR", "DEX", "CON", "INT", "WIS", "CHA"]
@@ -136,6 +137,12 @@ def _dependent_fields(path: str, data: dict) -> list[str]:
         if cid == primary_class_id(data):
             deps.append("equipment.class_package")
         return deps
+    m = re.match(r"^classes\.([^.]+)\.subclass$", path)
+    if m:
+        # En anden subklasse har andre ekstra spells (og evt. terræn-variant).
+        cid = m.group(1)
+        keys = ((data.get("classes", {}).get(cid) or {}).get("choices") or {})
+        return [f"classes.{cid}.choices.{k}" for k in keys if k == "subclass_variant" or k.startswith("sub_spell_")]
     if path == "race.choices.lineage":
         # En anden afstamning har andre resistance-/spell-muligheder og -størrelse.
         stale = ("resist", "spell_ability", "size", "ability_option", "ability_pick")
@@ -418,48 +425,11 @@ _SPELL_FILTER_KEYS = {"level", "school", "class", "components & miscellaneous", 
 
 
 def _parse_spell_filter(filter_str: str) -> dict | None:
-    """'level=1|school=I;N' -> {'level': '1', 'school': 'I;N'}. None hvis
-    filteret bruger et felt vi slet ikke genkender - så det bevidst
-    springes over i stedet for at vise en forkert/tom liste."""
-    parsed = {}
-    for part in filter_str.split("|"):
-        if "=" not in part:
-            return None
-        key, value = part.split("=", 1)
-        key = key.strip()
-        if key not in _SPELL_FILTER_KEYS:
-            return None
-        parsed[key] = value.strip()
-    return parsed
+    return spell_grants.parse_filter(filter_str)
 
 
 def _spells_for_filter(parsed: dict, sources: set[str]) -> list[dict]:
-    level = int(parsed["level"]) if "level" in parsed else None
-    schools = set(parsed["school"].split(";")) if "school" in parsed else None
-    class_names = {c.capitalize() for c in parsed["class"].split(";")} if "class" in parsed else None
-    ritual = True if parsed.get("components & miscellaneous") == "ritual" else None
-    spell_attack = set(parsed["spell attack"].split(";")) if "spell attack" in parsed else None
-    spells = e.spells_by_filter(sources, level=level, schools=schools, class_name=class_names, ritual=ritual, spell_attack=spell_attack) or []
-    # Flere tilladte kilder kan genoptrykke samme spell (fx PHB 2014 + XPHB
-    # 2024) - de to udgaver er IKKE nødvendigvis identiske (se notes.md), så
-    # ingen af dem fjernes. I stedet suffikses navnet med kilden, akkurat som
-    # _label_options() allerede gør for racer/baggrunde/feats, og KUN når
-    # navnet reelt er ambigut (findes under mere end én kandidat her).
-    by_name: dict[str, int] = {}
-    for s in spells:
-        by_name[s["name"]] = by_name.get(s["name"], 0) + 1
-    seen: set[tuple[str, str | None]] = set()
-    out = []
-    for s in spells:
-        key = (s["name"], s.get("source"))
-        if key in seen:
-            continue
-        seen.add(key)
-        label = s["name"]
-        if by_name[s["name"]] > 1:
-            label = f"{label} ({s.get('source')})"
-        out.append({**s, "name": label})
-    return out
+    return spell_grants.spells_for_filter(parsed, sources)
 
 
 def _find_spell_filters(node, found: list, skip_keys: set = frozenset()) -> None:
@@ -980,6 +950,65 @@ def _race_sub_choices(base: dict, eff: dict, stored: dict, sources: set[str], wi
     return choices
 
 
+def class_spell_names(data: dict) -> set[str]:
+    """Alle spells karakteren har valgt via sine klasser (cantrips, spellbog, forberedte, arcanum, ekstra)."""
+    names: set[str] = set()
+    for entry in (data.get("classes") or {}).values():
+        for key, value in ((entry or {}).get("choices") or {}).items():
+            if key in ("cantrips", "prepared", "spellbook") or key.startswith(("arcanum_", "sub_spell_")):
+                names.update(v for v in (value if isinstance(value, list) else [value]) if v)
+    return names
+
+
+def _spellcasting_for(entry: dict, sources: set[str]) -> dict | None:
+    """spellcasting.build for en klasse-post i choices.yaml (None hvis klassen ikke kaster)."""
+    name = entry.get("name")
+    if not name:
+        return None
+    class_sources = {entry["source"]} if entry.get("source") else sources
+    class_obj = e.get_class(name, class_sources)
+    if not class_obj:
+        return None
+    subclass_obj = next((x for x in e.subclasses(name, class_sources) if x.get("name") == entry.get("subclass")), None) if entry.get("subclass") else None
+    return spellcasting.build(class_obj, subclass_obj, name, entry.get("level", 1), sources, entry.get("choices") or {})
+
+
+def _migrate_known_spells(data: dict, sources: set[str]) -> None:
+    """Den gamle flade liste `spells.known` blev valgt uden klasse og uden grænser. Spells, der kan vælges
+    af en klasse, fordeles på dens cantrips/spellbog/forberedte efter dens antal; resten kasseres."""
+    known = list((data.get("spells") or {}).get("known") or [])
+    if not known:
+        return
+    remaining = list(known)
+    placed = False
+    for entry in (data.get("classes") or {}).values():
+        choices = entry.setdefault("choices", {})
+        if not entry.get("name") or any(k in choices for k in ("cantrips", "prepared", "spellbook")):
+            continue
+        built = _spellcasting_for(entry, sources)
+        if not built:
+            continue
+        for kind in ("cantrips", "spellbook", "prepared"):
+            pick = next((p for p in built["picks"] if p["id"] == kind), None)
+            if not pick:
+                continue
+            if kind == "prepared":  # Wizard: de forberedte vælges blandt spellbogen, som netop er sat
+                pick = next((p for p in _spellcasting_for(entry, sources)["picks"] if p["id"] == "prepared"), pick)
+            allowed = {o["name"] for o in pick["options"]}
+            if kind == "prepared" and "spellbook" in choices:  # Wizard: forberedt = de første i spellbogen
+                take = [n for n in choices["spellbook"] if n in allowed][:pick["count"]]
+                if take:
+                    choices[kind] = take
+                continue
+            take = [n for n in remaining if n in allowed][:pick["count"]]
+            if take:
+                choices[kind] = take
+                remaining = [n for n in remaining if n not in take]
+                placed = True
+    if placed:
+        data["spells"]["known"] = []
+
+
 def _background_fixed_feat(data: dict, sources: set[str]) -> tuple[dict, dict] | None:
     """Baggrundens faste feat (XPHB: hver baggrund giver ét): (5etools-feat, forudfyldte valg).
     Feat-id'et er fx 'skilled|xphb' eller en variant, 'magic initiate; cleric|xphb', som er Magic
@@ -1025,7 +1054,25 @@ def normalize(data: dict) -> dict:
         entry.update({"name": feat["name"], "source": feat["source"]})
         entry.setdefault("choices", {}).update(preset)
         feats["background"] = entry
+    _migrate_known_spells(data, sources)
     return data
+
+
+def _spellcasting_state(class_obj: dict, subclass_obj: dict | None, class_name: str, class_level: int, sources: set[str], stored: dict, cid: str, missing: list[str]) -> dict | None:
+    """Klassens spellcasting til UI'et: hvert valg (cantrips, spellbog, forberedte, arcanum, ekstra) med
+    præcis de spells, der kan vælges, hvor mange der skal vælges, og hvad der er valgt. Mangler der valg,
+    eller er der valgt for mange / spells der ikke længere kan vælges, står det i `missing`."""
+    built = spellcasting.build(class_obj, subclass_obj, class_name, class_level, sources, stored)
+    if not built:
+        return None
+    for pick in built["picks"]:
+        raw = stored.get(pick["id"])
+        chosen = [raw] if isinstance(raw, str) and raw else list(raw or [])
+        pick["chosen"] = chosen
+        pick["invalid"] = spellcasting.stale(pick, chosen)
+        if len([c for c in chosen if c not in pick["invalid"]]) != pick["count"] or pick["invalid"] or len(chosen) > pick["count"]:
+            missing.append(f"classes.{cid}.choices.{pick['id']}")
+    return built
 
 
 def state(data: dict) -> dict:
@@ -1039,7 +1086,7 @@ def state(data: dict) -> dict:
     level = total_level(data)
     assigned_abilities = data["abilities"].get("assigned", {})
     has_spellcasting = any(_class_has_spellcasting(entry, sources) for entry in data.get("classes", {}).values())
-    known_spells = set(data.get("spells", {}).get("known") or [])
+    known_spells = class_spell_names(data)
     armor_profs = _armor_proficiencies(data, sources)
 
     # race
@@ -1128,7 +1175,8 @@ def state(data: dict) -> dict:
         subclass_level = 99
         features = []
         is_caster = False
-        spell_options = []
+        subclass_obj = None
+        spellcasting_state = None
         extra_proficiencies = []
         if class_obj:
             # Multiclass (sekundær klasse) giver markant færre proficiencies end
@@ -1166,7 +1214,7 @@ def state(data: dict) -> dict:
                 merged.sort(key=lambda f: f["level"])
                 features = merged
             if is_caster:
-                spell_options = [s["name"] for s in e.class_spells(class_name, {class_source}, class_level)]
+                spellcasting_state = _spellcasting_state(class_obj, subclass_obj, class_name, class_level, sources, entry.get("choices") or {}, cid, missing)
             if skills_count and len(entry["choices"].get("skills", [])) < skills_count:
                 missing.append(f"classes.{cid}.choices.skills")
             if class_level >= subclass_level and not entry.get("subclass"):
@@ -1204,7 +1252,7 @@ def state(data: dict) -> dict:
             "extra_proficiencies": extra_proficiencies,
             "subclass_options": subclass_options, "subclass_level": subclass_level, "subclass": entry.get("subclass"),
             "features": features_out,
-            "is_caster": is_caster, "spell_options": spell_options,
+            "is_caster": is_caster, "spellcasting": spellcasting_state,
         })
     if not data.get("classes"):
         missing.append("classes")

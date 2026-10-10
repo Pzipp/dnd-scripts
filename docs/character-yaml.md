@@ -49,12 +49,28 @@ granted_spells:                # spells race/afstamning og feats giver på karak
 - {name: Faerie Fire, source: XPHB, cantrip: false, addition: innate, ability: WIS, recharge: long_rest, uses: '1', from: "race: Elf"}
 masteries: [[Vex, Shortsword]]  # [egenskab, våben] fra classes.*.choices.weapon_mastery - se character_yaml._masteries()
 feats: [{name: Tavern Brawler, source: XPHB}]
-spells_known: [{name: Fire Bolt, source: XPHB}]
+spells_known: [{name: Fire Bolt, source: XPHB}]   # spillerens egne valg: cantrips, forberedte, arcanum, ekstra (ikke spellbogen)
+spellcasting:                  # pr. caster-klasse (se "Klassens spellcasting")
+- {class: Wizard, subclass: Evoker, ability: INT, level: 5, save_dc: '{8+PB+INT}', attack: '{+PB+INT}', max_spell_level: 3,
+   cantrips: [], spellbook: [], prepared: [], arcanum: {}, extra: [], variant: null, prepare_change: restLong}
+spell_slots: [4, 3, 2]         # spell slots pr. spell-niveau, samlet for alle klasser (multiclass-tabellen)
+pact_slots: null               # Warlock: {slots: 2, level: 3}
 class_features: [{class: Fighter, name: Action Surge, source: XPHB, level: 2}]
 race_traits: [{name: Darkvision, source: XPHB}]
 extra_training: []
 summary: [[Klasse, Fighter 5], [Art, Human], [Baggrund, Soldier]]
 ```
+
+## Klassens spellcasting
+
+Læst fra klassens og subklassens egne felter (`webui/builder/spellcasting.py`), ikke fra en fast tabel:
+
+* **Antal** på klassens niveau: `cantripProgression`, `preparedSpellsProgression`. **Højeste spell-niveau**: højeste niveau med slots i klassetabellen (Warlock: kolonnen `Slot Level`).
+* **Spellbog** (Wizard): `spellsKnownProgressionFixed`; de forberedte vælges blandt spellbogen. **Mystic Arcanum** (Warlock): `spellsKnownProgressionFixedByLevel`.
+* **Altid forberedt/kendt** (`additionalSpells` på klasse og subklasse: domæne-, oath-, circle-, patron-spells, Divine Smite, Hunter's Mark osv.) tæller ikke mod antallet og lægges i `granted_spells` med `from: "class: Cleric (Life Domain)"`. Niveau-nøgler er klassens niveau, `s6` betyder "når man har slots af 6. niveau". Flere navngivne blokke er alternativer (Circle of the Land: terræn, `subclass_variant`).
+* **Subklasse-casters** (Eldritch Knight, Arcane Trickster) bruger deres egen tabel og vælger fra Wizard-listen (`expanded`). Bard udvider sin liste med Magical Secrets (`expanded`).
+* **Slots:** én caster-klasse bruger sin egen tabel; flere bruger Multiclass Spellcaster-tabellen (Wizards række) på det samlede caster-niveau (full = niveau, Paladin/Ranger = halvdelen rundet op, Eldritch Knight/Arcane Trickster = en tredjedel rundet ned). Warlocks Pact Magic er separat (`pact_slots`).
+* `save_dc` og `attack` er formler i `{...}`-syntaks, som arket regner ud.
 
 ## Hvad racen giver karakteren
 

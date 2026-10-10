@@ -150,3 +150,12 @@ select.invalid, input.invalid { border-color: var(--bad); box-shadow: 0 0 0 2px 
 .mono-area[readonly] { background: #f6f3ee; color: var(--muted); }
 #translate-manual-status { font-size: .78rem; color: var(--muted); padding: 0 .8rem .6rem; }
 #translate-manual-status.error { color: #9a2020; }
+
+/* Spellcasting: valg grupperet efter spell-niveau med tæller */
+.spell-group { margin: .35rem 0 .1rem; }
+.spell-group > b { font-size: .8rem; color: var(--muted); }
+.spell-counter { font-size: .8rem; margin-left: .4rem; padding: 0 .4rem; border-radius: 999px; border: 1px solid currentColor; }
+.spell-counter.ok { color: var(--ok, #2e7d32); }
+.spell-counter.bad { color: var(--bad, #b3261e); }
+.checklist label.disabled { opacity: .45; cursor: not-allowed; }
+.checklist label.invalid { border-color: var(--bad, #b3261e); }

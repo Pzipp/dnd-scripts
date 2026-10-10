@@ -100,8 +100,8 @@ feats:                     # DICT - key er en "slot-key", se "Feat slot-keys" ne
       asi: {mode: '2', ability1: CHA}    # se "Undervalg"
 
 spells:
-  known: [Counterspell, Tongues, ...]    # FLAD liste af engelske spell-navne karakteren KENDER
-                                          # - ikke hvilke der er "prepared i dag" (styres af de printede spell-kort, ikke her)
+  known: []   # UDFASET: den gamle flade liste. Ved indlæsning fordeles gyldige spells på klassernes
+              # cantrips/spellbog/forberedte (se "Klassens spells"), resten kasseres, og listen tømmes.
 
 equipment:
   class_package: A         # bogstav-nøgle ind i 5etools' startingEquipment-valgsæt for den PRIMÆRE klasse
@@ -117,6 +117,25 @@ settings:                  # PR. KARAKTER, ikke delt mellem karakterer
   allowed_sources: [XPHB]  # hvilke 5etools-kildekoder der må slås op i for DENNE karakter
   race_ability: false      # tæl ældre racers egne evnepoint med (2024 flyttede dem til baggrunden)
 ```
+
+### Klassens spells (`classes.<id>.choices`)
+
+Antal og muligheder læses fra den valgte klasse/subklasse (`webui/builder/spellcasting.py`), og kun spells,
+der faktisk kan vælges, tilbydes: klassens liste (eller `expanded`) i de tilladte kilder, højst det spell-niveau
+klassen har slots til, og aldrig de altid-forberedte. Antal = `cantripProgression`/`preparedSpellsProgression`
+på KLASSENS niveau.
+
+| Nøgle | Form | Betydning |
+|---|---|---|
+| `cantrips` | liste | Valgte cantrips |
+| `prepared` | liste | Forberedte spells. Wizard vælger dem blandt sin `spellbook` |
+| `spellbook` | liste | Wizards spellbog: 6 spells på niveau 1, derefter 2 pr. niveau (`spellsKnownProgressionFixed`) |
+| `arcanum_<6-9>` | liste | Warlocks Mystic Arcanum: ét spell af det niveau fra klasseniveau 11/13/15/17 |
+| `sub_spell_<n>` | liste | Ekstra spells fra subklassen (`additionalSpells` med et filter: Wizard-skoler, Bards Magical Secrets). Tæller ikke mod antallet af forberedte |
+| `subclass_variant` | tekst | Navngivne alternativer i subklassens spells (Circle of the Land: terræn) |
+
+Et valg er "mangler", hvis antallet ikke er præcis rigtigt, eller hvis en valgt spell ikke længere kan vælges
+(niveaufald, klasseskift): den vises i UI'et med rød markering, så den kan fjernes.
 
 ### Klassevalg: `skills`, `expertise_<niveau>`, `scholar`, `weapon_mastery`
 

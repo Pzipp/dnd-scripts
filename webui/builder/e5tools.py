@@ -373,7 +373,7 @@ def _matches_spell_attack(spell: dict, wanted: set[str]) -> bool:
     return bool(actual & (wanted - {"O"}))
 
 
-def spells_by_filter(sources: set[str], level: int | None = None, schools: set[str] | None = None, class_name: str | set[str] | None = None, ritual: bool | None = None, spell_attack: set[str] | None = None) -> list[dict] | None:
+def spells_by_filter(sources: set[str], level: int | set[int] | None = None, schools: set[str] | None = None, class_name: str | set[str] | None = None, ritual: bool | None = None, spell_attack: set[str] | None = None) -> list[dict] | None:
     """Løser 5etools' "choose": "level=X|school=Y;Z"-filterstrenge (bruges af
     feats som Shadow-Touched/Fey-Touched/Blessed Warrior til at give et valg
     blandt spells, der opfylder kriterierne). ritual=True matcher kun spells
@@ -382,11 +382,12 @@ def spells_by_filter(sources: set[str], level: int | None = None, schools: set[s
     returnerer "alle spells")."""
     if level is None and not schools and not class_name and ritual is None and not spell_attack:
         return None
+    levels = None if level is None else ({level} if isinstance(level, int) else set(level))
     pool = class_spells(class_name, sources, None) if class_name else _all_spells(sources)
     out = [
         s for s in pool
         if s.get("source") in sources
-        and (level is None or s.get("level") == level)
+        and (levels is None or s.get("level") in levels)
         and (not schools or s.get("school") in schools)
         and (ritual is None or bool((s.get("meta") or {}).get("ritual")) == ritual)
         and (not spell_attack or _matches_spell_attack(s, spell_attack))
