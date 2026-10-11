@@ -1,10 +1,10 @@
 # Udledt af choices.yaml (webui/builder/character_yaml.py). Eneste håndrettelse: languages, fordi byggeren ikke udleder
-# racesprog (Undercommon fra Felis) eller Thieves' Cant. Overskrives, næste gang choices.yaml gemmes i byggeren.
+# Thieves' Cant (Rogue) og ikke har et sted til Undercommon (kommer ikke fra racen Felis). Overskrives, næste gang choices.yaml gemmes i byggeren.
 name: Kvist
 level: 2
 race:
   name: Felis
-  source: FELIS
+  source: SebastianFelisDA
 background:
   name: Wayfarer
   source: XPHB
@@ -95,14 +95,16 @@ class_features:
   source: XPHB
   level: 2
 race_traits:
-- name: Kattens Held
-  source: FELIS
-- name: Stædig Uvilje
-  source: FELIS
-- name: Lige på Alle Fire
-  source: FELIS
-- name: Mørkesyn
-  source: FELIS
+- name: Mørkesyn (Darkvision)
+  source: SebastianFelisDA
+- name: Kattens List (Feline Prowess)
+  source: SebastianFelisDA
+- name: Stædig Uvilje (Stubborn Will)
+  source: SebastianFelisDA
+- name: Lige på Alle Fire (Always Land on Your Feet)
+  source: SebastianFelisDA
+- name: Kattens Held (Cat's Luck)
+  source: SebastianFelisDA
 resources:
 - name: Lucky
   max: 2

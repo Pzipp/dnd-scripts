@@ -1,8 +1,10 @@
 race:
   name: Felis
-  source: FELIS
+  source: SebastianFelisDA
   other_name: ''
-  choices: {}
+  choices:
+    skill:
+    - survival
 classes:
   a1b2c3:
     name: Rogue
@@ -60,5 +62,5 @@ languages:
 settings:
   allowed_sources:
   - XPHB
-  - FELIS
+  - SebastianFelisDA
   half_feats: false
