@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Hjælper til at oversætte data/books/book-<bog>.json til book-<bog>-da.json i batches.
 
-Brug: python3 oversaet_bog.py <bog-id> <kommando>   (bog-id fx xphb -> ../book-xphb.json)
+Brug: python3 oversaet_bog.py <id> <kommando>   (id fx xphb -> ../book-xphb.json, skills -> ../skills.json)
 
   udtraek   find alle oversættelige tekster og del dem i batches (engelsk/NNN.json)
   naeste    vis næste batch uden dansk fil (eller en given: naeste 7)
@@ -17,17 +17,25 @@ from pathlib import Path
 
 ROD = Path(__file__).resolve().parent.parent  # data/books
 BOG = sys.argv[1] if len(sys.argv) > 1 else ""
-KILDE = ROD / f"book-{BOG}.json"
-MAL = ROD / f"book-{BOG}-da.json"
+# Bøger hedder book-<id>.json; opslagsfiler beholder kildens navn (<id>.json). Målet får altid -da.
+STAMME = BOG if (ROD / f"{BOG}.json").exists() else f"book-{BOG}"
+KILDE = ROD / f"{STAMME}.json"
+MAL = ROD / f"{STAMME}-da.json"
 ARB = Path(__file__).resolve().parent / BOG
 EN, DA = ARB / "engelsk", ARB / "dansk"
 STIER = ARB / "stier.json"
 BATCH_TEGN = 9000
 
-TAG = re.compile(r"\{@[^{}]*\}")
+# {@...}-tags, {#itemEntry ...}-henvisninger og {{item.x}}-skabelonfelter skal stå uændret
+TAG = re.compile(r"\{@[^{}]*\}|\{#[^{}]*\}|\{\{[^{}]*\}\}")
 # Opslagsfiler (spells-*.json, races.json, feats.json): kun poster i disse lister; navnet på selve
 # posten (besværgelse, species, feat) står på engelsk og udtrækkes derfor ikke.
-ENTITETER = {"spell", "race", "subrace", "feat"}
+ENTITETER = {"spell", "race", "subrace", "feat", "background", "optionalfeature", "item", "itemGroup", "baseitem",
+             "itemProperty", "itemType", "itemEntry", "itemTypeAdditionalEntries", "itemMastery", "skill", "action",
+             "sense", "class", "subclass", "classFeature", "subclassFeature"}
+# `name` er kun tekst under disse nøgler (træk, valgmuligheder, tabeller). Andre steder er `name` en
+# henvisning (prerequisite.class.name, consumes.name, subclasses.name, optionalfeatureProgression.name).
+TEKST_UNDER = {"entries", "entry", "items", "additionalEntries", "entriesTemplate", "entriesHigherLevel", "sizeEntry"}
 STRENGE_I = {"entries", "entry", "items", "row", "rows", "footnotes", "colLabels", "colLabelRows", "cells", "caption", "title", "by"}
 
 
@@ -38,7 +46,7 @@ def oversaettelig(s):
 def find(node, sti=(), ctx=None, ude=None):
     """Giv (sti, tekst) for alle tekster der skal oversættes."""
     if isinstance(node, str):
-        if ctx and oversaettelig(node):
+        if ctx and oversaettelig(node) and not node.startswith("{#"):
             ude.append((sti, node))
     elif isinstance(node, list):
         for i, v in enumerate(node):
@@ -49,6 +57,10 @@ def find(node, sti=(), ctx=None, ude=None):
         for k, v in node.items():
             if sti and sti[0] in ENTITETER and k == "name" and (len(sti) == 2 or (len(sti) == 4 and sti[2] == "_versions")):
                 continue  # navn på posten eller på en variant (_versions)
+            if sti and sti[0] in ENTITETER and k == "name" and not TEKST_UNDER.intersection(x for x in sti if isinstance(x, str)):
+                continue
+            if sti and sti[0] == "itemGroup" and k == "items" and len(sti) == 2:
+                continue  # liste af "Navn|KILDE"-henvisninger
             if sti and sti[0] in ENTITETER and k in ("_copy", "_abstract", "additionalSpells"):
                 continue  # henvisninger til andre poster/besværgelser
             if sti and sti[0] in ENTITETER and k == "components" and isinstance(v, dict) and "m" in v:

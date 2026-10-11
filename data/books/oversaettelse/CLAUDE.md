@@ -28,9 +28,11 @@ Genoptagelse efter afbrydelse: `status` viser antal færdige batches, `naeste` g
 
 ## Opslagsfiler (spells, races, feats)
 
-Samme værktøj bruges til 5etools' opslagsfiler. Bog-id er et frit navn, og kilden er `data/books/book-<id>.json` (lav et symlink til filen i `/srv/dnd5etools/data/`, fx `ln -s /srv/dnd5etools/data/spells/spells-xphb.json ../book-spells-xphb.json` og `.../races.json` som `../book-races.json`). Arbejdsgangen er den samme. Forskelle:
+Samme værktøj bruges til 5etools' opslagsfiler. Id er kildefilens navn uden `.json`, og kilden er `data/books/<id>.json` (symlink til filen i `/srv/dnd5etools/data/`, fx `ln -s /srv/dnd5etools/data/skills.json ../skills.json`). Resultatet er `data/books/<id>-da.json`. Bøger beholder `book-<id>`-navnet. Arbejdsgangen er den samme. Forskelle:
 
-* Navne på poster i listerne `spell`, `race`, `subrace` og `feat` (og på `_versions`) udtrækkes ikke. `_copy`, `_abstract` og `additionalSpells` røres ikke.
+* Navne på poster (`spell`, `race`, `subrace`, `feat`, `background`, `optionalfeature`, `item`, `class`, `subclass`, `classFeature` osv.) udtrækkes ikke. `_copy`, `_abstract` og `additionalSpells` røres ikke.
+* `name` udtrækkes kun under `entries`, `entry`, `items` m.fl. (`TEKST_UNDER`); andre steder er det en henvisning. `itemGroup.items` og `{#itemEntry ...}` springes over, og `{#..}`/`{{..}}` skal stå uændret.
+* `forbered_kilde.py <id> [--kilder XPHB,XDMG]` laver en afgrænset kildefil til store filer (items, backgrounds, `class-<navn>`; klasser oversættes en fil pr. klasse, så `<fil>-da.json` har samme form som kilden). Små filer symlinkes uden filter.
 * Materialekomponenter (`components.m`) og `time[].condition` udtrækkes.
 * `saml` retter `_mod ... replace`-henvisninger til oversatte trækoverskrifter og melder dem, der ikke kunne findes.
 
