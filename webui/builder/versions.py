@@ -102,14 +102,17 @@ def _find(items: list, replace) -> int:
     exact = next((i for i, it in enumerate(items) if (it.get("name") == replace if isinstance(it, dict) else it == replace)), -1)
     if exact >= 0 or not isinstance(replace, str):
         return exact
-    # Dansk overskrift: "Størrelse (Size)" og "Size" er samme mål, uanset hvilken af dem der er oversat
-    # (data/*-da.json ændrer navnene i entries, ikke altid i _mod'en)
-    want = replace.lower()
-    for i, it in enumerate(items):
-        name = str(it.get("name", "")).lower() if isinstance(it, dict) else ""
-        if name and (name.endswith(f"({want})") or want.endswith(f"({name})")):
-            return i
-    return -1
+    return next((i for i, it in enumerate(items) if isinstance(it, dict) and name_matches(it.get("name"), replace)), -1)
+
+
+def name_matches(name, target) -> bool:
+    """Samme navn, også når den ene side er en dansk overskrift: "Størrelse (Size)" og "Size" er samme mål.
+    Data i data/*-da.json oversætter navnene i entries, men ikke de engelske henvisninger til dem
+    (_mod replace, subrace-overwrite, kolonnenavne)."""
+    if not isinstance(name, str) or not isinstance(target, str):
+        return False
+    a, b = name.strip().lower(), target.strip().lower()
+    return a == b or a.endswith(f"({b})") or b.endswith(f"({a})")
 
 
 def _mod(entity: dict, prop: str, op) -> None:

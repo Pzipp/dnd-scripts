@@ -55,9 +55,10 @@ def pact(obj: dict, level: int) -> dict | None:
     """Warlock: {'slots': 2, 'level': 3} - antal pact-slots og deres niveau."""
     for group in obj.get("classTableGroups") or []:
         labels = group.get("colLabels") or []
-        if "Spell Slots" in labels and "Slot Level" in labels and group.get("rows"):
+        slots, slot_level = e.label_index(labels, "Spell Slots"), e.label_index(labels, "Slot Level")
+        if slots >= 0 and slot_level >= 0 and group.get("rows"):
             row = group["rows"][min(level, len(group["rows"])) - 1]
-            return {"slots": int(row[labels.index("Spell Slots")]), "level": int(row[labels.index("Slot Level")])}
+            return {"slots": int(row[slots]), "level": int(row[slot_level])}
     return None
 
 

@@ -25,9 +25,17 @@ _PRESERVE_BASE = {"page", "otherSources", "referenceSources", "srd", "srd52", "b
                   "foundryTokenScale", "altArt", "_versions"}
 
 
+def key(prop: str, x: dict) -> tuple:
+    """Entydig nøgle for en post i listen `prop` (samme felter som 5etools' hash). En klasse-feature
+    hedder fx "Expertise" både på level 1 og 6, så name+source alene er ikke nok."""
+    return _hash(prop, x)
+
+
 def _hash(prop: str, x: dict) -> tuple:
     def g(k):
         return str(x.get(k, "")).lower()
+    if prop == "classFeature":
+        return (g("name"), g("source"), g("className"), g("classSource"), str(x.get("level")))
     if prop == "subclass":
         return (g("name"), g("shortName"), g("source"), g("className"), g("classSource"))
     if prop == "subclassFeature":

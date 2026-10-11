@@ -7,7 +7,7 @@ karakter.yaml bagefter (menneske eller AI) - den vises aldrig direkte for en
 spiller.
 
 Findes der en dansk oversættelse i repoets data/<fil>-da.json (fx feats-da.json),
-lægges dens felter ovenpå 5etools' entry for entry (matchet på name+source), så resten
+lægges dens felter ovenpå 5etools' entry for entry (matchet på copies.key: name+source, og for klasse-features/subclasses også klasse og level), så resten
 af koden ser dansk tekst uden at vide det. Navne og andre strukturfelter forbliver
 5etools'; entries uden oversættelse forbliver engelske.
 
@@ -56,7 +56,7 @@ def _da_path(rel_path: str) -> Path:
 
 
 def _overlay_dansk(base: dict, da: dict) -> dict:
-    """Lægger de danske felter ovenpå 5etools' engelske, entry for entry (matchet på name+source).
+    """Lægger de danske felter ovenpå 5etools' engelske, entry for entry (matchet på copies.key: name+source, og for klasse-features/subclasses også klasse og level).
     Et felt i den danske fil vinder; felter den ikke har, forbliver 5etools'. Entries uden
     dansk modstykke er uændrede."""
     out = dict(base)
@@ -64,8 +64,8 @@ def _overlay_dansk(base: dict, da: dict) -> dict:
         da_entries = da.get(key)
         if not isinstance(entries, list) or not isinstance(da_entries, list):
             continue
-        by_id = {(e.get("name"), e.get("source")): e for e in da_entries if isinstance(e, dict)}
-        out[key] = [_merge_entry(e, by_id.get((e.get("name"), e.get("source")))) if isinstance(e, dict) else e
+        by_id = {copies.key(key, e): e for e in da_entries if isinstance(e, dict)}
+        out[key] = [_merge_entry(e, by_id.get(copies.key(key, e))) if isinstance(e, dict) else e
                     for e in entries]
     return out
 
@@ -469,6 +469,11 @@ def spells_by_filter(sources: set[str], level: int | set[int] | None = None, sch
     return out
 
 
+def label_index(labels: list, wanted: str) -> int:
+    """Indeks for kolonnen `wanted` i colLabels, også når kolonnen er oversat til "Dansk (Wanted)". -1 hvis den mangler."""
+    return next((i for i, label in enumerate(labels) if label == wanted or str(label).endswith(f"({wanted})")), -1)
+
+
 def class_table_value(class_obj: dict, column_label: str, level: int) -> int | str | None:
     """Slår en kolonne op i klassens egen tabel (classTableGroups), fx hvor mange
     våben Weapon Mastery giver, eller Sneak Attacks terningeskade, på et givet
@@ -478,8 +483,8 @@ def class_table_value(class_obj: dict, column_label: str, level: int) -> int | s
     terne i samme celle som "1d6+1d4"."""
     for group in class_obj.get("classTableGroups", []):
         labels = group.get("colLabels", [])
-        if column_label in labels:
-            idx = labels.index(column_label)
+        idx = label_index(labels, column_label)
+        if idx >= 0:
             rows = group.get("rows", [])
             if 0 < level <= len(rows):
                 cell = rows[level - 1][idx]
