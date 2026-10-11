@@ -229,6 +229,21 @@ def output_file(character: str, filename: str):
     return send_from_directory(directory, filename)
 
 
+@app.get("/5etools/", defaults={"path": "index.html"})
+@app.get("/5etools/<path:path>")
+def e5tools_site(path: str):
+    """5etools' egen hjemmeside (statiske filer fra /e5tools), så man kan se officielt indhold og homebrew
+    (/e5tools/homebrew = vol/homebrew) i 5etools selv. Ingen login: kun til lokal brug, se webui/README.md."""
+    from builder import e5tools
+    root = e5tools.E5TOOLS_DATA.parent
+    if not root.is_dir():
+        return jsonify({"error": "5etools er ikke mountet."}), 404
+    parts = Path(path).parts
+    if any(part.startswith(".") for part in parts) or parts[:2] == ("homebrew", "kilder"):  # .git m.fl. og arkiverede kilder
+        return jsonify({"error": "Ikke fundet."}), 404
+    return send_from_directory(root, path)
+
+
 DATA_FILES = ("karakter.yaml", "kort.yaml")
 
 

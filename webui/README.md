@@ -41,6 +41,10 @@ Byggeren kræver 5etools' regeldata (JSON) mountet read-only på `/e5tools`, med
 
 `update-e5tools.sh` kan opdatere 5etools-klonen med `git pull --ff-only` ved opstart, hvis `UPDATE_E5TOOLS=true` er sat i `.env`. Variablen står ikke i `.env.example`. Scriptet fejler aldrig hårdt; en manglende opdatering blokerer ikke siden.
 
+### 5etools i browseren (`/5etools/`)
+
+Webuien serverer selve 5etools-siden fra `/e5tools` på `/5etools/` (fx `http://localhost:8081/5etools/`). Her kan gruppens homebrew ses i 5etools: `vol/homebrew` ligger som `/5etools/homebrew/`, og filerne i `index.json`s `toImport` indlæses via 5etools' egen "Manage Homebrew". Ruten (`e5tools_site` i `app.py`) er skrivebeskyttet, afviser stier der starter med `.` (fx `.git`) og `homebrew/kilder/` (arkiverede kilder). Der er ingen login, så den skal ikke eksponeres udadtil: 5etools' indhold er ophavsretligt beskyttet. Kræver genstart af containeren efter en kodeændring.
+
 ## Kør i Docker
 
 Repoet har en `Dockerfile` (Python 3.12, Flask, PyYAML, ruamel.yaml og Playwright med Chromium til PDF) og en `docker-compose.yml`. Imaget er stort (Chromium), så den første build tager et stykke tid. Containeren lytter internt på port 8080 (`PORT` i `Dockerfile`).
