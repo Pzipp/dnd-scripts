@@ -4,9 +4,24 @@ Dette er den fælles instruktionsfil for alle AI-værktøjer i gruppen (Claude, 
 
 ## Hvad projektet er
 
-Gruppens D&D 2024-værktøjer på dansk: generatorer, der laver print-klare **karakterark** og **spell-/evnekort** ud fra YAML-filer. Brugerne er spillere i en dansk gruppe. Sproget i filer og svar er **dansk**, reglerne er **D&D 2024 (Player's Handbook 2024, PHB)**.
+Gruppens D&D 2024-værktøjer på dansk: **webui'en med karakterbyggeren** (`/builder`) og en ældre kommandolinje. De laver print-klare **karakterark** og **spell-/evnekort** i farve og sort/hvid. Brugerne er spillere i en dansk gruppe. Sproget i filer og svar er **dansk**, reglerne er **D&D 2024 (Player's Handbook 2024, PHB)**.
+
+Der findes to systemer, som deler CSS, kortgenerator og PDF-generator:
+
+| | Nyt system (hovedvejen) | Ældre system (kommandolinjen) |
+|---|---|---|
+| Hvordan | Webui'en, fanerne Karakter, Udstyr, Kort, Ark | `python3 dnd.py ...` |
+| Filer pr. karakter | `choices.yaml` (rå valg), `character.yaml` (udregnet), `sheets.yaml` (layout), `kort.yaml` | `karakter.yaml` (alt i én fil), `kort.yaml` |
+| Ark laves af | `webui/builder/render.py` | `scripts/karakterark/karakterark.py` |
+| Format | `docs/choices-yaml.md`, `docs/character-yaml.md`, `docs/sheets-yaml.md` | `docs/karakterark-yaml.md` |
+
+Nye karakterer bygges i webui'en. Ældre karakterer (`karakter.yaml`) bruges stadig med `dnd.py` og webui'ens YAML-editor (`/editor`) og fjernes ikke. En karakter kan have begge slags filer (`valak`, `terrin`, `chukio` og `kvist` er konverteret til det nye format, men beholder de gamle filer). Flere er ikke konverteret.
 
 ## Kommandoer
+
+Webui'en (nyt system) køres fra roden: `python webui/app.py` (se `webui/README.md`) eller i Docker. Alle karakterbyggerens data kommer fra 5etools' regeldata, som skal være mountet på `/e5tools`.
+
+Ældre kommandolinje (`karakter.yaml`; `kort.yaml` virker også for byggerens karakterer):
 
 ```bash
 python3 dnd.py liste                          # vis karakterer
@@ -17,31 +32,41 @@ python3 dnd.py alt --alle --pdf               # alle karakterer
 python3 dnd.py tjek                           # byg alt; meld fejl i data. KØR FØR DU GEMMER
 ```
 
-`pip install -r requirements.txt`. PDF kræver Playwright og Chromium. Uden internet: brug `--skrifttyper` (se `scripts/pdf/README.md`), ellers får PDF'en forkerte skrifttyper og kortene kan ombrydes anderledes.
+`pip install -r requirements.txt` (PyYAML og Playwright; Chromium med `playwright install chromium`). Webui'en kræver desuden `pip install -r webui/requirements.txt` (Flask, ruamel.yaml). Uden internet: brug `--skrifttyper` (se `scripts/pdf/README.md`), ellers får PDF'en forkerte skrifttyper og kortene kan ombrydes anderledes.
 
 ## Mappekort
 
 | Sti | Hvad |
 |---|---|
-| `dnd.py` | Indgangspunkt |
-| `karakterer/<navn>/karakter.yaml` | Karakterarket. Format: `docs/karakterark-yaml.md` |
-| `karakterer/<navn>/kort.yaml` | Kortbunke. Format: `docs/kort-yaml.md` |
+| `dnd.py` | Indgangspunkt for den ældre kommandolinje |
+| `webui/` | Flask-webui: menu (`/`), karakterbygger (`/builder`) og YAML-editor (`/editor`). Se `webui/README.md` |
+| `webui/builder/` | Byggerens kode: `model.py` (valg og state), `character_yaml.py` (udregning), `render.py` (ark), `kort.py`/`cards.py` (kort), `e5tools.py` (opslag og dansk overlay), `copies.py`/`versions.py` (`_copy`, `_versions`), `descriptions.py`/`effects.py`/`llm_client.py` (danske beskrivelser og effekter), `baggrund.py`, `layout_edit.py`, `routes.py` |
+| `webui/static/` | CSS/JS til webui'en, `baggrunde/` (billeder til ark og kort), `theme-*.css` (sidetemaer, endnu ikke tilsluttet) |
+| `karakterer/<navn>/` | Én mappe pr. karakter, se tabellen ovenfor. Ældre: `karakter.yaml` (`docs/karakterark-yaml.md`) |
 | `karakterer/<navn>/udskrifter/` | **Genereret, ikke i git.** Redigér aldrig i hånden |
-| `karakterer/_skabelon/` | Kommenteret skabelon til nye karakterer |
-| `bibliotek/*.yaml` | Delte kort (id → kort) |
+| `karakterer/_skabelon/` | Kommenterede skabeloner til nye karakterer (`karakter.yaml`, `kort.yaml`, `sheets.yaml`) |
+| `bibliotek/*.yaml` | Delte kort (id -> kort) |
+| `bibliotek/_cards.yaml`, `_descriptions.yaml`, `_effects.yaml` | **Genererede caches** til det nye system: kortudkast, danske beskrivelser og udtrukne effekter. Se `bibliotek/README.md` |
 | `scripts/karakterark/`, `scripts/kort/`, `scripts/pdf/` | Generatorer og CSS. Hver mappe har en README |
 | `scripts/faelles.py` | Fælles hjælpere (indlæsning, stile, stier) |
-| `data/feats-XPHB-da.yaml` | Alle XPHB-feats med danske felter til ark og kort. Lav/opdatér med `scripts/data/feats_xphb.py`. Format: `docs/feats-xphb-da.md` |
-| `docs/` | Formater og navnekonvention |
+| `data/*-da.json`, `data/spells/`, `data/class/` | Danske oversættelser af 5etools-data, lagt ovenpå af `e5tools.py`. **Ikke i git** (bortset fra `feats-da.json`). Se `data/books/oversaettelse/CLAUDE.md` |
+| `data/books/` | Kilder og arbejdsfiler til oversættelse. Værktøjet i `data/books/oversaettelse/` er i git, resten ikke |
+| `data/feats-XPHB-da.yaml` | Alle XPHB-feats med danske felter. Lav/opdatér med `scripts/data/feats_xphb.py`. Format: `docs/feats-xphb-da.md` |
+| `vol/` | Runtime-data, ikke i git (`vol/homebrew/*` og `vol/karakterer/`); kun `vol/homebrew/index.json` er sporet |
+| `docs/` | Formater, navnekonvention, todo |
 
 ## Sådan laver du en ny karakter (arbejdsgang)
+
+Hovedvejen er webui'en: opret en karakter på `/builder`, vælg art, klasse, baggrund, evner, feats, spells og udstyr, vælg kort, og lav ark og PDF på fanerne Kort og Ark. Layoutet (`sheets.yaml`) redigeres i fanen Ark (YAML-editor eller træk og slip). `character.yaml` genberegnes ved hvert gem; ret valg i byggeren, ikke i den fil.
+
+Ældre arbejdsgang (`karakter.yaml`):
 
 1. Spørg, hvis du mangler det væsentlige: klasse og level, art (species), baggrund, evner, udstyr. Gæt ikke på tal.
 2. `cp -r karakterer/_skabelon karakterer/<navn>` (navn med små bogstaver og bindestreg).
 3. Udfyld `karakter.yaml` og `kort.yaml`. Udregn ikke modifiers i hånden: skriv `'{+DEX+PB}'`, og generatoren regner det ud.
 4. Nye kort: se om de findes i `bibliotek/` først. Ellers læg dem i `bibliotek/` (kan genbruges) eller under `egne:` i `kort.yaml`.
 5. `python3 dnd.py tjek`, derefter `python3 dnd.py alt <navn> --pdf`.
-6. **Kig på resultatet** (HTML eller PDF-siderne). Tekst, der er for lang, klippes ved kanten af A4-siden eller kortet. Forkort, til den passer.
+6. **Kig på resultatet** (HTML eller PDF-siderne). Tekst, der er for lang, klippes ved kanten af A4-siden eller kortet. Forkort, til den passer. I webui'en viser forhåndsvisningen og PDF-linket en advarsel om kort med tekst uden for rammen.
 
 ## Faste regler
 
@@ -58,23 +83,29 @@ python3 dnd.py tjek                           # byg alt; meld fejl i data. KØR 
 
 ## Dataformat i korte træk
 
-* Data er **YAML** (JSON kan også læses). Én karakter = én mappe.
+* Data er **YAML** (JSON kan også læses). Én karakter = én mappe. Det nye systems filer har engelske nøgler (`character.yaml`, `sheets.yaml`), de ældre danske (`karakter.yaml`, `kort.yaml`).
 * Tekst, der starter med `{` eller `[`, eller indeholder `: `, skal i citationstegn. `Ja`/`Nej` uden citationstegn bliver sandt/falsk.
 * `[]` i tekst = afkrydsningsfelt. `{+DEX+PB}` = udregnet med fortegn. `{10+DEX}` = udregnet uden fortegn. Udtryk kan bruge `STR DEX CON INT WIS CHA PB`.
 * HTML `<b> <i> <em>` er tilladt. Skriv `&` som `&amp;`.
+* `choices.yaml`, `character.yaml` og `bibliotek/_*.yaml` skrives af webui'en. Ret dem ikke i hånden uden at vide, hvordan de genskrives (`docs/choices-yaml.md`, `docs/character-yaml.md`). `sheets.yaml` og `kort.yaml` redigeres frit og overskrives aldrig automatisk.
 * Fejlbeskeder fra `dnd.py` er på dansk og forklarer, hvad der er galt (fx ukendt kort-id med forslag).
 
 ## Må og må ikke
 
 * **Redigér ikke** filer i `udskrifter/` i hånden. Generér dem igen.
 * **Slet eller overskriv ikke** en anden spillers karakter uden at spørge. Hver spiller ejer sin mappe i `karakterer/`.
-* Commit **ikke** genererede filer: hele `udskrifter/` (HTML og PDF) og `__pycache__` er i `.gitignore`. Der er ingen færdige PDF'er i repoet; de laves med `python3 dnd.py ... --pdf`.
+* Commit **ikke** genererede filer: hele `udskrifter/` (HTML og PDF) og `__pycache__` er i `.gitignore`. Der er ingen færdige PDF'er i repoet; de laves i webui'en eller med `python3 dnd.py ... --pdf`.
+* Commit ikke bogtekster og oversættelser af dem (`data/books/*.json`, `data/*-da.json`, `data/spells/`, `data/class/`; ophavsretligt materiale), `.env`, `vol/karakterer/`, eller indhold i `vol/homebrew/` (undtagen `index.json`). Se `.gitignore`.
 * Foretræk at lave ændringer på en **gren** og lade en pull request gennemgå dem. Skriv ikke direkte til `main`, medmindre ejeren siger det.
 * Ret ikke i `scripts/` for at løse et dataproblem i en enkelt karakter. Brug `egne:` eller karakterens egen fil.
-* Læg ikke adgangskoder, nøgler eller personlige oplysninger i repoet. Repoet er offentligt.
+* Læg ikke adgangskoder, nøgler, domænenavne eller personlige oplysninger i repoet. Repoet er offentligt. Lokal konfiguration (port, LLM-endpoint og -nøgle) står i `.env`, som ikke er i git.
 
 ## Når du ændrer generatorerne
 
 * Layoutkode er skrøbelig: sider er præcis én A4. Efter en ændring skal du bygge alle karakterer og sammenligne med før (`python3 dnd.py tjek`, og kig på mindst ét ark og ét kort i hver stil).
-* CSS: `sheets.css` er farve-stilen for karakterark (alle sider, delt med det nye systems `webui/builder/render.py`) og `sheets-bw.css` lægges ovenpå. `spellkort.css` er sort/hvid, og `spellkort-farve.css` lægges ovenpå. Skal begge stile ændres, så ret begge.
+* Der er to renderere for karakterark: `scripts/karakterark/karakterark.py` (ældre, `karakter.yaml`) og `webui/builder/render.py` (nyt, `character.yaml` + `sheets.yaml`). De er bevidst uafhængige og deler kun CSS. Ændrer du et boks-udseende, så tjek begge.
+* CSS til karakterark: `sheets.css` er farve-stilen (alle sider). `sheets-bw.css` lægges ovenpå i sort/hvid. De ni temaer `sheets-*.css` (moderne, skov, mørk fantasy, kongelig, blod og stål, arkanum, blækornament, bladkrus, stjernelinje) lægges også ovenpå `sheets.css`. De er registreret i `STYLE_FILES` i `webui/builder/render.py`, og et nyt tema skal stå dér. CSS'en scopes under `.s1`.
+* CSS til kort: `spellkort.css` er sort/hvid, og `spellkort-farve.css` lægges ovenpå. De fem `stil-*.css` er tema-overlays oven på en af dem (`TEMAER` i `spellkort.py`, valgt med `--tema`). Skal begge stile ændres, så ret begge.
+* Kortenes måling af tekst uden for rammen ligger i `scripts/kort/maal_overflow.js` og bruges af både `scripts/pdf/lav_pdf.py` og webui'ens Kort-fane. Ændrer du kortets klasser (`.frame`, `.eff`, `.kicker`, `.dice`), så ret målingen.
+* `webui/static/theme-*.css` er sidetemaer til webui'en selv, endnu ikke tilsluttet nogen vælger. Slet dem ikke.
 * Opdatér den README og det `docs/`-dokument, der beskriver det, du har ændret.
