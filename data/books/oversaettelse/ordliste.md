@@ -1,8 +1,6 @@
-# Oversættelsesregler for book-xphb-da.json
+# Ordliste og oversættelsesregler (D&D-bøger → dansk)
 
-Genoptag: `python3 scripts/data/oversaet_bog.py naeste` viser næste batch uden dansk fil.
-Skriv oversættelsen til `data/books/oversaettelse/dansk/NNN.json` (samme id'er som i
-`engelsk/NNN.json`), kør `tjek`, derefter næste. Til sidst `saml`.
+Gælder alle bøger i denne mappe. Udvid de faste termer, når en ny bog bringer nye begreber.
 
 ## Regler
 - Kun tekstværdier oversættes. `{@...}`-tags er uændrede, byte for byte (også visningsteksten).

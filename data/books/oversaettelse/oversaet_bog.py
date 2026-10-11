@@ -1,20 +1,25 @@
 #!/usr/bin/env python3
-"""Hjælper til at oversætte data/books/book-xphb.json til book-xphb-da.json i batches.
+"""Hjælper til at oversætte data/books/book-<bog>.json til book-<bog>-da.json i batches.
+
+Brug: python3 oversaet_bog.py <bog-id> <kommando>   (bog-id fx xphb -> ../book-xphb.json)
 
   udtraek   find alle oversættelige tekster og del dem i batches (engelsk/NNN.json)
   naeste    vis næste batch uden dansk fil (eller en given: naeste 7)
   tjek      kontrollér danske batches (id'er, {@...}-tags uændrede)
-  saml      byg book-xphb-da.json af alle gyldige danske batches (rest bliver engelsk)
+  saml      byg book-<bog>-da.json af alle gyldige danske batches (rest bliver engelsk)
   status    antal batches/tekster færdige
+  flet NNN FIL  flet delvis oversættelse FIL ind i dansk/NNN.json; rene tal+enhed
+                (fx "2 lb.", "25 GP") der mangler, kopieres uændret
 """
 import copy, json, re, sys
 from collections import Counter
 from pathlib import Path
 
-ROD = Path(__file__).resolve().parents[2] / "data" / "books"
-KILDE = ROD / "book-xphb.json"
-MAL = ROD / "book-xphb-da.json"
-ARB = ROD / "oversaettelse"
+ROD = Path(__file__).resolve().parent.parent  # data/books
+BOG = sys.argv[1] if len(sys.argv) > 1 else ""
+KILDE = ROD / f"book-{BOG}.json"
+MAL = ROD / f"book-{BOG}-da.json"
+ARB = Path(__file__).resolve().parent / BOG
 EN, DA = ARB / "engelsk", ARB / "dansk"
 STIER = ARB / "stier.json"
 BATCH_TEGN = 9000
@@ -116,6 +121,25 @@ def naeste(arg=None):
     print((EN / navn).read_text())
 
 
+ENHED = re.compile(r"^[\d.,/½¼¾ ]+(lb\.|GP|SP|CP|EP|PP|ft\.)?( [\d.,/½¼¾]+ (lb\.|GP|SP|CP|EP|PP))*$")
+
+
+def flet(nr, fil):
+    navn = f"{int(nr):03d}.json"
+    en, dele = laes(EN / navn), laes(fil)
+    ud = {}
+    for k, t in en.items():
+        if k in dele:
+            ud[k] = dele[k]
+        elif ENHED.match(t.strip()):
+            ud[k] = t
+    mangler = [k for k in en if k not in ud]
+    if mangler:
+        print("mangler stadig:", {k: en[k][:60] for k in mangler}); return
+    (DA / navn).write_text(json.dumps(ud, ensure_ascii=False, indent=0))
+    print("skrev", DA / navn)
+
+
 def saml():
     d = json.load(open(KILDE))
     ud = copy.deepcopy(d)
@@ -132,5 +156,9 @@ def saml():
 
 
 if __name__ == "__main__":
-    kmd = sys.argv[1] if len(sys.argv) > 1 else "status"
-    {"udtraek": udtraek, "naeste": lambda: naeste(*sys.argv[2:3]), "tjek": tjek, "saml": saml, "status": status}[kmd]()
+    if len(sys.argv) < 3 or not KILDE.exists():
+        sys.exit(__doc__ + f"\nBrug: oversaet_bog.py <bog-id> <kommando> [args]  (kilde: {KILDE})")
+    EN.mkdir(parents=True, exist_ok=True)
+    DA.mkdir(parents=True, exist_ok=True)
+    kmd = sys.argv[2]
+    {"udtraek": udtraek, "naeste": lambda: naeste(*sys.argv[3:4]), "tjek": tjek, "saml": saml, "status": status, "flet": lambda: flet(*sys.argv[3:5])}[kmd]()
