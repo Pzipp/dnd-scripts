@@ -313,15 +313,23 @@ def subclass_features(class_name: str, subclass_name: str, sources: set[str], up
 
 
 # ── Racer/species ────────────────────────────────────────────────────────
+def _with_homebrew(prop: str, official: list[dict]) -> list[dict]:
+    """Officielle poster + homebrew, med `_copy` foldet ud på tværs af begge (en homebrew-race kan være en
+    _copy af en officiel). Uden homebrew med _copy returneres den officielle liste uændret."""
+    homebrew = _homebrew_entries(prop)
+    if not any("_copy" in x for x in homebrew):
+        return official + homebrew
+    return copies.resolve(prop, official + homebrew)
+
+
 def races(sources: set[str]) -> list[dict]:
-    all_races = _load("races.json").get("race", []) + _homebrew_entries("race")
-    return [r for r in all_races if r.get("source") in sources]
+    return [r for r in _with_homebrew("race", _load("races.json").get("race", [])) if r.get("source") in sources]
 
 
 def subraces(race: dict, sources: set[str] | None = None) -> list[dict]:
     """Subraces (ældre kilder) til en race: poster i races.json's `subrace`-liste med samme
     raceName/raceSource. En subrace uden navn er racens grundvariant (Human: +1 på alt)."""
-    all_sub = _load("races.json").get("subrace", []) + _homebrew_entries("subrace")
+    all_sub = _with_homebrew("subrace", _load("races.json").get("subrace", []))
     return [sr for sr in all_sub
             if sr.get("raceName") == race.get("name") and sr.get("raceSource", race.get("source")) == race.get("source")
             and (sources is None or sr.get("source", race.get("source")) in sources)]
@@ -336,7 +344,7 @@ def get_race(name: str, sources: set[str]) -> dict | None:
 
 # ── Baggrunde ────────────────────────────────────────────────────────────
 def backgrounds(sources: set[str]) -> list[dict]:
-    all_backgrounds = _load("backgrounds.json").get("background", []) + _homebrew_entries("background")
+    all_backgrounds = _with_homebrew("background", _load("backgrounds.json").get("background", []))
     return [b for b in all_backgrounds if b.get("source") in sources]
 
 
