@@ -23,12 +23,32 @@ Det samlede resultat `book-<bog>-da.json` genereres. Ret aldrig i den, men i `<b
    - Skriv oversættelsen til `<bog>/dansk/NNN.json`. Enten hele batchen, eller kun de ids der skal ændres, i en midlertidig fil, som `flet NNN FIL` lægger ind i `dansk/NNN.json`. `flet` kopierer selv ids med ren tal+enhed (`2 lb.`, `25 GP`) uændret og melder, hvad der mangler.
    - `python3 oversaet_bog.py <bog> tjek` skal melde alle batches gyldige, før du går videre.
 4. `python3 oversaet_bog.py <bog> saml` bygger `book-<bog>-da.json`. Det kan køres når som helst; uoversatte batches bliver stående på engelsk.
+5. Opslagsfiler (ikke bøger): flyt resultatet til slutplaceringen, se "Slutplacering".
 
 Genoptagelse efter afbrydelse: `status` viser antal færdige batches, `naeste` giver den næste. Start den næste batch selv, når en er færdig, til `naeste` melder, at alle er oversat.
 
+## Slutplacering
+
+`oversaet_bog.py` skriver altid resultatet til `data/books/<stamme>-da.json`. Webui'en (`webui/builder/e5tools.py`, `_overlay_dansk`) læser derimod `data/<fil>-da.json` for en 5etools-fil `<fil>.json` (undermapper bevares: `spells/spells-xphb.json` giver `data/spells/spells-xphb-da.json`). Efter `saml` skal filen derfor **flyttes** til sin slutplacering (`mv`), ellers bruges den ikke:
+
+| Id | `saml` skriver | Flyt til | Læses fra 5etools-filen |
+|---|---|---|---|
+| `xphb`, `xdmg` (bøger) | `data/books/book-<id>-da.json` | bliver stående | bogvisning |
+| `spells-xphb` | `data/books/spells-xphb-da.json` | `data/spells/spells-xphb-da.json` | `spells/spells-xphb.json` |
+| `races` | `data/books/races-da.json` | `data/races-da.json` | `races.json` |
+| `feats` | `data/books/feats-da.json` | `data/feats-da.json` (sporet i git) | `feats.json` |
+| `backgrounds`, `optionalfeatures`, `items`, `items-base`, `skills`, `actions` | `data/books/<id>-da.json` | `data/<id>-da.json` | `<id>.json` |
+| `class-<navn>` | `data/books/class-<navn>-da.json` | `data/class/class-<navn>-da.json` | `class/class-<navn>.json` |
+
+Entries matches på `name` + `source` (klasse-features og subclasses også på klasse og level); entries uden dansk modstykke forbliver engelske.
+
+## Hvad der er i git, og sikkerhedskopi
+
+Kun værktøjet i denne mappe (`oversaet_bog.py`, `forbered_kilde.py`, `ordliste.md`, `OPSLAGSFILER.md`, `CLAUDE.md`) er i git. Bogtekster og oversættelser er ophavsretligt materiale og er gitignoreret: `data/books/*.json`, `data/books/oversaettelse/*/` (batch-arbejdet i `engelsk/`, `dansk/`, `delvis/`, `stier.json`), `data/*-da.json`, `data/spells/` og `data/class/`. Eneste undtagelse er `data/feats-da.json`, som er sporet. Batch-arbejdet ligger derfor kun på disken: tag selv sikkerhedskopi af `data/books/oversaettelse/*/` og de flyttede `*-da.json`-filer.
+
 ## Opslagsfiler (spells, races, feats)
 
-Samme værktøj bruges til 5etools' opslagsfiler. Id er kildefilens navn uden `.json`, og kilden er `data/books/<id>.json` (symlink til filen i `/srv/dnd5etools/data/`, fx `ln -s /srv/dnd5etools/data/skills.json ../skills.json`). Resultatet er `data/books/<id>-da.json`. Bøger beholder `book-<id>`-navnet. Arbejdsgangen er den samme. Forskelle:
+Samme værktøj bruges til 5etools' opslagsfiler. Id er kildefilens navn uden `.json`, og kilden er `data/books/<id>.json` (symlink til filen i `/srv/dnd5etools/data/`, fx `ln -s /srv/dnd5etools/data/skills.json ../skills.json`). Resultatet skrives til `data/books/<id>-da.json` og flyttes bagefter til sin slutplacering (se tabellen ovenfor). Bøger beholder `book-<id>`-navnet. Arbejdsgangen er den samme. Forskelle:
 
 * Navne på poster (`spell`, `race`, `subrace`, `feat`, `background`, `optionalfeature`, `item`, `class`, `subclass`, `classFeature` osv.) udtrækkes ikke. `_copy`, `_abstract` og `additionalSpells` røres ikke.
 * `name` udtrækkes kun under `entries`, `entry`, `items` m.fl. (`TEKST_UNDER`); andre steder er det en henvisning. `itemGroup.items` og `{#itemEntry ...}` springes over, og `{#..}`/`{{..}}` skal stå uændret.
@@ -44,9 +64,10 @@ Samme værktøj bruges til 5etools' opslagsfiler. Id er kildefilens navn uden `.
 ## Faste regler
 
 * `{@...}`-tags er uændrede, tegn for tegn, også visningsteksten. `tjek` afviser en batch, hvor tags afviger. Omgivende tekst bøjes efter dansk grammatik.
-* Spilbegreber (egenskaber, tilstande, skadetyper, handlinger, enheder) står som dansk med engelsk i parentes. Navne på genstande, klasser, subclasses, besværgelser, monstre og species står på engelsk. Detaljer og faste termer: `ordliste.md`.
+* Spilbegreber (egenskaber, tilstande, skadetyper, handlinger, enheder) står som dansk med engelsk i parentes. Navne på genstande, klasser, subclasses, besværgelser, monstre og species står på engelsk. Trækoverskrifter i species og klasser oversættes som `Dansk titel (English Name)`. Detaljer og faste termer: `ordliste.md`.
+* Denne regel gælder den oversatte **forklarende tekst**. Karakterark og kort følger i stedet `docs/navnekonvention.md` (engelske regelnavne alene).
 * Navne på personer og kreditlister oversættes ikke; kun etiketterne.
 * Ids i en `dansk/`-fil skal være præcis de samme som i `engelsk/`. Tomme værdier afvises.
 * Ændr aldrig `engelsk/` i hånden. Hvis kilden ændres, så kør `udtraek` igen (det overskriver `engelsk/` og `stier.json`) og ret `dansk/` til, så ids passer.
 * Ret `ordliste.md` i stedet for at lade en beslutning stå kun i en batch, så senere batches og bøger er konsistente.
-* Kun filer til denne mappe og `data/books/` ændres. Commit kun, når brugeren beder om det.
+* Kun filer til denne mappe, `data/books/` og slutplaceringerne under `data/` ændres. Commit kun, når brugeren beder om det.

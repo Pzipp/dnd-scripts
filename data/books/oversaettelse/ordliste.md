@@ -3,6 +3,8 @@
 Gælder alle bøger i denne mappe. Udvid de faste termer, når en ny bog bringer nye begreber.
 
 ## Regler
+
+Note: reglerne her gælder den oversatte forklarende tekst (bogtekst, træk, spells), hvor et spilbegreb skrives `dansk (English)`. Karakterark og kort er ikke oversat bogtekst, men følger `docs/navnekonvention.md`: engelske regelnavne står alene, og dansk forklaring står rundt om. Trækoverskrifter i species og klasser oversættes som `Dansk titel (English Name)` (se nedenfor).
 - Kun tekstværdier oversættes. `{@...}`-tags er uændrede, byte for byte (også visningsteksten).
 - Spilbegreber (stats, skills, conditions, skadetyper, handlinger, enheder) oversættes i løbende
   tekst som `dansk (English)`, fx `hastighed (Speed)`, `Dexterity`-> `Smidighed (Dexterity)`.

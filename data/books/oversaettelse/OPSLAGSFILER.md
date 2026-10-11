@@ -7,6 +7,7 @@ Opslagsfiler: `backgrounds`, `optionalfeatures`, `items`, `items-base`, `skills`
 1. Små filer (`skills`, `actions`, `items-base`, `optionalfeatures`) symlinkes uændret: `ln -s /srv/dnd5etools/data/<fil>.json data/books/<fil>.json`. Resultatet hedder `<id>-da.json`.
 2. Store filer (`items`, `backgrounds`, `class-<navn>`) afgrænses med `python3 forbered_kilde.py <id>` (standard XPHB og XDMG; `--kilder XPHB,PHB` ændrer det). Det skriver `data/books/<id>.json`.
 3. Derefter den sædvanlige arbejdsgang: `python3 oversaet_bog.py <id> udtraek`, `naeste`, skriv `dansk/NNN.json`, `tjek`, `saml`.
+4. Flyt `data/books/<id>-da.json` til slutplaceringen: `data/<id>-da.json` (`data/spells/<id>-da.json` for spells, `data/class/class-<navn>-da.json` for klasser). Hele tabellen står i `CLAUDE.md` ("Slutplacering"). Filen i `data/books/` bruges ikke af builderen, og `data/*-da.json`, `data/spells/`, `data/class/` og batch-mapperne er gitignoreret, så tag selv sikkerhedskopi.
 
 Rettelserne ændrer ikke udtrækket for `spells-xphb` og `races` (stier.json er identisk før og efter).
 
