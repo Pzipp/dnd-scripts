@@ -1,4 +1,6 @@
-"""Udfolder 5etools' `_versions` til fulde objekter - samme regler som
+"""(`_copy` løses i copies.py, som genbruger `_mod` herfra.)
+
+Udfolder 5etools' `_versions` til fulde objekter - samme regler som
 5etools' egen kode (js/utils.js: DataUtil.generic.getVersions og
 copyApplier.getCopy), kun de dele data faktisk bruger.
 
@@ -90,14 +92,24 @@ def _as_list(value) -> list:
 
 
 def _find(items: list, replace) -> int:
-    """Indeks for replace-målet: navn, {index}, {regex} eller selve strengen."""
+    """Indeks for replace-målet: navn (også "Dansk (Navn)"), {index}, {regex} eller selve strengen."""
     if isinstance(replace, dict):
         if replace.get("index") is not None:
             return replace["index"]
         if replace.get("regex"):
             rx = re.compile(replace["regex"], re.I if "i" in replace.get("flags", "") else 0)
             return next((i for i, it in enumerate(items) if rx.search(it.get("name", "") if isinstance(it, dict) else str(it))), -1)
-    return next((i for i, it in enumerate(items) if (it.get("name") == replace if isinstance(it, dict) else it == replace)), -1)
+    exact = next((i for i, it in enumerate(items) if (it.get("name") == replace if isinstance(it, dict) else it == replace)), -1)
+    if exact >= 0 or not isinstance(replace, str):
+        return exact
+    # Dansk overskrift: "Størrelse (Size)" og "Size" er samme mål, uanset hvilken af dem der er oversat
+    # (data/*-da.json ændrer navnene i entries, ikke altid i _mod'en)
+    want = replace.lower()
+    for i, it in enumerate(items):
+        name = str(it.get("name", "")).lower() if isinstance(it, dict) else ""
+        if name and (name.endswith(f"({want})") or want.endswith(f"({name})")):
+            return i
+    return -1
 
 
 def _mod(entity: dict, prop: str, op) -> None:

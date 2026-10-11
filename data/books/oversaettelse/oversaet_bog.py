@@ -8,6 +8,8 @@ Brug: python3 oversaet_bog.py <id> <kommando>   (id fx xphb -> ../book-xphb.json
   tjek      kontrollér danske batches (id'er, {@...}-tags uændrede)
   saml      byg book-<bog>-da.json af alle gyldige danske batches (rest bliver engelsk)
   status    antal batches/tekster færdige
+  forudfyld genbrug danske tekster fra færdige batches til identiske engelske tekster
+            (fuldt dækkede -> dansk/, ellers delvis/NNN.json, som flet tager med)
   flet NNN FIL  flet delvis oversættelse FIL ind i dansk/NNN.json; rene tal+enhed
                 (fx "2 lb.", "25 GP") der mangler, kopieres uændret
 """
@@ -82,6 +84,22 @@ def find(node, sti=(), ctx=None, ude=None):
     return ude
 
 
+def find_copy(node, ude):
+    """Tekster i `_copy._mod`-operationernes `items` (træk en kopi selv tilføjer eller erstatter).
+    Samles for sig og lægges sidst, så id'erne i de øvrige batches ikke flytter sig."""
+    for liste in (k for k in node if k in ENTITETER and isinstance(node[k], list)):
+        for i, post in enumerate(node[liste]):
+            mods = (post.get("_copy") or {}).get("_mod") if isinstance(post, dict) else None
+            for prop, ops in (mods or {}).items():
+                if not isinstance(ops, (list, dict)):
+                    continue
+                for j, op in enumerate(ops if isinstance(ops, list) else [ops]):
+                    if isinstance(op, dict) and "items" in op:
+                        sti = (liste, i, "_copy", "_mod", prop) + ((j,) if isinstance(ops, list) else ()) + ("items",)
+                        find(op["items"], sti, True, ude)
+    return ude
+
+
 def hent(rod, sti):
     for k in sti:
         rod = rod[k]
@@ -91,9 +109,13 @@ def hent(rod, sti):
 def udtraek():
     d = json.load(open(KILDE))
     fund = find(d, (), False, [])
+    antal_hoved = len(fund)
+    fund = fund + find_copy(d, [])
     STIER.write_text(json.dumps([list(s) for s, _ in fund]))
     batches, nu, tegn = [], {}, 0
     for n, (_, t) in enumerate(fund):
+        if n == antal_hoved and nu:  # _copy-tekster i egne batches, så de øvrige er uændrede
+            batches.append(nu); nu, tegn = {}, 0
         if nu and tegn + len(t) > BATCH_TEGN:
             batches.append(nu); nu, tegn = {}, 0
         nu[str(n)] = t; tegn += len(t)
@@ -156,6 +178,8 @@ ENHED = re.compile(r"^[\d.,/½¼¾ ]+(lb\.|GP|SP|CP|EP|PP|ft\.)?( [\d.,/½¼¾]+
 def flet(nr, fil):
     navn = f"{int(nr):03d}.json"
     en, dele = laes(EN / navn), laes(fil)
+    if (ARB / "delvis" / navn).exists():
+        dele = {**laes(ARB / "delvis" / navn), **dele}
     ud = {}
     for k, t in en.items():
         if k in dele:
@@ -200,6 +224,35 @@ def ret_replace(ud, orig):
         print("replace uden oversat navn (uændret, tjek):", sorted(uloest)[:10], f"({len(uloest)})")
 
 
+def forudfyld():
+    """Oversættelseshukommelse: genbrug danske tekster for identiske engelske tekster i batches uden dansk
+    fil. Fuldt dækkede batches skrives til dansk/, delvise til delvis/NNN.json (flet tager dem med)."""
+    hukommelse, konflikt = {}, set()
+    for n in faerdige():
+        if fejl_i(n):
+            continue
+        en, da = laes(EN / n), laes(DA / n)
+        for k, t in en.items():
+            if hukommelse.setdefault(t, da[k]) != da[k]:
+                konflikt.add(t)
+    for t in konflikt:
+        hukommelse.pop(t, None)
+    (ARB / "delvis").mkdir(exist_ok=True)
+    for n in sorted(p.name for p in EN.glob("*.json")):
+        if (DA / n).exists():
+            continue
+        en = laes(EN / n)
+        fundet = {k: hukommelse[t] for k, t in en.items() if t in hukommelse}
+        if len(fundet) == len(en):
+            (DA / n).write_text(json.dumps(fundet, ensure_ascii=False, indent=0))
+            print(f"{n}: alle {len(en)} tekster genbrugt -> dansk/")
+        elif fundet:
+            (ARB / "delvis" / n).write_text(json.dumps(fundet, ensure_ascii=False, indent=0))
+            print(f"{n}: {len(fundet)}/{len(en)} genbrugt -> delvis/, {len(en) - len(fundet)} mangler")
+        else:
+            print(f"{n}: intet genbrugt ({len(en)} tekster)")
+
+
 def saml():
     d = json.load(open(KILDE))
     ud = copy.deepcopy(d)
@@ -223,4 +276,4 @@ if __name__ == "__main__":
     EN.mkdir(parents=True, exist_ok=True)
     DA.mkdir(parents=True, exist_ok=True)
     kmd = sys.argv[2]
-    {"udtraek": udtraek, "naeste": lambda: naeste(*sys.argv[3:4]), "tjek": tjek, "saml": saml, "status": status, "flet": lambda: flet(*sys.argv[3:5])}[kmd]()
+    {"udtraek": udtraek, "naeste": lambda: naeste(*sys.argv[3:4]), "tjek": tjek, "saml": saml, "status": status, "flet": lambda: flet(*sys.argv[3:5]), "forudfyld": forudfyld}[kmd]()

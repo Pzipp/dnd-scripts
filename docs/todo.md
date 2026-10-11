@@ -69,7 +69,8 @@ for effekt-udtræks-designet.
   uændret (en Abyssal Tiefling får derfor 120 ft) og har bevidst ingen
   omvej; fjernes, når 5etools er rettet. Afklar mod bogen, inden der meldes.
 - **Ældre racer, bevidst ikke dækket:** `languageProficiencies` (sprog vælges i
-  byggerens egen dialog efter 2024-reglen) og de 17 racer med `_copy`. Subraces,
+  byggerens egen dialog efter 2024-reglen). `_copy` foldes ud (`copies.py`); tekster i
+  `_copy._mod` (træk, kopien selv tilføjer, fx Flamekin) er endnu ikke oversat. Subraces,
   racers `ability` (indstilling `race_ability`), armor-/weaponProficiencies,
   immune/vulnerable og Variant Humans feat er bygget.
 - **Spell Mastery** (Wizard 18): står kun som tekst. Foundry-dataene har ingen valgregler for den. Valget (ét

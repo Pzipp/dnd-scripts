@@ -28,6 +28,8 @@ import re
 from functools import lru_cache
 from pathlib import Path
 
+from . import copies
+
 E5TOOLS_DATA = Path(os.environ.get("E5TOOLS_DATA", "/e5tools/data"))
 E5TOOLS_HOMEBREW = E5TOOLS_DATA.parent / "homebrew"
 # Danske oversættelser (<fil>-da.json) ligger i repoets data/ og lægges ovenpå 5etools' egne filer.
@@ -90,8 +92,21 @@ def _load_dansk(rel_path: str) -> dict:
         return _overlay_dansk(base, json.load(f))
 
 
+# Lister hvor en post kan være en `_copy` af en anden (se copies.py).
+_COPY_KEYS = ("race", "subrace", "background")
+
+
+@lru_cache(maxsize=None)
+def _load_resolved(rel_path: str) -> dict:
+    """_load_dansk med `_copy` foldet ud - efter de danske felter, så kopier arver dansk tekst."""
+    data = _load_dansk(rel_path)
+    if not any(k in data for k in _COPY_KEYS):
+        return data
+    return {**data, **{k: copies.resolve(k, data[k]) for k in _COPY_KEYS if isinstance(data.get(k), list)}}
+
+
 def _load(rel_path: str) -> dict:
-    return _load_dansk(rel_path)
+    return _load_resolved(rel_path)
 
 
 def available() -> bool:
@@ -253,6 +268,8 @@ def _class_pool() -> dict:
         if "class" in data or "classFeature" in data:
             for key in pool:
                 pool[key].extend(data.get(key, []))
+    for key in ("subclass", "subclassFeature"):  # basen kan ligge i en anden klassefil
+        pool[key] = copies.resolve(key, pool[key])
     return pool
 
 

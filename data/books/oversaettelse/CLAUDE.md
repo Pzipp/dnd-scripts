@@ -34,6 +34,7 @@ Samme værktøj bruges til 5etools' opslagsfiler. Id er kildefilens navn uden `.
 * `name` udtrækkes kun under `entries`, `entry`, `items` m.fl. (`TEKST_UNDER`); andre steder er det en henvisning. `itemGroup.items` og `{#itemEntry ...}` springes over, og `{#..}`/`{{..}}` skal stå uændret.
 * `forbered_kilde.py <id> [--kilder XPHB,XDMG]` laver en afgrænset kildefil til store filer (items, backgrounds, `class-<navn>`; klasser oversættes en fil pr. klasse, så `<fil>-da.json` har samme form som kilden). Små filer symlinkes uden filter.
 * Materialekomponenter (`components.m`) og `time[].condition` udtrækkes.
+* Tekster i `_copy._mod` (træk en kopi selv tilføjer) udtrækkes sidst og i egne batches, så øvrige id'er ikke flytter sig. `python3 oversaet_bog.py <id> forudfyld` genbruger danske tekster fra færdige batches til identiske engelske tekster (fuldt dækkede -> `dansk/`, ellers `delvis/NNN.json`, som `flet` tager med). Kør det efter `udtraek`, når en ny del er kommet til.
 * `saml` retter `_mod ... replace`-henvisninger til oversatte trækoverskrifter og melder dem, der ikke kunne findes.
 
 ## Hvad oversættes
