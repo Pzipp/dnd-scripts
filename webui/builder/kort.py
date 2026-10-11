@@ -62,11 +62,6 @@ def _sources(entry: dict) -> set[str]:
     return {entry["source"]} if entry.get("source") else {"XPHB"}
 
 
-def _plain(text: str) -> str:
-    """5etools-markup væk, HTML-sikker (kortformatet tillader <b>/<i>)."""
-    return html.escape(e.clean_text(text), quote=False)
-
-
 def _truncate(text: str, limit: int) -> tuple[str, bool]:
     if len(text) <= limit:
         return text, False

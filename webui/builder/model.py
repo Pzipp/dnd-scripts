@@ -422,9 +422,6 @@ def _unknown_choice(id_: str, title: str) -> dict:
     return {"id": id_, "title": title, "unknown": True, "options": [], "multiple": False}
 
 
-_SPELL_FILTER_KEYS = {"level", "school", "class", "components & miscellaneous", "spell attack"}
-
-
 def _parse_spell_filter(filter_str: str) -> dict | None:
     return spell_grants.parse_filter(filter_str)
 

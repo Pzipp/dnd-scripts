@@ -255,9 +255,6 @@ def box_evner(node, v, env):
     return f'<div class="abil">{s1_abilities(v, env)}{legend}</div>'
 
 
-STANDARD_STATS = ("AC", "Max HP", "Hit Dice", "Initiativ", "Fart", "Prof. bonus", "Passiv Perc.")
-
-
 def box_stats(node, v, env):
     """Stat-rækken øverst. Uden felter bruges standarden ud fra faelles (ac, hp, level, fart, hit_die, evner, skills)."""
     felter = node.get("felter")
