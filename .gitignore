@@ -24,3 +24,9 @@ data/feats.json
 data/*-da.json
 data/spells/
 data/class/
+
+# vol/ er runtime-data. karakterer/ er den gældende kopi; vol/karakterer var en forældet kopi.
+# Homebrew-indhold er gruppens eget og skal ikke i det delte repo (kun index.json, der registrerer filerne).
+vol/karakterer/
+vol/homebrew/*
+!vol/homebrew/index.json

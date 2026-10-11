@@ -4,3 +4,8 @@
 **/*.pyc
 karakterer/*/udskrifter
 *.tmp.html
+
+# Hemmeligheder og lokal konfiguration må aldrig ind i imaget
+.env
+.env.*
+!.env.example
