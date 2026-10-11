@@ -160,25 +160,73 @@ AC (i `type: stats`-rækken) er på samme måde altid beregnet fra
 `equipment.armor`/`equipment.shield`, ikke et felt i sheets.yaml selv - se
 samme afsnit i character-yaml.md.
 
+## Sider, kolonner og fælles felter
+
+| Niveau | Felt | Betydning |
+|---|---|---|
+| Side (`pages:`-post) | `margin` | `small`: 198 mm bredde. `none`: hele A4-bredden og ingen margen oven for. Udeladt: standard |
+| | `top` | Sidehoved, se ovenfor. `top: {}` giver titel = `character.name` og `character.summary`. Udelades `top`, er der intet sidehoved |
+| | `top.title`, `top.subtitle` | Stor titel (standard `character.name`) og lille kursiv tekst ved titlen (fx `Hvad kan jeg gøre?`) |
+| | `top.summary`, `top.extra_summary` | Se ovenfor |
+| | `box_type: none` | Fjerner rammerne på alle bokse på siden |
+| | `layout` | Liste af noder: bokse, `columns` eller `rows` |
+| | `footer` | Tekst i sidefoden |
+| Kolonne | `width` | Relativ bredde (standard 1) |
+| | `merged` | `true` lægger boksene i kolonnen i én samlet ramme; `tight` gør det med mindre luft |
+| Boks | `type` | Boks-typen, se nedenfor |
+| | `title`, `subtitle` | Overskrift og undertitel. `title: false` fjerner overskriften. Udeladt: standardtitel fra typen |
+| | `box_type: none` | Fjerner rammen om netop denne boks |
+| | `blank_lines` | Antal tomme skrivelinjer efter punkterne (kun `list`-lignende bokse: `list`, `text`, `training` og kategoriboksene). Bruges til at lade pladsen stå åben |
+
+## Boks-typer
+
+Alle typer står i `REGISTRY` i `webui/builder/render.py`; hver har en `box_*`-funktion med de felter, den forventer. En ukendt type giver en fejl med listen over kendte typer. Typer, der udfyldes ud fra `character.yaml` og udelades, hvis der intet er at vise, er beskrevet ovenfor (`features`, `bonus_actions`, `reactions`, `action_features`, `resources`, `class_numbers`, `modifiers`, `granted_spells`, `passive`, `languages`). Resten:
+
+| Type | Felter | Indhold |
+|---|---|---|
+| `abilities`, `stats` | | De seks evner med saves og skills, og stat-rækken (AC, HP, Hit Dice, Initiative, Speed, PB, Passive Perception). Har selv ramme |
+| `attacks` | `attacks: [[navn, træf, skade, note]]` | Angrebstabel. Navnet skrives `Dansk <em>English</em>` |
+| `magic` | `dc: [{name, roll, dc}]`, `lists: [[label, tekst]]`, `slots` | Spellcasting: DC-celler, spell-lister og slots (afkrydsning). Tom, hvis intet er angivet |
+| `rules` | `items` | Punktliste med korte regler (fx Sneak Attack) |
+| `turn` | `title`, `subtitle`, `items` | Nummereret plan for en tur (`Din tur`) |
+| `actions` | `bonus: {Handling: Kilde}` | Handlingstabellen (Attack, Dash, Disengage ...). `bonus` tilføjer et "også Bonus Action"-tag |
+| `unarmed` | | Ubevæbnet angreb, Grapple og Shove, udregnet af STR og PB |
+| `movement` | | Fart, spring og fald, udregnet af `speed` og STR |
+| `extra` | `items` | Punktliste (formler med `{...}` regnes ud) |
+| `death_saves` | | Death saves, Short Rest og Long Rest. Udregner Hit Die-bonus fra CON |
+| `mastery` | | De valgte Weapon Mastery-egenskaber (`character.masteries`) med regelteksten. Tom, hvis ingen er valgt |
+| `useful` | | Fast liste over nyttige ting, alle kan købe og bruge |
+| `skill_checks` | `tools: [{use, name, ability, level}]` | "Hvad slår jeg?": situationer med den skill og det tal, karakteren bruger. `tools` tilføjer værktøj (`level`: `p` trænet, `e` Expertise) |
+| `conditions` | | Fast tabel over tilstande (Conditions) |
+| `training` | `items`, `blank_lines` | "Træning og valg": rustning, våben, værktøj, sprog, skills og Expertise fra `character.yaml`, plus egne `items` |
+| `money` | | Møntfelter (PP, GP, EP, SP, CP) til at skrive i |
+| `facts`, `appearance` | `fields: [[etiket, værdi]]` | Etiket/værdi-par |
+| `backstory` | `paragraphs` | Fritekst-afsnit |
+| `list`, `text`, `weapons`, `gear`, `special`, `campaign`, `places`, `people`, `traits`, `personality`, `family`, `enemies`, `goals`, `secrets` | `items`, `blank_lines` | Punktliste. De navngivne typer har en dansk standardtitel; `list` og `text` har ingen og får titlen fra YAML. Afkrydsningsfelter skrives `[]` |
+
 ## Renderer
 
-Print-fanen bygger arket via `webui/builder/render.py` - en selvstændig,
+Ark-fanen bygger arket via `webui/builder/render.py` - en selvstændig,
 engelsk-nøglet renderer, der læser `sheets.yaml`/`character.yaml` direkte
-(ingen dansk mellemform, ingen oversættelses-adapter). Boks-typerne
-(`type:`) og felt-navnene er engelske fra kilden - se `render.py`s
-`REGISTRY` for den fulde liste af boks-typer (`abilities`, `stats`,
-`features`, `attacks`, `training` osv.) og hver `box_*`-funktion for det
-felt den forventer.
+(ingen dansk mellemform, ingen oversættelses-adapter).
 
 `render.py` er en bevidst uafhængig kopi af
 `scripts/karakterark/karakterark.py`s rendering-logik (samme HTML/CSS,
 samme boks-for-boks-opbygning), lavet fordi en oversættelses-adapter mellem
 to parallelle sprog blev vurderet som en unødvendig, voksende
 vedligeholdelsesbyrde. De to renderere deler CSS'en i
-`scripts/karakterark/*.css` uændret. Når de 8 håndskrevne spillerkarakterer
-en dag migreres til `character.yaml`/`sheets.yaml`, kan
-`scripts/karakterark/karakterark.py` fjernes helt - se
+`scripts/karakterark/*.css` uændret. Migreringen af de håndskrevne
+karakterer til `character.yaml`/`sheets.yaml` er i gang (`valak`, `terrin`,
+`chukio` og `kvist` er konverteret); `karakterark.py` bruges stadig af de
+øvrige og fjernes først, når alle er flyttet og ejeren har besluttet det - se
 [`docs/karakterark-bygger-plan.md`](karakterark-bygger-plan.md).
+
+### Temaer
+
+Arket kan vises i `farve` (standard `sheets.css`), `sorthvid` og ni temaer, som lægges oven på `sheets.css`.
+Temaerne er registreret i `STYLE_FILES` i `render.py` og vælges under Udseende på Ark-fanen; samme tema bruges i PDF'en
+(`karakterark-<tema>.pdf`). En valgfri baggrund (`webui/static/baggrunde/`) vælges ved siden af. Se
+[`scripts/karakterark/README.md`](../scripts/karakterark/README.md) for filerne.
 
 ## Afgrænsning
 

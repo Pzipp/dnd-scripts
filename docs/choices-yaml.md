@@ -7,8 +7,8 @@ redigerer i hånden - den læses og skrives af `webui/builder/model.py`
 (`load()`/`save()`), og dens felter giver kun mening sammen med 5etools'
 egen regeldata (mountet på `/e5tools`, se `webui/builder/e5tools.py`).
 
-En karakter har enten en `karakter.yaml` (den manuelle, ældre vej) eller en
-`choices.yaml` (bygget via `/builder`), ikke nødvendigvis begge.
+En karakter har en `karakter.yaml` (den manuelle, ældre vej), en
+`choices.yaml` (bygget via `/builder`) eller begge (konverterede karakterer beholder deres gamle fil).
 
 ## To niveauer: rå valg vs. udregnet state
 
@@ -37,11 +37,9 @@ hukommelsen, når `/api/builder/state` kaldes, og skrives ikke til disk.
 merger den gemte YAML ovenpå med `template.update(data)` - kun på
 TOP-niveau. Et felt, som IKKE findes i skabelonen, forsvinder altså ikke,
 hvis det allerede står i filen, men bliver heller aldrig læst af nogen
-nuværende kode. **Vigtigt for en ny bygger:** mindst to eksisterende
-testkarakterer (`dev-two`, `dev-three`) har et efterladt top-niveau-felt
-`level:` og `class:` (ental, ikke `classes:`) fra en meget tidligere
-version af skemaet, før multiclass-dictet fandtes. De er døde data - ingen
-kode læser dem, og en ny bygger bør IKKE bruge dem (brug `classes`-dictet
+nuværende kode. **Vigtigt for en ny bygger:** en gammel fil kan have et efterladt top-niveau-felt
+`level:` og `class:` (ental, ikke `classes:`) fra skemaet før multiclass-dictet. De er døde data - ingen
+kode læser dem, og en ny bygger skal IKKE bruge dem (brug `classes`-dictet
 og summen af dets `level`-felter, se nedenfor).
 
 ## Opbygning
@@ -117,6 +115,8 @@ settings:                  # PR. KARAKTER, ikke delt mellem karakterer
   allowed_sources: [XPHB]  # hvilke 5etools-kildekoder der må slås op i for DENNE karakter
   race_ability: false      # tæl ældre racers egne evnepoint med (2024 flyttede dem til baggrunden)
 ```
+
+`settings` har kun `allowed_sources` og `race_ability`. Ældre filer kan have et efterladt `half_feats`; ingen kode læser det, og det kan fjernes.
 
 ### Klassens spells (`classes.<id>.choices`)
 

@@ -1,12 +1,14 @@
 # Karakterark-generator (D&D 2024, dansk, A4)
 
-Én generator, én YAML-fil pr. karakter, én HTML-fil med alle sider. Print de sider, du har brug for. Arket kan laves i **farve** og **sort/hvid**.
+Ældre generator til `karakter.yaml`: én YAML-fil pr. karakter, én HTML-fil med alle sider. Print de sider, du har brug for. Arket kan laves i **farve** og **sort/hvid**.
+
+Det nye system (`character.yaml` + `sheets.yaml`, webui'ens Ark-fane) bruger i stedet `webui/builder/render.py`, en uafhængig renderer, der deler CSS-filerne i denne mappe. Se [`docs/sheets-yaml.md`](../../docs/sheets-yaml.md).
 
 Datafilens felter: [`docs/karakterark-yaml.md`](../../docs/karakterark-yaml.md). Skabelon: [`karakterer/_skabelon/karakter.yaml`](../../karakterer/_skabelon/karakter.yaml).
 
 ## Tema og baggrund i webui'en
 
-Temaerne `sheets-*.css` vælges i webui'en (Udseende) via `STYLE_FILES` i `webui/builder/render.py` og gælder både forhåndsvisning og PDF. En valgfri baggrund lægges som en ekstra CSS-regel på hver side (`section.pg`); se `webui/static/baggrunde/README.md`.
+De ni temaer `sheets-*.css` (og `sheets-bw.css`) vælges i webui'en (Udseende) via `STYLE_FILES` i `webui/builder/render.py` og gælder både forhåndsvisning og PDF. `karakterark.py` bruger kun `farve` og `sorthvid`. En valgfri baggrund lægges som en ekstra CSS-regel på hver side (`section.pg`); se `webui/static/baggrunde/README.md`.
 
 ## Brug
 
@@ -32,7 +34,7 @@ python3 scripts/karakterark/karakterark.py valak [--stil farve|sorthvid|begge] [
 
 Sider og bokse bestemmes af YAML-filen (`sider:`), ikke af generatoren. Der er ingen fast opdeling i Karakterark, Handlingsark osv. Hvilke bokse der findes, står i `REGISTRY` i `karakterark.py`, og hvordan de vises, står i [`docs/karakterark-yaml.md`](../../docs/karakterark-yaml.md).
 
-Dev-one har fem sider: karakterark, handlinger, udstyr, baggrund og regler/ting.
+Et typisk ark har fire sider: karakterark, handlinger, udstyr og baggrund (og i nogle karakterer regler/ting).
 
 ## Filer
 
@@ -41,9 +43,18 @@ Dev-one har fem sider: karakterark, handlinger, udstyr, baggrund og regler/ting.
 | `karakterark.py` | Generatoren |
 | `sheets.css` | Den fælles stil for alle sider. **Farve**. Deles uændret med det nye systems `webui/builder/render.py` |
 | `sheets-bw.css` | Lægges oven på `sheets.css` i sort/hvid |
+| `sheets-modern.css` | Tema `moderne`: lægges oven på `sheets.css` (kun webui'en) |
+| `sheets-forest.css` | Tema `skov` |
+| `sheets-dark.css` | Tema `mork-fantasy` |
+| `sheets-royal.css` | Tema `kongelig` |
+| `sheets-blood-steel.css` | Tema `blod-stal` |
+| `sheets-arcane.css` | Tema `arkanum` |
+| `sheets-ink-ornament.css` | Tema `blaekornament` |
+| `sheets-leaf-scroll.css` | Tema `bladkrus` |
+| `sheets-starline.css` | Tema `stjernelinje` |
 | `tjek.py` | Fejlkontrol af YAML til webui'en (linje og kolonne). Bruger `REGISTRY` |
 
-Alle sider bruger den samme stil. CSS'en scopes under `.s1`, så den kun gælder arket.
+Alle sider i et ark bruger det samme tema. CSS'en scopes under `.s1`, så den kun gælder arket. Et nyt tema skal tilføjes i `STYLE_FILES` i `webui/builder/render.py`.
 
 ## Design
 
@@ -57,4 +68,4 @@ Alle sider bruger den samme stil. CSS'en scopes under `.s1`, så den kun gælder
 
 ## Ændrer du generatoren
 
-Byg alle karakterer før og efter (`python3 dnd.py tjek`) og kig på mindst én side i begge stile. Skal begge stile ændres, så ret begge CSS-filer. Se `AGENTS.md`.
+Byg alle karakterer før og efter (`python3 dnd.py tjek`) og kig på mindst én side i begge stile. Skal begge stile ændres, så ret begge CSS-filer; ændringer i `sheets.css` rammer også de ni temaer og det nye system. Se `AGENTS.md`.

@@ -191,7 +191,7 @@ altid i `character_yaml.py`, aldrig i renderen.
 
 * **`tools` er en flad liste**, ikke grupperet efter evne som den gamle
   `vaerktoej: {DEX: [...]}`. 5etools' egne data har ikke en sikker,
-  opslåelig "hvilken evne styrer dette værktøj"-regel, og Print-fanen viser
+  opslåelig "hvilken evne styrer dette værktøj"-regel, og Ark-fanen viser
   derfor (endnu) ikke værktøj under evne-boksen.
 * **`masteries`** udledes af de valgte Weapon Mastery-våben; egenskaben slås op i `mastery` på våbnet i 5etools' `items-base.json`. `expertise` kommer fra klassens `choices.expertise`.
 * **HP/Hit Dice bruger nu HVER klasses egen hit die** (rettet - var tidligere

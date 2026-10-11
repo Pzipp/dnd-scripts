@@ -1,11 +1,15 @@
-# YAML-editor (det oprindelige WebUI-overlay)
+# YAML-editor (det ældre system i webui'en)
 
-Et lille valgfrit overlay til projektets eksisterende D&D-scripts: rediger
-`karakter.yaml`/`kort.yaml` direkte i browseren og generér derefter med de
+Et lille valgfrit overlay til den ældre kommandolinje: rediger
+`karakter.yaml`/`kort.yaml` direkte i browseren (`/editor`) og generér derefter med de
 eksisterende scripts. Findes side om side med karakterbyggeren (`/builder`,
 se [README.md](README.md)) - de er to forskellige måder at redigere en
 karakters data, ikke to versioner af samme feature. Kør/stop-instrukser står
 i [README.md](README.md), fælles for begge.
+
+## Omfang
+
+Editoren dækker kun de ældre filer `karakter.yaml` og `kort.yaml`. Den redigerer ikke `choices.yaml`, `character.yaml` eller `sheets.yaml` (det nye system, som redigeres i `/builder`; layoutet i fanen Ark). Karakterlisten viser alle mapper i `karakterer/`, også byggerkarakterer uden `karakter.yaml`; vælger du **Karakterark** for en af dem, giver editoren fejlen "<navn> har ingen karakter.yaml." Har karakteren en `kort.yaml`, virker **Kort** også for byggerkarakterer.
 
 ## Funktioner
 

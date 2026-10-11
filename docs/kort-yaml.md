@@ -11,7 +11,8 @@ To slags filer:
 | Fil | Indhold |
 |---|---|
 | `bibliotek/*.yaml` | Alle kort, som gruppen deler. Nøglen er kortets **id** |
-| `karakterer/<navn>/kort.yaml` | En bunke: liste af id'er, evt. med egne kort |
+| `karakterer/<navn>/kort.yaml` | En bunke: liste af id'er, evt. med egne kort. Skrives i hånden (ældre system) eller af webui'ens Kort-fane |
+| `bibliotek/_cards.yaml` | Genererede kortudkast til det nye system (id -> kort, samme felter). Indlæses ikke som bibliotek, men bruges af Kort-fanen |
 
 ## Bunke (`kort.yaml`)
 
@@ -25,6 +26,7 @@ egne:                            # valgfri: kort kun til denne karakter
 * Et ukendt id stopper scriptet og foreslår det nærmeste id.
 * Et id må kun findes én gang på tværs af alle filer i `bibliotek/` (og `egne`).
 * Et eget kort printes kun, hvis id'et også står under `kort:`.
+* Kort-fanen i webui'en gemmer sit valg i samme format og bevarer `egne:`. Den kan vælge tema (`--tema` på kommandolinjen, se [`scripts/kort/README.md`](../scripts/kort/README.md)) og viser en advarsel om kort, hvor teksten går uden for rammen.
 
 ## Print
 

@@ -1,84 +1,34 @@
-# Plan: karakterark-bygger ud fra `choices.yaml`
+# Karakterark-bygger: designbeslutninger
 
-**Status: bygget for choices.yaml-karakterer (gren `karakterark-nyt-system`).**
-De 8 håndskrevne spillerkarakterer (gammel `karakter.yaml`) er IKKE
-omfattet og er urørte. Se [`docs/character-yaml.md`](character-yaml.md) og
-[`docs/sheets-yaml.md`](sheets-yaml.md) for det endelige format, og
-"Hvad der blev besluttet" nedenfor for hvordan de uafklarede spørgsmål
-herunder faktisk blev afgjort.
+Det printbare karakterark bygges direkte af karakterbyggerens data (`choices.yaml`, se [choices-yaml.md](choices-yaml.md)) i stedet for af en håndskrevet `karakter.yaml` (se [karakterark-yaml.md](karakterark-yaml.md)). Det endelige format står i [character-yaml.md](character-yaml.md) og [sheets-yaml.md](sheets-yaml.md). Denne fil forklarer, hvorfor det er bygget sådan.
 
-## Hvad det skal gøre
+## To filer: data og layout
 
-En ny bygger, der laver det printbare karakterark direkte ud fra
-karakterbyggerens data (`choices.yaml`, se [choices-yaml.md](choices-yaml.md)),
-i stedet for den eksisterende manuelle vej (`karakter.yaml`, se
-[karakterark-yaml.md](karakterark-yaml.md)).
+* `character.yaml` indeholder de udregnede stats (engelsk), afledt af `choices.yaml` og 5etools-data. Den genberegnes ved hvert gem.
+* `sheets.yaml` indeholder sideopsætningen (engelsk). Den redigeres frit og overskrives aldrig automatisk.
 
-## Input: to YAML-filer
+Dataen er altså udregnet og ligger i en separat fil, ikke rå i `choices.yaml` og ikke i samme fil som layoutet.
 
-Byggeren læser to filer, ikke én:
+## Renderer og layout-sprog
 
-1. **Data** - stats, spells, feats osv. Dette er `choices.yaml` (eller en
-   udregnet/opsummeret udgave af den, se nedenfor).
-2. **Side-opsætning** - hvordan indholdet fordeles på sider/bokse.
+Layout-sproget (sider, kolonner, rækker, bokse) er det samme som i det ældre system, bare med engelske nøgler. Arket bygges af `webui/builder/render.py`, en selvstændig renderer, der læser `character.yaml` og `sheets.yaml` direkte. Den deler CSS med den ældre `scripts/karakterark/karakterark.py`, men der er ingen oversættelses-adapter mellem de to systemer: en adapter mellem to parallelle sprog ville vokse for hver ny boks-type. Layoutet redigeres i en YAML-editor eller ved at trække boksene (Ark-fanen).
 
-Hvilket format fil nr. 2 skal have, og om det er en ny fil pr. karakter
-eller en delt skabelon, er IKKE afklaret. Det eksisterende system har et
-layout-sprog til dette (`karakter.yaml`s `sider`/`layout`, se
-[karakterark-yaml.md](karakterark-yaml.md#layout)) - om den nye bygger
-genbruger det, eller får sit eget, er et åbent spørgsmål.
+## Dansk tekst
 
-## Data: rå eller udregnet, i filen eller en anden fil
+Hvert valg i `choices.yaml` er et engelsk `{name, source}`-id. Den korte danske beskrivelse til arket findes i denne rækkefølge (`webui/builder/descriptions.py`):
 
-Byggeren skal kunne læse sin data **enten** direkte fra `choices.yaml`
-(rå valg, slået op i 5etools selv, som `model.state()` allerede gør),
-**eller** fra en opsummeret/udregnet udgave - og den udregnede udgave kan
-ligge **enten** inde i samme fil **eller** i en separat fil. Hvilken af de
-fire kombinationer der reelt skal bygges, er ikke besluttet.
+1. Et håndlavet kort i `bibliotek/*.yaml`.
+2. Den delte cache `bibliotek/_descriptions.yaml`.
+3. Et LLM-kald (OpenAI-kompatibelt endpoint konfigureret i `.env`, se `webui/builder/llm_client.py`), kun ved et eksplicit knaptryk og i bidder af højst 10. Er der intet endpoint, kan prompten kopieres ind i en egen chat og svaret indsættes.
 
-## Dansk tekst: slå op via id, generér med LLM hvis den mangler
+De fulde regeltekster i byggeren og kortudkastene bruger desuden de danske oversættelser af 5etools-data (`data/*-da.json`, lagt ovenpå af `webui/builder/e5tools.py`).
 
-Hvert valg i `choices.yaml` er et engelsk `{name, source}`-id (se
-[choices-yaml.md](choices-yaml.md#navneopslag-engelsk-id--kilde-ikke-en-fast-liste)).
-Byggeren skal ud fra det rigtige id kunne se, hvad karakteren har, og
-hente DEN DANSKE udgave af det. Findes der ikke allerede en dansk udgave,
-skal byggeren kunne lave én ved et LLM-kald.
+Det gælder spells, feats, klassefeatures og art-træk. Navnereglen fra [navnekonvention.md](navnekonvention.md) gælder: engelske regelnavne står alene, og den danske udgave er en kort gengivelse af reglen, ikke en oversættelse af navnet.
 
-Ikke specificeret endnu: hvor en genereret dansk udgave gemmes/caches (så
-den ikke skal genereres igen ved næste bygning), og det nøjagtige format
-for en "dansk udgave" af et opslag.
+## Migrering af de håndskrevne karakterer
 
-**Relevant eksisterende regel, værd at holde sig til:** AGENTS.md's
-navnekonvention siger at engelske regelnavne (stats, spells, feats,
-tilstande osv.) altid står ALENE, uden dansk oversættelse i parentes -
-kun forklarende tekst er dansk. En "dansk udgave" af et opslag bliver
-derfor sandsynligvis en dansk GENGIVELSE/forklaring af reglen, ikke en
-oversættelse af selve navnet - men det er min kobling til en eksisterende
-regel, ikke noget der er sagt direkte om den nye bygger.
+Migreringen af karakterer med `karakter.yaml` til det nye format er i gang: `valak`, `terrin`, `chukio` og `kvist` har `choices.yaml`, `character.yaml` og `sheets.yaml` og beholder deres gamle filer. De øvrige bruger stadig `dnd.py`. Det ældre system fjernes ikke, før alle er flyttet og ejeren har besluttet det.
 
-## Hvad der blev besluttet
+## Afgrænsning
 
-* **To filer, ikke én kombination:** `character.yaml` (udregnede stats,
-  engelsk) + `sheets.yaml` (layout, engelsk) - se
-  [character-yaml.md](character-yaml.md)/[sheets-yaml.md](sheets-yaml.md).
-* **Udregnet, i en separat fil** - ikke rå choices.yaml, og ikke i samme
-  fil som layoutet.
-* **Layout-sproget genbruges**, bare med engelske nøgler - ingen ny editor.
-  Print-fanen bygger via `webui/builder/render.py`, en selvstændig
-  engelsk-nøglet renderer der læser `character.yaml`/`sheets.yaml` direkte
-  (samme CSS som den gamle `karakterark.py`, men ingen
-  oversættelses-adapter mellem de to systemer - en tidligere version havde
-  det, men blev opgivet: en adapter mellem to parallelle sprog ville kun
-  vokse, hver gang en ny boks-type dukkede op).
-* **Dansk udgave = kort gengivelse, cachet delt** i `bibliotek/_descriptions.yaml`,
-  genereret af et OpenAI-kompatibelt LLM-endpoint (claude-code ELLER
-  Mistral, konfigureres i `.env` - se `webui/builder/llm_client.py`), kun
-  ved et eksplicit knaptryk, i bidder af højst 10 ad gangen. Dækker spells,
-  feats, klassefeatures OG race-traits (ikke kun spells/feats).
-* **Ikke bygget i denne omgang** (bevidst afgrænset, se
-  [sheets-yaml.md](sheets-yaml.md#afgrænsning) og
-  [character-yaml.md](character-yaml.md#kendte-forenklinger)): automatisk
-  indsættelse af de oversatte beskrivelser i selve arket, AC/sprog udledt
-  af valg, værktøj grupperet efter evne, Weapon Mastery pr. våben, ægte
-  multiclass-HP, migrering af de 8 håndskrevne karakterer, og en LLM-skrevet
-  `character.yaml` uden choices.yaml (kun formatet er klar til det).
+Se [sheets-yaml.md](sheets-yaml.md#afgrænsning) og [character-yaml.md](character-yaml.md#kendte-forenklinger) for hvad arket endnu ikke udleder automatisk, og [todo.md](todo.md) for åbne punkter.
