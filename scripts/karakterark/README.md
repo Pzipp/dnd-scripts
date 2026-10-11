@@ -52,7 +52,6 @@ Et typisk ark har fire sider: karakterark, handlinger, udstyr og baggrund (og i 
 | `sheets-ink-ornament.css` | Tema `blaekornament` |
 | `sheets-leaf-scroll.css` | Tema `bladkrus` |
 | `sheets-starline.css` | Tema `stjernelinje` |
-| `tjek.py` | Fejlkontrol af YAML til webui'en (linje og kolonne). Bruger `REGISTRY` |
 
 Alle sider i et ark bruger det samme tema. CSS'en scopes under `.s1`, så den kun gælder arket. Et nyt tema skal tilføjes i `STYLE_FILES` i `webui/builder/render.py`.
 

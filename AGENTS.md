@@ -15,7 +15,7 @@ Der findes to systemer, som deler CSS, kortgenerator og PDF-generator:
 | Ark laves af | `webui/builder/render.py` | `scripts/karakterark/karakterark.py` |
 | Format | `docs/choices-yaml.md`, `docs/character-yaml.md`, `docs/sheets-yaml.md` | `docs/karakterark-yaml.md` |
 
-Nye karakterer bygges i webui'en. Ældre karakterer (`karakter.yaml`) bruges stadig med `dnd.py` og webui'ens YAML-editor (`/editor`) og fjernes ikke. En karakter kan have begge slags filer (`valak`, `terrin`, `chukio` og `kvist` er konverteret til det nye format, men beholder de gamle filer). Flere er ikke konverteret.
+Nye karakterer bygges i webui'en. Ældre karakterer (`karakter.yaml`) bruges stadig med `dnd.py` og fjernes ikke. En karakter kan have begge slags filer (`valak`, `terrin`, `chukio` og `kvist` er konverteret til det nye format, men beholder de gamle filer). Flere er ikke konverteret.
 
 ## Kommandoer
 
@@ -39,7 +39,7 @@ python3 dnd.py tjek                           # byg alt; meld fejl i data. KØR 
 | Sti | Hvad |
 |---|---|
 | `dnd.py` | Indgangspunkt for den ældre kommandolinje |
-| `webui/` | Flask-webui: menu (`/`), karakterbygger (`/builder`) og YAML-editor (`/editor`). Se `webui/README.md` |
+| `webui/` | Flask-webui: menu (`/`), og karakterbygger (`/builder`). Se `webui/README.md` |
 | `webui/builder/` | Byggerens kode: `model.py` (valg og state), `character_yaml.py` (udregning), `render.py` (ark), `kort.py`/`cards.py` (kort), `e5tools.py` (opslag og dansk overlay), `copies.py`/`versions.py` (`_copy`, `_versions`), `descriptions.py`/`effects.py`/`llm_client.py` (danske beskrivelser og effekter), `baggrund.py`, `layout_edit.py`, `routes.py` |
 | `webui/static/` | CSS/JS til webui'en, `baggrunde/` (billeder til ark og kort), `theme-*.css` (sidetemaer, endnu ikke tilsluttet) |
 | `karakterer/<navn>/` | Én mappe pr. karakter, se tabellen ovenfor. Ældre: `karakter.yaml` (`docs/karakterark-yaml.md`) |

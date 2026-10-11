@@ -1,11 +1,10 @@
 # D&D WebUI
 
-Webui'en er hovedvejen til nye karakterer. `/` er en menu til to features, der deler serveren:
+Webui'en er hovedvejen til nye karakterer. `/` er en menu med karakterbyggeren og et link til 5etools:
 
 - **Karakterbygger** (`/builder`) - en trin-for-trin guide der bygger en karakter op ved at slå art, klasse, baggrund, feats og spells op i 5etools' egen regeldata (se "Kilder" i indstillingerne for hvilke kildebøger der er tilladt pr. karakter). Fanerne er **Karakter**, **Udstyr**, **Kort** og **Ark**. Valgene gemmes i `karakterer/<karakter>/choices.yaml`, de udregnede stats i `character.yaml`, arkets layout i `sheets.yaml` og kortbunken i `kort.yaml`. Se `builder/` for kode og data-lag og [docs/choices-yaml.md](../docs/choices-yaml.md), [docs/character-yaml.md](../docs/character-yaml.md), [docs/sheets-yaml.md](../docs/sheets-yaml.md) for formaterne.
-- **YAML-editor** (`/editor`) - redigér de ældre `karakter.yaml`/`kort.yaml` direkte i browseren og generér derefter med `dnd.py`. Se [README-yaml-editor.md](README-yaml-editor.md). Dækker ikke `sheets.yaml`: layoutet redigeres kun i byggerens Ark-fane.
 
-De to er ikke to versioner af samme ting. En karakter kan være lavet med den ene, den anden, begge (`valak`, `terrin`, `chukio` og `kvist`) eller ingen af dem (direkte i filsystemet). Den ældre kommandolinje (`dnd.py`) er stadig i brug til de karakterer, der ikke er konverteret.
+En karakter kan være lavet med byggeren (`valak`, `terrin`, `chukio` og `kvist` har både nye og gamle filer) eller direkte i filsystemet. Den ældre kommandolinje (`dnd.py`) er stadig i brug til de karakterer, der ikke er konverteret.
 
 ## Kør
 
@@ -33,11 +32,11 @@ PORT=8081 python webui/app.py
 
 **Uden Docker binder `app.py` til `0.0.0.0`**, så alle på netværket kan nå porten. **Webui'en har ingen login**, så alle der kan nå den, kan ændre karaktererne. Kør kun på et netværk, du stoler på.
 
-Fonte (Google Fonts) og CodeMirror til YAML-editorerne (fra `esm.sh`) hentes fra internettet. Uden internet virker siden, men editoren og skrifttyperne gør ikke (PDF: se [../scripts/pdf/README.md](../scripts/pdf/README.md)).
+Fonte (Google Fonts) og CodeMirror til layout-editoren (fra `esm.sh`) hentes fra internettet. Uden internet virker siden, men layout-editoren og skrifttyperne gør ikke (PDF: se [../scripts/pdf/README.md](../scripts/pdf/README.md)).
 
 ## 5etools-data
 
-Byggeren kræver 5etools' regeldata (JSON) mountet read-only på `/e5tools`, med `data/` som `/e5tools/data` (stien kan ændres med miljøvariablen `E5TOOLS_DATA`, se `builder/e5tools.py`). Uden den virker `/builder` ikke, men YAML-editoren er uafhængig af den. Homebrew lægges i `homebrew/` ved siden af `data/` og registreres i `homebrew/index.json` (5etools' egen konvention). Filerne i `vol/homebrew/` er gruppens eget indhold: de er gitignoreret, bortset fra `vol/homebrew/index.json`.
+Byggeren kræver 5etools' regeldata (JSON) mountet read-only på `/e5tools`, med `data/` som `/e5tools/data` (stien kan ændres med miljøvariablen `E5TOOLS_DATA`, se `builder/e5tools.py`). Uden den virker `/builder` ikke. Homebrew lægges i `homebrew/` ved siden af `data/` og registreres i `homebrew/index.json` (5etools' egen konvention). Filerne i `vol/homebrew/` er gruppens eget indhold: de er gitignoreret, bortset fra `vol/homebrew/index.json`.
 
 `update-e5tools.sh` kan opdatere 5etools-klonen med `git pull --ff-only` ved opstart, hvis `UPDATE_E5TOOLS=true` er sat i `.env`. Variablen står ikke i `.env.example`. Scriptet fejler aldrig hårdt; en manglende opdatering blokerer ikke siden.
 
@@ -137,5 +136,5 @@ Mange racer og baggrunde er `_copy` af en anden post, og racer har `_versions`. 
 
 ## Kode
 
-* `app.py` - menu, YAML-editor (`/editor`, `/api/yaml`, `/api/save`, `/api/check`, `/api/preview`, `/api/generate`) og blueprintet fra `builder/routes.py`.
+* `app.py` - menu, `/5etools/` og blueprintet fra `builder/routes.py`.
 * `builder/` - se mappen. `notes.md` har noter til data-laget.

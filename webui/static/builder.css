@@ -128,8 +128,7 @@ select.invalid, input.invalid { border-color: var(--bad); box-shadow: 0 0 0 2px 
 .source-list label { display: flex; align-items: center; gap: .5rem; padding: .25rem 0; font-size: .9rem; }
 .source-list .code { font-family: ui-monospace, monospace; color: var(--muted); width: 4.5rem; display: inline-block; }
 
-/* Layout-editor (sheets.yaml) på Print-siden - CodeMirror-delen er kopieret
-   fra webui/static/style.css (den gamle YAML-editor på "/"), skoped under
+/* Layout-editor (sheets.yaml) på Print-siden - CodeMirror-delen er skoped under
    #sheets-editor for ikke at krydse builder.css's egne .btn/.status-regler. */
 #sheets-editor { border: 1px solid var(--line); border-radius: .5rem; margin-bottom: .8rem; background: #fff; overflow: hidden; }
 #sheets-editor .editor-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .6rem .8rem; border-bottom: 1px solid var(--line); background: var(--parch); }

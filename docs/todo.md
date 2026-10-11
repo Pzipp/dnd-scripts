@@ -46,7 +46,7 @@ for effekt-udtræks-designet.
   sheets_check, sheets_preview) er testet direkte via curl, men selve
   CodeMirror-editoren ("Rediger layout"-knappen, live-forhåndsvisning,
   Ctrl+S) er aldrig åbnet i en browser. Samme forbehold for den nye
-  menu-side ("/") og "/editor"-flytningen af den gamle YAML-editor.
+  menu-side ("/").
 - **Mistral-endpointet**: `429 Rate limit exceeded` - afventer undersøgelse
   af kontoens kvote/betaling på console.mistral.ai.
 - **Git: `karakterark-nyt-system` vs. opdateret `main`.** `karakterbygger`

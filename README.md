@@ -13,7 +13,7 @@ Bruges af både mennesker og AI-assistenter (Claude, Gemini, ChatGPT/Codex m.fl.
 | Passer til | Nye karakterer. Faner: Karakter, Udstyr, Kort, Ark | Karakterer skrevet i hånden |
 | Læs | [`webui/README.md`](webui/README.md) | resten af denne fil |
 
-En karakter kan have begge slags filer (`valak`, `terrin`, `chukio` og `kvist` er konverteret til det nye format og beholder deres gamle filer). Flere karakterer er ikke konverteret endnu og bruges kun med `dnd.py` og webui'ens YAML-editor (`/editor`).
+En karakter kan have begge slags filer (`valak`, `terrin`, `chukio` og `kvist` er konverteret til det nye format og beholder deres gamle filer). Flere karakterer er ikke konverteret endnu og bruges kun med `dnd.py`.
 
 ## Webui og karakterbygger
 
@@ -55,7 +55,7 @@ Webui'en gemmer også ark-temaer (`karakterark-<tema>`) og kort-temaer (`kort-<t
 ```
 dnd.py                  den ældre kommandolinje: liste · karakterark · kort · alt · tjek
 AGENTS.md               instruktioner til AI-assistenter (CLAUDE.md og GEMINI.md peger hertil)
-webui/                  webui: menu, karakterbygger (/builder), YAML-editor (/editor)
+webui/                  webui: menu, karakterbygger (/builder)
   builder/              byggerens kode: valg, udregning, ark, kort, 5etools-opslag
   static/ templates/    CSS/JS/billeder (baggrunde/ er egne baggrundsbilleder) og HTML
 karakterer/
