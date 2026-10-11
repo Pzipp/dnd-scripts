@@ -126,6 +126,10 @@ nu RIGTIGT afledte af choices.yaml:
   [llm-effect-extraction-prompt.md](llm-effect-extraction-prompt.md)) -
   `character_yaml._apply_effects()` folder høj-konfidens, PERMANENTE
   effects ind i formlen hver gang.
+  Strukturerede tal fra 5etools' Foundry-filer (`webui/builder/foundry.py`:
+  HP pr. level/samlet, initiativ) går forud for LLM-effekterne og kræver
+  hverken LLM eller tekstlæsning. Det dækker bl.a. Dwarven Toughness, Tough,
+  Draconic Resilience, Boon of Fortitude, Alert og Dread Ambusher.
 - `ac`: løst ved at tracke udstyret rustning direkte i choices.yaml
   (`equipment.armor`/`equipment.shield`, se [choices-yaml.md](choices-yaml.md))
   - `character_yaml._ac()` følger PHB 2024 kap. 1 (Light = base + DEX,

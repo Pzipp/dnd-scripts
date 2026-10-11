@@ -20,7 +20,7 @@ from pathlib import Path
 
 import yaml
 
-from . import cards, effects, llm_client
+from . import cards, effects, foundry, llm_client
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 BIBLIOTEK = ROOT / "bibliotek"
@@ -156,7 +156,7 @@ def missing_effects_for(character: dict) -> list[dict]:
     beskrivelse, men aldrig har været igennem effects-udtræk."""
     cache = effects.load()
     return [e for e in _entries_from_character(character)
-            if effects._slug(e["name"], e.get("source")) not in cache]
+            if effects._slug(e["name"], e.get("source")) not in cache and not foundry.covers(e)]
 
 
 def entries_needing_llm(character: dict) -> list[dict]:

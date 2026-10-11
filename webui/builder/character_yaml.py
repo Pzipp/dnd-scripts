@@ -51,6 +51,7 @@ import yaml
 from . import e5tools as e
 from . import effects
 from . import feat_rules
+from . import foundry
 from . import model
 from . import optionalfeatures
 from . import races
@@ -163,12 +164,22 @@ def _apply_effects(
     ikke total niveau - en multiclass Sorcerer 3/Fighter 5 får stadig kun
     Sorcerer-niveauets andel, ikke 8). class_levels er {klassenavn: niveau},
     fra samme classes_out derive_from_state() allerede bygger."""
-    for entry, eff in effects.high_confidence_effects(entries):
+    # Foundry-data (strukturerede tal, se foundry.py) vinder over LLM-effekterne for de entries, de dækker.
+    pairs, rest = [], []
+    for entry in entries:
+        mapped = foundry.resolve(entry, total_level, class_levels)
+        if mapped is None:
+            rest.append(entry)
+        else:
+            pairs += [(entry, eff) for eff in mapped]
+    for entry, eff in pairs + effects.high_confidence_effects(rest):
         target, kind, value = eff.get("target"), eff.get("type"), str(eff.get("value", ""))
         if target == "initiative" and kind == "add":
             term = value.removeprefix("ability:")
             if term and f"+{term}" not in initiative_formula:
                 initiative_formula = initiative_formula[:-1] + f"+{term}" + "}"
+        elif target == "hp_flat" and kind == "add" and hp is not None:
+            hp += int(value)
         elif target == "hp_per_level" and kind == "add" and hp is not None:
             multiplier = class_levels.get(entry.get("class"), total_level) if entry["kind"] == "class_feature" else total_level
             try:
@@ -680,7 +691,7 @@ def derive_from_state(data: dict, state: dict) -> dict:
         [{**f, "kind": "feat"} for f in feats]
         + [{**s, "kind": "spell"} for s in spells_known]
         + [{**c, "kind": "class_feature"} for c in class_features]
-        + [{**t, "kind": "race_trait"} for t in race_traits]
+        + [{**t, "kind": "race_trait", "race": race_name, "lineage": race_stored.get("lineage")} for t in race_traits]
     )
     class_levels = {c["name"]: c["level"] for c in classes_out}
     initiative_formula, hp = _apply_effects(effect_entries, "{+DEX}", hp, total_level, class_levels)
