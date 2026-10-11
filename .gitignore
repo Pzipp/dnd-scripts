@@ -30,3 +30,6 @@ data/class/
 vol/karakterer/
 vol/homebrew/*
 !vol/homebrew/index.json
+
+# Genereret opslagsfil til LLM-vejen (afledt af bogindhold; lav den med dnd.py llm-opslag)
+llm-karakter-opslag.md
