@@ -20,6 +20,8 @@ a { color: var(--accent); }
   padding: .7rem 1.4rem; background: var(--parch); border-bottom: 2px solid var(--line);
 }
 .builder-top h1 { font-size: 1.4rem; color: var(--accent); }
+.builder-top h1 { display: flex; align-items: center; gap: .6rem; }
+.builder-top .logo { height: 2.4rem; width: auto; }
 .builder-top .meta { display: flex; align-items: center; gap: .9rem; font-size: .85rem; }
 .builder-top select { font-family: inherit; font-size: .95rem; padding: .25rem .4rem; border: 1px solid var(--line); border-radius: .3rem; background: var(--paper); }
 .builder-top .status { min-width: 6rem; text-align: right; color: var(--muted); font-size: .8rem; }
@@ -108,8 +110,7 @@ select.invalid, input.invalid { border-color: var(--bad); box-shadow: 0 0 0 2px 
 .missing-banner.with-action { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 
 #page-print { display: none; }
-#page-print.active { display: flex; flex-direction: column; min-height: 80vh; }
-#sheet-output { width: 100%; flex: 1; min-height: 70vh; border: 0; background: #ddd; }
+#page-print.active { display: flex; flex-direction: column; }
 
 .modal-backdrop { position: fixed; inset: 0; background: rgb(0 0 0 / 45%); display: none; align-items: center; justify-content: center; z-index: 50; }
 .modal-backdrop.open { display: flex; }
@@ -168,3 +169,29 @@ select.invalid, input.invalid { border-color: var(--bad); box-shadow: 0 0 0 2px 
 .missing-list a { color: var(--bad); text-decoration: underline; }
 @keyframes jump-flash { 0%, 60% { outline: 3px solid var(--bad); outline-offset: 3px; background: #fbe4e4; } 100% { outline: 3px solid transparent; } }
 .jump-flash { animation: jump-flash 2.2s ease-out; border-radius: .3rem; }
+
+/* Live karakterark ved siden af builderen (Karakter/Udstyr). Print-fanen har sit eget fulde ark. */
+.workspace { display: block; }
+.workspace.has-preview { display: grid; grid-template-columns: minmax(340px, 5fr) minmax(0, 6fr); gap: 1.2rem; align-items: start; padding: 0 1.4rem; }
+.workspace.has-preview .sheet { margin: 0; max-width: none; width: 100%; }
+.live-preview { display: none; }
+.workspace.has-preview .live-preview { display: flex; flex-direction: column; position: sticky; top: 3.6rem; height: calc(100vh - 4.4rem); margin-top: 0; }
+.live-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .4rem .8rem; background: var(--parch); border: 1px solid var(--line); border-bottom: none; font-family: "IM Fell English", serif; color: var(--accent); }
+.live-head label { font-family: "Crimson Pro", serif; font-size: .8rem; color: var(--muted); display: flex; align-items: center; gap: .4rem; }
+.live-head select { font-size: .85rem; padding: .15rem .3rem; }
+.live-frame { position: relative; flex: 1; overflow: hidden; border: 1px solid var(--line); background: #ddd; }
+#sheet-output { position: absolute; top: 0; left: 0; border: 0; background: #fff; transform-origin: 0 0; }
+.live-msg { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; padding: 1rem; text-align: center; color: var(--bad); background: rgb(255 255 255 / 85%); font-size: .9rem; }
+.live-msg.show { display: flex; }
+.live-frame.loading::after { content: ""; position: absolute; top: .5rem; right: .5rem; width: .7rem; height: .7rem; border-radius: 50%; background: var(--accent); opacity: .6; }
+@media (max-width: 1100px) {
+  .workspace.has-preview { display: block; padding: 0; }
+  .workspace.has-preview .live-preview { display: none; }
+  .workspace.has-preview .sheet { margin: 0 auto; max-width: 920px; }
+}
+
+/* Panelet står i en kolonne ved siden af arket: giv det topkant, og lad den aktive fane åbne ind i det */
+.tabs { position: relative; z-index: 1; margin-bottom: -1px; }
+.tabs button.active { padding-bottom: calc(.5rem + 1px); }
+.workspace.has-preview .sheet { border-top: 1px solid var(--line); border-radius: 0 .4rem .4rem .4rem; }
+.workspace.has-preview .live-preview { margin-top: 1px; }

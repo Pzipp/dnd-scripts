@@ -27,6 +27,79 @@ async function fetchState() {
   state = await res.json();
   if (state.error) { alert(state.error); return; }
   render();
+  refreshLivePreview();
+}
+
+// ── Live karakterark ved siden af builderen ───────────────────────────
+const LIVE_WIDTH = 830; // A4-arkets bredde i px; iframen skaleres, så hele bredden altid er synlig
+let liveSeq = 0;
+let liveTimer = null;
+
+function fitLiveSheet() {
+  const frame = $("#live-frame"), iframe = $("#sheet-output");
+  if (!frame || !iframe || !frame.clientWidth) return;
+  const scale = Math.min(1, frame.clientWidth / LIVE_WIDTH);
+  iframe.style.width = `${LIVE_WIDTH}px`;
+  iframe.style.height = `${frame.clientHeight / scale}px`;
+  iframe.style.transform = `scale(${scale})`;
+}
+
+function setSheetHtml(html) {
+  const iframe = $("#sheet-output");
+  let scroll = 0;
+  try { scroll = iframe.contentWindow.scrollY; } catch (e) { /* ingen dokument endnu */ }
+  iframe.addEventListener("load", () => { try { iframe.contentWindow.scrollTo(0, scroll); } catch (e) { /* ignorer */ } }, { once: true });
+  iframe.srcdoc = html;
+}
+
+// Ét ark til højre på alle faner. På Print-fanen styrer layout-editoren (ugemt sheets.yaml) eller Print-hentningen arket.
+function refreshLivePreview() {
+  clearTimeout(liveTimer);
+  liveTimer = setTimeout(() => {
+    if ($(".tabs button.active")?.dataset.page !== "print") return loadLivePreview();
+    const editor = $("#sheets-editor");
+    if (sheetsEditor && editor && editor.style.display !== "none") sheetsPreview();
+    else loadPrintPage();
+  }, 150);
+}
+
+async function loadLivePreview() {
+  const frame = $("#live-frame"), msg = $("#live-msg");
+  const seq = ++liveSeq;
+  frame.classList.add("loading");
+  fitLiveSheet();
+  try {
+    const style = $("#live-style").value || "farve";
+    const res = await fetch(`/api/builder/sheet?name=${encodeURIComponent(NAME)}&style=${encodeURIComponent(style)}`);
+    const data = await res.json();
+    if (seq !== liveSeq) return; // et nyere svar er på vej
+    if (data.error) {
+      msg.textContent = data.error;
+      msg.classList.add("show");
+      return;
+    }
+    msg.classList.remove("show");
+    setSheetHtml(data.html);
+  } catch (e) {
+    if (seq === liveSeq) { msg.textContent = "Kunne ikke hente arket."; msg.classList.add("show"); }
+  } finally {
+    if (seq === liveSeq) frame.classList.remove("loading");
+  }
+}
+
+function initLivePreview() {
+  const live = $("#live-style"), main = $("#sheet-style");
+  if (!live || !main) return;
+  live.innerHTML = main.innerHTML;
+  try { live.value = localStorage.getItem("builder-live-style") || "farve"; } catch (e) { /* ingen storage */ }
+  main.value = live.value;
+  live.addEventListener("change", () => {
+    main.value = live.value;
+    try { localStorage.setItem("builder-live-style", live.value); } catch (e) { /* ignorer */ }
+    refreshLivePreview();
+  });
+  window.addEventListener("resize", fitLiveSheet);
+  new ResizeObserver(fitLiveSheet).observe($("#live-frame"));
 }
 
 async function answer(fields, confirmed = false) {
@@ -49,6 +122,31 @@ async function answer(fields, confirmed = false) {
   state = data;
   setStatus("Gemt.");
   render();
+  refreshLivePreview();
+}
+
+// Løbende opdatering mens man skriver: gem stille og opdatér kun arket.
+// Ingen render(), så feltet ikke mister fokus; blur-"change" gemmer og tegner bagefter som sædvanligt.
+let typingTimer = null;
+function answerWhileTyping(fieldEl) {
+  clearTimeout(typingTimer);
+  typingTimer = setTimeout(async () => {
+    const path = fieldEl.dataset.field;
+    const raw = fieldEl.value;
+    const value = fieldEl.type === "number" ? (raw === "" ? null : Number(raw)) : raw;
+    try {
+      const res = await fetch("/api/builder/answer", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: NAME, fields: { [path]: value }, confirmed: false }),
+      });
+      const data = await res.json();
+      if (data.error || data.needs_confirmation) return; // afgøres ved blur
+      state = data;
+      setStatus("Gemt.");
+      refreshLivePreview();
+    } catch (e) { /* netværksfejl: blur-gemningen prøver igen */ }
+  }, 400);
 }
 
 function setStatus(text) {
@@ -656,18 +754,16 @@ function setPrintBanner(text, { showButton = false, enabled = true } = {}) {
 }
 
 async function loadPrintPage() {
-  const output = $("#sheet-output");
   hideManualPrompt();
   setPrintBanner("Henter karakterarket...");
   const style = $("#sheet-style")?.value || "farve";
   const res = await fetch(`/api/builder/sheet?name=${encodeURIComponent(NAME)}&style=${encodeURIComponent(style)}`);
   const data = await res.json();
   if (data.error) {
-    output.srcdoc = "";
     setPrintBanner(data.error);
     return;
   }
-  output.srcdoc = data.html;
+  setSheetHtml(data.html);
   const n = (data.missing_descriptions || []).length;
   setPrintBanner(n ? `${n} regler/besværgelser mangler en dansk beskrivelse.` : "", { showButton: true });
 }
@@ -805,7 +901,7 @@ async function sheetsPreview() {
     setSheetsStatus(data.error, true);
     return;
   }
-  $("#sheet-output").srcdoc = data.html;
+  setSheetHtml(data.html);
   const n = (data.missing_descriptions || []).length;
   setPrintBanner(n ? `${n} regler/besværgelser mangler en dansk beskrivelse.` : "", { showButton: true });
   setSheetsStatus(text === sheetsSavedYaml ? "Gemt." : "Ugemt - viser dine rettelser.");
@@ -904,7 +1000,7 @@ function wireEvents() {
     if (!btn) return;
     document.querySelectorAll(".tabs button[data-page]").forEach((b) => b.classList.toggle("active", b === btn));
     document.querySelectorAll(".page").forEach((p) => p.classList.toggle("active", p.id === `page-${btn.dataset.page}`));
-    if (btn.dataset.page === "print") loadPrintPage();
+    refreshLivePreview();
   });
 
   $("#translate-btn").addEventListener("click", translateMissing);
@@ -914,6 +1010,7 @@ function wireEvents() {
   $("#pdf-btn").addEventListener("click", makePdf);
   $("#sheets-save-btn").addEventListener("click", saveSheetsYaml);
   $("#sheet-style")?.addEventListener("change", () => {
+    $("#live-style").value = $("#sheet-style").value;
     const editor = $("#sheets-editor");
     if (sheetsEditor && editor && editor.style.display !== "none") sheetsPreview();
     else loadPrintPage();
@@ -929,7 +1026,13 @@ function wireEvents() {
     render();
   });
 
+  document.querySelector("main").addEventListener("input", (e) => {
+    const el = e.target.closest("input[data-field]");
+    if (el && !el.dataset.multi && (el.type === "text" || el.type === "number")) answerWhileTyping(el);
+  });
+
   document.querySelector("main").addEventListener("change", (e) => {
+    clearTimeout(typingTimer); // blur gemmer selv
     const comboEl = e.target.closest("[data-field-combo]");
     if (comboEl) {
       const base = comboEl.dataset.fieldCombo;
@@ -994,5 +1097,6 @@ function getPath(obj, path) {
 
 $("#missing-banner").addEventListener("toggle", (e) => { missingListOpen = e.target.open; }, true);
 wireEvents();
+initLivePreview();
 fetchState();
-if ($(".tabs button.active")?.dataset.page === "print") loadPrintPage();
+

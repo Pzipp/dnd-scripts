@@ -3,6 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="48x48">
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32.png') }}">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
   <title>D&D WebUI</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <!-- CodeMirror 6 hentes fra esm.sh. Versionerne er låst. external=… gør, at alle pakker bruger samme kopi fra import map'et (ellers virker fx lint-markeringer ikke). -->

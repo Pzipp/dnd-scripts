@@ -3,6 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="48x48">
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32.png') }}">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
   <title>Karakterbygger – {{ name }}</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&display=swap">
   <link rel="stylesheet" href="{{ url_for('static', filename='builder.css') }}">
@@ -27,7 +30,7 @@
 </head>
 <body>
 <header class="builder-top">
-  <h1>Karakterbygger</h1>
+  <h1><img class="logo" src="{{ url_for('static', filename='logo.png') }}" alt=""> Karakterbygger</h1>
   <div class="meta">
     <a href="/builder">&larr; Alle karakterer</a>
     <span id="total-level"></span>
@@ -41,6 +44,7 @@
   <button type="button" data-page="print" class="{{ 'active' if page == 'print' else '' }}">Print</button>
   <button type="button" onclick="location.href='/builder/{{ name }}/settings'">Kilder</button>
 </nav>
+<div class="workspace has-preview" id="workspace">
 <main class="sheet">
   <div id="missing-banner" class="missing-banner" style="display:none"></div>
   <div class="page {{ 'active' if page == 'character' else '' }}" id="page-character"></div>
@@ -89,9 +93,21 @@
       </div>
       <div id="sheets-editor-mount"></div>
     </div>
-    <iframe id="sheet-output" title="Karakterark"></iframe>
   </div>
 </main>
+<aside class="live-preview" id="live-preview" aria-label="Live karakterark">
+  <div class="live-head">
+    <span>Karakterark</span>
+    <label>Udseende
+      <select id="live-style"></select>
+    </label>
+  </div>
+  <div class="live-frame" id="live-frame">
+    <iframe id="sheet-output" title="Karakterark"></iframe>
+    <div class="live-msg" id="live-msg"></div>
+  </div>
+</aside>
+</div>
 
 <div class="modal-backdrop" id="confirm-modal">
   <div class="modal">
