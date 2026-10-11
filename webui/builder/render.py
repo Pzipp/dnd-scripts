@@ -609,7 +609,8 @@ def box_money(node, character, env):
 
 
 def box_text(node, character, env):
-    return _h2(node) + '<div class="prose">' + "".join(f"<p>{fmt(p, env)}</p>" for p in node.get("paragraphs", [])) + "</div>"
+    prose = '<div class="prose">' + "".join(f"<p>{fmt(p, env)}</p>" for p in node.get("paragraphs", [])) + "</div>"
+    return _h2(node) + prose + _list([], node.get("blank_lines", 0), env)
 
 
 def box_facts(node, character, env):

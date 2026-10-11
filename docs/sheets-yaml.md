@@ -176,7 +176,7 @@ samme afsnit i character-yaml.md.
 | Boks | `type` | Boks-typen, se nedenfor |
 | | `title`, `subtitle` | Overskrift og undertitel. `title: false` fjerner overskriften. Udeladt: standardtitel fra typen |
 | | `box_type: none` | Fjerner rammen om netop denne boks |
-| | `blank_lines` | Antal tomme skrivelinjer efter punkterne (kun `list`-lignende bokse: `list`, `text`, `training` og kategoriboksene). Bruges til at lade pladsen stå åben |
+| | `blank_lines` | Antal tomme skrivelinjer efter punkterne (`list`-lignende bokse: `list`, `text`, `training` og kategoriboksene, og tekstboksen `backstory`, hvor linjerne kommer efter afsnittene). Bruges til at lade pladsen stå åben |
 
 ## Boks-typer
 
