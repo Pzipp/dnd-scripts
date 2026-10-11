@@ -384,18 +384,23 @@ def _auto_feat_items(character: dict, exclude: list[str]) -> list[dict]:
 
 
 _BONUS_ACTION_RE = re.compile(r"bonus\s*action|bonushandling", re.I)
+_ACTIVATION_KINDS = {"bonus_actions": "bonus", "reactions": "reaction", "action_features": "action"}
 
 
-def _auto_bonus_action_items(character: dict, exclude: list[str]) -> list[dict]:
-    """items til bonus_actions-boksen med auto: true: de af karakterens feats,
-    klassefeatures og race-traits hvis (danske) beskrivelse nævner Bonus
-    Action/bonushandling. Samme opslagskæde som _auto_feat_items(); entries
-    uden beskrivelse endnu kan ikke genkendes og udelades."""
+def _auto_activation_items(character: dict, exclude: list[str], kind: str) -> list[dict]:
+    """items til bonus_actions-/reactions-/action_features-boksen med auto: true: de af karakterens feats,
+    klassefeatures, race-traits og valgfrie features, der bruges som Bonus Action / Reaction / Action.
+    Hvad der gælder, står i character['activations'] (Foundry-data, se foundry.py); en feature Foundry ikke
+    kender (kun bonus actions) genkendes i stedet på, at dens danske beskrivelse nævner Bonus Action/
+    bonushandling. Navn + beskrivelse som _auto_feat_items(); entries uden beskrivelse endnu får tom tekst.
+    Terningformlen fra dataene (fx Second Wind 1d10+5) står i tagget."""
     excluded = {n.lower() for n in exclude}
+    known = {a["name"].lower(): a for a in character.get("activations", [])}
     entries = (
         [(f, None) for f in character.get("feats", [])]
         + [(f, f"Niveau {f['level']}" if f.get("level") else None) for f in character.get("class_features", [])]
         + [(t, None) for t in character.get("race_traits", [])]
+        + [(o, None) for o in character.get("optional_features", [])]
     )
     items, seen = [], set()
     for e, tag in entries:
@@ -404,13 +409,20 @@ def _auto_bonus_action_items(character: dict, exclude: list[str]) -> list[dict]:
             continue
         found = descriptions.lookup(e["name"], e.get("source"))
         text = (found.get("description_da") if found else None) or ""
-        if not _BONUS_ACTION_RE.search(text):
+        act = known.get(key)
+        if act is not None:
+            if kind not in act["types"]:
+                continue
+            tags = [t for t in (tag, act.get("roll")) if t]
+        elif kind == "bonus" and found and _BONUS_ACTION_RE.search(text):
+            tags = [tag] if tag else []
+        else:
             continue
         seen.add(key)
-        name_da = found.get("name_da")
+        name_da = found.get("name_da") if found else None
         item = {"name": f'{e["name"]} <i>· {name_da}</i>' if name_da else e["name"], "text": text}
-        if tag:
-            item["tag"] = tag
+        if tags:
+            item["tag"] = " · ".join(tags)
         items.append(item)
     return items
 
@@ -420,14 +432,16 @@ def box_features(node, character, env):
     auto: true bygger items automatisk fra character['feats'] i stedet for
     at læse node['items'] fra sheets.yaml - se _auto_feat_items(). exclude:
     [navn, ...] (kun relevant med auto: true) springer specifikke feats
-    over. bonus_actions-typen bruger i stedet _auto_bonus_action_items()."""
+    over. bonus_actions/reactions/action_features bruger i stedet _auto_activation_items()."""
     o = [f'<h2>{node["title"]}</h2>']
     if not node.get("auto"):
         items = node.get("items", [])
-    elif node.get("type") == "bonus_actions":
-        items = _auto_bonus_action_items(character, node.get("exclude", []))
+    elif node.get("type") in _ACTIVATION_KINDS:
+        items = _auto_activation_items(character, node.get("exclude", []), _ACTIVATION_KINDS[node["type"]])
     else:
         items = _auto_feat_items(character, node.get("exclude", []))
+    if node.get("auto") and not items:
+        return ""  # automatisk boks uden indhold (fx Reactions for en karakter uden) udelades helt
     for i, t in enumerate(items):
         last = ' style="margin:0"' if i == len(items) - 1 else ""
         tag = f'<span class="tag">{t["tag"]}</span>' if t.get("tag") else ""
@@ -638,6 +652,51 @@ def box_granted_spells(node, character, env):
     return "".join(o)
 
 
+_RECHARGE_LABELS = {"long_rest": "Long Rest", "short_rest": "Short Rest eller Long Rest"}
+
+
+def box_resources(node, character, env):
+    """Features med begrænset antal brug (character.yaml: resources): navn, afkrydsningsfelter og hvornår de
+    kommer tilbage. Over 8 brug vises i stedet tallet (Lay on Hands: 30 point). Tom liste giver ingen boks."""
+    resources = character.get("resources") or []
+    if not resources:
+        return ""
+    o = [_h2(node), '<ul class="t">']
+    for r in resources:
+        boxes = '<span class="cbx"></span>' * r["max"] if r["max"] <= 8 else f' <b>{r["max"]}</b>'
+        recharge = _RECHARGE_LABELS.get(r.get("recharge"), "")
+        if r.get("recharge") == "long_rest" and r.get("short_rest_regain"):
+            recharge = f"Long Rest ({r['short_rest_regain']} ved Short Rest)"
+        o.append(f'<li><b>{r["name"]}</b> {boxes}' + (f' <em>· {recharge}</em>' if recharge else "") + "</li>")
+    o.append("</ul>")
+    return "".join(o)
+
+
+def box_class_numbers(node, character, env):
+    """Klassernes niveau-tal (character.yaml: class_numbers): Sneak Attack 3d6, Rage Damage 2, ..."""
+    numbers = character.get("class_numbers") or []
+    if not numbers:
+        return ""
+    return _h2(node) + '<ul class="t">' + "".join(
+        f'<li><b>{n["label"]}</b>: {n["value"]} <small>{n["owner"]}</small></li>' for n in numbers) + "</ul>"
+
+
+def box_modifiers(node, character, env):
+    """Fordele og bonusser fra features (character.yaml: modifiers), som ikke er regnet ind i arkets tal, samt
+    fart-/AC-bonusser, hvis betingelse ikke er opfyldt lige nu (vist svagt)."""
+    mods = character.get("modifiers") or []
+    if not mods:
+        return ""
+    o = [_h2(node), '<ul class="t">']
+    for m in mods:
+        text = f'<b>{m["what"]}</b>: {m["value"]} <small>{m["from"]}</small>'
+        if not m.get("active", True):
+            text = f'<span style="opacity:.55">{text}' + (f" · {m['note']}" if m.get("note") else "") + "</span>"
+        o.append(f"<li>{text}</li>")
+    o.append("</ul>")
+    return "".join(o)
+
+
 def _box(fn, title=None, card=True, small=False) -> dict:
     return {"fn": fn, "title": title, "card": card, "small": small}
 
@@ -656,6 +715,11 @@ REGISTRY = {
     "rules": _box(box_rules, small=True),
     "features": _box(box_features, small=True),
     "bonus_actions": _box(box_features, small=True),
+    "reactions": _box(box_features, small=True),
+    "action_features": _box(box_features, small=True),
+    "resources": _box(box_resources, "Ressourcer <i>Uses</i>", small=True),
+    "class_numbers": _box(box_class_numbers, "Klasse-tal <i>Class numbers</i>", small=True),
+    "modifiers": _box(box_modifiers, "Fordele og bonusser <i>Modifiers</i>", small=True),
     "turn": _box(box_turn, small=True),
     # side 2
     "actions": _box(box_actions),

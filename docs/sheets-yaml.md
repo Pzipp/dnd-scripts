@@ -86,6 +86,27 @@ virker som ovenfor. Entries uden beskrivelse endnu kan ikke genkendes og
 udelades, til de er beskrevet. `spells_known` er stadig ikke
 automatiseret (se [Afgrænsning](#afgrænsning)).
 
+## Automatiske bokse fra Foundry-data
+
+Disse bokse udfyldes selv ud fra `character.yaml` (se [character-yaml.md](character-yaml.md#foundry-data)) og
+udelades helt, hvis der intet er at vise:
+
+```yaml
+- type: bonus_actions     # auto: true = features, der er Bonus Action (Foundry-data; ellers genkendt i beskrivelsen)
+  auto: true
+- type: reactions         # auto: true = features, der er Reaction
+  auto: true
+- type: action_features   # auto: true = features, der er en Action
+  auto: true
+- type: resources         # Rage, Second Wind, Channel Divinity ...: afkrydsningsfelter og genopladning
+- type: class_numbers     # Sneak Attack 3d6, Rage Damage 2, Martial Arts Die d8 ...
+- type: modifiers         # fordele/bonusser, fx Danger Sense, og inaktive fart-/AC-bonusser
+```
+
+`bonus_actions`, `reactions` og `action_features` viser den udregnede terningformel i tagget (Second Wind
+`1d10+5`). `exclude` virker som ovenfor. Skabelonen har `bonus_actions`, `reactions` og `resources` på side 1 og
+`class_numbers` og `modifiers` på side 2. En eksisterende `sheets.yaml` ændres ikke; tilføj boksene selv.
+
 ## Tildelte spells
 
 `type: granted_spells` viser automatisk de spells, race/afstamning og feats giver

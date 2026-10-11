@@ -150,28 +150,22 @@ def _ac(data: dict, sources: set[str], dex_mod: int) -> tuple[int, str]:
 
 
 def _apply_effects(
-    entries: list[dict], initiative_formula: str, hp: int | None, total_level: int, class_levels: dict[str, int]
+    entries: list[dict], initiative_formula: str, hp: int | None, total_level: int, class_levels: dict[str, int],
+    foundry_pairs: list[tuple[dict, dict]] | None = None,
 ) -> tuple[str, int | None]:
-    """Folder høj-konfidens, PERMANENTE effects (se effects.py) ind i
-    initiative-formlen og HP - de to eneste targets, der rent faktisk er
-    bygget en anvendelse for (se docs/llm-effect-extraction-prompt.md).
-    Andre targets (ac, saves, skills, resistances, darkvision, speed) er
-    gemt i _effects.yaml, men IKKE foldet ind nogen steder endnu.
+    """Folder PERMANENTE effects ind i initiative-formlen og HP - de to targets, der har en anvendelse
+    bygget (se docs/llm-effect-extraction-prompt.md). Foundry-dataene (foundry.py, strukturerede tal)
+    går forud: en entry, de giver HP eller initiativ for, bruger ikke LLM-effekterne. De øvrige
+    entries bruger høj-konfidens LLM-effects (se effects.py).
 
-    hp_per_level skalerer med KARAKTERniveau for feats (fx Tough: "twice
-    your character level"), men med DEN GRANTENDE KLASSES EGEN niveau for
-    class_features (fx Draconic Resilience: skalerer med Sorcerer-niveau,
-    ikke total niveau - en multiclass Sorcerer 3/Fighter 5 får stadig kun
-    Sorcerer-niveauets andel, ikke 8). class_levels er {klassenavn: niveau},
-    fra samme classes_out derive_from_state() allerede bygger."""
-    # Foundry-data (strukturerede tal, se foundry.py) vinder over LLM-effekterne for de entries, de dækker.
-    pairs, rest = [], []
-    for entry in entries:
-        mapped = foundry.resolve(entry, total_level, class_levels)
-        if mapped is None:
-            rest.append(entry)
-        else:
-            pairs += [(entry, eff) for eff in mapped]
+    hp_per_level (LLM) skalerer med KARAKTERniveau for feats (fx Tough: "twice your character level"),
+    men med DEN GRANTENDE KLASSES EGEN niveau for class_features (fx Draconic Resilience). class_levels er
+    {klassenavn: niveau}, fra samme classes_out derive_from_state() allerede bygger. Foundry-effekter
+    kommer færdigregnet (`hp_flat`)."""
+    pairs = list(foundry_pairs or [])
+    covered = {id(entry) for entry, eff in pairs if eff["target"] in ("hp_flat", "initiative")}
+    rest = [entry for entry in entries if id(entry) not in covered]
+    pairs = [(entry, eff) for entry, eff in pairs if eff["target"] in ("hp_flat", "initiative")]
     for entry, eff in pairs + effects.high_confidence_effects(rest):
         target, kind, value = eff.get("target"), eff.get("type"), str(eff.get("value", ""))
         if target == "initiative" and kind == "add":
@@ -187,6 +181,55 @@ def _apply_effects(
             except ValueError:
                 pass
     return initiative_formula, hp
+
+
+def _armor_type(data: dict, sources: set[str]) -> str | None:
+    """Den valgte rustnings type (items-base: LA/MA/HA), ellers None."""
+    choice = data.get("equipment", {}).get("armor") or {}
+    armor = e.get_armor(choice["name"], {choice["source"]} if choice.get("source") else sources) if choice.get("name") else None
+    return (armor.get("type") or "").split("|")[0] if armor else None
+
+
+def _apply_foundry(pairs: list[tuple[dict, dict]], base: dict) -> dict:
+    """Foldet Foundry-effekter (se foundry.py) ind i fart, sanser, resistenser, AC. Returnerer det ændrede
+    + `modifiers`: oplysninger, der ikke regnes ind i tal (fordele, bonusser på checks/saves/angreb, og
+    fart/AC-bonusser, hvis betingelse ikke er opfyldt)."""
+    speeds, senses = dict(base["speeds"]), dict(base["senses"])
+    resist, immune, vulnerable, cond = set(base["resistances"]), set(base["immunities"]), set(base["vulnerabilities"]), set(base["condition_immunities"])
+    ac, ac_note = base["ac"], base["ac_note"]
+    modifiers = []
+    for entry, eff in pairs:
+        target, name = eff["target"], entry["name"]
+        if target == "speed":
+            if eff["active"]:
+                speeds[eff["mode"]] = speeds.get(eff["mode"], 0) + eff["value"]
+            else:
+                modifiers.append({"from": name, "what": f"fart ({eff['mode']})", "value": f"+{eff['value']} ft", "note": foundry._CONDITION_LABELS.get(eff["condition"], ""), "active": False})
+        elif target == "sense":
+            have = senses.get(eff["sense"], 0)
+            senses[eff["sense"]] = have + eff["value"] if eff["mode"] == "ADD" else max(have, eff["value"])
+        elif target == "resist":
+            resist.add(eff["value"].lower())
+        elif target == "immune":
+            immune.add(eff["value"].lower())
+        elif target == "vulnerable":
+            vulnerable.add(eff["value"].lower())
+        elif target == "condition_immune":
+            cond.add(eff["value"].lower())
+        elif target == "ac_bonus":
+            if eff["active"]:
+                ac += eff["value"]
+                ac_note += f" + {name}"
+            else:
+                modifiers.append({"from": name, "what": "AC", "value": f"+{eff['value']}", "note": foundry._CONDITION_LABELS.get(eff["condition"], ""), "active": False})
+        elif target == "modifier":
+            modifiers.append({"from": name, "what": eff["what"], "value": eff["value"], "note": "", "active": True})
+    speed = speeds.get("walk", base["speed"])
+    return {
+        "speed": speed, "speeds": speeds, "senses": senses, "resistances": sorted(resist), "immunities": sorted(immune),
+        "vulnerabilities": sorted(vulnerable), "condition_immunities": sorted(cond), "ac": ac, "ac_note": ac_note,
+        "modifiers": modifiers,
+    }
 
 
 def empty_character_sheet() -> dict:
@@ -227,6 +270,10 @@ def empty_character_sheet() -> dict:
         "pact_slots": None,
         "class_features": [],
         "race_traits": [],
+        "resources": [],
+        "class_numbers": [],
+        "activations": [],
+        "modifiers": [],
         "extra_training": [],
         "summary": [],
     }
@@ -687,14 +734,38 @@ def derive_from_state(data: dict, state: dict) -> dict:
     # til feats/spells_known/class_features/race_traits selv - det ville
     # være redundant støj i den gemte character.yaml (hvilken liste en
     # entry står i, siger allerede dens "kind").
+    feat_texts = {obj["name"]: e.render_text(obj.get("entries", [])) for _entry, obj in _chosen_feats(data, sources)}
+    class_texts = {(c["name"], f["name"], f["level"]): f["text"] for c in state.get("classes", []) for f in c.get("features", [])}
+    trait_texts = {t["name"]: t.get("text", "") for t in (state.get("race", {}).get("traits") or [])}
     effect_entries = (
-        [{**f, "kind": "feat"} for f in feats]
+        [{**f, "kind": "feat", "text": feat_texts.get(f["name"], "")} for f in feats]
         + [{**s, "kind": "spell"} for s in spells_known]
-        + [{**c, "kind": "class_feature"} for c in class_features]
-        + [{**t, "kind": "race_trait", "race": race_name, "lineage": race_stored.get("lineage")} for t in race_traits]
+        + [{**c, "kind": "class_feature", "text": class_texts.get((c["class"], c["name"], c["level"]), "")} for c in class_features]
+        + [{**t, "kind": "race_trait", "race": race_name, "lineage": race_stored.get("lineage"), "text": trait_texts.get(t["name"], "")} for t in race_traits]
+        + [{**o, "kind": "optional_feature"} for o in optional_features]
     )
     class_levels = {c["name"]: c["level"] for c in classes_out}
-    initiative_formula, hp = _apply_effects(effect_entries, "{+DEX}", hp, total_level, class_levels)
+    foundry_ctx = foundry.Context(
+        total_level=total_level, class_levels=class_levels, abilities=final_abilities,
+        pb=PROFICIENCY_BONUS_BY_LEVEL.get(total_level, 2), scales=foundry.scale_values(classes_out),
+        armor_type=_armor_type(data, sources), shield=bool(data.get("equipment", {}).get("shield")),
+    )
+    foundry_pairs = foundry.collect(effect_entries, foundry_ctx)
+    initiative_formula, hp = _apply_effects(effect_entries, "{+DEX}", hp, total_level, class_levels, foundry_pairs)
+    derived = _apply_foundry(foundry_pairs, {
+        "speed": speed, "speeds": speeds, "senses": senses, "resistances": resistances,
+        "immunities": races.fixed_other(race_eff)["immune"], "vulnerabilities": races.fixed_other(race_eff)["vulnerable"],
+        "condition_immunities": races.fixed_other(race_eff)["conditionImmune"], "ac": ac, "ac_note": ac_note,
+    })
+    activation_entries = []
+    for entry in effect_entries:
+        info = foundry.activation(entry, foundry_ctx)
+        if info is not None:
+            activation_entries.append({k: entry[k] for k in ("name", "source", "kind", "class", "level") if entry.get(k) is not None} | info)
+    class_numbers = sorted(
+        ({"owner": v["owner"], "label": v["title"], "value": foundry.scale_text(v)} for v in foundry_ctx.scales.values()),
+        key=lambda x: (x["owner"], x["label"]),
+    )
 
     summary = [
         [label, value] for label, value in [
@@ -714,10 +785,10 @@ def derive_from_state(data: dict, state: dict) -> dict:
         "proficiency_bonus": PROFICIENCY_BONUS_BY_LEVEL.get(total_level, 2),
         "hp": hp,
         "hit_dice": hit_dice,  # poolet efter terningtype across klasser, se _hit_dice_pool()
-        "ac": ac,  # se _ac() - afledt af equipment.armor/shield, ikke et PRESERVED_FIELD længere
-        "ac_note": ac_note,  # kort forklaring til AC-boksens fodnote i render.py (box_stats), ikke en formel
+        "ac": derived["ac"],  # se _ac() - afledt af equipment.armor/shield, ikke et PRESERVED_FIELD længere
+        "ac_note": derived["ac_note"],  # kort forklaring til AC-boksens fodnote i render.py (box_stats), ikke en formel
         "initiative": initiative_formula,  # standard + evt. høj-konfidens effects (fx Alert) - se _apply_effects()
-        "speed": speed,
+        "speed": derived["speed"],
         "hit_die": hit_die,
         "saves": saves,
         "skills": skills,
@@ -726,12 +797,12 @@ def derive_from_state(data: dict, state: dict) -> dict:
         "languages": _languages(data),  # se _languages() - klasse-/feature-tildelte ekstra sprog er IKKE talt med, kendt gap
         "can_use": can_use,
         "size": _size(race_eff, race_stored),
-        "speeds": speeds,  # {'walk': 30, 'fly': 30, ...} i ft
-        "senses": senses,  # {'darkvision': 60, 'blindsight': 10, ...} i ft, fra race/afstamning og feats
-        "resistances": resistances,  # fra race/afstamning og feats
-        "immunities": races.fixed_other(race_eff)["immune"],
-        "vulnerabilities": races.fixed_other(race_eff)["vulnerable"],
-        "condition_immunities": races.fixed_other(race_eff)["conditionImmune"],
+        "speeds": derived["speeds"],  # {'walk': 30, 'fly': 30, ...} i ft
+        "senses": derived["senses"],  # {'darkvision': 60, 'blindsight': 10, ...} i ft, fra race/afstamning og feats
+        "resistances": derived["resistances"],  # fra race/afstamning og feats
+        "immunities": derived["immunities"],
+        "vulnerabilities": derived["vulnerabilities"],
+        "condition_immunities": derived["condition_immunities"],
         "granted_spells": granted_spells,
         "masteries": _masteries(data, sources),
         "feats": feats,
@@ -742,6 +813,10 @@ def derive_from_state(data: dict, state: dict) -> dict:
         "pact_slots": pact_slots,  # Warlock: {slots, level}
         "class_features": class_features,
         "race_traits": race_traits,
+        "resources": foundry.resources(effect_entries, foundry_ctx),  # features med begrænset antal brug (Foundry-data), se foundry.py
+        "class_numbers": class_numbers,  # klassernes niveau-tabeller på dette niveau (Sneak Attack-terninger, Rage Damage ...)
+        "activations": activation_entries,  # hvilke features der er Action/Bonus Action/Reaction (types), evt. med terningformel (roll)
+        "modifiers": derived["modifiers"],  # fordele/bonusser på checks, saves, angreb, skade + ikke-aktive fart-/AC-bonusser
         "extra_training": [],
         "summary": summary,
     }

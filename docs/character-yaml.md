@@ -47,6 +47,14 @@ vulnerabilities: []
 condition_immunities: []
 granted_spells:                # spells race/afstamning og feats giver på karakterens nuværende niveau
 - {name: Faerie Fire, source: XPHB, cantrip: false, addition: innate, ability: WIS, recharge: long_rest, uses: '1', from: "race: Elf"}
+resources:                     # features med begrænset antal brug (Foundry-data): navn, antal, genopladning
+- {name: Second Wind, max: 3, recharge: long_rest, short_rest_regain: 1, from: Fighter}
+class_numbers:                 # klassernes niveau-tabeller på dit niveau (Foundry-data, advancement/ScaleValue)
+- {owner: Rogue, label: Sneak Attack, value: 3d6}
+activations:                   # hvilke features der er action/bonus/reaction (Foundry-data), evt. med terningformel
+- {name: Second Wind, source: XPHB, kind: class_feature, class: Fighter, level: 1, types: [bonus], roll: 1d10+5}
+modifiers:                     # fordele/bonusser, der ikke er regnet ind i arkets tal (Foundry-data)
+- {from: Danger Sense, what: DEX saves, value: fordel, note: '', active: true}
 masteries: [[Vex, Shortsword]]  # [egenskab, våben] fra classes.*.choices.weapon_mastery - se character_yaml._masteries()
 feats: [{name: Tavern Brawler, source: XPHB}]
 spells_known: [{name: Fire Bolt, source: XPHB}]   # spillerens egne valg: cantrips, forberedte, arcanum, ekstra (ikke spellbogen)
@@ -126,10 +134,36 @@ nu RIGTIGT afledte af choices.yaml:
   [llm-effect-extraction-prompt.md](llm-effect-extraction-prompt.md)) -
   `character_yaml._apply_effects()` folder høj-konfidens, PERMANENTE
   effects ind i formlen hver gang.
-  Strukturerede tal fra 5etools' Foundry-filer (`webui/builder/foundry.py`:
-  HP pr. level/samlet, initiativ) går forud for LLM-effekterne og kræver
-  hverken LLM eller tekstlæsning. Det dækker bl.a. Dwarven Toughness, Tough,
-  Draconic Resilience, Boon of Fortitude, Alert og Dread Ambusher.
+  Strukturerede tal fra 5etools' Foundry-filer (`webui/builder/foundry.py`)
+  går forud for LLM-effekterne og kræver hverken LLM eller tekstlæsning.
+
+## Foundry-data
+
+`foundry.py` læser `foundry-feats.json`, `foundry-races.json`, `foundry-optionalfeatures.json` og
+`class/foundry.json` fra 5etools og regner formlerne ud mod karakteren (`@prof`, `@abilities.wis.mod`,
+`@classes.sorcerer.levels`, `@scale.rogue.sneak-attack`, `max()`/`min()`). Hvad det giver:
+
+* **Effekter** (kun permanente: `transfer`, ikke slået fra): HP pr. level/samlet (Dwarven Toughness, Tough,
+  Draconic Resilience, Boon of Fortitude), initiativ (Alert, Dread Ambusher), fart i alle bevægelsesarter
+  (Fast Movement, Unarmored Movement, Speedy ...), sanser (ADD/UPGRADE), resistenser/immuniteter/tilstands-
+  immuniteter og AC-bonus (Defense). Det regnes ind i `hp`, `initiative`, `speed(s)`, `senses`, `resistances`,
+  `immunities`, `vulnerabilities`, `condition_immunities` og `ac`.
+* **Betingelser** står kun i featurens tekst: "aren't wearing Heavy armor" (Fast Movement, Roving, Speedy),
+  "aren't wearing armor" (Unarmored Movement) og "while you're wearing armor" (Defense) genkendes og tjekkes
+  mod den valgte rustning og skjold. Er betingelsen ikke opfyldt, står effekten som inaktiv i `modifiers`.
+  En ukendt vending regnes som ubetinget.
+* **`resources`**: features med antal og genopladning (Rage, Second Wind, Action Surge, Channel Divinity, Lucky,
+  Lay on Hands ...). Genopladning kommer fra dataene; mangler den (SRD-features), læses den af featurens tekst
+  ("Short or Long Rest", "Long Rest", "regain one expended use when you finish a Short Rest").
+* **`class_numbers`**: klassernes og subklassernes niveau-tabeller (Sneak Attack, Rage Damage, Martial Arts Die,
+  Unarmored Movement, Focus Points, Sorcery Points ...).
+* **`activations`**: hvilke features der er Action, Bonus Action eller Reaction, og skade-/helbredelsesformler
+  regnet ud (Second Wind 1d10+9). Bruges af de automatiske bokse `bonus_actions`, `reactions` og
+  `action_features` (se [sheets-yaml.md](sheets-yaml.md)).
+* **`modifiers`**: fordele og bonusser på checks, saves, angreb og skade (Danger Sense, Archery, Dueling,
+  Aura of Protection ...). De regnes ikke ind i arkets tal, men kan vises med boksen `modifiers`.
+
+Entries, hvor Foundry giver HP eller initiativ, sendes ikke til LLM-effekt-udtrækket.
 - `ac`: løst ved at tracke udstyret rustning direkte i choices.yaml
   (`equipment.armor`/`equipment.shield`, se [choices-yaml.md](choices-yaml.md))
   - `character_yaml._ac()` følger PHB 2024 kap. 1 (Light = base + DEX,
