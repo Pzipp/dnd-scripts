@@ -18,3 +18,4 @@ webui/builder/settings.yaml
 data/books/book-*.json
 data/books/5etools-*.json
 data/books/oversaettelse/*/
+data/feats.json
