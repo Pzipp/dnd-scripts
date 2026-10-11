@@ -72,24 +72,34 @@ for effekt-udtræks-designet.
   byggerens egen dialog efter 2024-reglen) og de 17 racer med `_copy`. Subraces,
   racers `ability` (indstilling `race_ability`), armor-/weaponProficiencies,
   immune/vulnerable og Variant Humans feat er bygget.
-- **Dwarven Toughness (+1 HP pr. level) mangler i HP.** Racen har intet
-  struktureret felt for det; effekten står kun i trækkets tekst. Den findes
-  hverken i `bibliotek/_effects.yaml` eller `_descriptions.yaml`, så
-  `character_yaml._apply_effects()` kender den ikke (en Dwarf får altså for få
-  HP). Effekt-udtrækket (`effects.py`, `hp_per_level` på `race_trait`) kan løse
-  det, når Print-fanens "generér manglende beskrivelser" køres for en Dwarf.
-  Afklar, om det skal være den vej, eller en fast håndskrevet regel. Gælder
-  tilsvarende andre race-træk, der kun er tekst.
-- **Feats' `additionalSpells`** giver valg i byggeren, men lægges ikke i
-  `granted_spells` (det gør kun racer). Samme læser (`spell_grants.py`) kan
-  bruges.
+- **Spell Mastery** (Wizard 18): står kun som tekst. Foundry-dataene har ingen valgregler for den. Valget (ét
+  spell på niveau 1 og ét på niveau 2 fra spellbogen, casting time Action, altid forberedt) skal hardcodes.
+
+## Foundry-data: tilgængeligt, men ikke brugt endnu
+
+Brugt i dag (se [character-yaml.md](character-yaml.md#foundry-data)): effekter (HP, initiativ, fart, sanser,
+resistenser, AC-bonus), `resources`, `class_numbers`, `activations`, `modifiers`. Resten ligger klar i
+`/srv/e5tools/data` (`foundry-feats.json`, `foundry-races.json`, `foundry-optionalfeatures.json`,
+`class/foundry.json`, `foundry-items.json`):
+
+- **`entryData`** på class-/subclass-features (30 stk.): `expertise` (erstatter navnematch i
+  `model._expertise_keys()`), `languageProficiencies` (lukker "klasse-tildelte sprog"-gabet: Thieves' Cant,
+  Druidic), `skillProficiencies`/`toolProficiencies`/`armorProficiencies`/`weaponProficiencies`/
+  `savingThrowProficiencies`, `resist`/`immune`/`conditionImmune`, `senses`, `additionalSpells`, `resources`.
+- **`ac.calc`** (Unarmored Defense, Draconic Resilience: `unarmoredBard` m.fl.): AC uden rustning fra klassen.
+- **Skill-/save-bonusser og `roll.mode`** (Thaumaturge, Aura of Protection, Danger Sense): vises kun i
+  `modifiers`; kan regnes ind i skill- og save-tallene på arket.
+- **`weaponProf.mastery.bonus`** (Tactical Master, Battering Roots): ekstra Mastery-egenskaber.
+- **`activities`**: række, varighed, mål, redningskast og forbrug (hvilken ressource en feature bruger, fx
+  Metamagic og Flurry of Blows) kan fylde kortenes `kicker`/`scaling` og beskrivelserne. Kun aktiveringstype og
+  terningformel bruges i dag.
+- **`foundry-items.json`**: effekter af magiske genstande, når der kommer en fuld udstyrsliste.
+- Genopladning for SRD-features (Rage, Second Wind ...) mangler i dataene og læses af featurens tekst.
 
 ## Fra klasse-runden (spells og valgfrie features)
 
-- **Lessons of the First Ones** (invocation) giver et Origin feat (`featProgression`), men feat-slottet oprettes ikke.
 - **Ældre kilder (valgfrie features):** Elemental Disciplines, Infusions, Arcane Shots og runer bruger de samme
   felter og tilbydes, men er ikke testet; Pact Boons som `pact`-forudsætning er kun afprøvet på XPHB.
-- **Agonizing Blast** kræver "et cantrip, der gør skade": der tjekkes kun, at et Warlock-cantrip er kendt, ikke at det gør skade.
 - **Spells fra valgfrie features** (Pact of the Tome) tæller ikke med i `spells_known`/kort, kun i `granted_spells`.
 - **Prepared Spells ved multiclass:** højeste spell-niveau regnes pr. klasse (dens egen tabel), ikke efter de samlede slots.
 - **Spellbog-kopiering** (Wizard: spells fundet i spil) er ikke modelleret ud over de 6 + 2 pr. niveau.
@@ -103,7 +113,6 @@ samlet herfra, kommentarerne i filen selv er urørt.
   kunne udfyldes automatisk fra karakterens valgte værktøjer/evner.
 - **`appearance`-felterne** (Alder/Højde) har ingen plads i
   karakterbyggeren i dag - kræver en ny funktion dér til at indtaste dem.
-- **Bonus Action-boksen** - måske automatiserbar, ingen konkret idé endnu.
 - **Angreb/Weapons/Gear/Special-boksene** rammer stadig den samme kendte,
   dybe mangel: der er ingen FULD udstyrs-/genstandsliste (hvilke våben/gear
   er udstyret/aktivt lige nu) - Armor-dropdownen (se character-yaml.md)
@@ -119,16 +128,10 @@ afledt i `character_yaml._masteries()` og `expertise`. Dækker Rogue, Bard,
 Ranger (Deft Explorer + Expertise), Wizard (Scholar), Fighter, Barbarian,
 Paladin. Hvad der kunne udbygges:
 
-- **Expertise-antal:** maks. håndhæves ikke (kun "for få" meldes som `missing`). Valg for en feature, karakteren ikke har nået, ignoreres i stedet for at blive slettet.
-- **Expertise vs. proficiencies:** Fjernes en skill-proficiency (eller
-  skiftes baggrund), ryddes en valgt Expertise på den ikke automatisk.
-- **Expertise fra andre kilder:** Feats med Expertise (fx Skill Expert)
-  deduperes ikke mod klassernes Expertise. Subclass-/species-features med
-  Expertise opdages kun, hvis de hedder "Expertise", "Deft Explorer" eller
-  "Scholar" (navnematch, ingen generel regel i 5etools-data).
+- **Expertise:** Subclass-/species-features med Expertise opdages kun, hvis de hedder "Expertise", "Deft Explorer" eller "Scholar" (navnematch). Foundry-dataene har en generel regel (`entryData.expertise`), se Foundry-afsnittet. Feats' Expertise tæller med i "taget"; maks. antal afkortes, og Expertise på en skill uden træning ryddes ved normalisering.
 - **Weapon Mastery, trænede våben:** Filteret ("with which you have
-  proficiency") bruger kun klassernes egen våbentræning. Træning fra race,
-  baggrund eller feats (fx Weapon Master) tælles ikke med. Klasser, hvis
+  proficiency") bruger klassernes våbentræning plus FASTE træninger fra race og feats.
+  VALGTE træninger (fx Weapon Master) tælles ikke med. Klasser, hvis
   feature-tekst hverken siger "proficiency" eller "Melee", får alle
   Simple+Martial våben.
 - **Weapon Mastery, skift:** Bytte våben ved Long Rest er ikke modelleret
@@ -137,6 +140,3 @@ Paladin. Hvad der kunne udbygges:
 - **Homebrew-våben** uden `mastery`-felt giver ingen par i `masteries`.
 - **Ingen automatiske tests** af valgene; kun manuelt prøvet mod
   Rogue/Bard/Ranger/Wizard/Barbarian/Fighter/Paladin.
-- **Baggrunds-feat (fx Alert fra Criminal)** kommer stadig ikke med i
-  `feats`/initiativ for baggrunde med et fast feat.
-- `dnd.py tjek` kender ikke de nye (character/choices/sheets-)karakterer.
