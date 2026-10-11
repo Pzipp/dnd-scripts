@@ -227,3 +227,4 @@ select.invalid, input.invalid { border-color: var(--bad); box-shadow: 0 0 0 2px 
 .dnd-palette { display: flex; flex-wrap: wrap; gap: .3rem; max-height: 14rem; overflow: auto; }
 .dnd-chip { font-size: .8rem; padding: .15rem .6rem; border: 1px solid var(--line); border-radius: 999px; background: var(--parch); cursor: grab; user-select: none; }
 .dnd-chip:hover { border-color: var(--accent); color: var(--accent); }
+#cards-status .bad { color: var(--bad); }

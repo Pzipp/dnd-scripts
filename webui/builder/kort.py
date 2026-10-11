@@ -388,8 +388,8 @@ def regenerate(character_dir: Path, character: dict, card_id: str) -> None:
         deck_path(character_dir).write_text(yaml.safe_dump(deck, allow_unicode=True, sort_keys=False, width=100), encoding="utf-8")
 
 
-def build_html(character_dir: Path, style: str) -> str:
+def build_html(character_dir: Path, style: str, tema: str | None = None) -> str:
     deck = load_deck(character_dir)
     if not deck["kort"]:
         raise ValueError("Ingen kort valgt endnu.")
-    return spellkort.build(deck, style)
+    return spellkort.build(deck, style, tema)

@@ -4,6 +4,10 @@
 
 Datafilens felter: [`docs/karakterark-yaml.md`](../../docs/karakterark-yaml.md). Skabelon: [`karakterer/_skabelon/karakter.yaml`](../../karakterer/_skabelon/karakter.yaml).
 
+## Tema og baggrund i webui'en
+
+Temaerne `sheets-*.css` vælges i webui'en (Udseende) via `STYLE_FILES` i `webui/builder/render.py` og gælder både forhåndsvisning og PDF. En valgfri baggrund lægges som en ekstra CSS-regel på hver side (`section.pg`); se `webui/static/baggrunde/README.md`.
+
 ## Brug
 
 Fra roden af repoet (anbefalet):

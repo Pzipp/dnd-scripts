@@ -49,7 +49,38 @@ function setSheetHtml(html) {
   let scroll = 0;
   try { scroll = iframe.contentWindow.scrollY; } catch (e) { /* ingen dokument endnu */ }
   iframe.addEventListener("load", () => { try { iframe.contentWindow.scrollTo(0, scroll); } catch (e) { /* ignorer */ } }, { once: true });
+  $("#live-warn").style.display = "none";
   iframe.srcdoc = html;
+}
+
+// Kort med tekst uden for rammen: måling i scripts/kort/maal_overflow.js (samme som PDF-genereringen bruger).
+let maalLoaded = null;
+const loadMaal = () => maalLoaded ||= new Promise((ok, fejl) => {
+  const s = document.createElement("script");
+  s.src = "/builder/kort-maal.js"; s.onload = ok; s.onerror = () => { maalLoaded = null; fejl(); };
+  document.head.append(s);
+});
+const SIDE_TXT = { for: "forside", bag: "bagside" };
+const cardWarnText = (m) => `${m.navn} (${SIDE_TXT[m.side]}, ${m.procent} % for meget)`;
+
+// Efter hver gengivelse og når skrifttyperne er indlæst: markér overfyldte kort i iframen og vis samlet advarsel.
+async function measureCards(seq) {
+  const iframe = $("#sheet-output"), warn = $("#live-warn");
+  try {
+    const loaded = new Promise((ok) => iframe.addEventListener("load", ok, { once: true })); // før await: load kan komme under indlæsningen
+    await loadMaal();
+    await loaded;
+    const doc = iframe.contentDocument;
+    await doc.fonts.ready;
+    if (seq !== liveSeq) return;
+    const over = window.maalKortOverflow(doc);
+    const st = doc.createElement("style");
+    st.textContent = ".card.over .frame { border-color: #c0392b !important; box-shadow: 0 0 0 .6mm #c0392b; } .card.over::after { content: attr(data-over); position: absolute; top: 0; left: 0; right: 0; z-index: 9; background: #c0392b; color: #fff; font: 700 7pt sans-serif; padding: .3mm 1.5mm; }";
+    doc.head.append(st);
+    over.forEach((m) => { m.card.classList.add("over"); m.card.dataset.over = `⚠ ${m.navn}: ${m.procent} % for meget`; });
+    warn.style.display = over.length ? "" : "none";
+    warn.textContent = over.length ? `${over.length} kort har tekst uden for rammen: ${over.map(cardWarnText).join("; ")}` : "";
+  } catch (e) { /* måling er kun en hjælp; forhåndsvisningen virker uden */ }
 }
 
 // Ét ark til højre på alle faner. På Print-fanen styrer layout-editoren (ugemt sheets.yaml) eller Print-hentningen arket.
@@ -72,7 +103,7 @@ async function loadLivePreview() {
   fitLiveSheet();
   try {
     const style = $("#live-style").value || "farve";
-    const res = await fetch(`/api/builder/sheet?name=${encodeURIComponent(NAME)}&style=${encodeURIComponent(style)}`);
+    const res = await fetch(`/api/builder/sheet?name=${encodeURIComponent(NAME)}&style=${encodeURIComponent(style)}${bgParam()}`);
     const data = await res.json();
     if (seq !== liveSeq) return; // et nyere svar er på vej
     if (data.error) {
@@ -154,12 +185,13 @@ async function loadCardsPreview() {
   fitLiveSheet();
   try {
     const style = $("#live-style").value || "farve";
-    const res = await fetch(`/api/builder/cards/preview?name=${encodeURIComponent(NAME)}&style=${encodeURIComponent(style)}`);
+    const res = await fetch(`/api/builder/cards/preview?name=${encodeURIComponent(NAME)}&style=${encodeURIComponent(style)}${bgParam()}`);
     const data = await res.json();
     if (seq !== liveSeq) return;
     if (data.error) { msg.textContent = data.error; msg.classList.add("show"); return; }
     msg.classList.remove("show");
     setSheetHtml(data.html);
+    measureCards(seq);
   } catch (e) {
     if (seq === liveSeq) { msg.textContent = "Kunne ikke hente kortene."; msg.classList.add("show"); }
   } finally {
@@ -172,11 +204,12 @@ async function makeCardsPdf() {
   status.textContent = "Laver PDF...";
   const res = await fetch("/api/builder/cards/pdf", {
     method: "POST", headers: { "content-type": "application/json" },
-    body: JSON.stringify({ name: NAME, style: $("#live-style").value || "farve" }),
+    body: JSON.stringify({ name: NAME, style: $("#live-style").value || "farve", background: $("#live-bg").value }),
   });
   const data = await res.json();
   if (data.error) { status.textContent = data.error; return; }
-  status.innerHTML = `<a href="${esc(data.pdf)}">Hent PDF</a>`;
+  status.innerHTML = `<a href="${esc(data.pdf)}">Hent PDF</a>`
+    + (data.warnings?.length ? ` <span class="bad">Advarsel: ${data.warnings.length} kort har tekst uden for rammen (klippes i PDF'en): ${esc(data.warnings.join("; "))}</span>` : "");
 }
 
 function wireCards() {
@@ -205,15 +238,47 @@ function wireCards() {
   $("#cards-pdf-btn").addEventListener("click", makeCardsPdf);
 }
 
+// Udseende og baggrund pr. fane-type: Kort-fanen har egne temaer (scripts/kort/) og egne valg; alle andre faner deler arkets.
+const isCardsPage = () => $(".tabs button.active")?.dataset.page === "cards";
+const bgParam = () => { const b = $("#live-bg")?.value; return b ? `&background=${encodeURIComponent(b)}` : ""; };
+let bgFiles = [];
+
+async function loadBackgrounds() {
+  try {
+    const res = await fetch("/api/builder/backgrounds");
+    bgFiles = (await res.json()).files || [];
+  } catch (e) { bgFiles = []; }
+  syncLiveControls();
+}
+
+// Fyld Udseende/Baggrund efter den aktive fane og gendan fanens sidst valgte værdi.
+function syncLiveControls() {
+  const live = $("#live-style"), main = $("#sheet-style"), bg = $("#live-bg");
+  if (!live || !main || !bg) return;
+  const cards = isCardsPage();
+  const read = (k, fallback) => { try { return localStorage.getItem(k) || fallback; } catch (e) { return fallback; } };
+  live.innerHTML = (cards ? $("#cards-style-options") : main).innerHTML;
+  live.value = read(cards ? "builder-cards-style" : "builder-live-style", "farve");
+  if (live.selectedIndex < 0) live.value = "farve";
+  if (!cards) main.value = live.value;
+  const wanted = read(cards ? "builder-cards-bg" : "builder-live-bg", "");
+  bg.innerHTML = `<option value="">Ingen</option>` + bgFiles.map((f) => `<option value="${esc(f)}">${esc(f)}</option>`).join("");
+  bg.value = bgFiles.includes(wanted) ? wanted : "";
+}
+
 function initLivePreview() {
-  const live = $("#live-style"), main = $("#sheet-style");
-  if (!live || !main) return;
-  live.innerHTML = main.innerHTML;
-  try { live.value = localStorage.getItem("builder-live-style") || "farve"; } catch (e) { /* ingen storage */ }
-  main.value = live.value;
+  const live = $("#live-style"), main = $("#sheet-style"), bg = $("#live-bg");
+  if (!live || !main || !bg) return;
+  syncLiveControls();
+  loadBackgrounds();
+  const store = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* ignorer */ } };
   live.addEventListener("change", () => {
-    main.value = live.value;
-    try { localStorage.setItem("builder-live-style", live.value); } catch (e) { /* ignorer */ }
+    if (isCardsPage()) store("builder-cards-style", live.value);
+    else { main.value = live.value; store("builder-live-style", live.value); }
+    refreshLivePreview();
+  });
+  bg.addEventListener("change", () => {
+    store(isCardsPage() ? "builder-cards-bg" : "builder-live-bg", bg.value);
     refreshLivePreview();
   });
   window.addEventListener("resize", fitLiveSheet);
@@ -916,7 +981,7 @@ async function loadPrintPage() {
   hideManualPrompt();
   setPrintBanner("Henter karakterarket...");
   const style = $("#sheet-style")?.value || "farve";
-  const res = await fetch(`/api/builder/sheet?name=${encodeURIComponent(NAME)}&style=${encodeURIComponent(style)}${dndMode ? "&edit=1" : ""}`);
+  const res = await fetch(`/api/builder/sheet?name=${encodeURIComponent(NAME)}&style=${encodeURIComponent(style)}${bgParam()}${dndMode ? "&edit=1" : ""}`);
   const data = await res.json();
   if (data.error) {
     setPrintBanner(data.error);
@@ -1002,15 +1067,14 @@ async function makePdf() {
   const style = $("#sheet-style")?.value || "farve";
   try {
     const res = await fetch("/api/builder/pdf", {
-      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: NAME, style }),
+      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: NAME, style, background: $("#live-bg").value }),
     });
     const data = await res.json();
     if (data.error) {
       status.textContent = data.error;
       return;
     }
-    status.textContent = "";
-    window.open(data.pdf, "_blank");
+    status.innerHTML = `<a href="${esc(data.pdf)}">Hent PDF</a>`;
   } finally {
     btn.disabled = false;
   }
@@ -1053,7 +1117,7 @@ async function sheetsLint(view) {
 async function sheetsPreview() {
   const text = sheetsEditor.state.doc.toString();
   const res = await fetch("/api/builder/sheets_preview", {
-    method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: NAME, yaml: text, style: $("#sheet-style")?.value || "farve", edit: dndMode }),
+    method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: NAME, yaml: text, style: $("#sheet-style")?.value || "farve", background: $("#live-bg").value, edit: dndMode }),
   });
   const data = await res.json();
   if (data.error) {
@@ -1160,6 +1224,7 @@ function wireEvents() {
     document.querySelectorAll(".tabs button[data-page]").forEach((b) => b.classList.toggle("active", b === btn));
     document.querySelectorAll(".page").forEach((p) => p.classList.toggle("active", p.id === `page-${btn.dataset.page}`));
     if (btn.dataset.page === "cards") fetchCards();
+    loadBackgrounds(); // gendanner også fanens udseende/baggrund og henter evt. nye filer
     refreshLivePreview();
   });
 

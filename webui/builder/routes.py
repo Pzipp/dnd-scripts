@@ -3,11 +3,12 @@ from __future__ import annotations
 import re
 import sys
 from pathlib import Path
+from urllib.parse import quote
 
 import yaml
-from flask import Blueprint, jsonify, render_template, request, send_from_directory
+from flask import Blueprint, jsonify, render_template, request, send_file, send_from_directory
 
-from . import character_yaml, descriptions, e5tools, kort, layout_edit, llm_client, model, render, settings
+from . import baggrund, character_yaml, descriptions, e5tools, kort, layout_edit, llm_client, model, render, settings
 from . import sheets as sheets_module
 
 bp = Blueprint("builder", __name__)
@@ -22,6 +23,43 @@ import lav_pdf  # noqa: E402
 import faelles  # noqa: E402
 
 PDF_STYLES = {"farve", *render.STYLE_FILES}
+# Kort: grundstilene plus tema-overlays (se scripts/kort/spellkort.py); tema -> grundstil.
+CARD_STYLES = {"farve": "farve", "sorthvid": "sorthvid", **{t: g for t, (g, _) in kort.spellkort.TEMAER.items()}}
+CARD_THEME_LABELS = {
+    "farve": "Farve (standard)", "skovland": "Skovland", "stormblaa": "Stormblå", "vinroed": "Vinrød",
+    "sorthvid": "Sort/hvid (standard)", "gravure": "Gravure", "herbarium": "Herbarium",
+}
+
+
+@bp.app_context_processor
+def _card_theme_options():
+    return {"card_themes": [(k, CARD_THEME_LABELS.get(k, k)) for k in CARD_STYLES]}
+
+
+def _med_baggrund(html: str, name: str | None, kind: str, pdf: bool = False) -> str:
+    """Læg den valgte baggrund (fra webui/static/baggrunde/) på HTML'en. Til PDF læses filen direkte (file://),
+    til forhåndsvisning hentes den fra /builder/background/. ValueError, hvis navnet ikke findes."""
+    url = None if pdf else f"/builder/background/{quote(name or '', safe='')}"
+    return baggrund.inject(html, baggrund.css(name, kind, url))
+
+
+@bp.get("/api/builder/backgrounds")
+def api_backgrounds():
+    return jsonify({"files": baggrund.files()})
+
+
+@bp.get("/builder/background/<name>")
+def builder_background(name: str):
+    try:
+        path = baggrund.resolve(name)
+    except ValueError:
+        return jsonify({"error": "Ukendt baggrund."}), 404
+    if path is None:
+        return jsonify({"error": "Ukendt baggrund."}), 404
+    resp = send_from_directory(baggrund.DIR, path.name, mimetype=baggrund.mimetype(path.name))
+    resp.headers["X-Content-Type-Options"] = "nosniff"
+    resp.headers["Cache-Control"] = "no-cache"
+    return resp
 
 
 def _character_dir(name: str) -> Path:
@@ -99,6 +137,7 @@ def api_sheet():
     stil = request.args.get("style", "farve")
     try:
         html = render.build(character, sheets, stil, edit=request.args.get("edit") == "1")
+        html = _med_baggrund(html, request.args.get("background"), "ark")
     except Exception as exc:  # et dataproblem i character.yaml/sheets.yaml
         return jsonify({"error": f"Fejl i arket: {type(exc).__name__}: {exc}"}), 400
     return jsonify({"html": html, "missing_descriptions": descriptions.missing_for(character)})
@@ -125,6 +164,7 @@ def api_pdf():
     sheets = sheets_module.load(character_dir)
     try:
         html = render.build(character, sheets, stil)
+        html = _med_baggrund(html, payload.get("background"), "ark", pdf=True)
     except Exception as exc:  # et dataproblem i character.yaml/sheets.yaml
         return jsonify({"error": f"Fejl i arket: {type(exc).__name__}: {exc}"}), 400
     out = character_dir / "udskrifter"
@@ -150,7 +190,7 @@ def builder_download(name: str, filename: str):
         character_dir = _character_dir(name)
     except ValueError:
         return jsonify({"error": "Ukendt karakter."}), 404
-    if filename not in {f"karakterark-{s}.pdf" for s in PDF_STYLES} | {f"kort-{s}.pdf" for s in faelles.STILE}:
+    if filename not in {f"karakterark-{s}.pdf" for s in PDF_STYLES} | {f"kort-{s}.pdf" for s in CARD_STYLES}:
         return jsonify({"error": "Ukendt fil."}), 404
     return send_from_directory(character_dir / "udskrifter", filename, as_attachment=True)
 
@@ -286,6 +326,7 @@ def api_sheets_preview():
     stil = payload.get("style", "farve")
     try:
         html = render.build(character, parsed, stil, edit=bool(payload.get("edit")))
+        html = _med_baggrund(html, payload.get("background"), "ark")
     except Exception as exc:  # et dataproblem i den (endnu ugemte) sheets-YAML
         return jsonify({"error": f"Fejl i arket: {type(exc).__name__}: {exc}"}), 400
     return jsonify({"html": html, "missing_descriptions": descriptions.missing_for(character)})
@@ -409,8 +450,11 @@ def api_set_settings():
 
 
 # ── Kort: spil-kort af 5etools-data (se kort.py) ──
-def _card_style(style: str) -> str:
-    return "sorthvid" if style == "sorthvid" else "farve"
+def _card_style(style: str) -> tuple[str, str | None]:
+    """Valgt stil -> (grundstil, tema). Tema er None for farve/sorthvid."""
+    if style not in CARD_STYLES:
+        raise ValueError("Ukendt stil.")
+    return CARD_STYLES[style], (None if style in ("farve", "sorthvid") else style)
 
 
 def _cards_context(name: str):
@@ -459,7 +503,9 @@ def api_cards_regenerate():
 def api_cards_preview():
     try:
         character_dir, _ = _cards_context(request.args.get("name", ""))
-        html = kort.build_html(character_dir, _card_style(request.args.get("style", "farve")))
+        grund, tema = _card_style(request.args.get("style", "farve"))
+        html = kort.build_html(character_dir, grund, tema)
+        html = _med_baggrund(html, request.args.get("background"), "kort")
     except ValueError as exc:
         return jsonify({"error": str(exc)}), 400
     except SystemExit as exc:  # faelles.fejl() fra kortgeneratoren
@@ -470,10 +516,12 @@ def api_cards_preview():
 @bp.post("/api/builder/cards/pdf")
 def api_cards_pdf():
     payload = request.get_json(silent=True) or {}
-    stil = _card_style(payload.get("style", "farve"))
+    stil = payload.get("style", "farve")
     try:
+        grund, tema = _card_style(stil)
         character_dir, _ = _cards_context(payload.get("name", ""))
-        html = kort.build_html(character_dir, stil)
+        html = kort.build_html(character_dir, grund, tema)
+        html = _med_baggrund(html, payload.get("background"), "kort", pdf=True)
     except ValueError as exc:
         return jsonify({"error": str(exc)}), 400
     out = character_dir / "udskrifter"
@@ -481,10 +529,17 @@ def api_cards_pdf():
     html_path, pdf_path = out / f"kort-{stil}.html", out / f"kort-{stil}.pdf"
     html_path.write_text(html, encoding="utf-8")
     try:
-        lav_pdf.lav_pdf([(str(html_path), str(pdf_path))])
+        maal = lav_pdf.lav_pdf([(str(html_path), str(pdf_path))])
     except SystemExit as exc:
         return jsonify({"error": str(exc.code)}), 500
-    return jsonify({"pdf": f"/builder/download/{payload.get('name', '')}/{pdf_path.name}"})
+    return jsonify({"pdf": f"/builder/download/{payload.get('name', '')}/{pdf_path.name}",
+                    "warnings": lav_pdf.tekst_uden_for(maal)})
+
+
+@bp.get("/builder/kort-maal.js")
+def kort_maal_js():
+    """Målingen af tekst uden for kortets ramme; samme fil som lav_pdf.py bruger."""
+    return send_file(lav_pdf.MAAL_JS, mimetype="text/javascript", max_age=0)
 
 
 # ── Træk og slip af bokse i sheets.yaml (se layout_edit.py) ──

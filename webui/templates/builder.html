@@ -117,7 +117,11 @@
     <label>Udseende
       <select id="live-style"></select>
     </label>
+    <label>Baggrund
+      <select id="live-bg"><option value="">Ingen</option></select>
+    </label>
   </div>
+  <div class="missing-banner" id="live-warn" style="display:none"></div>
   <div class="live-frame" id="live-frame">
     <iframe id="sheet-output" title="Karakterark"></iframe>
     <div class="live-msg" id="live-msg"></div>
@@ -135,6 +139,13 @@
     </div>
   </div>
 </div>
+
+<!-- Udseende-valg til Kort-fanen (grundstile + tema-overlays fra scripts/kort/); JS bytter live-style til dem på den fane. -->
+<select id="cards-style-options" hidden>
+{%- for key, label in card_themes %}
+  <option value="{{ key }}">{{ label }}</option>
+{%- endfor %}
+</select>
 
 <script>
   window.BUILDER_NAME = {{ name|tojson }};

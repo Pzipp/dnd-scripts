@@ -93,9 +93,16 @@ Fanen **Kort** i builderen laver spil-kort (63 × 88 mm, 9 pr. A4) ud fra 5etool
 * Spells udledes af 5etools' strukturerede felter: grad, skole, tid, afstand, varighed, komponenter, koncentration, ritual, angreb/redningskast, skade og skala (cantrip-skala eller spell slot-skala). Teksten er dansk, hvis `descriptions`/`bibliotek/_cards.yaml` har den; ellers den engelske regeltekst fra 5etools, forkortet til kortets plads.
 * Findes et håndlavet kort med samme navn i `bibliotek/`, bruges det uændret (mærket "bibliotek").
 * Valget gemmes i karakterens `kort.yaml` (`titel`, `kort`, `egne`), samme format som i det gamle system. `egne` bevares, så en håndrettelse ikke overskrives; **Byg om** bygger ét kort forfra fra 5etools. `python3 dnd.py kort <navn>` virker dermed også på byggerens karakterer.
+* **Tekst uden for rammen:** efter hver gengivelse og når skrifttyperne er indlæst (`document.fonts.ready`) måler forhåndsvisningen alle kort (`scripts/kort/maal_overflow.js`, serveret som `/builder/kort-maal.js`). Overfyldte kort får rød ramme og en rød bjælke med navnet, og over forhåndsvisningen står "N kort har tekst uden for rammen: ...". Samme måling kører i PDF-generering; svaret fra `/api/builder/cards/pdf` har `warnings` (liste af tekster), som vises ved siden af linket **Hent PDF**. PDF'en laves stadig.
 * **Lav PDF** gemmer `kort-farve.pdf` eller `kort-sorthvid.pdf` i karakterens `udskrifter/`.
 
 Kode: `builder/kort.py` (udledning, valg, bunke) og `/api/builder/cards*` i `builder/routes.py`.
+
+## Udseende, baggrund og PDF (Ark- og Kort-fanen)
+
+* **Udseende** (øverst over forhåndsvisningen) vælger tema. På Kort-fanen er listen kortenes egne temaer (`farve`, `sorthvid` og de fem `stil-*.css`-overlays, se [scripts/kort/README.md](../scripts/kort/README.md)); på de andre faner arkets temaer. Valget huskes pr. fane-type i browseren, og samme tema bruges i PDF'en.
+* **Baggrund** vælger et billede fra `webui/static/baggrunde/` (png/jpg/webp; se README dér). Mappen listes dynamisk (`/api/builder/backgrounds`), så nye filer dukker op efter genindlæsning uden kodeændring. "Ingen" er standard. Billedet hentes fra `/builder/background/<fil>`, som kun udleverer filer, der står i listen (ingen sti-traversal). Til PDF læser Chromium filen direkte. Kode: `builder/baggrund.py`.
+* **Lav PDF** (Ark og Kort) viser et link, **Hent PDF**, i stedet for selv at åbne en download.
 
 ## Træk og slip af bokse (Ark-fanen)
 
