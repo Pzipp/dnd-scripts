@@ -6,7 +6,7 @@ from pathlib import Path
 from urllib.parse import quote
 
 import yaml
-from flask import Blueprint, jsonify, render_template, request, send_file, send_from_directory
+from flask import Blueprint, jsonify, redirect, render_template, request, send_file, send_from_directory
 
 from . import baggrund, character_yaml, descriptions, e5tools, kort, layout_edit, llm_client, model, render, settings
 from . import sheets as sheets_module
@@ -85,9 +85,31 @@ def _builder_characters() -> list[str]:
     )
 
 
+def _sheet_only(character_dir: Path) -> bool:
+    """Karakter med character.yaml men uden choices.yaml: filen er skrevet i hånden eller af en LLM (se docs/character-yaml.md).
+    Den er den primære fil, så alt, der gemmer choices.yaml (og dermed overskriver character.yaml), er spærret."""
+    return character_yaml.character_path(character_dir).is_file() and not model.choices_path(character_dir).is_file()
+
+
+def _sheet_only_characters() -> list[str]:
+    if not CHARACTERS.is_dir():
+        return []
+    return sorted(
+        p.name for p in CHARACTERS.iterdir()
+        if p.is_dir() and not p.name.startswith(("_", ".")) and NAME_OK.match(p.name) and _sheet_only(p)
+    )
+
+
+def _reject_sheet_only(character_dir: Path):
+    """None, eller et (svar, status), hvis karakteren kun har character.yaml (byggeren må ikke gemme valg for den)."""
+    if _sheet_only(character_dir):
+        return jsonify({"error": "Karakteren har kun character.yaml (ingen choices.yaml). Byggerens valg kan ikke gemmes uden at overskrive den; ret filen direkte."}), 409
+    return None
+
+
 @bp.get("/builder")
 def builder_index():
-    return render_template("builder_index.html", characters=_builder_characters())
+    return render_template("builder_index.html", characters=_builder_characters(), sheet_only=_sheet_only_characters())
 
 
 @bp.post("/api/builder/create")
@@ -98,6 +120,9 @@ def api_create():
         character_dir = _character_dir(name)
     except ValueError as exc:
         return jsonify({"error": str(exc)}), 400
+    rejected = _reject_sheet_only(character_dir)
+    if rejected:
+        return rejected
     character_dir.mkdir(parents=True, exist_ok=True)
     path = model.choices_path(character_dir)
     if not path.is_file():
@@ -105,19 +130,30 @@ def api_create():
     return jsonify({"name": name})
 
 
+def _is_sheet_only_name(name: str) -> bool:
+    try:
+        return _sheet_only(_character_dir(name))
+    except ValueError:
+        return False
+
+
 @bp.get("/builder/<name>")
 def builder_character(name: str):
-    return render_template("builder.html", name=name, page="character")
+    if _is_sheet_only_name(name):  # Karakter- og Udstyr-fanen kræver choices.yaml
+        return redirect(f"/builder/{name}/print")
+    return render_template("builder.html", name=name, page="character", sheet_only=False)
 
 
 @bp.get("/builder/<name>/equipment")
 def builder_equipment(name: str):
-    return render_template("builder.html", name=name, page="equipment")
+    if _is_sheet_only_name(name):
+        return redirect(f"/builder/{name}/print")
+    return render_template("builder.html", name=name, page="equipment", sheet_only=False)
 
 
 @bp.get("/builder/<name>/print")
 def builder_print(name: str):
-    return render_template("builder.html", name=name, page="print")
+    return render_template("builder.html", name=name, page="print", sheet_only=_is_sheet_only_name(name))
 
 
 # ── Print: character.yaml + sheets.yaml -> HTML via den native render.py ──
@@ -181,7 +217,7 @@ def api_pdf():
 
 @bp.get("/builder/<name>/cards")
 def builder_cards(name: str):
-    return render_template("builder.html", name=name, page="cards")
+    return render_template("builder.html", name=name, page="cards", sheet_only=_is_sheet_only_name(name))
 
 
 @bp.get("/builder/download/<name>/<filename>")
@@ -264,8 +300,9 @@ def api_sheets_yaml_get():
         return jsonify({"error": str(exc)}), 400
     if not character_dir.is_dir():
         return jsonify({"error": "Ukendt karakter."}), 404
-    sheets_module.ensure_exists(character_dir)
-    return jsonify({"yaml": sheets_module.sheets_path(character_dir).read_text(encoding="utf-8")})
+    # Uden sheets.yaml vises standarden (skabelonen) uden at skrive filen; den oprettes først, når man gemmer eller flytter en boks.
+    path = sheets_module.sheets_path(character_dir)
+    return jsonify({"yaml": (path if path.is_file() else sheets_module.TEMPLATE_PATH).read_text(encoding="utf-8")})
 
 
 @bp.post("/api/builder/sheets_yaml")
@@ -359,6 +396,9 @@ def api_answer():
         return jsonify({"error": "Ukendt karakter."}), 404
     if not isinstance(fields, dict) or not fields:
         return jsonify({"error": "Mangler fields."}), 400
+    rejected = _reject_sheet_only(character_dir)
+    if rejected:
+        return rejected
     data = model.load(character_dir)
     try:
         result = model.set_fields(data, fields, confirmed)
@@ -379,6 +419,9 @@ def api_class_add():
         return jsonify({"error": str(exc)}), 400
     if not character_dir.is_dir():
         return jsonify({"error": "Ukendt karakter."}), 404
+    rejected = _reject_sheet_only(character_dir)
+    if rejected:
+        return rejected
     data = model.load(character_dir)
     model.add_class(data)
     _save_choices(character_dir, data)
@@ -397,6 +440,9 @@ def api_class_remove():
     class_id = payload.get("class_id", "")
     if not class_id:
         return jsonify({"error": "Mangler class_id."}), 400
+    rejected = _reject_sheet_only(character_dir)
+    if rejected:
+        return rejected
     data = model.load(character_dir)
     model.remove_class(data, class_id)
     _save_choices(character_dir, data)
@@ -406,6 +452,8 @@ def api_class_remove():
 # ── Indstillinger: hvilke 5etools-kilder og husregler gælder for DENNE karakter ──
 @bp.get("/builder/<name>/settings")
 def builder_settings(name: str):
+    if _is_sheet_only_name(name):  # indstillingerne gemmes i choices.yaml
+        return redirect(f"/builder/{name}/print")
     return render_template("builder_settings.html", name=name)
 
 
@@ -443,6 +491,9 @@ def api_set_settings():
     allowed = payload.get("allowed")
     if not isinstance(allowed, list) or not allowed:
         return jsonify({"error": "Vælg mindst én kilde."}), 400
+    rejected = _reject_sheet_only(character_dir)
+    if rejected:
+        return rejected
     data = model.load(character_dir)
     data["settings"] = {"allowed_sources": sorted(allowed), "race_ability": bool(payload.get("race_ability", False))}
     _save_choices(character_dir, data)

@@ -38,6 +38,19 @@
     <p>Ingen karakterer er i gang endnu.</p>
     {% endif %}
   </section>
+  <section class="step">
+    <h2>Kun ark</h2>
+    <p style="font-size:.9rem">Karakterer med kun <code>character.yaml</code> (skrevet i hånden eller af en LLM, ingen <code>choices.yaml</code>). De åbner på Ark-fanen; Karakter- og Udstyr-fanen kræver <code>choices.yaml</code>.</p>
+    {% if sheet_only %}
+    <ul class="feature-list">
+      {% for c in sheet_only %}
+      <li><a href="/builder/{{ c }}/print">{{ c }}</a></li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p>Ingen karakterer med kun character.yaml.</p>
+    {% endif %}
+  </section>
 </main>
 <script>
 document.getElementById("create-btn").addEventListener("click", async () => {

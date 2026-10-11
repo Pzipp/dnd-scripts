@@ -23,6 +23,7 @@ const sectionMissing = (prefix) => (state?.missing || []).some((m) => m.startsWi
 const cls = (bad) => (bad ? "invalid" : "");
 
 async function fetchState() {
+  if (window.BUILDER_SHEET_ONLY) { refreshLivePreview(); return; } // kun character.yaml: ingen choices.yaml at hente
   const res = await fetch(`/api/builder/state?name=${encodeURIComponent(NAME)}`);
   state = await res.json();
   if (state.error) { alert(state.error); return; }

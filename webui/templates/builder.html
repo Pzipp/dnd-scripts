@@ -36,12 +36,18 @@
     <span id="total-level"></span>
     <span>{{ name }}</span>
     <span class="status" id="save-status"></span>
+    {%- if sheet_only %}
+    <span title="Kun character.yaml (ingen choices.yaml): filen redigeres direkte, ikke i byggeren">Kun ark</span>
+    {%- else %}
     <a class="gear" href="/builder/{{ name }}/settings" title="Indstillinger" aria-label="Indstillinger">&#9881;</a>
+    {%- endif %}
   </div>
 </header>
 <nav class="tabs">
+  {%- if not sheet_only %}
   <button type="button" data-page="character" class="{{ 'active' if page == 'character' else '' }}">Karakter</button>
   <button type="button" data-page="equipment" class="{{ 'active' if page == 'equipment' else '' }}">Udstyr</button>
+  {%- endif %}
   <button type="button" data-page="cards" class="{{ 'active' if page == 'cards' else '' }}">Kort</button>
   <button type="button" data-page="print" class="{{ 'active' if page == 'print' else '' }}">Ark</button>
 </nav>
@@ -149,6 +155,7 @@
 
 <script>
   window.BUILDER_NAME = {{ name|tojson }};
+  window.BUILDER_SHEET_ONLY = {{ 'true' if sheet_only else 'false' }};
 </script>
 <script type="module" src="{{ url_for('static', filename='builder.js') }}"></script>
 </body>
