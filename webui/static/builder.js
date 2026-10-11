@@ -56,7 +56,9 @@ function setSheetHtml(html) {
 function refreshLivePreview() {
   clearTimeout(liveTimer);
   liveTimer = setTimeout(() => {
-    if ($(".tabs button.active")?.dataset.page !== "print") return loadLivePreview();
+    const page = $(".tabs button.active")?.dataset.page;
+    if (page === "cards") return loadCardsPreview();
+    if (page !== "print") return loadLivePreview();
     const editor = $("#sheets-editor");
     if (sheetsEditor && editor && editor.style.display !== "none") sheetsPreview();
     else loadPrintPage();
@@ -85,6 +87,122 @@ async function loadLivePreview() {
   } finally {
     if (seq === liveSeq) frame.classList.remove("loading");
   }
+}
+
+// ── Kort-fanen ────────────────────────────────────────────────────────
+let cardsData = null;
+const cardsKey = "builder-cards-open";
+
+async function fetchCards() {
+  const res = await fetch(`/api/builder/cards?name=${encodeURIComponent(NAME)}`);
+  cardsData = await res.json();
+  renderCards();
+}
+
+function renderCards() {
+  const banner = $("#cards-banner"), list = $("#cards-list");
+  if (cardsData.error) {
+    banner.textContent = cardsData.error;
+    banner.style.display = "";
+    list.innerHTML = "";
+    return;
+  }
+  banner.style.display = "none";
+  const selected = new Set(cardsData.selected);
+  const groups = {};
+  for (const c of cardsData.candidates) (groups[c.group] ||= []).push(c);
+  const order = ["Spells", "Feats", "Klasseevner", "Art-træk"];
+  list.innerHTML = order.filter((g) => groups[g]).map((g) => {
+    const items = groups[g].slice();
+    if (g === "Spells") items.sort((a, b) => (a.level ?? 0) - (b.level ?? 0) || a.name.localeCompare(b.name));
+    const picked = items.filter((c) => selected.has(c.id)).length;
+    const rows = items.map((c) => `
+      <label class="card-row">
+        <input type="checkbox" data-card="${esc(c.id)}" ${selected.has(c.id) ? "checked" : ""}>
+        <span class="cn">${esc(c.name)}${c.name_da && c.name_da !== c.name ? ` <small>${esc(c.name_da)}</small>` : ""}</span>
+        ${c.level != null ? `<span class="tag">${c.level === 0 ? "Cantrip" : `Level ${c.level}`}</span>` : ""}
+        ${c.curated ? `<span class="tag curated" title="Håndlavet kort i bibliotek/">bibliotek</span>` : ""}
+        ${selected.has(c.id) && !c.curated ? `<button type="button" class="btn secondary regen" data-regen="${esc(c.id)}" title="Byg kortet om fra 5etools (overskriver rettelser i kort.yaml)">Byg om</button>` : ""}
+      </label>`).join("");
+    return `<details class="step cards-group" data-group="${esc(g)}" ${openGroups().has(g) ? "open" : ""}>
+      <summary>${esc(g)}<span class="count">${picked}/${items.length}</span></summary>
+      <div class="step-body">${rows}</div></details>`;
+  }).join("");
+}
+
+function openGroups() {
+  try { return new Set(JSON.parse(localStorage.getItem(cardsKey) || '["Spells"]')); } catch (e) { return new Set(["Spells"]); }
+}
+
+async function selectCards(ids) {
+  $("#cards-status").textContent = "Gemmer...";
+  const res = await fetch("/api/builder/cards/select", {
+    method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: NAME, ids }),
+  });
+  const data = await res.json();
+  if (data.error) { $("#cards-status").textContent = data.error; return; }
+  cardsData.selected = data.selected;
+  $("#cards-status").textContent = `${data.selected.length} kort valgt.`;
+  renderCards();
+  refreshLivePreview();
+}
+
+async function loadCardsPreview() {
+  const frame = $("#live-frame"), msg = $("#live-msg");
+  const seq = ++liveSeq;
+  frame.classList.add("loading");
+  fitLiveSheet();
+  try {
+    const style = $("#live-style").value || "farve";
+    const res = await fetch(`/api/builder/cards/preview?name=${encodeURIComponent(NAME)}&style=${encodeURIComponent(style)}`);
+    const data = await res.json();
+    if (seq !== liveSeq) return;
+    if (data.error) { msg.textContent = data.error; msg.classList.add("show"); return; }
+    msg.classList.remove("show");
+    setSheetHtml(data.html);
+  } catch (e) {
+    if (seq === liveSeq) { msg.textContent = "Kunne ikke hente kortene."; msg.classList.add("show"); }
+  } finally {
+    if (seq === liveSeq) frame.classList.remove("loading");
+  }
+}
+
+async function makeCardsPdf() {
+  const status = $("#cards-status");
+  status.textContent = "Laver PDF...";
+  const res = await fetch("/api/builder/cards/pdf", {
+    method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ name: NAME, style: $("#live-style").value || "farve" }),
+  });
+  const data = await res.json();
+  if (data.error) { status.textContent = data.error; return; }
+  status.innerHTML = `<a href="${esc(data.pdf)}">Hent PDF</a>`;
+}
+
+function wireCards() {
+  $("#cards-list").addEventListener("change", (e) => {
+    const box = e.target.closest("input[data-card]");
+    if (!box) return;
+    const now = new Set(cardsData.selected);
+    if (box.checked) now.add(box.dataset.card); else now.delete(box.dataset.card);
+    selectCards([...now]);
+  });
+  $("#cards-list").addEventListener("click", async (e) => {
+    const btn = e.target.closest("[data-regen]");
+    if (!btn) return;
+    e.preventDefault();
+    await fetch("/api/builder/cards/regenerate", {
+      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: NAME, id: btn.dataset.regen }),
+    });
+    refreshLivePreview();
+  });
+  $("#cards-list").addEventListener("toggle", (e) => {
+    const open = [...document.querySelectorAll("#cards-list details[open]")].map((d) => d.dataset.group);
+    try { localStorage.setItem(cardsKey, JSON.stringify(open)); } catch (err) { /* ignorer */ }
+  }, true);
+  $("#cards-all-btn").addEventListener("click", () => selectCards(cardsData.candidates.map((c) => c.id)));
+  $("#cards-none-btn").addEventListener("click", () => selectCards([]));
+  $("#cards-pdf-btn").addEventListener("click", makeCardsPdf);
 }
 
 function initLivePreview() {
@@ -1000,6 +1118,7 @@ function wireEvents() {
     if (!btn) return;
     document.querySelectorAll(".tabs button[data-page]").forEach((b) => b.classList.toggle("active", b === btn));
     document.querySelectorAll(".page").forEach((p) => p.classList.toggle("active", p.id === `page-${btn.dataset.page}`));
+    if (btn.dataset.page === "cards") fetchCards();
     refreshLivePreview();
   });
 
@@ -1097,6 +1216,8 @@ function getPath(obj, path) {
 
 $("#missing-banner").addEventListener("toggle", (e) => { missingListOpen = e.target.open; }, true);
 wireEvents();
+wireCards();
 initLivePreview();
+if ($(".tabs button.active")?.dataset.page === "cards") fetchCards();
 fetchState();
 

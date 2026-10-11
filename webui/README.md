@@ -84,3 +84,15 @@ det printbare karakterark direkte, i stedet for den manuelle
 hvad der er bedt om, og [docs/choices-yaml.md](../docs/choices-yaml.md)
 for formatet den skal læse. Dette afsnit skrives om til en rigtig
 beskrivelse, når featuren er bygget.
+
+## Kort-fanen (kortbygger)
+
+Fanen **Kort** i builderen laver spil-kort (63 × 88 mm, 9 pr. A4) ud fra 5etools-data. Den bruger samme kortformat og samme generator som det gamle system (`scripts/kort/spellkort.py`, format: [docs/kort-yaml.md](../docs/kort-yaml.md)), så kortene kan printes i begge stile.
+
+* Listen viser alt karakteren har: spells, feats, klasseevner og art-træk. Et flueben lægger kortet i bunken, og kortene vises straks i arket til højre.
+* Spells udledes af 5etools' strukturerede felter: grad, skole, tid, afstand, varighed, komponenter, koncentration, ritual, angreb/redningskast, skade og skala (cantrip-skala eller spell slot-skala). Teksten er dansk, hvis `descriptions`/`bibliotek/_cards.yaml` har den; ellers den engelske regeltekst fra 5etools, forkortet til kortets plads.
+* Findes et håndlavet kort med samme navn i `bibliotek/`, bruges det uændret (mærket "bibliotek").
+* Valget gemmes i karakterens `kort.yaml` (`titel`, `kort`, `egne`), samme format som i det gamle system. `egne` bevares, så en håndrettelse ikke overskrives; **Byg om** bygger ét kort forfra fra 5etools. `python3 dnd.py kort <navn>` virker dermed også på byggerens karakterer.
+* **Lav PDF** gemmer `kort-farve.pdf` eller `kort-sorthvid.pdf` i karakterens `udskrifter/`.
+
+Kode: `builder/kort.py` (udledning, valg, bunke) og `/api/builder/cards*` i `builder/routes.py`.

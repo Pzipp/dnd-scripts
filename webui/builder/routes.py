@@ -7,7 +7,7 @@ from pathlib import Path
 import yaml
 from flask import Blueprint, jsonify, render_template, request, send_from_directory
 
-from . import character_yaml, descriptions, e5tools, llm_client, model, render, settings
+from . import character_yaml, descriptions, e5tools, kort, llm_client, model, render, settings
 from . import sheets as sheets_module
 
 bp = Blueprint("builder", __name__)
@@ -19,6 +19,7 @@ NAME_OK = re.compile(r"^[a-z0-9-]+$")
 # Samme PDF-generator som det gamle system (scripts/pdf/), genbrugt uændret.
 sys.path.insert(0, str(ROOT / "scripts" / "pdf"))
 import lav_pdf  # noqa: E402
+import faelles  # noqa: E402
 
 PDF_STYLES = {"farve", *render.STYLE_FILES}
 
@@ -138,13 +139,18 @@ def api_pdf():
     return jsonify({"pdf": f"/builder/download/{payload.get('name', '')}/{pdf_path.name}"})
 
 
+@bp.get("/builder/<name>/cards")
+def builder_cards(name: str):
+    return render_template("builder.html", name=name, page="cards")
+
+
 @bp.get("/builder/download/<name>/<filename>")
 def builder_download(name: str, filename: str):
     try:
         character_dir = _character_dir(name)
     except ValueError:
         return jsonify({"error": "Ukendt karakter."}), 404
-    if filename not in {f"karakterark-{s}.pdf" for s in PDF_STYLES}:
+    if filename not in {f"karakterark-{s}.pdf" for s in PDF_STYLES} | {f"kort-{s}.pdf" for s in faelles.STILE}:
         return jsonify({"error": "Ukendt fil."}), 404
     return send_from_directory(character_dir / "udskrifter", filename, as_attachment=True)
 
@@ -400,3 +406,82 @@ def api_set_settings():
     data["settings"] = {"allowed_sources": sorted(allowed), "race_ability": bool(payload.get("race_ability", False))}
     _save_choices(character_dir, data)
     return jsonify({"allowed": data["settings"]["allowed_sources"], "race_ability": data["settings"]["race_ability"]})
+
+
+# ── Kort: spil-kort af 5etools-data (se kort.py) ──
+def _card_style(style: str) -> str:
+    return "sorthvid" if style == "sorthvid" else "farve"
+
+
+def _cards_context(name: str):
+    character_dir = _character_dir(name)
+    if not character_dir.is_dir():
+        raise ValueError("Ukendt karakter.")
+    if not character_yaml.character_path(character_dir).is_file():
+        raise ValueError("Ingen character.yaml endnu - gem noget på Karakter-fanen først.")
+    return character_dir, character_yaml.load(character_dir)
+
+
+@bp.get("/api/builder/cards")
+def api_cards():
+    try:
+        character_dir, character = _cards_context(request.args.get("name", ""))
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    deck = kort.load_deck(character_dir)
+    cands = [{k: v for k, v in c.items() if k != "entry"} for c in kort.candidates(character)]
+    return jsonify({"candidates": cands, "selected": deck["kort"], "title": deck["titel"]})
+
+
+@bp.post("/api/builder/cards/select")
+def api_cards_select():
+    payload = request.get_json(silent=True) or {}
+    try:
+        character_dir, character = _cards_context(payload.get("name", ""))
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    deck = kort.save_selection(character_dir, character, [str(i) for i in payload.get("ids", [])])
+    return jsonify({"selected": deck["kort"]})
+
+
+@bp.post("/api/builder/cards/regenerate")
+def api_cards_regenerate():
+    payload = request.get_json(silent=True) or {}
+    try:
+        character_dir, character = _cards_context(payload.get("name", ""))
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    kort.regenerate(character_dir, character, str(payload.get("id", "")))
+    return jsonify({"ok": True})
+
+
+@bp.get("/api/builder/cards/preview")
+def api_cards_preview():
+    try:
+        character_dir, _ = _cards_context(request.args.get("name", ""))
+        html = kort.build_html(character_dir, _card_style(request.args.get("style", "farve")))
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    except SystemExit as exc:  # faelles.fejl() fra kortgeneratoren
+        return jsonify({"error": str(exc.code)}), 400
+    return jsonify({"html": html})
+
+
+@bp.post("/api/builder/cards/pdf")
+def api_cards_pdf():
+    payload = request.get_json(silent=True) or {}
+    stil = _card_style(payload.get("style", "farve"))
+    try:
+        character_dir, _ = _cards_context(payload.get("name", ""))
+        html = kort.build_html(character_dir, stil)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    out = character_dir / "udskrifter"
+    out.mkdir(exist_ok=True)
+    html_path, pdf_path = out / f"kort-{stil}.html", out / f"kort-{stil}.pdf"
+    html_path.write_text(html, encoding="utf-8")
+    try:
+        lav_pdf.lav_pdf([(str(html_path), str(pdf_path))])
+    except SystemExit as exc:
+        return jsonify({"error": str(exc.code)}), 500
+    return jsonify({"pdf": f"/builder/download/{payload.get('name', '')}/{pdf_path.name}"})
