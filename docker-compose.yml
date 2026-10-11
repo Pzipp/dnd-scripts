@@ -7,7 +7,7 @@
 name: dnd
 
 services:
-  # Opdaterer /srv/e5tools (git-klonen bag 5etools) ved container-start, kun
+  # Opdaterer /srv/dnd5etools (git-klonen bag 5etools) ved container-start, kun
   # hvis UPDATE_E5TOOLS=true er sat i .env. Kører én gang og stopper -
   # dnd-webui venter på den (se depends_on), men den fejler aldrig hårdt
   # (se update-e5tools.sh), så en manglende opdatering blokerer ikke siden.
@@ -20,7 +20,7 @@ services:
     environment:
       - UPDATE_E5TOOLS=${UPDATE_E5TOOLS:-false}
     volumes:
-      - /srv/e5tools:/e5tools
+      - /srv/dnd5etools:/e5tools
       - ./update-e5tools.sh:/update-e5tools.sh:ro
     logging:
       driver: json-file
@@ -44,8 +44,8 @@ services:
 
     volumes:
       - .:/app
-      # 5etools-data (JSON-regelbøger), read-only - se /srv/e5tools
-      - /srv/e5tools:/e5tools:ro
+      # 5etools-data (JSON-regelbøger), read-only - se /srv/dnd5etools
+      - /srv/dnd5etools:/e5tools:ro
       # Homebrew lægges her (gitignoreret vol/, redigerbar) og mountes OVEN PÅ
       # /e5tools/homebrew, så gruppens eget indhold ikke ryger ved en opdatering
       # eller oprydning af e5tools-klonen, og ikke skal ind i det delte repo.

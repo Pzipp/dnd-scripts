@@ -29,7 +29,7 @@ from pathlib import Path
 import yaml
 
 ROOT = Path(__file__).resolve().parent.parent.parent
-KILDE = Path(os.environ.get("E5TOOLS_DATA", "/srv/e5tools/data")) / "feats.json"
+KILDE = Path(os.environ.get("E5TOOLS_DATA", "/srv/dnd5etools/data")) / "feats.json"
 UD = ROOT / "data" / "feats-XPHB-da.yaml"
 SOURCE = "XPHB"
 

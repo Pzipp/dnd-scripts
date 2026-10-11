@@ -418,7 +418,7 @@ def class_spells(class_names: str | set[str], sources: set[str], max_level: int 
 
 def _matches_spell_attack(spell: dict, wanted: set[str]) -> bool:
     """5etools' "Spell Attack"-filter (M/R/O - Melee/Ranged/Other-Unknown, se
-    js/filter-spells.js i /srv/e5tools). spellAttack-feltet sættes kun til
+    js/filter-spells.js i /srv/dnd5etools). spellAttack-feltet sættes kun til
     "M" og/eller "R" (automatisk udledt af spell-teksten ved data-generering,
     se converterutils-spell.js) - "O" findes ikke som en faktisk værdi, det
     er UI'ets bagkat for "intet attack-kast" (feltet tomt/mangler)."""

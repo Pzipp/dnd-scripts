@@ -79,7 +79,7 @@ for effekt-udtræks-designet.
 
 Brugt i dag (se [character-yaml.md](character-yaml.md#foundry-data)): effekter (HP, initiativ, fart, sanser,
 resistenser, AC-bonus), `resources`, `class_numbers`, `activations`, `modifiers`. Resten ligger klar i
-`/srv/e5tools/data` (`foundry-feats.json`, `foundry-races.json`, `foundry-optionalfeatures.json`,
+`/srv/dnd5etools/data` (`foundry-feats.json`, `foundry-races.json`, `foundry-optionalfeatures.json`,
 `class/foundry.json`, `foundry-items.json`):
 
 - **`entryData`** på class-/subclass-features (30 stk.): `expertise` (erstatter navnematch i
