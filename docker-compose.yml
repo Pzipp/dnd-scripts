@@ -11,9 +11,9 @@ services:
   # hvis UPDATE_E5TOOLS=true er sat i .env. Kører én gang og stopper -
   # dnd-webui venter på den (se depends_on), men den fejler aldrig hårdt
   # (se update-e5tools.sh), så en manglende opdatering blokerer ikke siden.
-  e5tools-updater:
+  5etools-updater:
     image: alpine/git
-    container_name: e5tools-updater
+    container_name: 5etools-updater
     entrypoint: ["sh", "/update-e5tools.sh"]
     restart: "no"
     user: "${DND_UID:-1000}:${DND_GID:-1000}"
@@ -28,12 +28,12 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  dnd-webui:
+  dnd-webui-dev:
     build: ../dnd-scripts-dev
-    container_name: dnd-webui
+    container_name: dnd-webui-dev
     restart: unless-stopped
     depends_on:
-      e5tools-updater:
+      5etools-updater:
         condition: service_completed_successfully
 
     # Samme UID/GID som ejeren af dnd-scripts-dev/-mappen, så genererede filer ejes af sebastian.
@@ -65,7 +65,7 @@ services:
 
     labels:
       - "homelab.stack=games"
-      - "homelab.service=dnd-webui"
+      - "homelab.service=dnd-webui-dev"
 
     logging:
       driver: json-file
