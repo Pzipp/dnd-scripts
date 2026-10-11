@@ -313,7 +313,7 @@ function renderSpellcasting(k, base) {
   const grants = (sc.grants || []).length
     ? `<div class="sub-choice"><span>Altid forberedt / kendt (tæller ikke med)</span><div class="ftext">${sc.grants.map((g) => esc(g.name)).join(", ")}</div></div>`
     : "";
-  const picks = sc.picks.map((p) => renderSpellPick(`${base}.choices.${p.id}`, p)).join("");
+  const picks = sc.picks.map((p) => renderSpellPick(`${base}.choices.${p.id}`, p, takenElsewhere(k, p))).join("");
   return `<div class="sub-choice spellcasting"><span>Spells</span>${info}${picks}${grants}</div>`;
 }
 
@@ -321,10 +321,23 @@ function renderSpellcasting(k, base) {
 function renderOptionalFeatures(k, base) {
   const picks = k.optional_features || [];
   if (!picks.length) return "";
-  return picks.map((p) => renderSpellPick(`${base}.choices.${p.id}`, p) + (p.feat_slots || []).map(renderFeatSlot).join("")).join("");
+  return picks.map((p) => renderSpellPick(`${base}.choices.${p.id}`, p, takenElsewhere(k, p)) + (p.feat_slots || []).map(renderFeatSlot).join("")).join("");
 }
 
-function renderSpellPick(path, p) {
+// Spells, der allerede er valgt et andet sted hos samme klasse (cantrips, spellbog, ekstra spells, spells fra
+// features), og derfor står grå her. "Forberedte" er undtaget: de vælges netop blandt spellbogens spells.
+function takenElsewhere(k, pick) {
+  const all = [...(k.spellcasting?.picks || []), ...(k.optional_features || []).filter((p) => p.kind === "feature_spell")];
+  const taken = new Set();
+  if (pick.kind === "prepared") return taken;
+  all.forEach((p) => {
+    if (p === pick || p.kind === "prepared" || p.kind === "variant" || p.kind === "optional") return;
+    (p.chosen || []).forEach((n) => taken.add(n));
+  });
+  return taken;
+}
+
+function renderSpellPick(path, p, taken = new Set()) {
   if (p.kind === "variant") {
     const current = p.chosen[0] || "";
     return `<div class="sub-choice field"><label class="field"><span>${esc(p.title)}</span>
@@ -340,7 +353,7 @@ function renderSpellPick(path, p) {
   const tips = {};
   p.options.forEach((o) => { if (o.text) tips[o.name] = o.text; });
   const chip = (name, extra = "") =>
-    `<label data-field="${path}" data-multi="1" data-limit="${p.count}" data-value="${esc(name)}" title="${esc(tips[name] || "")}" class="${chosen.includes(name) ? "checked" : ""} ${!chosen.includes(name) && full ? "disabled" : ""} ${extra}"><input type="checkbox" ${chosen.includes(name) ? "checked" : ""}>${esc(name)}</label>`;
+    `<label data-field="${path}" data-multi="1" data-limit="${p.count}" data-value="${esc(name)}" title="${esc(taken.has(name) && !chosen.includes(name) ? "Allerede valgt et andet sted" : tips[name] || "")}" class="${chosen.includes(name) ? "checked" : ""} ${!chosen.includes(name) && (full || taken.has(name)) ? "disabled" : ""} ${extra}"><input type="checkbox" ${chosen.includes(name) ? "checked" : ""}>${esc(name)}</label>`;
   const heading = (lvl) => (lvl === "" ? "" : `<b>${lvl === "0" ? "Cantrips" : `Niveau ${lvl}`}</b>`);
   const groups = Object.keys(byLevel).sort((a, b) => a - b).map((lvl) =>
     `<div class="spell-group">${p.kind === "optional" || p.kind === "feature_spell" ? "" : heading(lvl)}<div class="checklist">${byLevel[lvl].map((o) => chip(o.name)).join("")}</div></div>`).join("");
@@ -836,6 +849,7 @@ function wireEvents() {
       const current = getPath(state.choices, path) || [];
       const limit = Number(chip.dataset.limit || 0);
       if (limit && !current.includes(val) && current.length >= limit) return; // allerede fuldt antal valgt
+      if (chip.classList.contains("disabled") && !current.includes(val)) return; // grå: valgt et andet sted
       const next = current.includes(val) ? current.filter((v) => v !== val) : [...current, val];
       answer({ [path]: next });
       return;
