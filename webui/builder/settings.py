@@ -1,4 +1,4 @@
-"""Standardværdier for karakter-indstillinger (kilder, husregler).
+"""Standardværdier for karakter-indstillinger (kilder).
 
 Selve indstillingerne gemmes pr. karakter i dens egen choices.yaml under
 "settings" (ikke delt for hele byggeren - to spillere kan have forskellige
@@ -9,6 +9,6 @@ from __future__ import annotations
 
 DEFAULT_SOURCES = ["XPHB"]
 
-# "Alle General-feats er half-feats" er ikke en fastlagt regel her, kun en
-# mulig husregel - se diskussionen i model._feat_sub_choices. Default fra.
-DEFAULT_HALF_FEATS = False
+# 2024 flyttede evnebonussen fra racen til baggrunden. Slået til, tæller ÆLDRE racers egen
+# `ability` (fx PHB Dwarf +2 CON) også med - ellers ignoreres den for ikke at tælle dobbelt.
+DEFAULT_RACE_ABILITY = False

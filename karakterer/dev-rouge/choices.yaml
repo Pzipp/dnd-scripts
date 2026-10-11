@@ -1,0 +1,130 @@
+race:
+  name: Halfling
+  source: XPHB
+  other_name: ''
+  choices: {}
+classes:
+  d07e38:
+    name: Rogue
+    source: XPHB
+    level: 20
+    subclass: Thief
+    choices:
+      skills:
+      - stealth
+      - perception
+      - deception
+      - persuasion
+      weapon_mastery:
+      - Dagger
+      - Shortsword
+      expertise:
+      - sleight of hand
+      - deception
+      - stealth
+      - perception
+      expertise_1:
+      - deception
+      - sleight of hand
+      expertise_6:
+      - persuasion
+      - stealth
+background:
+  name: Criminal
+  source: XPHB
+  choices:
+    ability_split:
+      type: 2-1
+      plus2: dex
+      plus1: con
+abilities:
+  method: standard
+  rolls: {}
+  assigned:
+    STR: 12
+    CON: 12
+    WIS: 12
+    INT: 12
+    DEX: 12
+    CHA: 12
+hp_rolls:
+  d07e38:
+    '2': 5
+    '3': 5
+    '5': 5
+    '6': 5
+    '8': 5
+    '10': 5
+    '12': 5
+    '14': 5
+    '16': 5
+    '18': 5
+    '20': 5
+    '4': 5
+    '7': 5
+    '9': 5
+    '11': 5
+    '13': 5
+    '15': 5
+    '17': 5
+    '19': 5
+feats:
+  d07e38_4_abilityscoreimprovement:
+    name: Ability Score Improvement
+    source: XPHB
+    choices:
+      asi:
+        mode: 1-1
+        ability1: DEX
+        ability2: INT
+  d07e38_8_abilityscoreimprovement:
+    name: Ability Score Improvement
+    source: XPHB
+    choices:
+      asi:
+        mode: '2'
+        ability1: STR
+  d07e38_10_abilityscoreimprovement:
+    name: Ability Score Improvement
+    source: XPHB
+    choices:
+      asi:
+        mode: '2'
+        ability1: DEX
+  d07e38_12_abilityscoreimprovement:
+    name: Ability Score Improvement
+    source: XPHB
+    choices:
+      asi:
+        mode: '2'
+        ability1: DEX
+  d07e38_16_abilityscoreimprovement:
+    name: Ability Score Improvement
+    source: XPHB
+    choices:
+      asi:
+        mode: '2'
+        ability1: DEX
+  d07e38_19_epicboon:
+    name: Boon of Recovery
+    source: XPHB
+    choices:
+      ability: CHA
+spells:
+  known: []
+equipment:
+  class_package: A
+  background_package: A
+  extra: []
+  armor:
+    name: null
+    source: null
+  shield: false
+languages:
+  known:
+  - Halfling
+  - Gnomish
+settings:
+  allowed_sources:
+  - XPHB
+  half_feats: false

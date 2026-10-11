@@ -100,8 +100,8 @@ feats:                     # DICT - key er en "slot-key", se "Feat slot-keys" ne
       asi: {mode: '2', ability1: CHA}    # se "Undervalg"
 
 spells:
-  known: [Counterspell, Tongues, ...]    # FLAD liste af engelske spell-navne karakteren KENDER
-                                          # - ikke hvilke der er "prepared i dag" (styres af de printede spell-kort, ikke her)
+  known: []   # UDFASET: den gamle flade liste. Ved indlæsning fordeles gyldige spells på klassernes
+              # cantrips/spellbog/forberedte (se "Klassens spells"), resten kasseres, og listen tømmes.
 
 equipment:
   class_package: A         # bogstav-nøgle ind i 5etools' startingEquipment-valgsæt for den PRIMÆRE klasse
@@ -115,8 +115,52 @@ languages:
 
 settings:                  # PR. KARAKTER, ikke delt mellem karakterer
   allowed_sources: [XPHB]  # hvilke 5etools-kildekoder der må slås op i for DENNE karakter
-  half_feats: false        # husregel-switch, se model._feat_sub_choices
+  race_ability: false      # tæl ældre racers egne evnepoint med (2024 flyttede dem til baggrunden)
 ```
+
+### Klassens spells (`classes.<id>.choices`)
+
+Antal og muligheder læses fra den valgte klasse/subklasse (`webui/builder/spellcasting.py`), og kun spells,
+der faktisk kan vælges, tilbydes: klassens liste (eller `expanded`) i de tilladte kilder, højst det spell-niveau
+klassen har slots til, og aldrig de altid-forberedte. Antal = `cantripProgression`/`preparedSpellsProgression`
+på KLASSENS niveau.
+
+| Nøgle | Form | Betydning |
+|---|---|---|
+| `cantrips` | liste | Valgte cantrips |
+| `prepared` | liste | Forberedte spells. Wizard vælger dem blandt sin `spellbook` |
+| `spellbook` | liste | Wizards spellbog: 6 spells på niveau 1, derefter 2 pr. niveau (`spellsKnownProgressionFixed`) |
+| `arcanum_<6-9>` | liste | Warlocks Mystic Arcanum: ét spell af det niveau fra klasseniveau 11/13/15/17 |
+| `sub_spell_<n>` | liste | Ekstra spells fra subklassen (`additionalSpells` med et filter: Wizard-skoler, Bards Magical Secrets). Tæller ikke mod antallet af forberedte |
+| `subclass_variant` | tekst | Navngivne alternativer i subklassens spells (Circle of the Land: terræn) |
+
+Et valg er "mangler", hvis antallet ikke er præcis rigtigt, eller hvis en valgt spell ikke længere kan vælges
+(niveaufald, klasseskift): den vises i UI'et med rød markering, så den kan fjernes.
+
+### Valgfrie klassefeatures (`classes.<id>.choices.opt_*`)
+
+Metamagic (Sorcerer), Eldritch Invocations (Warlock), Maneuvers (Battle Master) m.fl. læses fra `optionalfeatures.json`
+(`webui/builder/optionalfeatures.py`). Antal og slags står i klassens/subklassens `optionalfeatureProgression`
+(Sorcerer: 2/4/6 på niveau 2/10/17; Warlock: en tabel pr. niveau; Battle Master: 3/5/7/9). Kun features, man kan
+vælge, tilbydes: rette `featureType`, tilladte kilder og opfyldte forudsætninger (klasse + niveau, en anden valgt
+feature, et kendt cantrip, ældre Pact Boons).
+
+| Nøgle | Form | Betydning |
+|---|---|---|
+| `opt_<navn>` | liste | Valgte features, fx `opt_metamagic`, `opt_eldritch-invocations`, `opt_maneuvers` |
+| `ofs_<feature>_<n>_<m>` | liste | Spells en valgt feature selv giver et valg af (Pact of the Tome: 3 cantrips, 2 rituals) |
+
+En valgt feature, hvis forudsætning ikke længere er opfyldt (fx Agonizing Blast uden et kendt cantrip), er ugyldig og
+markeres. Spells fra features (Armor of Shadows: Mage Armor) kommer i `granted_spells`, og sanser i `senses`.
+
+### Klassevalg: `skills`, `expertise_<niveau>`, `scholar`, `weapon_mastery`
+
+Under `classes.<id>.choices`. Antal og muligheder læses fra den valgte klasse:
+
+* `skills`: klassens start-skills.
+* `expertise_<niveau>`: ét valg pr. feature, der giver Expertise, vist under featuren (Rogue `expertise_1` og `expertise_6`, Bard 2 og 9, Ranger `expertise_2` (Deft Explorer, 1 skill) og `expertise_9`). Antal fra featurens tekst. Muligheder: karakterens trænede skills, uden dem der allerede har Expertise i et andet valg. Valg for features, karakteren ikke har nået, ignoreres.
+* `scholar`: Wizards `Scholar` (1 skill, kun Arcana, History, Investigation, Medicine, Nature, Religion).
+* `weapon_mastery`: våbennavne. Antal fra klassens tabelkolonne, ellers fra feature-teksten. Muligheder efter teksten: "Melee" (Barbarian) = kun nærkamp, "proficiency" (Rogue, Paladin, Ranger) = våben klassernes træning dækker, ellers alle Simple og Martial (Fighter).
 
 ### Samlet niveau er ikke gemt
 
@@ -151,16 +195,21 @@ autoritative liste):
 | `skill` | tekst | Et enkelt skill-valg |
 | `skills` | liste af tekst | Flere skill-valg (fx klassens startskills) |
 | `skill_any` | tekst | Skill valgt fra en helt fri pulje (fx Skilled) |
-| `lineage` | tekst | Race-givet spell-liste-valg (fx visse lineage/subrace-spells) - kun på `race.choices` |
-| `ability` | `STR`\|`DEX`\|... | Et evne-valg |
+| `lineage` | tekst | Racens afstamning = valgt `_versions`-version, som kortnavn (`Drow`, `Wood Elf`, `Abyssal`, `Forest Gnome`, `Cloud`, `Gold`). Ældre kilder uden `_versions`: navnet på en `additionalSpells`-blok. Kun på `race.choices` |
+| `size` | tekst | Størrelse, når racen kan vælge (`Small`/`Medium`). Kun på `race.choices` |
+| `spell_ability` | `INT`\|`WIS`\|`CHA` | Spellcasting-evne for racens spells. Kun på `race.choices` |
+| `ability_option` / `ability_pick` / `ability_w<n>` | tekst / liste / `STR`... | Ældre racers evnepoint (kun med `race_ability`): valgt variant, valgte evner, vægtede evner. Kun på `race.choices` |
+| `ability` | `STR`\|`DEX`\|... | Feat'ets evne-valg: +`amount` (normalt 1) til evnen, loft 20 eller feat'ets `max`. Styrer også saving throw-træning (Resilient) og spellcasting-evne (`inherit`), når feat'et siger det |
+| `save` | `STR`\|... | Saving throw-træning valgt for sig selv, når feat'et ikke kobler den til `ability` |
 | `asi` | `{mode: '1'|'2', ability1, ability2}` | Ability Score Improvement: `mode '2'` = +1 til to evner, `'1'` = +2 til én |
 | `ability_split` | `{type: '2-1'|'1-1-1', plus2, plus1}` | Baggrundens evne-bonus-fordeling |
 | `weapon` | tekst | Weapon Mastery-våbnet for Weapon Master-feat'et |
 | `weapon_mastery` | liste af tekst | Klassens egne Weapon Mastery-valg |
 | `damage_type` | tekst | Elemental Adepts skadetype |
 | `resist` | tekst | Resistance-valg (fx Epic Boons) |
-| `tool` | tekst | Tool-proficiency-valg |
-| `instrument` | tekst | Musikinstrument-valg |
+| `tool` | tekst/liste | Valg af navngivne værktøjer (`choose.from`) |
+| `gaming_set` / `artisan_tool` / `tool_any` | tekst/liste | Fri valg af Gaming Set / Artisan's Tool / hvilket som helst værktøj (`anyGamingSet`, `anyArtisansTool`, `anyTool`). Også på `background.choices` |
+| `instrument` | tekst/liste | Musikinstrument-valg (`anyMusicalInstrument`). Også på `background.choices` |
 | `expertise` | tekst | Expertise-valg |
 | `origin` | tekst | HVILKEN spell-liste et feat med flere alternativer bruger (fx Magic Initiate: Cleric/Druid/Wizard) - styrer hvilke `origin_*`-nøgler der derefter giver mening |
 | `spell_<n>` / `origin_spell_<n>` / `spell_prepared` / `b<n>_spell_<n>` osv. | tekst eller liste | Valgte spells fra et feats strukturerede spell-filter. Det eksakte id afhænger af hvor i feat'ets data-struktur filteret sidder - se `model._spell_choices_from_block()` |

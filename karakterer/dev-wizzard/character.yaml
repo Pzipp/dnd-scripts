@@ -12,9 +12,9 @@ classes:
   level: 19
   subclass: Evoker
 abilities:
-  STR: 11
-  DEX: 9
-  CON: 8
+  STR: 12
+  DEX: 11
+  CON: 9
   INT: 19
   WIS: 15
   CHA: 11
@@ -31,16 +31,61 @@ hit_die: 6
 saves:
 - INT
 - WIS
+- STR
 skills:
 - history
 - persuasion
 - religion
-expertise: []
+expertise:
+- history
 tools:
-- anyGamingSet
+- Dice Set
+- cook's utensils
 languages: Common, Draconic, Elvish
 can_use:
   weapons: simple
+size: Small
+speeds:
+  walk: 30
+senses:
+  darkvision: 60
+resistances: []
+immunities: []
+vulnerabilities: []
+condition_immunities: []
+granted_spells:
+- name: Mending
+  source: XPHB
+  cantrip: true
+  addition: known
+  ability: WIS
+  recharge: null
+  uses: null
+  from: 'race: Gnome'
+- name: Prestidigitation
+  source: XPHB
+  cantrip: true
+  addition: known
+  ability: WIS
+  recharge: null
+  uses: null
+  from: 'race: Gnome'
+- name: Invisibility
+  source: XPHB
+  cantrip: false
+  addition: innate
+  ability: WIS
+  recharge: long_rest
+  uses: 1e
+  from: 'feat: Shadow-Touched'
+- name: Inflict Wounds
+  source: XPHB
+  cantrip: false
+  addition: innate
+  ability: WIS
+  recharge: long_rest
+  uses: 1e
+  from: 'feat: Shadow-Touched'
 masteries: []
 feats:
 - name: Ability Score Improvement
@@ -53,6 +98,8 @@ feats:
   source: XPHB
 - name: Boon of Recovery
   source: XPHB
+- name: Skilled
+  source: XPHB
 spells_known:
 - name: Chill Touch
   source: XPHB
@@ -60,7 +107,9 @@ spells_known:
   source: XPHB
 - name: Minor Illusion
   source: XPHB
-- name: Charm Person
+- name: Prestidigitation
+  source: XPHB
+- name: Mending
   source: XPHB
 - name: Expeditious Retreat
   source: XPHB
@@ -68,11 +117,7 @@ spells_known:
   source: XPHB
 - name: Identify
   source: XPHB
-- name: Ice Knife
-  source: XPHB
 - name: Ray of Sickness
-  source: XPHB
-- name: Shield
   source: XPHB
 - name: Tenser's Floating Disk
   source: XPHB
@@ -84,6 +129,137 @@ spells_known:
   source: XPHB
 - name: Rary's Telepathic Bond
   source: XPHB
+- name: Hypnotic Pattern
+  source: XPHB
+- name: Disintegrate
+  source: XPHB
+- name: Prismatic Wall
+  source: XPHB
+- name: Programmed Illusion
+  source: XPHB
+- name: Incendiary Cloud
+  source: XPHB
+- name: Tasha's Bubbling Cauldron
+  source: XPHB
+- name: Gaseous Form
+  source: XPHB
+- name: Thunderwave
+  source: XPHB
+- name: Magic Missile
+  source: XPHB
+- name: Gust of Wind
+  source: XPHB
+- name: Darkness
+  source: XPHB
+- name: Scorching Ray
+  source: XPHB
+- name: Chromatic Orb
+  source: XPHB
+- name: Forcecage
+  source: XPHB
+- name: Delayed Blast Fireball
+  source: XPHB
+- name: Sunburst
+  source: XPHB
+optional_features: []
+spellcasting:
+- class: Wizard
+  subclass: Evoker
+  ability: INT
+  level: 19
+  save_dc: '{8+PB+INT}'
+  attack: '{+PB+INT}'
+  cantrips:
+  - Chill Touch
+  - Mind Sliver
+  - Minor Illusion
+  - Prestidigitation
+  - Mending
+  spellbook:
+  - Charm Person
+  - Expeditious Retreat
+  - Feather Fall
+  - Identify
+  - Ray of Sickness
+  - Shield
+  - Tenser's Floating Disk
+  - Blur
+  - Locate Object
+  - Control Water
+  - Rary's Telepathic Bond
+  - Phantasmal Force
+  - Ice Storm
+  - Dominate Person
+  - Tasha's Bubbling Cauldron
+  - Maze
+  - Incendiary Cloud
+  - True Polymorph
+  - Shapechange
+  - Programmed Illusion
+  - Summon Dragon
+  - Disintegrate
+  - Summon Elemental
+  - Summon Construct
+  - Enhance Ability
+  - Slow
+  - Leomund's Tiny Hut
+  - Fly
+  - Gaseous Form
+  - Water Breathing
+  - Major Image
+  - Summon Undead
+  - Hypnotic Pattern
+  - Locate Creature
+  - Flesh to Stone
+  - Mordenkainen's Sword
+  - Prismatic Wall
+  - Project Image
+  - Control Weather
+  - Otiluke's Freezing Sphere
+  - Eyebite
+  - Witch Bolt
+  prepared:
+  - Expeditious Retreat
+  - Feather Fall
+  - Identify
+  - Ray of Sickness
+  - Tenser's Floating Disk
+  - Blur
+  - Locate Object
+  - Control Water
+  - Rary's Telepathic Bond
+  - Hypnotic Pattern
+  - Disintegrate
+  - Prismatic Wall
+  - Programmed Illusion
+  - Incendiary Cloud
+  - Tasha's Bubbling Cauldron
+  - Gaseous Form
+  arcanum: {}
+  extra:
+  - Thunderwave
+  - Magic Missile
+  - Gust of Wind
+  - Darkness
+  - Scorching Ray
+  - Chromatic Orb
+  - Forcecage
+  - Delayed Blast Fireball
+  - Sunburst
+  variant: null
+  max_spell_level: 9
+  prepare_change: restLong
+spell_slots:
+- 4
+- 3
+- 3
+- 3
+- 3
+- 2
+- 1
+- 1
+- 1
+pact_slots: null
 class_features:
 - class: Wizard
   name: Arcane Recovery
@@ -162,8 +338,86 @@ race_traits:
   source: XPHB
 - name: Gnomish Cunning
   source: XPHB
-- name: Gnomish Lineage
+- name: Gnomish Lineage (Rock Gnome)
   source: XPHB
+resources:
+- name: Chef
+  max: 6
+  recharge: long_rest
+  from: feat
+- name: Boon of Recovery
+  max: 1
+  recharge: long_rest
+  from: feat
+class_numbers: []
+activations:
+- name: Chef
+  source: XPHB
+  kind: feat
+  types: []
+  roll: 1d8
+- name: Boon of Recovery
+  source: XPHB
+  kind: feat
+  types:
+  - bonus
+  roll: null
+- name: Scholar
+  source: XPHB
+  kind: class_feature
+  class: Wizard
+  level: 2
+  types: []
+  roll: null
+- name: Empowered Evocation
+  source: XPHB
+  kind: class_feature
+  class: Wizard
+  level: 10
+  types: []
+  roll: null
+- name: Overchannel
+  source: XPHB
+  kind: class_feature
+  class: Wizard
+  level: 14
+  types: []
+  roll: null
+- name: Spell Mastery
+  source: XPHB
+  kind: class_feature
+  class: Wizard
+  level: 18
+  types: []
+  roll: null
+- name: Epic Boon
+  source: XPHB
+  kind: class_feature
+  class: Wizard
+  level: 19
+  types: []
+  roll: null
+- name: Gnomish Cunning
+  source: XPHB
+  kind: race_trait
+  types: []
+  roll: null
+modifiers:
+- from: Gnomish Cunning
+  what: INT saves
+  value: fordel
+  note: ''
+  active: true
+- from: Gnomish Cunning
+  what: WIS saves
+  value: fordel
+  note: ''
+  active: true
+- from: Gnomish Cunning
+  what: CHA saves
+  value: fordel
+  note: ''
+  active: true
 extra_training: []
 summary:
 - - Klasse

@@ -13,3 +13,8 @@ node_modules/
 
 # Karakterbyggerens kilde-indstillinger (hvilke 5etools-bøger må bruges) — lokalt pr. opsætning
 webui/builder/settings.yaml
+
+# Bogtekster og deres oversættelser (ophavsretsligt materiale; repoet er offentligt) — kun værktøjet i data/books/oversaettelse/ committes
+data/books/book-*.json
+data/books/5etools-*.json
+data/books/oversaettelse/*/

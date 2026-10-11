@@ -50,7 +50,14 @@ import yaml
 
 from . import e5tools as e
 from . import effects
+from . import feat_rules
+from . import foundry
 from . import model
+from . import optionalfeatures
+from . import races
+from . import settings
+from . import spell_grants
+from . import spellcasting
 
 # D&D 2024 (PHB)-reglens faste Proficiency Bonus pr. level - ikke noget nogen
 # vælger, derfor sikkert at opslå som tabel i stedet for at bede spilleren om det.
@@ -143,26 +150,30 @@ def _ac(data: dict, sources: set[str], dex_mod: int) -> tuple[int, str]:
 
 
 def _apply_effects(
-    entries: list[dict], initiative_formula: str, hp: int | None, total_level: int, class_levels: dict[str, int]
+    entries: list[dict], initiative_formula: str, hp: int | None, total_level: int, class_levels: dict[str, int],
+    foundry_pairs: list[tuple[dict, dict]] | None = None,
 ) -> tuple[str, int | None]:
-    """Folder høj-konfidens, PERMANENTE effects (se effects.py) ind i
-    initiative-formlen og HP - de to eneste targets, der rent faktisk er
-    bygget en anvendelse for (se docs/llm-effect-extraction-prompt.md).
-    Andre targets (ac, saves, skills, resistances, darkvision, speed) er
-    gemt i _effects.yaml, men IKKE foldet ind nogen steder endnu.
+    """Folder PERMANENTE effects ind i initiative-formlen og HP - de to targets, der har en anvendelse
+    bygget (se docs/llm-effect-extraction-prompt.md). Foundry-dataene (foundry.py, strukturerede tal)
+    går forud: en entry, de giver HP eller initiativ for, bruger ikke LLM-effekterne. De øvrige
+    entries bruger høj-konfidens LLM-effects (se effects.py).
 
-    hp_per_level skalerer med KARAKTERniveau for feats (fx Tough: "twice
-    your character level"), men med DEN GRANTENDE KLASSES EGEN niveau for
-    class_features (fx Draconic Resilience: skalerer med Sorcerer-niveau,
-    ikke total niveau - en multiclass Sorcerer 3/Fighter 5 får stadig kun
-    Sorcerer-niveauets andel, ikke 8). class_levels er {klassenavn: niveau},
-    fra samme classes_out derive_from_state() allerede bygger."""
-    for entry, eff in effects.high_confidence_effects(entries):
+    hp_per_level (LLM) skalerer med KARAKTERniveau for feats (fx Tough: "twice your character level"),
+    men med DEN GRANTENDE KLASSES EGEN niveau for class_features (fx Draconic Resilience). class_levels er
+    {klassenavn: niveau}, fra samme classes_out derive_from_state() allerede bygger. Foundry-effekter
+    kommer færdigregnet (`hp_flat`)."""
+    pairs = list(foundry_pairs or [])
+    covered = {id(entry) for entry, eff in pairs if eff["target"] in ("hp_flat", "initiative")}
+    rest = [entry for entry in entries if id(entry) not in covered]
+    pairs = [(entry, eff) for entry, eff in pairs if eff["target"] in ("hp_flat", "initiative")]
+    for entry, eff in pairs + effects.high_confidence_effects(rest):
         target, kind, value = eff.get("target"), eff.get("type"), str(eff.get("value", ""))
         if target == "initiative" and kind == "add":
             term = value.removeprefix("ability:")
             if term and f"+{term}" not in initiative_formula:
                 initiative_formula = initiative_formula[:-1] + f"+{term}" + "}"
+        elif target == "hp_flat" and kind == "add" and hp is not None:
+            hp += int(value)
         elif target == "hp_per_level" and kind == "add" and hp is not None:
             multiplier = class_levels.get(entry.get("class"), total_level) if entry["kind"] == "class_feature" else total_level
             try:
@@ -170,6 +181,55 @@ def _apply_effects(
             except ValueError:
                 pass
     return initiative_formula, hp
+
+
+def _armor_type(data: dict, sources: set[str]) -> str | None:
+    """Den valgte rustnings type (items-base: LA/MA/HA), ellers None."""
+    choice = data.get("equipment", {}).get("armor") or {}
+    armor = e.get_armor(choice["name"], {choice["source"]} if choice.get("source") else sources) if choice.get("name") else None
+    return (armor.get("type") or "").split("|")[0] if armor else None
+
+
+def _apply_foundry(pairs: list[tuple[dict, dict]], base: dict) -> dict:
+    """Foldet Foundry-effekter (se foundry.py) ind i fart, sanser, resistenser, AC. Returnerer det ændrede
+    + `modifiers`: oplysninger, der ikke regnes ind i tal (fordele, bonusser på checks/saves/angreb, og
+    fart/AC-bonusser, hvis betingelse ikke er opfyldt)."""
+    speeds, senses = dict(base["speeds"]), dict(base["senses"])
+    resist, immune, vulnerable, cond = set(base["resistances"]), set(base["immunities"]), set(base["vulnerabilities"]), set(base["condition_immunities"])
+    ac, ac_note = base["ac"], base["ac_note"]
+    modifiers = []
+    for entry, eff in pairs:
+        target, name = eff["target"], entry["name"]
+        if target == "speed":
+            if eff["active"]:
+                speeds[eff["mode"]] = speeds.get(eff["mode"], 0) + eff["value"]
+            else:
+                modifiers.append({"from": name, "what": f"fart ({eff['mode']})", "value": f"+{eff['value']} ft", "note": foundry._CONDITION_LABELS.get(eff["condition"], ""), "active": False})
+        elif target == "sense":
+            have = senses.get(eff["sense"], 0)
+            senses[eff["sense"]] = have + eff["value"] if eff["mode"] == "ADD" else max(have, eff["value"])
+        elif target == "resist":
+            resist.add(eff["value"].lower())
+        elif target == "immune":
+            immune.add(eff["value"].lower())
+        elif target == "vulnerable":
+            vulnerable.add(eff["value"].lower())
+        elif target == "condition_immune":
+            cond.add(eff["value"].lower())
+        elif target == "ac_bonus":
+            if eff["active"]:
+                ac += eff["value"]
+                ac_note += f" + {name}"
+            else:
+                modifiers.append({"from": name, "what": "AC", "value": f"+{eff['value']}", "note": foundry._CONDITION_LABELS.get(eff["condition"], ""), "active": False})
+        elif target == "modifier":
+            modifiers.append({"from": name, "what": eff["what"], "value": eff["value"], "note": "", "active": True})
+    speed = speeds.get("walk", base["speed"])
+    return {
+        "speed": speed, "speeds": speeds, "senses": senses, "resistances": sorted(resist), "immunities": sorted(immune),
+        "vulnerabilities": sorted(vulnerable), "condition_immunities": sorted(cond), "ac": ac, "ac_note": ac_note,
+        "modifiers": modifiers,
+    }
 
 
 def empty_character_sheet() -> dict:
@@ -193,11 +253,27 @@ def empty_character_sheet() -> dict:
         "tools": [],
         "languages": "Common",
         "can_use": {},
+        "size": None,
+        "speeds": {"walk": 30},
+        "senses": {},
+        "resistances": [],
+        "immunities": [],
+        "vulnerabilities": [],
+        "condition_immunities": [],
+        "granted_spells": [],
         "masteries": [],
         "feats": [],
         "spells_known": [],
+        "optional_features": [],
+        "spellcasting": [],
+        "spell_slots": [],
+        "pact_slots": None,
         "class_features": [],
         "race_traits": [],
+        "resources": [],
+        "class_numbers": [],
+        "activations": [],
+        "modifiers": [],
         "extra_training": [],
         "summary": [],
     }
@@ -234,14 +310,56 @@ def _all_choice_blocks(data: dict) -> list[dict]:
     return blocks
 
 
+def _chosen_feats(data: dict, sources: set[str]):
+    """(slot-post, 5etools-feat) for hvert valgt feat; kilden er den, der er gemt på valget."""
+    for entry in (data.get("feats") or {}).values():
+        if not entry or not entry.get("name"):
+            continue
+        obj = e.get_feat(entry["name"], {entry["source"]} if entry.get("source") else sources)
+        if obj:
+            yield entry, obj
+
+
+def _ability_caps(data: dict, sources: set[str]) -> dict[str, int]:
+    """Loft pr. evne: 20, men et feat kan hæve det (Epic Boons: 30) for den evne, det giver bonus til."""
+    caps = {a: feat_rules.DEFAULT_ABILITY_MAX for a in model.ABILITIES}
+    for entry, obj in _chosen_feats(data, sources):
+        for ability, (_amount, cap) in feat_rules.fixed_ability(obj).items():
+            caps[ability] = max(caps.get(ability, 0), cap)
+        choice = feat_rules.ability_choice(obj)
+        picked = (entry.get("choices") or {}).get("ability")
+        if choice and isinstance(picked, str) and picked.upper() in caps:
+            caps[picked.upper()] = max(caps[picked.upper()], choice["max"])
+    return caps
+
+
+def _feat_grants(data: dict, sources: set[str]) -> dict:
+    """Det de valgte feats giver karakteren: faste tildelinger (5etools' `true`-felter, senses,
+    resist) + de valg spilleren har truffet. Samlet pr. kategori."""
+    out = {"skills": [], "tools": [], "armor": [], "weapons": [], "saves": [], "senses": {}, "resist": [], "expertise": []}
+    for entry, obj in _chosen_feats(data, sources):
+        fixed = feat_rules.fixed_grants(obj)
+        for key in ("skills", "tools", "armor", "weapons", "saves", "resist"):
+            out[key] += fixed[key]
+        out["senses"].update(fixed["senses"])
+        chosen = entry.get("choices") or {}
+        if feat_rules.saves_linked_to_ability(obj) and isinstance(chosen.get("ability"), str):
+            out["saves"].append(chosen["ability"].lower())
+        if isinstance(chosen.get("save"), str):
+            out["saves"].append(chosen["save"].lower())
+        for key in ("resist", "expertise"):
+            value = chosen.get(key)
+            out[key] += [v for v in (value if isinstance(value, list) else [value]) if v]
+    return out
+
+
 def _ability_bonuses(data: dict, state: dict, sources: set[str]) -> dict[str, int]:
     """Evne-bonusser der IKKE er en del af grundscoren i abilities.assigned:
     baggrundens ability_split (2024-reglen flyttede racernes evne-bonus til
     baggrunden) og hver ASI-feats valgte +2/+1-fordeling (se
-    docs/choices-yaml.md#undervalg). Inkluderer også feats' FASTE
-    evne-forbedring (fx Durable: altid +1 CON), men kun når husreglen
-    half_feats er slået til - samme betingelse som model.py's egen
-    _add_feat_slot bruger til at vise den."""
+    docs/choices-yaml.md#undervalg). Inkluderer feats' FASTE evne-forbedring
+    (fx Durable: altid +1 CON) og det valgte evne-valg (fx Athlete, Resilient,
+    Epic Boons), læst fra feat'ets `ability`-felt (se feat_rules.py)."""
     bonuses = {a: 0 for a in model.ABILITIES}
 
     split = (data.get("background", {}).get("choices") or {}).get("ability_split") or {}
@@ -254,10 +372,16 @@ def _ability_bonuses(data: dict, state: dict, sources: set[str]) -> dict[str, in
         for ability in state.get("background", {}).get("ability_options") or []:
             bonuses[ability.upper()] += 1
 
-    half_feats = data.get("settings", {}).get("half_feats", False)
-    for feat_entry in data.get("feats", {}).values():
-        if not feat_entry or not feat_entry.get("name"):
-            continue
+    if data.get("settings", {}).get("race_ability", settings.DEFAULT_RACE_ABILITY):
+        race_name, race_source = data["race"].get("name"), data["race"].get("source")
+        race_obj = e.get_race(race_name, {race_source} if race_source else sources) if (race_name and race_name != model.OTHER) else None
+        stored = data["race"].get("choices") or {}
+        if race_obj and not races.needs_lineage(race_obj, stored.get("lineage"), sources):
+            for ability, amount in races.ability_bonus(races.effective(race_obj, stored.get("lineage"), sources), stored).items():
+                if ability in bonuses:
+                    bonuses[ability] += amount
+
+    for feat_entry, feat_obj in _chosen_feats(data, sources):
         asi = (feat_entry.get("choices") or {}).get("asi")
         if asi:
             ability1, ability2 = (asi.get("ability1") or "").upper(), (asi.get("ability2") or "").upper()
@@ -268,15 +392,13 @@ def _ability_bonuses(data: dict, state: dict, sources: set[str]) -> dict[str, in
                     bonuses[ability1] += 1
                 if ability2 in bonuses:
                     bonuses[ability2] += 1
-        if half_feats:
-            feat_source = {feat_entry["source"]} if feat_entry.get("source") else sources
-            feat_obj = e.get_feat(feat_entry["name"], feat_source)
-            fixed_ability = (feat_obj or {}).get("ability") or [{}]
-            fixed_ability = fixed_ability[0]
-            if fixed_ability and not fixed_ability.get("choose"):
-                for ability, amount in fixed_ability.items():
-                    if ability.upper() in bonuses:
-                        bonuses[ability.upper()] += amount
+        for ability, (amount, _cap) in feat_rules.fixed_ability(feat_obj).items():
+            if ability in bonuses:
+                bonuses[ability] += amount
+        picked = (feat_entry.get("choices") or {}).get("ability")
+        choice = feat_rules.ability_choice(feat_obj)
+        if choice and isinstance(picked, str) and picked.upper() in bonuses:
+            bonuses[picked.upper()] += choice["amount"]
     return bonuses
 
 
@@ -292,6 +414,197 @@ def _collect(data: dict, *keys: str) -> list[str]:
                 out.extend(v for v in value if v)
             elif value:
                 out.append(value)
+    return out
+
+
+def _masteries(data: dict, sources: set[str]) -> list[list[str]]:
+    """[[mastery-egenskab, våben], ...] ud fra hver klasses valgte Weapon
+    Mastery-våben; egenskaben slås op på våbnet i items-base ('Vex|XPHB' -> Vex)."""
+    weapons = {w["name"]: w for w in e.weapons(sources)}
+    out = []
+    for entry in data.get("classes", {}).values():
+        for name in entry.get("choices", {}).get("weapon_mastery", []):
+            for prop in (weapons.get(name) or {}).get("mastery", []):
+                pair = [prop.split("|")[0], name]
+                if pair not in out:
+                    out.append(pair)
+    return out
+
+
+_RECHARGE_KEYS = {"daily": "long_rest", "restLong": "long_rest", "rest": "short_rest"}
+
+
+def _size(race_eff: dict, stored: dict) -> str | None:
+    """Karakterens størrelse: racens eneste, eller det valgte (race.choices.size)."""
+    options = races.size_options(race_eff)
+    if len(options) == 1:
+        return options[0]
+    return stored.get("size") if stored.get("size") in options else None
+
+
+def _class_optional_features(data: dict, sources: set[str]) -> tuple[list[dict], list[dict], dict[str, int]]:
+    """Valgte valgfrie klassefeatures (Metamagic, Invocations, Maneuvers ...): ([{name, source, types, class}],
+    spells de giver, sanser de giver). Kun gyldige valg tages med."""
+    features: list[dict] = []
+    granted: list[dict] = []
+    senses: dict[str, int] = {}
+    known = model.class_spell_names(data)
+    for entry in (data.get("classes") or {}).values():
+        class_name = entry.get("name")
+        class_obj = e.get_class(class_name, {entry["source"]} if entry.get("source") else sources) if class_name else None
+        if not class_obj:
+            continue
+        subclass_obj = next((x for x in e.subclasses(class_name, {class_obj["source"]}) if x.get("name") == entry.get("subclass")), None) if entry.get("subclass") else None
+        stored = entry.get("choices") or {}
+        for pick in optionalfeatures.build(class_obj, subclass_obj, class_name, entry.get("level", 1), sources, stored, known):
+            if pick["kind"] != "optional":
+                continue
+            options = {o["name"]: o for o in pick["options"]}
+            for label in stored.get(pick["id"]) or []:
+                option = options.get(label)
+                if not option or option.get("unmet"):
+                    continue
+                feature = next((f for f in e.optional_features(sources) if f["name"] == option["feature"] and f["source"] == option["source"]), None)
+                if not feature:
+                    continue
+                features.append({"name": feature["name"], "source": feature["source"], "types": list(feature.get("featureType") or []), "class": class_name})
+                ability = ((model._spellcasting_for(entry, sources) or {}).get("ability"))
+                granted += optionalfeatures.granted(feature, stored, entry.get("level", 1), sources, f"class: {class_name} ({feature['name']})", ability)
+                for block in feature.get("senses") or []:
+                    for sense, rng in block.items():
+                        if isinstance(rng, int):
+                            senses[sense] = max(senses.get(sense, 0), rng)
+    return features, granted, senses
+
+
+def _class_spellcasting(data: dict, sources: set[str]) -> tuple[list[dict], list[dict], list[int], dict | None]:
+    """Spellcasting pr. klasse ud fra valgene: ([{class, ability, cantrips, prepared, spellbook, arcanum, extra, ...}],
+    tildelte spells fra klasse/subklasse, samlede slots, pact-slots). Se spellcasting.py for reglerne."""
+    blocks: list[dict] = []
+    granted: list[dict] = []
+    casters: list[dict] = []
+    pact_slots = None
+    for entry in (data.get("classes") or {}).values():
+        if not entry.get("name"):
+            continue
+        built = model._spellcasting_for(entry, sources)
+        if not built:
+            continue
+        stored = entry.get("choices") or {}
+        level = entry.get("level", 1)
+        label = f"class: {entry['name']}" + (f" ({entry['subclass']})" if entry.get("subclass") else "")
+
+        def picked(pick_id: str) -> list[str]:
+            raw = stored.get(pick_id)
+            return [raw] if isinstance(raw, str) and raw else [r for r in (raw or []) if r]
+
+        pick_ids = [p["id"] for p in built["picks"]]
+        valid = {p["id"]: [n for n in picked(p["id"]) if n not in spellcasting.stale(p, picked(p["id"]))] for p in built["picks"]}
+        arcanum = {pid.split("_", 1)[1]: valid[pid] for pid in pick_ids if pid.startswith("arcanum_") and valid[pid]}
+        extra = [n for pid in pick_ids if pid.startswith("sub_spell_") for n in valid[pid]]
+        blocks.append({
+            "class": entry["name"], "subclass": entry.get("subclass"), "ability": built["ability"], "level": level,
+            "save_dc": "{8+PB+%s}" % built["ability"], "attack": "{+PB+%s}" % built["ability"],
+            "cantrips": valid.get("cantrips", []), "spellbook": valid.get("spellbook", []), "prepared": valid.get("prepared", []),
+            "arcanum": arcanum, "extra": extra, "variant": stored.get("subclass_variant"),
+            "max_spell_level": built["max_spell_level"], "prepare_change": built["prepare_change"],
+        })
+        for g in built["grants"]:
+            granted.append({"name": g["name"], "source": g["source"], "cantrip": g["cantrip"], "addition": g["addition"], "ability": built["ability"],
+                            "recharge": _RECHARGE_KEYS.get(g["recharge"], g["recharge"]), "uses": g["uses"], "from": label})
+        if built.get("pact"):
+            pact_slots = built["pact"]
+        casters.append({"progression": built["progression"], "level": level, "row": built["slots"]})
+    slots = spellcasting.combined_slots(casters, sources)
+    while slots and slots[-1] == 0:
+        slots = slots[:-1]
+    return blocks, granted, slots, pact_slots
+
+
+def _spells_from_block(block: dict, ability: str | None, picked, level: int, sources: set[str], origin: str) -> list[dict]:
+    """Poster for én additionalSpells-blok: faste spells og de valgte. `picked(i)` giver den
+    gemte værdi for valg nr. i (ikke-prepared), `picked("prepared")` den samlede liste for
+    prepared-trinene (Ritual Caster). Spells, der låses op på et højere niveau end karakterens,
+    udelades. Poster: {name, source, cantrip, addition, ability, recharge, uses, from}."""
+    out = []
+    pick = 0
+    prepared_done = False
+    for item in spell_grants.walk(block):
+        if item["kind"] == "fixed":
+            uid = spell_grants.parse_uid(item["value"])
+            names, cantrip = [uid["name"]], uid["cantrip"]
+        elif item["addition"] == "prepared":
+            if prepared_done or item["level"] > level:
+                continue
+            prepared_done = True
+            value = picked("prepared")
+            names, cantrip = [v for v in (value if isinstance(value, list) else [value]) if v], False
+        else:
+            value = picked(pick)
+            pick += 1
+            names = [v for v in (value if isinstance(value, list) else [value]) if v]
+            cantrip = "level=0" in item["value"]
+        if item["level"] > level:
+            continue
+        for name in names:
+            spell = e.get_spell(name, sources) or e.get_spell(name, {"XPHB"})
+            out.append({
+                "name": spell["name"] if spell else name.title(),
+                "source": spell["source"] if spell else None,
+                "cantrip": cantrip,
+                "addition": item["addition"],
+                "ability": ability,
+                "recharge": _RECHARGE_KEYS.get(item["recharge"], item["recharge"]),
+                "uses": item["uses"],
+                "from": origin,
+            })
+    return out
+
+
+def _race_granted_spells(race_eff: dict, stored: dict, level: int, sources: set[str], race_name: str) -> list[dict]:
+    """De spells racen (den valgte afstamning) giver KARAKTEREN på det nuværende niveau: faste
+    spells og de valgte (race.choices.spell_<n>)."""
+    out = []
+    blocks = model.race_spell_blocks(race_eff, stored)
+    for b_index, block in enumerate(blocks):
+        prefix = "" if len(blocks) == 1 else f"b{b_index}_"
+        picked_ability = stored.get(f"{prefix}spell_ability")
+        ability = spell_grants.fixed_ability(block) or (picked_ability.upper() if isinstance(picked_ability, str) else None)
+        out += _spells_from_block(block, ability, lambda i, p=prefix: stored.get(f"{p}spell_{i}"), level, sources, f"race: {race_name}")
+    return out
+
+
+def _feat_granted_spells(entry: dict, feat_obj: dict, level: int, sources: set[str], known_spells: set[str]) -> list[dict]:
+    """Det valgte feats additionalSpells giver (samme valg-id'er som model._additional_spell_choices:
+    `origin` + `origin_`-præfiks for Magic Initiates navngivne blokke, `b<n>_` for flere ikke-navngivne
+    blokke, `spell_<n>`, `spell_prepared`, og `ability` / `<præfiks>ability` for spellcasting-evnen)."""
+    blocks = feat_obj.get("additionalSpells") or []
+    if not blocks:
+        return []
+    stored = entry.get("choices") or {}
+    origin = f"feat: {feat_obj['name']}"
+    if feat_obj.get("name") == "Cold Caster":
+        # Enten Ray of Frost, eller - hvis den allerede er kendt - en anden Wizard-cantrip.
+        blocks = [blocks[1] if "Ray of Frost" in known_spells else blocks[0]]
+    pairs: list[tuple[dict, str]]
+    if len(blocks) > 1 and all(b.get("name") for b in blocks):
+        chosen = stored.get("origin")
+        pairs = [(b, "origin_") for b in blocks if b["name"].removesuffix(" Spells") == chosen]
+    elif len(blocks) == 1:
+        pairs = [(blocks[0], "")]
+    else:
+        pairs = [(b, f"b{i}_") for i, b in enumerate(blocks)]
+    out = []
+    for block, prefix in pairs:
+        raw = block.get("ability")
+        if raw == "inherit":  # den evne, feat'et forhøjede
+            picked = stored.get("ability")
+        elif spell_grants.ability_choice(block):
+            picked = stored.get(f"{prefix}ability")
+        else:
+            picked = spell_grants.fixed_ability(block)
+        ability = picked.upper() if isinstance(picked, str) else None
+        out += _spells_from_block(block, ability, lambda i, p=prefix: stored.get(f"{p}spell_prepared" if i == "prepared" else f"{p}spell_{i}"), level, sources, origin)
     return out
 
 
@@ -313,31 +626,60 @@ def derive_from_state(data: dict, state: dict) -> dict:
     # state() beregnes før vi kan kende ability_options for '1-1-1'-fordelingen,
     # men den afhænger kun af baggrund/feats, ikke af selve evnescoren - rækkefølgen er ok.
     bonuses = _ability_bonuses(data, state, sources)
-    final_abilities = {a: assigned[a] + bonuses[a] for a in model.ABILITIES if a in assigned}
+    caps = _ability_caps(data, sources)
+    # Loftet (20, eller 30 for en Epic Boon) begrænser kun bonusserne; en grundscore over loftet røres ikke.
+    final_abilities = {a: max(assigned[a], min(assigned[a] + bonuses[a], caps[a])) for a in model.ABILITIES if a in assigned}
     con_mod = _mod(final_abilities.get("CON", 10))
     ac, ac_note = _ac(data, sources, _mod(final_abilities.get("DEX", 10)))
     hit_die = (primary_class_obj or {}).get("hd", {}).get("faces", 8)
     hit_dice = _hit_dice_pool(data, sources)
     hp = _hp(data, primary_id, hit_die, con_mod, total_level) if assigned.get("CON") is not None else None
 
+    feat_grants = _feat_grants(data, sources)
     saves = [s.upper() for s in (primary_class_obj or {}).get("proficiency", [])]
+    saves += [s.upper() for s in feat_grants["saves"] if s.upper() not in saves]
 
     race_name, race_source = data["race"].get("name"), data["race"].get("source")
     background_name, background_source = data["background"].get("name"), data["background"].get("source")
     background_obj = e.get_background(background_name, {background_source} if background_source else sources) if background_name else None
     race_obj = e.get_race(race_name, {race_source} if race_source else sources) if (race_name and race_name != model.OTHER) else None
-    race_speed = (race_obj or {}).get("speed", 30)
-    speed = race_speed.get("walk", 30) if isinstance(race_speed, dict) else (race_speed or 30)
+    race_stored = data["race"].get("choices") or {}
+    race_eff = races.effective(race_obj, race_stored.get("lineage"), sources) if race_obj else {}
+    speeds = races.speeds(race_eff) if race_obj else {"walk": 30}
+    speed = speeds["walk"]
 
     fixed_skills = []
     fixed_tools = []
     if background_obj:
-        fixed_skills = [k for k, v in (background_obj.get("skillProficiencies") or [{}])[0].items() if v]
-        fixed_tools = [k for k, v in (background_obj.get("toolProficiencies") or [{}])[0].items() if v]
+        # Kun `true` er en fast tildeling; et tal (anyGamingSet: 1) er et VALG og står i choices.
+        fixed_skills = [k for k, v in (background_obj.get("skillProficiencies") or [{}])[0].items() if v is True]
+        fixed_tools = [k for k, v in (background_obj.get("toolProficiencies") or [{}])[0].items() if v is True]
+    fixed_skills += feat_rules._true_keys(race_eff.get("skillProficiencies"))
+    fixed_tools += feat_rules._true_keys(race_eff.get("toolProficiencies"))
 
-    skills = sorted({*(s.lower() for s in _collect(data, "skill", "skills", "skill_any")), *fixed_skills})
-    tools = sorted({*_collect(data, "tool", "instrument"), *fixed_tools})
-    expertise = sorted(set(_collect(data, "expertise")))
+    # `skill_any` (Skilled) er ét valg blandt skills OG værktøjer: skills er de små bogstaver-navne i ALL_SKILLS.
+    picked_any = _collect(data, "skill_any")
+    skill_any_skills = [p.lower() for p in picked_any if p.lower() in model.ALL_SKILLS]
+    skill_any_tools = [p for p in picked_any if p.lower() not in model.ALL_SKILLS]
+    skills = sorted({*(s.lower() for s in _collect(data, "skill", "skills")), *skill_any_skills, *fixed_skills, *feat_grants["skills"]})
+    tools = sorted({*_collect(data, "tool", "instrument", "gaming_set", "artisan_tool", "tool_any"), *skill_any_tools, *fixed_tools, *feat_grants["tools"]})
+    expertise = sorted({
+        skill for c in state.get("classes", []) for f in c.get("features", [])
+        if f.get("expertise_choice") for skill in f["expertise_choice"]["chosen"]
+    } | {s.lower() for s in feat_grants["expertise"]})
+
+    senses = dict(races.fixed_senses(race_eff))
+    for sense, rng in feat_grants["senses"].items():
+        senses[sense] = max(senses.get(sense, 0), rng)
+    race_resist = races.fixed_resist(race_eff)
+    chosen_resist = race_stored.get("resist")
+    race_resist += [r for r in (chosen_resist if isinstance(chosen_resist, list) else [chosen_resist]) if r]
+    resistances = sorted({r.lower() for r in [*race_resist, *feat_grants["resist"]]})
+
+    known_spell_set = model.class_spell_names(data)
+    granted_spells = _race_granted_spells(race_eff, race_stored, total_level, sources, race_name) if race_obj else []
+    for feat_entry, feat_obj in _chosen_feats(data, sources):
+        granted_spells += _feat_granted_spells(feat_entry, feat_obj, total_level, sources, known_spell_set)
 
     classes_out = [
         {"name": c.get("name"), "source": c.get("source"), "level": c.get("level"), "subclass": c.get("subclass")}
@@ -354,11 +696,23 @@ def derive_from_state(data: dict, state: dict) -> dict:
             can_use["armor"] = ", ".join(e.clean_text(a) for a in sp["armor"])
         if sp.get("weapons"):
             can_use["weapons"] = ", ".join(e.clean_text(w) for w in sp["weapons"])
+    race_prof = races.fixed_proficiencies(race_eff)
+    for key, extra in (("armor", feat_rules.armor_text([*race_prof["armor"], *feat_grants["armor"]])), ("weapons", feat_rules.weapon_text([*race_prof["weapons"], *feat_grants["weapons"]]))):
+        if extra:
+            can_use[key] = ", ".join(dict.fromkeys([*filter(None, [can_use.get(key)]), *extra]))
 
-    known_spell_names = data.get("spells", {}).get("known") or []
+    spellcasting_blocks, class_granted, spell_slots, pact_slots = _class_spellcasting(data, sources)
+    granted_spells += class_granted
+    optional_features, optional_granted, optional_senses = _class_optional_features(data, sources)
+    granted_spells += [{**g, "recharge": _RECHARGE_KEYS.get(g["recharge"], g["recharge"])} for g in optional_granted]
+    for sense, rng in optional_senses.items():
+        senses[sense] = max(senses.get(sense, 0), rng)
+    # Spells spilleren selv har valgt (cantrips, forberedte, arcanum, ekstra). Spellbogen er en liste at vælge fra,
+    # ikke noget, der skal have kort eller beskrivelse, og er derfor ikke med her.
+    known_names = list(dict.fromkeys(n for b in spellcasting_blocks for n in [*b["cantrips"], *b["prepared"], *[x for v in b["arcanum"].values() for x in v], *b["extra"]]))
     spells_known = []
-    for name in known_spell_names:
-        spell = e.get_spell(name, sources)
+    for name in known_names:
+        spell = e.get_spell(name, sources) or e.get_spell(name, {"XPHB"})
         spells_known.append({"name": name, "source": spell["source"] if spell else None})
 
     feats = [
@@ -380,14 +734,38 @@ def derive_from_state(data: dict, state: dict) -> dict:
     # til feats/spells_known/class_features/race_traits selv - det ville
     # være redundant støj i den gemte character.yaml (hvilken liste en
     # entry står i, siger allerede dens "kind").
+    feat_texts = {obj["name"]: e.render_text(obj.get("entries", [])) for _entry, obj in _chosen_feats(data, sources)}
+    class_texts = {(c["name"], f["name"], f["level"]): f["text"] for c in state.get("classes", []) for f in c.get("features", [])}
+    trait_texts = {t["name"]: t.get("text", "") for t in (state.get("race", {}).get("traits") or [])}
     effect_entries = (
-        [{**f, "kind": "feat"} for f in feats]
+        [{**f, "kind": "feat", "text": feat_texts.get(f["name"], "")} for f in feats]
         + [{**s, "kind": "spell"} for s in spells_known]
-        + [{**c, "kind": "class_feature"} for c in class_features]
-        + [{**t, "kind": "race_trait"} for t in race_traits]
+        + [{**c, "kind": "class_feature", "text": class_texts.get((c["class"], c["name"], c["level"]), "")} for c in class_features]
+        + [{**t, "kind": "race_trait", "race": race_name, "lineage": race_stored.get("lineage"), "text": trait_texts.get(t["name"], "")} for t in race_traits]
+        + [{**o, "kind": "optional_feature"} for o in optional_features]
     )
     class_levels = {c["name"]: c["level"] for c in classes_out}
-    initiative_formula, hp = _apply_effects(effect_entries, "{+DEX}", hp, total_level, class_levels)
+    foundry_ctx = foundry.Context(
+        total_level=total_level, class_levels=class_levels, abilities=final_abilities,
+        pb=PROFICIENCY_BONUS_BY_LEVEL.get(total_level, 2), scales=foundry.scale_values(classes_out),
+        armor_type=_armor_type(data, sources), shield=bool(data.get("equipment", {}).get("shield")),
+    )
+    foundry_pairs = foundry.collect(effect_entries, foundry_ctx)
+    initiative_formula, hp = _apply_effects(effect_entries, "{+DEX}", hp, total_level, class_levels, foundry_pairs)
+    derived = _apply_foundry(foundry_pairs, {
+        "speed": speed, "speeds": speeds, "senses": senses, "resistances": resistances,
+        "immunities": races.fixed_other(race_eff)["immune"], "vulnerabilities": races.fixed_other(race_eff)["vulnerable"],
+        "condition_immunities": races.fixed_other(race_eff)["conditionImmune"], "ac": ac, "ac_note": ac_note,
+    })
+    activation_entries = []
+    for entry in effect_entries:
+        info = foundry.activation(entry, foundry_ctx)
+        if info is not None:
+            activation_entries.append({k: entry[k] for k in ("name", "source", "kind", "class", "level") if entry.get(k) is not None} | info)
+    class_numbers = sorted(
+        ({"owner": v["owner"], "label": v["title"], "value": foundry.scale_text(v)} for v in foundry_ctx.scales.values()),
+        key=lambda x: (x["owner"], x["label"]),
+    )
 
     summary = [
         [label, value] for label, value in [
@@ -407,10 +785,10 @@ def derive_from_state(data: dict, state: dict) -> dict:
         "proficiency_bonus": PROFICIENCY_BONUS_BY_LEVEL.get(total_level, 2),
         "hp": hp,
         "hit_dice": hit_dice,  # poolet efter terningtype across klasser, se _hit_dice_pool()
-        "ac": ac,  # se _ac() - afledt af equipment.armor/shield, ikke et PRESERVED_FIELD længere
-        "ac_note": ac_note,  # kort forklaring til AC-boksens fodnote i render.py (box_stats), ikke en formel
+        "ac": derived["ac"],  # se _ac() - afledt af equipment.armor/shield, ikke et PRESERVED_FIELD længere
+        "ac_note": derived["ac_note"],  # kort forklaring til AC-boksens fodnote i render.py (box_stats), ikke en formel
         "initiative": initiative_formula,  # standard + evt. høj-konfidens effects (fx Alert) - se _apply_effects()
-        "speed": speed,
+        "speed": derived["speed"],
         "hit_die": hit_die,
         "saves": saves,
         "skills": skills,
@@ -418,11 +796,27 @@ def derive_from_state(data: dict, state: dict) -> dict:
         "tools": tools,
         "languages": _languages(data),  # se _languages() - klasse-/feature-tildelte ekstra sprog er IKKE talt med, kendt gap
         "can_use": can_use,
-        "masteries": [],  # se docs/character-yaml.md: ikke udledt endnu (mangler sikker opslagsvej til mastery pr. våben)
+        "size": _size(race_eff, race_stored),
+        "speeds": derived["speeds"],  # {'walk': 30, 'fly': 30, ...} i ft
+        "senses": derived["senses"],  # {'darkvision': 60, 'blindsight': 10, ...} i ft, fra race/afstamning og feats
+        "resistances": derived["resistances"],  # fra race/afstamning og feats
+        "immunities": derived["immunities"],
+        "vulnerabilities": derived["vulnerabilities"],
+        "condition_immunities": derived["condition_immunities"],
+        "granted_spells": granted_spells,
+        "masteries": _masteries(data, sources),
         "feats": feats,
         "spells_known": spells_known,
+        "optional_features": optional_features,  # valgte Metamagic/Invocations/Maneuvers ...: {name, source, types, class}
+        "spellcasting": spellcasting_blocks,  # pr. caster-klasse: evne, DC/angreb (formler), cantrips, spellbog, forberedte, arcanum
+        "spell_slots": spell_slots,  # [slots pr. spell-niveau 1..] - samlet for alle klasser (multiclass-tabellen)
+        "pact_slots": pact_slots,  # Warlock: {slots, level}
         "class_features": class_features,
         "race_traits": race_traits,
+        "resources": foundry.resources(effect_entries, foundry_ctx),  # features med begrænset antal brug (Foundry-data), se foundry.py
+        "class_numbers": class_numbers,  # klassernes niveau-tabeller på dette niveau (Sneak Attack-terninger, Rage Damage ...)
+        "activations": activation_entries,  # hvilke features der er Action/Bonus Action/Reaction (types), evt. med terningformel (roll)
+        "modifiers": derived["modifiers"],  # fordele/bonusser på checks, saves, angreb, skade + ikke-aktive fart-/AC-bonusser
         "extra_training": [],
         "summary": summary,
     }

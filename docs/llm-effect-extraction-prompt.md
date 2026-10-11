@@ -19,7 +19,7 @@ Resten af dette dokument er det oprindelige eksempel på selve beskeden, fra
 før koden blev skrevet - bevaret som dokumentation af designovervejelsen.
 Ingen af teksterne heri er opfundet: begge er den FAKTISKE output af
 `e5tools.render_text()` for `Alert` og `Tough` (XPHB), hentet direkte fra
-`/srv/e5tools/data/feats.json` i en kørende container. Det er bevidst - en
+`/srv/dnd5etools/data/feats.json` i en kørende container. Det er bevidst - en
 LLM-prompt bygget på en forestillet tekst beviser ingenting om det rigtige
 system.
 

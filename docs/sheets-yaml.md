@@ -77,9 +77,47 @@ top:
 `exclude` er til feats, du hellere vil beskrive i hånden et andet sted
 (fx et avanceret feat, der fortjener sin egen boks). En feat uden
 oversættelse endnu vises med sit engelske navn og tom tekst - ingen fejl,
-ingen opfundet tekst. Kun `feats` dækkes i dag - `class_features`/
-`spells_known`/`race_traits` er stadig ikke automatiserede (se
-[Afgrænsning](#afgrænsning)).
+ingen opfundet tekst. `type: features` dækker kun `feats`.
+
+`type: bonus_actions` med `auto: true` henter i stedet de feats,
+klassefeatures og race-traits, hvis danske beskrivelse nævner Bonus
+Action/bonushandling (klassefeatures får et `Niveau N`-tag). `exclude`
+virker som ovenfor. Entries uden beskrivelse endnu kan ikke genkendes og
+udelades, til de er beskrevet. `spells_known` er stadig ikke
+automatiseret (se [Afgrænsning](#afgrænsning)).
+
+## Automatiske bokse fra Foundry-data
+
+Disse bokse udfyldes selv ud fra `character.yaml` (se [character-yaml.md](character-yaml.md#foundry-data)) og
+udelades helt, hvis der intet er at vise:
+
+```yaml
+- type: bonus_actions     # auto: true = features, der er Bonus Action (Foundry-data; ellers genkendt i beskrivelsen)
+  auto: true
+- type: reactions         # auto: true = features, der er Reaction
+  auto: true
+- type: action_features   # auto: true = features, der er en Action
+  auto: true
+- type: resources         # Rage, Second Wind, Channel Divinity ...: afkrydsningsfelter og genopladning
+- type: class_numbers     # Sneak Attack 3d6, Rage Damage 2, Martial Arts Die d8 ...
+- type: modifiers         # fordele/bonusser, fx Danger Sense, og inaktive fart-/AC-bonusser
+```
+
+`bonus_actions`, `reactions` og `action_features` viser den udregnede terningformel i tagget (Second Wind
+`1d10+5`). `exclude` virker som ovenfor. Skabelonen har `bonus_actions`, `reactions` og `resources` på side 1 og
+`class_numbers` og `modifiers` på side 2. En eksisterende `sheets.yaml` ændres ikke; tilføj boksene selv.
+
+## Tildelte spells
+
+`type: granted_spells` viser automatisk de spells, race/afstamning og feats giver
+(`character.yaml`: `granted_spells`): navn, hvordan de bruges (`1 pr. Long Rest`,
+`PB pr. Long Rest`, `kendt`, `altid forberedt`), spellcasting-evne og hvorfra.
+Ingen `items` behøves, og boksen udelades, hvis karakteren ingen tildelte spells har.
+
+```yaml
+- type: granted_spells
+  title: Tildelte spells   # valgfri, ellers "Tildelte spells Granted spells"
+```
 
 ## Passive sanser
 
@@ -137,8 +175,9 @@ en dag migreres til `character.yaml`/`sheets.yaml`, kan
 
 ## Afgrænsning
 
-`feats` kan vises automatisk (se [Feats: manuel eller automatisk](#feats-manuel-eller-automatisk)
-ovenfor). `spells_known`/`class_features`/`race_traits` udfyldes stadig
-IKKE automatisk nogen steder - de skrives i hånden, ligesom i det gamle
+`feats` kan vises automatisk, og `bonus_actions` henter også klassefeatures
+og race-traits (se [Feats: manuel eller automatisk](#feats-manuel-eller-automatisk)
+ovenfor). `spells_known` og resten af `class_features`/`race_traits` udfyldes
+stadig IKKE automatisk nogen steder - de skrives i hånden, ligesom i det gamle
 system, eller dækkes slet ikke af selve arket (spells/klasseevner hører i
 dag til det separate kort-system, `kort.yaml`/`spellkort.py`).

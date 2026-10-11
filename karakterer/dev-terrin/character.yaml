@@ -1,0 +1,94 @@
+name: Dev Terrin
+level: 2
+race:
+  name: Halfling
+  source: XPHB
+background:
+  name: Criminal
+  source: XPHB
+classes:
+- name: Rogue
+  source: XPHB
+  level: 2
+  subclass: null
+abilities:
+  STR: 14
+  DEX: 18
+  CON: 12
+  INT: 14
+  WIS: 13
+  CHA: 9
+proficiency_bonus: 2
+hp: 15
+hit_dice:
+- die: 8
+  count: 2
+ac: 15
+ac_note: Leather Armor + DEX
+initiative: '{+DEX}'
+speed: 30
+hit_die: 8
+saves:
+- DEX
+- INT
+skills:
+- deception
+- insight
+- investigation
+- perception
+- sleight of hand
+- stealth
+expertise:
+- perception
+- stealth
+tools:
+- thieves' tools
+languages: Common, Dwarvish, Orc
+can_use:
+  armor: light
+  weapons: simple, Martial weapons that have the Finesse or Light property
+masteries:
+- - Vex
+  - Shortsword
+- - Nick
+  - Dagger
+feats: []
+spells_known: []
+class_features:
+- class: Rogue
+  name: Expertise
+  source: XPHB
+  level: 1
+- class: Rogue
+  name: Sneak Attack
+  source: XPHB
+  level: 1
+- class: Rogue
+  name: Thieves' Cant
+  source: XPHB
+  level: 1
+- class: Rogue
+  name: Weapon Mastery
+  source: XPHB
+  level: 1
+- class: Rogue
+  name: Cunning Action
+  source: XPHB
+  level: 2
+race_traits:
+- name: Brave
+  source: XPHB
+- name: Halfling Nimbleness
+  source: XPHB
+- name: Luck
+  source: XPHB
+- name: Naturally Stealthy
+  source: XPHB
+extra_training: []
+summary:
+- - Klasse
+  - Rogue 2
+- - Art
+  - Halfling
+- - Baggrund
+  - Criminal

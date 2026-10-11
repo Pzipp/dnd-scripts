@@ -49,9 +49,11 @@ pages:
           content:
           - type: bonus_actions
             title: Bonus actions
-            items:
-            - name: Cunning Action
-              text: <em>Dash</em> eller <em>Disengage</em>.
+            auto: true               # fra Foundry-data (Action/Bonus Action/Reaction pr. feature); skriv items: i hånden for selv at bestemme
+          - type: reactions
+            title: Reactions
+            auto: true
+          - type: resources          # features med begrænset antal brug, afkrydsningsfelter + genopladning (tom = ingen boks)
           - type: turn
             title: Nærkamp
             subtitle: nærkamp
@@ -82,6 +84,8 @@ pages:
         - '<b>Navn</b>: teksten.'
       - type: death_saves
       - type: mastery
+      - type: class_numbers        # Sneak Attack-terninger, Rage Damage osv. på dit niveau (tom = ingen boks)
+      - type: modifiers            # fordele/bonusser fra features, fx Danger Sense (tom = ingen boks)
       - type: useful
     - width: 1.25
       merged: tight

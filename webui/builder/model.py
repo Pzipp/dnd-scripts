@@ -24,7 +24,12 @@ from pathlib import Path
 import yaml
 
 from . import e5tools as e
+from . import feat_rules
+from . import races
 from . import settings
+from . import optionalfeatures
+from . import spell_grants
+from . import spellcasting
 
 OTHER = "Andet (hjemmelavet)"
 ABILITIES = ["STR", "DEX", "CON", "INT", "WIS", "CHA"]
@@ -44,7 +49,7 @@ def empty_character() -> dict:
         "languages": {"known": []},  # PHB 2024 kap. 2: Common (fast) + 2 valgt/rullet fra Standard Languages-tabellen
         # Pr. karakter, ikke delt - to gruppemedlemmer kan have forskellige
         # tilladte kilder/husregler i gang samtidig.
-        "settings": {"allowed_sources": list(settings.DEFAULT_SOURCES), "half_feats": settings.DEFAULT_HALF_FEATS},
+        "settings": {"allowed_sources": list(settings.DEFAULT_SOURCES)},
     }
 
 
@@ -72,7 +77,7 @@ def load(character_dir: Path) -> dict:
     data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     template = empty_character()
     template.update(data)
-    return template
+    return normalize(template)
 
 
 def save(character_dir: Path, data: dict) -> None:
@@ -133,6 +138,16 @@ def _dependent_fields(path: str, data: dict) -> list[str]:
         if cid == primary_class_id(data):
             deps.append("equipment.class_package")
         return deps
+    m = re.match(r"^classes\.([^.]+)\.subclass$", path)
+    if m:
+        # En anden subklasse har andre ekstra spells (og evt. terræn-variant).
+        cid = m.group(1)
+        keys = ((data.get("classes", {}).get(cid) or {}).get("choices") or {})
+        return [f"classes.{cid}.choices.{k}" for k in keys if k == "subclass_variant" or k.startswith(("sub_spell_", "opt_", "ofs_"))]
+    if path == "race.choices.lineage":
+        # En anden afstamning har andre resistance-/spell-muligheder og -størrelse.
+        stale = ("resist", "spell_ability", "size", "ability_option", "ability_pick")
+        return [f"race.choices.{k}" for k in (data.get("race", {}).get("choices") or {}) if k in stale or k.startswith(("spell_", "b0_", "b1_", "ability_w"))]
     if path == "background.name":
         return ["background.choices", "equipment.background_package", "feats.background"]
     if path.startswith("feats.") and path.endswith(".name"):
@@ -266,14 +281,18 @@ def _feat_grant(obj: dict | None) -> dict | None:
     if "anyFromCategory" in grant:
         c = grant["anyFromCategory"]
         return {"type": "choice", "category": (c.get("category") or ["G"])[0], "count": c.get("count", 1)}
+    if "any" in grant:  # Variant Human: ét hvilket som helst feat
+        return {"type": "choice", "category": None, "count": grant["any"]}
     feat_id = next(iter(grant), None)
     return {"type": "fixed", "id": feat_id} if feat_id else None
 
 
-def _meets_prerequisite(feat: dict, level: int, assigned: dict, has_spellcasting: bool) -> bool:
+def _meets_prerequisite(feat: dict, level: int, assigned: dict, has_spellcasting: bool, armor_profs: frozenset = frozenset()) -> bool:
     """prerequisite er en liste af ALTERNATIVER (opfyld én); inden i ét alternativ
-    skal niveau, evt. spellcasting2020-krav (Spellcasting/Pact Magic feature) OG
-    alle evne-krav være opfyldt."""
+    skal niveau, evt. spellcasting2020-krav (Spellcasting/Pact Magic feature),
+    rustningstræning (`proficiency`, fx Heavily Armored kræver Medium) OG alle
+    evne-krav være opfyldt. `feature` (Fighting Style) og `otherSummary` er
+    allerede opfyldt, når feat'et tilbydes i det slot, der giver dem."""
     prereqs = feat.get("prerequisite")
     if not prereqs:
         return True
@@ -282,6 +301,8 @@ def _meets_prerequisite(feat: dict, level: int, assigned: dict, has_spellcasting
             continue
         if alt.get("spellcasting2020") and not has_spellcasting:
             continue
+        if any(a not in armor_profs for a in feat_rules.required_armor(alt)):
+            continue
         if all(
             (assigned.get(ability.upper()) or 0) >= minimum
             for req in (alt.get("ability") or [])
@@ -289,6 +310,25 @@ def _meets_prerequisite(feat: dict, level: int, assigned: dict, has_spellcasting
         ):
             return True
     return False
+
+
+def _armor_proficiencies(data: dict, sources: set[str]) -> frozenset:
+    """Rustningstræning (light/medium/heavy/shield) fra karakterens klasser (primær = start-,
+    øvrige = multiclass-træning) og fra valgte feats' faste armorProficiencies."""
+    out: set[str] = set()
+    primary = primary_class_id(data)
+    for cid, entry in data.get("classes", {}).items():
+        obj = e.get_class(entry.get("name"), {entry.get("source")} if entry.get("source") else sources) if entry.get("name") else None
+        if not obj:
+            continue
+        prof = obj.get("startingProficiencies", {}) if cid == primary else obj.get("multiclassing", {}).get("proficienciesGained", {})
+        out |= set(feat_rules._true_keys(prof.get("armorProficiencies")))
+    for chosen in (data.get("feats") or {}).values():
+        if chosen and chosen.get("name"):
+            feat_obj = e.get_feat(chosen["name"], {chosen["source"]} if chosen.get("source") else sources)
+            if feat_obj:
+                out |= set(feat_rules.fixed_grants(feat_obj)["armor"])
+    return frozenset(out)
 
 
 def _class_has_spellcasting(entry: dict, sources: set[str]) -> bool:
@@ -368,6 +408,8 @@ def _sub_choice_complete(sc: dict, stored_value) -> bool:
         if stored_value["mode"] == "2":
             return bool(stored_value.get("ability1"))
         return bool(stored_value.get("ability1")) and bool(stored_value.get("ability2"))
+    if sc.get("count", 1) > 1 and isinstance(stored_value, list):
+        return len(stored_value) >= sc["count"]
     return bool(stored_value)
 
 
@@ -384,48 +426,11 @@ _SPELL_FILTER_KEYS = {"level", "school", "class", "components & miscellaneous", 
 
 
 def _parse_spell_filter(filter_str: str) -> dict | None:
-    """'level=1|school=I;N' -> {'level': '1', 'school': 'I;N'}. None hvis
-    filteret bruger et felt vi slet ikke genkender - så det bevidst
-    springes over i stedet for at vise en forkert/tom liste."""
-    parsed = {}
-    for part in filter_str.split("|"):
-        if "=" not in part:
-            return None
-        key, value = part.split("=", 1)
-        key = key.strip()
-        if key not in _SPELL_FILTER_KEYS:
-            return None
-        parsed[key] = value.strip()
-    return parsed
+    return spell_grants.parse_filter(filter_str)
 
 
 def _spells_for_filter(parsed: dict, sources: set[str]) -> list[dict]:
-    level = int(parsed["level"]) if "level" in parsed else None
-    schools = set(parsed["school"].split(";")) if "school" in parsed else None
-    class_names = {c.capitalize() for c in parsed["class"].split(";")} if "class" in parsed else None
-    ritual = True if parsed.get("components & miscellaneous") == "ritual" else None
-    spell_attack = set(parsed["spell attack"].split(";")) if "spell attack" in parsed else None
-    spells = e.spells_by_filter(sources, level=level, schools=schools, class_name=class_names, ritual=ritual, spell_attack=spell_attack) or []
-    # Flere tilladte kilder kan genoptrykke samme spell (fx PHB 2014 + XPHB
-    # 2024) - de to udgaver er IKKE nødvendigvis identiske (se notes.md), så
-    # ingen af dem fjernes. I stedet suffikses navnet med kilden, akkurat som
-    # _label_options() allerede gør for racer/baggrunde/feats, og KUN når
-    # navnet reelt er ambigut (findes under mere end én kandidat her).
-    by_name: dict[str, int] = {}
-    for s in spells:
-        by_name[s["name"]] = by_name.get(s["name"], 0) + 1
-    seen: set[tuple[str, str | None]] = set()
-    out = []
-    for s in spells:
-        key = (s["name"], s.get("source"))
-        if key in seen:
-            continue
-        seen.add(key)
-        label = s["name"]
-        if by_name[s["name"]] > 1:
-            label = f"{label} ({s.get('source')})"
-        out.append({**s, "name": label})
-    return out
+    return spell_grants.spells_for_filter(parsed, sources)
 
 
 def _find_spell_filters(node, found: list, skip_keys: set = frozenset()) -> None:
@@ -578,15 +583,58 @@ def _additional_spell_choices(feat_obj: dict, sources: set[str], stored: dict, l
     return choices
 
 
-def _feat_sub_choices(feat_obj: dict, sources: set[str], stored: dict, level: int, half_feats: bool, known_spells: set[str]) -> list[dict]:
-    """Et valgt feats egne undervalg. Feat-JSON'ens 'ability'-felt er IKKE
-    generelt pålideligt - det optræder på feats hvor selve teksten slet ikke
-    giver en evne-forbedring (fx Weapon Master), så det bruges ikke generisk
-    for alle feats. For Epic Boons (category EB) er feltet derimod altid
-    korrekt: alle Epic Boons giver +1 til én evne, op til 30 - det er en
-    fast regel for hele kategorien (nævnt i reglerne for Epic Boons som
-    helhed, ikke gentaget i hver enkelt boons egen tekst), så her bruges
-    kategori-koden som det pålidelige signal i stedet for feat-navnet."""
+# 5etools' tildelings-nøgler for "vælg et værktøj": hvilken gruppe, valgets id, titel og værktøjstyper.
+_TOOL_CATEGORIES = {
+    "anyMusicalInstrument": ("instrument", "Musikinstrument", {"INS"}),
+    "anyArtisansTool": ("artisan_tool", "Artisan's Tool", {"AT"}),
+    "anyGamingSet": ("gaming_set", "Gaming Set", {"GS"}),
+    "anyTool": ("tool_any", "Tool", {"AT", "INS", "GS", "T"}),
+    "any": ("tool_any", "Tool", {"AT", "INS", "GS", "T"}),
+}
+# Ord i `choose.from`, der betyder en hel gruppe i stedet for ét værktøj.
+_TOOL_WORDS = {
+    "musical instrument": "anyMusicalInstrument", "anyMusicalInstrument": "anyMusicalInstrument",
+    "gaming set": "anyGamingSet", "anyGamingSet": "anyGamingSet",
+    "anyArtisansTool": "anyArtisansTool", "artisan's tools": "anyArtisansTool",
+    "anyTool": "anyTool",
+}
+
+
+def _tool_pool(types: set[str], sources: set[str]) -> list[str]:
+    return sorted({t["name"] for t in e.tools(sources) if (t.get("type") or "").split("|")[0] in types})
+
+
+def _tool_choices(blocks, sources: set[str]) -> list[dict]:
+    """Værktøjsvalg fra et `toolProficiencies`-felt (feat, race, baggrund):
+    * `anyGamingSet: 1` / `anyArtisansTool: 1` / `anyMusicalInstrument: 1` / `any: 1`: vælg N frit
+      blandt gruppen. Hver gruppe har sit eget valg-id (gaming_set, artisan_tool, instrument, tool_any).
+    * `choose: {from: [...], count}`: navngivne værktøjer og/eller grupper (ældre baggrunde)."""
+    block = (blocks or [{}])[0]
+    choices = []
+    for key, (id_, label, types) in _TOOL_CATEGORIES.items():
+        n = block.get(key)
+        if isinstance(n, int) and not isinstance(n, bool) and n > 0:
+            choices.append({"id": id_, "title": f"{label} ({n})" if n > 1 else label, "options": _tool_pool(types, sources), "multiple": n > 1, "count": n})
+    choose = block.get("choose") or {}
+    if choose.get("from"):
+        n = choose.get("count", 1)
+        by_lower = {t["name"].lower(): t["name"] for t in e.tools(sources)}
+        options: list[str] = []
+        for entry in choose["from"]:
+            group = _TOOL_WORDS.get(entry)
+            if group:
+                options += _tool_pool(_TOOL_CATEGORIES[group][2], sources)
+            else:
+                options.append(by_lower.get(entry.lower(), entry[:1].upper() + entry[1:]))
+        choices.append({"id": "tool", "title": f"Tool ({n})" if n > 1 else "Tool", "options": sorted(dict.fromkeys(options)), "multiple": n > 1, "count": n})
+    return choices
+
+
+def _feat_sub_choices(feat_obj: dict, sources: set[str], stored: dict, level: int, known_spells: set[str]) -> list[dict]:
+    """Et valgt feats egne undervalg, læst fra 5etools' strukturerede felter
+    (se feat_rules.py for deres betydning). Kun det, dataene ikke siger,
+    har navne-undtagelser: Weapon Master og Elemental Adept (valget står kun
+    i feat'ens tekst) og Ability Score Improvement (egen +2/+1-dialog)."""
     choices = []
     skills_from, count = _skills_from_choose(feat_obj.get("skillProficiencies"))
     if skills_from:
@@ -616,52 +664,26 @@ def _feat_sub_choices(feat_obj: dict, sources: set[str], stored: dict, level: in
         # struktureret choose-felt (modsat fx Epic Boons' resist-valg) - ingen
         # systematisk måde at opdage det på, derfor specialhåndteret som Weapon Master.
         choices.append({"id": "damage_type", "title": "Skadetype (Energy Mastery)", "options": ["Acid", "Cold", "Fire", "Lightning", "Thunder"], "multiple": False})
-    if feat_obj.get("name") == "Resilient":
-        # Ability-feltets 'entry'-tekst siger eksplicit "choose one ability in
-        # which you lack saving throw proficiency, increase..." - det er en del
-        # af Resilients EGEN tekst, ikke den omstridte "alle General-feats er
-        # half-feats"-regel, så det gælder uanset half_feats-indstillingen.
-        # ÉT valg giver BÅDE +1 og saving throw-træning i samme evne.
-        save_choose = (feat_obj.get("savingThrowProficiencies") or [{}])[0].get("choose", {})
-        if save_choose.get("from"):
-            choices.append({"id": "ability", "title": "Evne (+1 og saving throw-træning)", "options": [a.upper() for a in save_choose["from"]], "multiple": False})
-    elif feat_obj.get("name") == "Cold Caster":
-        # Egen tekst: "The spell's spellcasting ability is the ability
-        # increased by this feat" - ÉT valg styrer BÅDE +1-forbedringen og
-        # cantrippets spellcasting-evne, ikke to separate valg (feltet står
-        # identisk gentaget i begge additionalSpells-blokke) - uafhængig af
-        # half_feats, ligesom Resilient, fordi det er feat'ets egen tekst.
-        ability_choose = (feat_obj.get("ability") or [{}])[0].get("choose", {})
-        if ability_choose.get("from"):
-            choices.append({"id": "ability", "title": "Evne (+1 og spellcasting-evne)", "options": [a.upper() for a in ability_choose["from"]], "multiple": False})
-    elif feat_obj.get("category") == "EB":
-        # Epic Boons' +1-regel er udiskutabel RAW (nævnt i kategoriens egen
-        # intro-tekst), uafhængig af half_feats-indstillingen, som kun gælder
-        # det omstridte "alle General-feats er half-feats"-spørgsmål.
-        ability_choose = (feat_obj.get("ability") or [{}])[0].get("choose", {})
-        if ability_choose.get("from"):
-            choices.append({"id": "ability", "title": "Evne-forbedring (+1, op til 30)", "options": [a.upper() for a in ability_choose["from"]], "multiple": False})
-    elif half_feats and feat_obj.get("category") == "G" and feat_obj.get("name") != "Ability Score Improvement":
-        # Om General-feats generelt er half-feats (ud over dem der selv
-        # nævner det, som Resilient) er en husregel-diskussion, ikke en
-        # fastlagt del af reglerne her - derfor styret af indstillingen
-        # half_feats (pr. karakter, default fra), ikke altid aktiv.
-        ability_choose = (feat_obj.get("ability") or [{}])[0].get("choose", {})
-        if ability_choose.get("from"):
-            choices.append({"id": "ability", "title": "Evne-forbedring (+1)", "options": [a.upper() for a in ability_choose["from"]], "multiple": False})
+    ability = feat_rules.ability_choice(feat_obj)
+    if ability:
+        # ÉT valg kan styre flere ting: +1 til evnen, og hvis feat'et siger det
+        # (samme evne-liste i savingThrowProficiencies, eller additionalSpells.
+        # ability == "inherit"), også saving throw-træning og spellcasting-evne.
+        parts = [f"+{ability['amount']}"]
+        if feat_rules.saves_linked_to_ability(feat_obj):
+            parts.append("saving throw-træning")
+        if feat_rules.spell_ability_from_choice(feat_obj):
+            parts.append("spellcasting-evne")
+        title = "Evne (" + " og ".join(parts) + (f", op til {ability['max']})" if ability["max"] != feat_rules.DEFAULT_ABILITY_MAX else ")")
+        choices.append({"id": "ability", "title": title, "options": ability["from"], "multiple": False})
+    save_from = feat_rules._choose_from(feat_obj.get("savingThrowProficiencies"))
+    if save_from and not feat_rules.saves_linked_to_ability(feat_obj):
+        choices.append({"id": "save", "title": "Saving throw-træning", "options": [a.upper() for a in save_from], "multiple": False})
     resist_choose = (feat_obj.get("resist") or [{}])[0].get("choose", {})
     if resist_choose.get("from"):
         n = resist_choose.get("count", 1)
         choices.append({"id": "resist", "title": f"Resistance ({n})", "options": [r.capitalize() for r in resist_choose["from"]], "multiple": n > 1})
-    tool_block = (feat_obj.get("toolProficiencies") or [{}])[0]
-    tool_choose = tool_block.get("choose", {})
-    if tool_choose.get("from"):
-        n = tool_choose.get("count", 1)
-        choices.append({"id": "tool", "title": f"Tool ({n})", "options": [t[:1].upper() + t[1:] for t in tool_choose["from"]], "multiple": n > 1})
-    if tool_block.get("anyMusicalInstrument"):
-        n = tool_block["anyMusicalInstrument"]
-        instrument_names = sorted({t["name"] for t in e.tools(sources) if (t.get("type") or "").split("|")[0] == "INS"})
-        choices.append({"id": "instrument", "title": f"Musikinstrument ({n}, blandt alle)", "options": instrument_names, "multiple": n > 1})
+    choices += _tool_choices(feat_obj.get("toolProficiencies"), sources)
     expertise = (feat_obj.get("expertise") or [{}])[0]
     if expertise.get("anyProficientSkill"):
         n = expertise["anyProficientSkill"]
@@ -686,16 +708,423 @@ def _feature_feat_category(feature: dict) -> str | None:
     return m.group(1) if m else None
 
 
+def _proficient_skills(data: dict, background_obj: dict | None) -> list[str]:
+    """Alle skills karakteren er trænet i (klasse-, race-, feat-valg + baggrundens
+    faste) - de eneste, Expertise kan vælges blandt."""
+    found: set[str] = set()
+    blocks = [data.get("race", {}).get("choices", {}), data.get("background", {}).get("choices", {})]
+    blocks += [c.get("choices", {}) for c in data.get("classes", {}).values()]
+    blocks += [f.get("choices", {}) for f in data.get("feats", {}).values() if f]
+    for block in blocks:
+        for key in ("skill", "skills", "skill_any"):
+            value = block.get(key)
+            found.update(v.lower() for v in (value if isinstance(value, list) else [value]) if v)
+    if background_obj:
+        found.update(k for k, v in (background_obj.get("skillProficiencies") or [{}])[0].items() if v)
+    return [s for s in ALL_SKILLS if s in found]
+
+
+_SCHOLAR_SKILLS = ["arcana", "history", "investigation", "medicine", "nature", "religion"]
+
+
+def _expertise_keys(class_name: str, feature: dict) -> str | None:
+    """Choices-nøglen for en feature, der giver Expertise (ellers None):
+    'expertise_<niveau>' for Expertise/Deft Explorer, 'scholar' for Wizards Scholar."""
+    if feature["name"] in ("Expertise", "Deft Explorer"):
+        return f"expertise_{feature['level']}"
+    if class_name == "Wizard" and feature["name"] == "Scholar":
+        return "scholar"
+    return None
+
+
+def _expertise_choice(data: dict, cid: str, class_name: str, feature: dict, text: str, proficient: list[str]) -> dict | None:
+    """Ét Expertise-valg pr. feature (Rogue niv. 1 og 6, Bard 2 og 9, Ranger
+    Deft Explorer 2 og Expertise 9, Wizard Scholar). Antal fra featurens tekst
+    (Deft Explorer og Scholar: 1), Scholar kun 6 faste skills. En skill kan kun
+    få Expertise én gang på tværs af alle valg og klasser."""
+    key = _expertise_keys(class_name, feature)
+    if not key:
+        return None
+    if key == "scholar" or feature["name"] == "Deft Explorer":
+        count = 1
+    else:
+        m = re.search(r"\b(one|two|three)\b", text, re.I)
+        count = _NUMBER_WORDS[m.group(1).lower()] if m else 2
+    taken = set()
+    for ocid, oentry in data.get("classes", {}).items():
+        for okey, values in oentry.get("choices", {}).items():
+            if (okey.startswith("expertise_") or okey == "scholar") and not (ocid == cid and okey == key):
+                taken.update(values)
+    for feat in (data.get("feats") or {}).values():  # Expertise fra et feat (Skill Expert) kan ikke tages én gang til
+        value = ((feat or {}).get("choices") or {}).get("expertise")
+        taken.update(v.lower() for v in (value if isinstance(value, list) else [value]) if v)
+    pool = [s for s in proficient if s in _SCHOLAR_SKILLS] if key == "scholar" else proficient
+    title = "Scholar (1 skill, kun Arcana, History, Investigation, Medicine, Nature, Religion)" if key == "scholar" \
+        else f"Expertise ({count} skill{'s' if count > 1 else ''}, blandt dine proficiencies uden Expertise)"
+    return {
+        "id": key, "title": title, "options": [x for x in pool if x not in taken],
+        "chosen": data["classes"][cid]["choices"].get(key, [])[:count], "count": count,
+    }
+
+
 def _slug(name: str) -> str:
     return re.sub(r"[^a-z0-9]", "", name.lower())
 
 
-def _weapon_mastery_choice(class_obj: dict, level: int, sources: set[str]) -> dict | None:
+_NUMBER_WORDS = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6}
+
+
+def _weapon_mastery_count(class_obj: dict, level: int, feature_text: str) -> int | None:
+    """Antal våben: klassens egen tabelkolonne (Fighter, Barbarian...), ellers
+    - for klasser uden kolonne, fx Rogue - tallet i feature-teksten
+    ('mastery properties of two kinds of weapons')."""
     count = e.class_table_value(class_obj, "Weapon Mastery", level)
+    if count:
+        return count
+    m = re.search(r"\b(one|two|three|four|five|six)\s+kinds? of\b", feature_text, re.I)
+    return _NUMBER_WORDS[m.group(1).lower()] if m else None
+
+
+_PROPERTY_CODES = {"light": "L", "finesse": "F", "heavy": "H", "reach": "R", "thrown": "T", "versatile": "V"}
+
+
+def _weapon_prof_predicate(prof: dict):
+    """Fra en klasses startingProficiencies (primær) / proficienciesGained
+    (sekundær): (weapon_dict) -> bool. Forstår 'simple', 'martial' og
+    weaponProficiencies' fromFilter ('type=martial weapon|property=light;finesse')."""
+    rules = []  # (kategori, evt. mængde af property-koder)
+    for entry in prof.get("weaponProficiencies") or []:
+        if entry.get("simple"):
+            rules.append(("simple", None))
+        if entry.get("martial"):
+            rules.append(("martial", None))
+        filt = (entry.get("all") or {}).get("fromFilter", "")
+        if filt:
+            parts = dict(p.split("=", 1) for p in filt.split("|") if "=" in p)
+            props = {_PROPERTY_CODES[x] for x in parts.get("property", "").split(";") if x in _PROPERTY_CODES}
+            rules.append(("martial" if "martial" in parts.get("type", "") else "simple", props or None))
+    if not rules:
+        for w in prof.get("weapons") or []:
+            low = str(w).lower()
+            if low.startswith("simple"):
+                rules.append(("simple", None))
+            elif low.startswith("martial"):
+                rules.append(("martial", None))
+
+    def ok(weapon: dict) -> bool:
+        codes = {(p if isinstance(p, str) else p.get("uid", "")).split("|")[0] for p in weapon.get("property", [])}
+        return any(weapon.get("weaponCategory") == cat and (props is None or props & codes) for cat, props in rules)
+    return ok
+
+
+def _weapon_mastery_choice(class_obj: dict, level: int, sources: set[str], feature_text: str = "", proficient=None) -> dict | None:
+    """Antal fra tabelkolonne/feature-tekst; mulige våben efter feature-teksten:
+    'Simple or Martial Melee' = kun nærkamp, 'Simple or Martial' = alle,
+    'with which you have proficiency' = kun våben karakteren er trænet i."""
+    count = _weapon_mastery_count(class_obj, level, feature_text)
     if not count:
         return None
-    weapon_names = sorted(w["name"] for w in e.weapons(sources))
+    pool = e.weapons(sources)
+    if "proficiency" in feature_text and proficient:
+        pool = [w for w in pool if proficient(w)]
+    elif "Melee" in feature_text:
+        pool = [w for w in pool if (w.get("type") or "").startswith("M")]
+    weapon_names = sorted({w["name"] for w in pool})
     return {"id": "weapon_mastery", "title": f"Weapon Mastery ({count} våben)", "options": weapon_names, "multiple": True, "count": count}
+
+
+def _character_weapon_predicate(data: dict, sources: set[str]):
+    """Union af alle karakterens klassers våbentræning (primær = start-, øvrige = multiclass-træning)."""
+    preds = []
+    primary = primary_class_id(data)
+    for cid, entry in data.get("classes", {}).items():
+        obj = e.get_class(entry.get("name"), {entry.get("source")} if entry.get("source") else sources) if entry.get("name") else None
+        if obj:
+            prof = obj.get("startingProficiencies", {}) if cid == primary else obj.get("multiclassing", {}).get("proficienciesGained", {})
+            preds.append(_weapon_prof_predicate(prof))
+    # Træning fra race/afstamning og valgte feats (faste tildelinger): 'simple'/'martial' eller et våbennavn.
+    granted: list[str] = []
+    race = data.get("race") or {}
+    race_obj = e.get_race(race["name"], {race["source"]} if race.get("source") else sources) if race.get("name") and race["name"] != OTHER else None
+    if race_obj:
+        granted += races.fixed_proficiencies(races.effective(race_obj, (race.get("choices") or {}).get("lineage"), sources))["weapons"]
+    for entry in (data.get("feats") or {}).values():
+        feat = e.get_feat(entry["name"], {entry["source"]} if entry.get("source") else sources) if entry and entry.get("name") else None
+        if feat:
+            granted += feat_rules.fixed_grants(feat)["weapons"]
+    granted = {g.split("|")[0].lower() for g in granted}
+
+    def by_grant(w: dict) -> bool:
+        return w.get("weaponCategory") in granted or w["name"].lower() in granted
+    return lambda w: by_grant(w) or any(p(w) for p in preds)
+
+
+def _spell_use_text(item: dict) -> str:
+    return spell_grants.use_text(item["addition"], item.get("recharge"), item.get("uses"))
+
+
+def race_spell_blocks(eff: dict, stored: dict) -> list[dict]:
+    """additionalSpells-blokkene, der gælder for den valgte race/afstamning. Flere NAVNGIVNE
+    blokke (ældre kilder uden _versions) er alternativer: kun den valgte afstamnings blok gælder."""
+    blocks = eff.get("additionalSpells") or []
+    if len(blocks) > 1 and all(b.get("name") for b in blocks):
+        chosen = str(stored.get("lineage") or "").lower()
+        return [b for b in blocks if b["name"].lower() == chosen]
+    return blocks
+
+
+def _race_spell_choices(eff: dict, sources: set[str], stored: dict) -> list[dict]:
+    """Valg og faste spells fra racens (afstamningens) additionalSpells. Spells låses op på et
+    karakterniveau (cantrips på 1, større spells på 3 og 5); alle vises, med niveauet angivet."""
+    choices = []
+    blocks = race_spell_blocks(eff, stored)
+    for b_index, block in enumerate(blocks):
+        prefix = "" if len(blocks) == 1 else f"b{b_index}_"
+        abilities = spell_grants.ability_choice(block)
+        if abilities:
+            choices.append({"id": f"{prefix}spell_ability", "title": "Spellcasting-evne", "options": abilities, "multiple": False})
+        fixed_lines = []
+        pick = 0
+        for item in spell_grants.walk(block):
+            if item["kind"] == "choose":
+                parsed = _parse_spell_filter(item["value"])
+                spells = _spells_for_filter(parsed, sources) if parsed else []
+                title = f"Spell ({item['count']})" if item["count"] > 1 else "Spell"
+                id_ = f"{prefix}spell_{pick}"
+                pick += 1
+                if not spells:
+                    choices.append(_unknown_choice(id_, title))
+                else:
+                    choices.append({"id": id_, "title": title, "options": [sp["name"] for sp in spells], "multiple": item["count"] > 1, "count": item["count"]})
+                continue
+            uid = spell_grants.parse_uid(item["value"])
+            spell = e.get_spell(uid["name"], sources) or e.get_spell(uid["name"], {"XPHB"})
+            name = spell["name"] if spell else uid["name"].title()
+            extra = [t for t in ("cantrip" if uid["cantrip"] else "", f"fra level {item['level']}" if item["level"] > 1 else "", _spell_use_text(item)) if t]
+            fixed_lines.append(f"{name} ({', '.join(extra)})" if extra else name)
+        if fixed_lines:
+            choices.append({"id": f"{prefix}spell_fixed", "title": "Spells (automatisk)", "fixed": True, "options": fixed_lines, "multiple": len(fixed_lines) > 1})
+    return choices
+
+
+def _race_ability_choices(eff: dict, stored: dict) -> list[dict]:
+    """Valg for racens egen evnebonus (ældre kilder, kun når indstillingen race_ability er slået til):
+    variant (flere blokke), frie evner (`choose.from`, `count`) og vægtede evner (+2/+1 eller +1/+1/+1);
+    faste bonusser vises som information."""
+    blocks = races.ability_alternatives(eff)
+    if not blocks:
+        return []
+    choices = []
+    labels = [races.ability_label(b) for b in blocks]
+    if len(blocks) > 1:
+        choices.append({"id": "ability_option", "title": "Racens evnebonus (variant)", "options": labels, "multiple": False})
+        if stored.get("ability_option") not in labels:
+            return choices
+        block = blocks[labels.index(stored["ability_option"])]
+    else:
+        block = blocks[0]
+    fixed = [f"{'+' if v > 0 else ''}{v} {k.upper()}" for k, v in block.items() if k in races.ABILITY_KEYS]
+    if fixed:
+        choices.append({"id": "ability_fixed", "title": "Racens evnebonus (automatisk)", "fixed": True, "options": fixed, "multiple": len(fixed) > 1})
+    choose = block.get("choose") or {}
+    if choose.get("weighted"):
+        for i, weight in enumerate(choose["weighted"]["weights"]):
+            choices.append({"id": f"ability_w{i}", "title": f"Evne {'+' if weight > 0 else ''}{weight}", "options": [a.upper() for a in choose["weighted"]["from"]], "multiple": False})
+    elif choose.get("from"):
+        n, amount = choose.get("count", 1), choose.get("amount", 1)
+        choices.append({"id": "ability_pick", "title": f"Evne +{amount} ({n} forskellige)" if n > 1 else f"Evne +{amount}", "options": [a.upper() for a in choose["from"]], "multiple": n > 1, "count": n})
+    return choices
+
+
+def _race_sub_choices(base: dict, eff: dict, stored: dict, sources: set[str], with_ability: bool = False) -> list[dict]:
+    """Alle valg en race giver, læst fra 5etools' felter (se races.py): skill, afstamning (= version),
+    størrelse, resistance, værktøj og spells. Felter afstamningen ændrer læses fra den valgte version;
+    så længe en race med afstamninger ikke har fået en valgt, vises kun afstamnings-valget først."""
+    choices = []
+    skills_from, count = _skills_from_choose(eff.get("skillProficiencies"))
+    if skills_from:
+        choices.append({"id": "skill", "title": f"Skill ({count})", "options": skills_from, "multiple": count > 1, "count": count})
+    lineage_options = [label for label, _v in races.lineages(base, sources)]
+    if not lineage_options:
+        # Ældre kilder: afstamningen er navnet på en additionalSpells-blok.
+        named = [b["name"] for b in base.get("additionalSpells") or [] if b.get("name")]
+        if named:
+            lineage_options = named
+    if lineage_options:
+        choices.append({"id": "lineage", "title": "Afstamning (Lineage)", "options": lineage_options, "multiple": False})
+    pending = bool(lineage_options) and not any(str(stored.get("lineage") or "").lower() == o.lower() for o in lineage_options)
+    sizes = races.size_options(eff)
+    if len(sizes) > 1:
+        choices.append({"id": "size", "title": "Størrelse (Size)", "options": sizes, "multiple": False})
+    resist = races.resist_choice(eff)
+    if resist and not pending:
+        n = resist.get("count", 1)
+        choices.append({"id": "resist", "title": f"Resistance ({n})" if n > 1 else "Resistance", "options": [r.capitalize() for r in resist["from"]], "multiple": n > 1, "count": n})
+    choices += _tool_choices(eff.get("toolProficiencies"), sources)
+    if not pending:
+        if with_ability:
+            choices += _race_ability_choices(eff, stored)
+        choices += _race_spell_choices(eff, sources, stored)
+    return choices
+
+
+def class_spell_names(data: dict) -> set[str]:
+    """Alle spells karakteren har valgt via sine klasser (cantrips, spellbog, forberedte, arcanum, ekstra)."""
+    names: set[str] = set()
+    for entry in (data.get("classes") or {}).values():
+        for key, value in ((entry or {}).get("choices") or {}).items():
+            if key in ("cantrips", "prepared", "spellbook") or key.startswith(("arcanum_", "sub_spell_")):
+                names.update(v for v in (value if isinstance(value, list) else [value]) if v)
+    return names
+
+
+def _spellcasting_for(entry: dict, sources: set[str]) -> dict | None:
+    """spellcasting.build for en klasse-post i choices.yaml (None hvis klassen ikke kaster)."""
+    name = entry.get("name")
+    if not name:
+        return None
+    class_sources = {entry["source"]} if entry.get("source") else sources
+    class_obj = e.get_class(name, class_sources)
+    if not class_obj:
+        return None
+    subclass_obj = next((x for x in e.subclasses(name, class_sources) if x.get("name") == entry.get("subclass")), None) if entry.get("subclass") else None
+    return spellcasting.build(class_obj, subclass_obj, name, entry.get("level", 1), sources, entry.get("choices") or {})
+
+
+def _migrate_known_spells(data: dict, sources: set[str]) -> None:
+    """Den gamle flade liste `spells.known` blev valgt uden klasse og uden grænser. Spells, der kan vælges
+    af en klasse, fordeles på dens cantrips/spellbog/forberedte efter dens antal; resten kasseres."""
+    known = list((data.get("spells") or {}).get("known") or [])
+    if not known:
+        return
+    remaining = list(known)
+    placed = False
+    for entry in (data.get("classes") or {}).values():
+        choices = entry.setdefault("choices", {})
+        if not entry.get("name") or any(k in choices for k in ("cantrips", "prepared", "spellbook")):
+            continue
+        built = _spellcasting_for(entry, sources)
+        if not built:
+            continue
+        for kind in ("cantrips", "spellbook", "prepared"):
+            pick = next((p for p in built["picks"] if p["id"] == kind), None)
+            if not pick:
+                continue
+            if kind == "prepared":  # Wizard: de forberedte vælges blandt spellbogen, som netop er sat
+                pick = next((p for p in _spellcasting_for(entry, sources)["picks"] if p["id"] == "prepared"), pick)
+            allowed = {o["name"] for o in pick["options"]}
+            if kind == "prepared" and "spellbook" in choices:  # Wizard: forberedt = de første i spellbogen
+                take = [n for n in choices["spellbook"] if n in allowed][:pick["count"]]
+                if take:
+                    choices[kind] = take
+                continue
+            take = [n for n in remaining if n in allowed][:pick["count"]]
+            if take:
+                choices[kind] = take
+                remaining = [n for n in remaining if n not in take]
+                placed = True
+    if placed:
+        data["spells"]["known"] = []
+
+
+def _background_fixed_feat(data: dict, sources: set[str]) -> tuple[dict, dict] | None:
+    """Baggrundens faste feat (XPHB: hver baggrund giver ét): (5etools-feat, forudfyldte valg).
+    Feat-id'et er fx 'skilled|xphb' eller en variant, 'magic initiate; cleric|xphb', som er Magic
+    Initiate med spell-listen Cleric låst (valget `origin`)."""
+    bg = data.get("background") or {}
+    if not bg.get("name"):
+        return None
+    obj = e.get_background(bg["name"], {bg["source"]} if bg.get("source") else sources)
+    grant = _feat_grant(obj)
+    if not grant or grant["type"] != "fixed":
+        return None
+    name_part, _, source = grant["id"].partition("|")
+    variant = None
+    if ";" in name_part:
+        name_part, variant = (x.strip() for x in name_part.split(";", 1))
+    feat = e.get_feat(name_part.strip(), {source.strip().upper()} if source.strip() else sources)
+    if not feat:
+        return None
+    preset = {}
+    if variant:
+        for block in feat.get("additionalSpells") or []:
+            label = (block.get("name") or "").removesuffix(" Spells")
+            if label.lower() == variant.lower():
+                preset["origin"] = label
+    return feat, preset
+
+
+def _prune_expertise(data: dict, sources: set[str]) -> None:
+    """Fjerner valgt Expertise på skills, karakteren ikke længere er trænet i (skill-valg ændret, anden baggrund)."""
+    bg = data.get("background") or {}
+    background_obj = e.get_background(bg["name"], {bg["source"]} if bg.get("source") else sources) if bg.get("name") else None
+    proficient = set(_proficient_skills(data, background_obj))
+    for entry in (data.get("classes") or {}).values():
+        choices = entry.get("choices") or {}
+        for key, values in list(choices.items()):
+            if (key.startswith("expertise_") or key == "scholar") and isinstance(values, list):
+                kept = [v for v in values if v in proficient]
+                if kept != values:
+                    choices[key] = kept
+
+
+def normalize(data: dict) -> dict:
+    """Udfylder det, der er afledt af andre valg: en baggrunds faste feat står som et feat-slot
+    (`feats.background`), så dens undervalg (Skilled: 3 skills/tools, Magic Initiate: spells,
+    Crafter/Musician: værktøj) kan gemmes og giver karakteren det, de skal. Skifter feat'et,
+    nulstilles dens valg."""
+    if not e.available():
+        return data
+    sources = set((data.get("settings") or {}).get("allowed_sources") or settings.DEFAULT_SOURCES)
+    fixed = _background_fixed_feat(data, sources)
+    if fixed:
+        feat, preset = fixed
+        feats = data.setdefault("feats", {})
+        entry = feats.get("background") or {}
+        if entry.get("name") and (entry["name"] != feat["name"] or entry.get("source") != feat["source"]):
+            entry = {}  # et andet feat end før (ny baggrund): valgene hørte til det forrige
+        entry.update({"name": feat["name"], "source": feat["source"]})
+        entry.setdefault("choices", {}).update(preset)
+        feats["background"] = entry
+    _migrate_known_spells(data, sources)
+    _prune_expertise(data, sources)
+    return data
+
+
+def _spellcasting_state(class_obj: dict, subclass_obj: dict | None, class_name: str, class_level: int, sources: set[str], stored: dict, cid: str, missing: list[str]) -> dict | None:
+    """Klassens spellcasting til UI'et: hvert valg (cantrips, spellbog, forberedte, arcanum, ekstra) med
+    præcis de spells, der kan vælges, hvor mange der skal vælges, og hvad der er valgt. Mangler der valg,
+    eller er der valgt for mange / spells der ikke længere kan vælges, står det i `missing`."""
+    built = spellcasting.build(class_obj, subclass_obj, class_name, class_level, sources, stored)
+    if not built:
+        return None
+    for pick in built["picks"]:
+        raw = stored.get(pick["id"])
+        chosen = [raw] if isinstance(raw, str) and raw else list(raw or [])
+        pick["chosen"] = chosen
+        pick["invalid"] = spellcasting.stale(pick, chosen)
+        valid = len([c for c in chosen if c not in pick["invalid"]])
+        # Forberedte spells er valgfrie (gruppen bruger printede kort): for få er ok, for mange/ugyldige er ikke.
+        too_few = valid != pick["count"] and pick["kind"] != "prepared"
+        if too_few or pick["invalid"] or len(chosen) > pick["count"]:
+            missing.append(f"classes.{cid}.choices.{pick['id']}")
+    return built
+
+
+def _optional_features_state(class_obj: dict, subclass_obj: dict | None, class_name: str, class_level: int, sources: set[str], stored: dict, cid: str, missing: list[str], known_spells: set[str]) -> list[dict]:
+    """Klassens valgfrie features (Metamagic, Eldritch Invocations, Maneuvers ...) til UI'et: præcis de, der kan
+    vælges, hvor mange, og hvad der er valgt. En valgt feature, hvis forudsætning ikke længere er opfyldt, står
+    som ugyldig; mangler der valg eller er der for mange, står det i `missing`."""
+    picks = optionalfeatures.build(class_obj, subclass_obj, class_name, class_level, sources, stored, known_spells)
+    for pick in picks:
+        raw = stored.get(pick["id"])
+        chosen = [raw] if isinstance(raw, str) and raw else list(raw or [])
+        options = {o["name"]: o for o in pick["options"]}
+        pick["chosen"] = chosen
+        pick["invalid"] = [n for n in chosen if n not in options or options[n].get("unmet")]
+        if len(chosen) != pick["count"] or pick["invalid"]:
+            missing.append(f"classes.{cid}.choices.{pick['id']}")
+    return picks
 
 
 def state(data: dict) -> dict:
@@ -704,12 +1133,13 @@ def state(data: dict) -> dict:
 
     char_settings = data.get("settings", {})
     sources = set(char_settings.get("allowed_sources") or settings.DEFAULT_SOURCES)
-    half_feats = char_settings.get("half_feats", settings.DEFAULT_HALF_FEATS)
+    normalize(data)
     missing = []
     level = total_level(data)
     assigned_abilities = data["abilities"].get("assigned", {})
     has_spellcasting = any(_class_has_spellcasting(entry, sources) for entry in data.get("classes", {}).values())
-    known_spells = set(data.get("spells", {}).get("known") or [])
+    known_spells = class_spell_names(data)
+    armor_profs = _armor_proficiencies(data, sources)
 
     # race
     race_name = data["race"].get("name")
@@ -717,49 +1147,54 @@ def state(data: dict) -> dict:
     race_obj = e.get_race(race_name, {race_source} if race_source else sources) if (race_name and race_name != OTHER) else None
     race_options = _label_options([{"name": r["name"], "source": r["source"]} for r in e.races(sources)]) + [{"name": OTHER, "source": None, "label": OTHER}]
     race_sub_choices = []
-    race_grant = _feat_grant(race_obj)
+    race_stored = data["race"].get("choices") or {}
+    race_eff = races.effective(race_obj, race_stored.get("lineage"), sources) if race_obj else None
+    race_grant = _feat_grant(race_eff)  # den valgte afstamnings feats (Variant Human: ét valgfrit feat)
     race_traits = []
     if race_obj:
-        skills_from, count = _skills_from_choose(race_obj.get("skillProficiencies"))
-        if skills_from:
-            race_sub_choices.append({"id": "skill", "title": f"Skill ({count})", "options": skills_from, "multiple": count > 1})
-        for lineage in race_obj.get("additionalSpells", []) or []:
-            if lineage.get("name"):
-                race_sub_choices.append({"id": "lineage", "title": "Lineage", "options": [s["name"] for s in race_obj["additionalSpells"]]})
-                break
-        for trait in race_obj.get("entries", []) or []:
+        race_sub_choices = _race_sub_choices(race_obj, race_eff, race_stored, sources, with_ability=char_settings.get("race_ability", settings.DEFAULT_RACE_ABILITY))
+        for sc in race_sub_choices:
+            if not _sub_choice_complete(sc, race_stored.get(sc["id"])):
+                missing.append(f"race.choices.{sc['id']}")
+        for trait in race_eff.get("entries", []) or []:
             if isinstance(trait, dict) and trait.get("name"):
                 race_traits.append({"name": trait["name"], "text": e.render_text(trait.get("entries", []))})
     if not race_name:
         missing.append("race.name")
 
-    def _add_feat_slot(key: str, label: str, category: str) -> dict:
-        candidates = [ft for ft in e.feats_by_category(category, sources) if _meets_prerequisite(ft, level, assigned_abilities, has_spellcasting)]
+    def _add_feat_slot(key: str, label: str, category: str | None, fixed: bool = False) -> dict:
+        pool = [] if fixed else (e.feats_by_category(category, sources) if category else e.feats_any(sources))
+        candidates = [ft for ft in pool if _meets_prerequisite(ft, level, assigned_abilities, has_spellcasting, armor_profs)]
         chosen = data["feats"].get(key)
         # Et allerede valgt feat holdes altid i options, selvom det ikke længere
         # ville kvalificere (fx niveau faldt, eller en skærpet forudsætning som
         # spellcasting2020 blev tilføjet senere) - ellers forsvinder valget fra
         # sin egen <select>, ser ud som uvalgt, og brugeren risikerer at rydde
         # det ved et uheld (samme fælde som multiclass-klassevælgeren havde).
-        if chosen and not any(ft["name"] == chosen["name"] for ft in candidates):
+        if chosen and not fixed and not any(ft["name"] == chosen["name"] for ft in candidates):
             existing = e.get_feat(chosen["name"], {chosen["source"]})
             if existing:
                 candidates = candidates + [existing]
         options = _label_options([{"name": ft["name"], "source": ft["source"]} for ft in candidates])
-        slot = {"key": key, "label": label, "options": options, "chosen": chosen, "text": "", "sub_choices": []}
+        slot = {"key": key, "label": label, "options": options, "chosen": chosen, "text": "", "sub_choices": [], "fixed": fixed}
         if chosen:
             feat_obj = e.get_feat(chosen["name"], {chosen["source"]})
             if feat_obj:
                 slot["text"] = e.render_text(feat_obj["entries"])
-                # Faste (ikke-valgfrie) evne-forbedringer (fx Durable: altid +1
-                # CON) hører til den omstridte "General-feats er half-feats"-
-                # regel (se half_feats ovenfor), så de vises kun når den er slået til.
-                fixed_ability = (feat_obj.get("ability") or [{}])[0]
-                if half_feats and feat_obj.get("category") == "G" and fixed_ability and not fixed_ability.get("choose"):
-                    bumps = ", ".join(f"+{v} {k.upper()}" for k, v in fixed_ability.items())
+                # Faste (ikke-valgfrie) evne-forbedringer (fx Durable: altid +1 CON).
+                fixed_asi = feat_rules.fixed_ability(feat_obj)
+                if fixed_asi:
+                    bumps = ", ".join(f"+{amount} {ab}" for ab, (amount, _cap) in fixed_asi.items())
                     slot["text"] = f"Evne-forbedring: {bumps}.\n{slot['text']}"
                 stored = chosen.get("choices", {})
-                slot["sub_choices"] = _feat_sub_choices(feat_obj, sources, stored, level, half_feats, known_spells)
+                slot["sub_choices"] = _feat_sub_choices(feat_obj, sources, stored, level, known_spells)
+                if fixed:
+                    # Baggrundens feat har en bestemt variant (Magic Initiate: Cleric): den spell-liste kan ikke vælges om.
+                    slot["sub_choices"] = [
+                        {"id": "origin", "title": "Oprindelse (spell-liste, fastlagt af baggrunden)", "fixed": True, "options": [stored["origin"]], "multiple": False}
+                        if sc["id"] == "origin" and stored.get("origin") else sc
+                        for sc in slot["sub_choices"]
+                    ]
                 for sc in slot["sub_choices"]:
                     if not _sub_choice_complete(sc, stored.get(sc["id"])):
                         missing.append(f"feats.{key}.choices.{sc['id']}")
@@ -776,6 +1211,10 @@ def state(data: dict) -> dict:
     if primary_entry.get("name") and not any(c["name"] == primary_entry["name"] for c in class_entries):
         class_entries.append({"name": primary_entry["name"], "source": primary_entry.get("source") or "XPHB"})
     class_options = _label_options(class_entries)
+    _bg_name, _bg_source = data["background"].get("name"), data["background"].get("source")
+    _background_obj = e.get_background(_bg_name, {_bg_source} if _bg_source else sources) if _bg_name else None
+    _weapon_proficient = _character_weapon_predicate(data, sources)
+    _proficient = _proficient_skills(data, _background_obj)
     classes_state = []
     for cid, entry in data.get("classes", {}).items():
         class_name = entry.get("name")
@@ -788,7 +1227,9 @@ def state(data: dict) -> dict:
         subclass_level = 99
         features = []
         is_caster = False
-        spell_options = []
+        subclass_obj = None
+        spellcasting_state = None
+        optional_state = []
         extra_proficiencies = []
         if class_obj:
             # Multiclass (sekundær klasse) giver markant færre proficiencies end
@@ -825,8 +1266,18 @@ def state(data: dict) -> dict:
                     merged += subclass_feats_by_level[leftover_level]
                 merged.sort(key=lambda f: f["level"])
                 features = merged
+            optional_state = _optional_features_state(class_obj, subclass_obj, class_name, class_level, sources, entry.get("choices") or {}, cid, missing, known_spells)
+            for pick in optional_state:
+                if pick["kind"] != "optional":
+                    continue
+                pick["feat_slots"] = []
+                for label in pick["chosen"]:
+                    option = next((o for o in pick["options"] if o["name"] == label and not o.get("unmet")), None)
+                    feature = next((f for f in e.optional_features(sources) if f["name"] == option["feature"] and f["source"] == option["source"]), None) if option else None
+                    for fs in optionalfeatures.feat_slots(feature or {}, class_level):
+                        pick["feat_slots"].append(_add_feat_slot(f"{cid}_{fs['suffix']}", f"{class_name}: {fs['label']}", fs["category"]))
             if is_caster:
-                spell_options = [s["name"] for s in e.class_spells(class_name, {class_source}, class_level)]
+                spellcasting_state = _spellcasting_state(class_obj, subclass_obj, class_name, class_level, sources, entry.get("choices") or {}, cid, missing)
             if skills_count and len(entry["choices"].get("skills", [])) < skills_count:
                 missing.append(f"classes.{cid}.choices.skills")
             if class_level >= subclass_level and not entry.get("subclass"):
@@ -842,17 +1293,20 @@ def state(data: dict) -> dict:
             if category:
                 feat_slot = _add_feat_slot(f"{cid}_{f['level']}_{_slug(f['name'])}", f"{class_name} niveau {f['level']}", category)
             if f["name"] == "Weapon Mastery" and class_obj:
-                weapon_choice = _weapon_mastery_choice(class_obj, class_level, sources)
+                weapon_choice = _weapon_mastery_choice(class_obj, class_level, sources, e.render_text(f.get("entries", [])), _weapon_proficient)
                 if weapon_choice:
                     stored = entry["choices"].get("weapon_mastery", [])
                     weapon_choice["chosen"] = stored
                     if len(stored) < weapon_choice["count"]:
                         missing.append(f"classes.{cid}.choices.weapon_mastery")
+            f_text = e.render_text(f.get("entries", []))
+            expertise_choice = _expertise_choice(data, cid, class_name, f, f_text, _proficient) if class_obj else None
+            if expertise_choice and len(expertise_choice["chosen"]) < expertise_choice["count"]:
+                missing.append(f"classes.{cid}.choices.{expertise_choice['id']}")
             features_out.append({
-                "name": f["name"], "level": f["level"], "text": e.render_text(f.get("entries", [])),
-                "feat_slot": feat_slot, "weapon_choice": weapon_choice,
+                "name": f["name"], "level": f["level"], "text": f_text,
+                "feat_slot": feat_slot, "weapon_choice": weapon_choice, "expertise_choice": expertise_choice,
             })
-
         classes_state.append({
             "id": cid, "name": class_name, "source": class_source, "level": class_level,
             "is_primary": is_primary_class, "hit_die": (class_obj or {}).get("hd", {}).get("faces", 8),
@@ -861,7 +1315,7 @@ def state(data: dict) -> dict:
             "extra_proficiencies": extra_proficiencies,
             "subclass_options": subclass_options, "subclass_level": subclass_level, "subclass": entry.get("subclass"),
             "features": features_out,
-            "is_caster": is_caster, "spell_options": spell_options,
+            "is_caster": is_caster, "spellcasting": spellcasting_state, "optional_features": optional_state,
         })
     if not data.get("classes"):
         missing.append("classes")
@@ -874,12 +1328,21 @@ def state(data: dict) -> dict:
     background_feat = None
     background_abilities = []
     background_grant = _feat_grant(background_obj)
+    background_sub_choices = []
     if background_obj:
+        bg_stored = data["background"].get("choices") or {}
+        bg_skills, bg_count = _skills_from_choose(background_obj.get("skillProficiencies"))
+        if bg_skills:
+            background_sub_choices.append({"id": "skill", "title": f"Skill ({bg_count})", "options": bg_skills, "multiple": bg_count > 1, "count": bg_count})
+        background_sub_choices += _tool_choices(background_obj.get("toolProficiencies"), sources)
+        for sc in background_sub_choices:
+            if not _sub_choice_complete(sc, bg_stored.get(sc["id"])):
+                missing.append(f"background.choices.{sc['id']}")
+        fixed_feat = _background_fixed_feat(data, sources) if background_grant and background_grant["type"] == "fixed" else None
         if background_grant and background_grant["type"] == "fixed":
-            feat_obj = e.get_feat(background_grant["id"].split("|")[0].title(), sources)
             background_feat = {
-                "name": feat_obj["name"] if feat_obj else background_grant["id"],
-                "text": e.render_text(feat_obj["entries"]) if feat_obj else "",
+                "name": fixed_feat[0]["name"] if fixed_feat else background_grant["id"],
+                "text": e.render_text(fixed_feat[0]["entries"]) if fixed_feat else "",
             }
         ability = background_obj.get("ability") or []
         if len(ability) == 2:
@@ -889,7 +1352,12 @@ def state(data: dict) -> dict:
     if not background_name:
         missing.append("background.name")
 
-    background_feat_slot = _add_feat_slot("background", f"Baggrund ({background_name})", background_grant["category"]) if background_grant and background_grant["type"] == "choice" else None
+    if background_grant and background_grant["type"] == "choice":
+        background_feat_slot = _add_feat_slot("background", f"Baggrund ({background_name})", background_grant["category"])
+    elif background_feat:
+        background_feat_slot = _add_feat_slot("background", f"Feat fra baggrunden ({background_name})", None, fixed=True)
+    else:
+        background_feat_slot = None
 
     # abilities
     method = data["abilities"].get("method")
@@ -957,7 +1425,7 @@ def state(data: dict) -> dict:
         "classes": classes_state,
         "background": {
             "options": background_options, "feat": background_feat, "ability_options": background_abilities,
-            "feat_slot": background_feat_slot,
+            "feat_slot": background_feat_slot, "sub_choices": background_sub_choices,
         },
         "hp_levels": hp_levels,
         "equipment": {"class_packages": class_packages, "background_packages": background_packages, "armor_options": armor_options},

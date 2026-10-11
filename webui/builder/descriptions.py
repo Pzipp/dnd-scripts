@@ -20,7 +20,7 @@ from pathlib import Path
 
 import yaml
 
-from . import cards, effects, llm_client
+from . import cards, effects, foundry, llm_client
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 BIBLIOTEK = ROOT / "bibliotek"
@@ -120,6 +120,12 @@ def _entries_from_character(character: dict) -> list[dict]:
         entries.append({"name": f["name"], "source": f.get("source"), "kind": "feat"})
     for s in character.get("spells_known", []):
         entries.append({"name": s["name"], "source": s.get("source"), "kind": "spell"})
+    for s in character.get("granted_spells", []):
+        # Racers/feats' tildelte spells får beskrivelse og kort-udkast som alle andre spells;
+        # dubletter (samme spell kendt OG tildelt) fjernes nedenfor.
+        entries.append({"name": s["name"], "source": s.get("source"), "kind": "spell"})
+    for f in character.get("optional_features", []):
+        entries.append({"name": f["name"], "source": f.get("source"), "kind": "optional_feature", "class": f.get("class")})
     for f in character.get("class_features", []):
         # class/level tages med her (ikke kun til lookup/cache-brug), så
         # cards.derive_kicker()/derive_scaling() kan bruge dem direkte uden
@@ -150,7 +156,7 @@ def missing_effects_for(character: dict) -> list[dict]:
     beskrivelse, men aldrig har været igennem effects-udtræk."""
     cache = effects.load()
     return [e for e in _entries_from_character(character)
-            if effects._slug(e["name"], e.get("source")) not in cache]
+            if effects._slug(e["name"], e.get("source")) not in cache and not foundry.covers(e)]
 
 
 def entries_needing_llm(character: dict) -> list[dict]:

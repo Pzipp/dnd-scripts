@@ -1,0 +1,227 @@
+name: Dev Rouge
+level: 20
+race:
+  name: Halfling
+  source: XPHB
+background:
+  name: Criminal
+  source: XPHB
+classes:
+- name: Rogue
+  source: XPHB
+  level: 20
+  subclass: Thief
+abilities:
+  STR: 14
+  DEX: 21
+  CON: 13
+  INT: 13
+  WIS: 12
+  CHA: 12
+proficiency_bonus: 6
+hp: 123
+hit_dice:
+- die: 8
+  count: 20
+ac: 15
+ac_note: 10 + DEX (ingen rustning)
+initiative: '{+DEX}'
+speed: 30
+hit_die: 8
+saves:
+- DEX
+- INT
+skills:
+- deception
+- perception
+- persuasion
+- sleight of hand
+- stealth
+expertise:
+- deception
+- persuasion
+- sleight of hand
+- stealth
+tools:
+- thieves' tools
+languages: Common, Halfling, Gnomish
+can_use:
+  armor: light
+  weapons: simple, Martial weapons that have the Finesse or Light property
+masteries:
+- - Nick
+  - Dagger
+- - Vex
+  - Shortsword
+feats:
+- name: Ability Score Improvement
+  source: XPHB
+- name: Ability Score Improvement
+  source: XPHB
+- name: Ability Score Improvement
+  source: XPHB
+- name: Ability Score Improvement
+  source: XPHB
+- name: Ability Score Improvement
+  source: XPHB
+- name: Boon of Recovery
+  source: XPHB
+spells_known: []
+class_features:
+- class: Rogue
+  name: Expertise
+  source: XPHB
+  level: 1
+- class: Rogue
+  name: Sneak Attack
+  source: XPHB
+  level: 1
+- class: Rogue
+  name: Thieves' Cant
+  source: XPHB
+  level: 1
+- class: Rogue
+  name: Weapon Mastery
+  source: XPHB
+  level: 1
+- class: Rogue
+  name: Cunning Action
+  source: XPHB
+  level: 2
+- class: Rogue
+  name: Rogue Subclass
+  source: XPHB
+  level: 3
+- class: Rogue
+  name: Steady Aim
+  source: XPHB
+  level: 3
+- class: Rogue
+  name: Fast Hands
+  source: XPHB
+  level: 3
+- class: Rogue
+  name: Second-Story Work
+  source: XPHB
+  level: 3
+- class: Rogue
+  name: Thief
+  source: XPHB
+  level: 3
+- class: Rogue
+  name: Ability Score Improvement
+  source: XPHB
+  level: 4
+- class: Rogue
+  name: Cunning Strike
+  source: XPHB
+  level: 5
+- class: Rogue
+  name: 'Poison (Cost: 1d6)'
+  source: XPHB
+  level: 5
+- class: Rogue
+  name: 'Trip (Cost: 1d6)'
+  source: XPHB
+  level: 5
+- class: Rogue
+  name: Uncanny Dodge
+  source: XPHB
+  level: 5
+- class: Rogue
+  name: 'Withdraw (Cost: 1d6)'
+  source: XPHB
+  level: 5
+- class: Rogue
+  name: Expertise
+  source: XPHB
+  level: 6
+- class: Rogue
+  name: Evasion
+  source: XPHB
+  level: 7
+- class: Rogue
+  name: Reliable Talent
+  source: XPHB
+  level: 7
+- class: Rogue
+  name: Ability Score Improvement
+  source: XPHB
+  level: 8
+- class: Rogue
+  name: Supreme Sneak
+  source: XPHB
+  level: 9
+- class: Rogue
+  name: Ability Score Improvement
+  source: XPHB
+  level: 10
+- class: Rogue
+  name: Improved Cunning Strike
+  source: XPHB
+  level: 11
+- class: Rogue
+  name: Ability Score Improvement
+  source: XPHB
+  level: 12
+- class: Rogue
+  name: Use Magic Device
+  source: XPHB
+  level: 13
+- class: Rogue
+  name: 'Daze (Cost: 2d6)'
+  source: XPHB
+  level: 14
+- class: Rogue
+  name: Devious Strikes
+  source: XPHB
+  level: 14
+- class: Rogue
+  name: 'Knock Out (Cost: 6d6)'
+  source: XPHB
+  level: 14
+- class: Rogue
+  name: 'Obscure (Cost: 3d6)'
+  source: XPHB
+  level: 14
+- class: Rogue
+  name: Slippery Mind
+  source: XPHB
+  level: 15
+- class: Rogue
+  name: Ability Score Improvement
+  source: XPHB
+  level: 16
+- class: Rogue
+  name: Thief's Reflexes
+  source: XPHB
+  level: 17
+- class: Rogue
+  name: Elusive
+  source: XPHB
+  level: 18
+- class: Rogue
+  name: Epic Boon
+  source: XPHB
+  level: 19
+- class: Rogue
+  name: Stroke of Luck
+  source: XPHB
+  level: 20
+race_traits:
+- name: Brave
+  source: XPHB
+- name: Halfling Nimbleness
+  source: XPHB
+- name: Luck
+  source: XPHB
+- name: Naturally Stealthy
+  source: XPHB
+extra_training: []
+summary:
+- - Klasse
+  - Rogue 20
+- - Art
+  - Halfling
+- - Baggrund
+  - Criminal

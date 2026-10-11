@@ -10,20 +10,20 @@ classes:
 - name: Druid
   source: XPHB
   level: 11
-  subclass: Circle of the Moon
+  subclass: Circle of the Land
 - name: Ranger
   source: XPHB
   level: 6
-  subclass: Gloom Stalker
+  subclass: Fey Wanderer
 abilities:
   STR: 17
   DEX: 15
-  CON: 19
+  CON: 20
   INT: 20
   WIS: 20
   CHA: 17
 proficiency_bonus: 6
-hp: 175
+hp: 226
 hit_dice:
 - die: 10
   count: 6
@@ -42,24 +42,241 @@ skills:
 - arcana
 - nature
 - religion
-expertise: []
+expertise:
+- arcana
 tools:
 - carpenter's tools
-languages: Common, Dwarvish, Goblin
+languages: Common, Goblin, Draconic
 can_use:
   armor: light, shield
   weapons: simple
-masteries: []
+size: Small
+speeds:
+  walk: 30
+senses: {}
+resistances: []
+immunities: []
+vulnerabilities: []
+condition_immunities: []
+granted_spells:
+- name: Speak with Animals
+  source: XPHB
+  cantrip: false
+  addition: prepared
+  ability: WIS
+  recharge: null
+  uses: null
+  from: 'class: Druid (Circle of the Land)'
+- name: Find Familiar
+  source: XPHB
+  cantrip: false
+  addition: prepared
+  ability: WIS
+  recharge: null
+  uses: null
+  from: 'class: Druid (Circle of the Land)'
+- name: Acid Splash
+  source: XPHB
+  cantrip: true
+  addition: prepared
+  ability: WIS
+  recharge: null
+  uses: null
+  from: 'class: Druid (Circle of the Land)'
+- name: Ray of Sickness
+  source: XPHB
+  cantrip: false
+  addition: prepared
+  ability: WIS
+  recharge: null
+  uses: null
+  from: 'class: Druid (Circle of the Land)'
+- name: Web
+  source: XPHB
+  cantrip: false
+  addition: prepared
+  ability: WIS
+  recharge: null
+  uses: null
+  from: 'class: Druid (Circle of the Land)'
+- name: Stinking Cloud
+  source: XPHB
+  cantrip: false
+  addition: prepared
+  ability: WIS
+  recharge: null
+  uses: null
+  from: 'class: Druid (Circle of the Land)'
+- name: Polymorph
+  source: XPHB
+  cantrip: false
+  addition: prepared
+  ability: WIS
+  recharge: null
+  uses: null
+  from: 'class: Druid (Circle of the Land)'
+- name: Insect Plague
+  source: XPHB
+  cantrip: false
+  addition: prepared
+  ability: WIS
+  recharge: null
+  uses: null
+  from: 'class: Druid (Circle of the Land)'
+- name: Hunter's Mark
+  source: XPHB
+  cantrip: false
+  addition: prepared
+  ability: WIS
+  recharge: null
+  uses: null
+  from: 'class: Ranger (Fey Wanderer)'
+- name: Charm Person
+  source: XPHB
+  cantrip: false
+  addition: known
+  ability: WIS
+  recharge: null
+  uses: null
+  from: 'class: Ranger (Fey Wanderer)'
+- name: Misty Step
+  source: XPHB
+  cantrip: false
+  addition: known
+  ability: WIS
+  recharge: null
+  uses: null
+  from: 'class: Ranger (Fey Wanderer)'
+masteries:
+- - Slow
+  - Light Crossbow
+- - Slow
+  - Musket
 feats:
 - name: Ability Score Improvement
   source: XPHB
 - name: Piercer
   source: XPHB
-- name: Protection
+- name: Archery
   source: XPHB
 - name: Ability Score Improvement
   source: XPHB
-spells_known: []
+- name: Tough
+  source: XPHB
+spells_known:
+- name: Thorn Whip
+  source: XPHB
+- name: Guidance
+  source: XPHB
+- name: Shillelagh
+  source: XPHB
+- name: Poison Spray
+  source: XPHB
+- name: Charm Person
+  source: XPHB
+- name: Entangle
+  source: XPHB
+- name: Protection from Evil and Good
+  source: XPHB
+- name: Purify Food and Drink
+  source: XPHB
+- name: Beast Sense
+  source: XPHB
+- name: Find Traps
+  source: XPHB
+- name: Plant Growth
+  source: XPHB
+- name: Summon Fey
+  source: XPHB
+- name: Protection from Energy
+  source: XPHB
+- name: Water Breathing
+  source: XPHB
+- name: Dominate Beast
+  source: XPHB
+- name: Grasping Vine
+  source: XPHB
+- name: Transport via Plants
+  source: XPHB
+- name: Wall of Fire
+  source: XPHB
+- name: Awaken
+  source: XPHB
+- name: Geas
+  source: XPHB
+- name: Gust of Wind
+  source: XPHB
+- name: Speak with Animals
+  source: XPHB
+- name: Goodberry
+  source: XPHB
+- name: Hail of Thorns
+  source: XPHB
+optional_features: []
+spellcasting:
+- class: Druid
+  subclass: Circle of the Land
+  ability: WIS
+  level: 11
+  save_dc: '{8+PB+WIS}'
+  attack: '{+PB+WIS}'
+  cantrips:
+  - Thorn Whip
+  - Guidance
+  - Shillelagh
+  - Poison Spray
+  spellbook: []
+  prepared:
+  - Charm Person
+  - Entangle
+  - Protection from Evil and Good
+  - Purify Food and Drink
+  - Beast Sense
+  - Find Traps
+  - Plant Growth
+  - Summon Fey
+  - Protection from Energy
+  - Water Breathing
+  - Dominate Beast
+  - Grasping Vine
+  - Transport via Plants
+  - Wall of Fire
+  - Awaken
+  - Geas
+  arcanum: {}
+  extra: []
+  variant: Tropical Land
+  max_spell_level: 6
+  prepare_change: restLong
+- class: Ranger
+  subclass: Fey Wanderer
+  ability: WIS
+  level: 6
+  save_dc: '{8+PB+WIS}'
+  attack: '{+PB+WIS}'
+  cantrips: []
+  spellbook: []
+  prepared:
+  - Gust of Wind
+  - Entangle
+  - Speak with Animals
+  - Goodberry
+  - Hail of Thorns
+  - Find Traps
+  arcanum: {}
+  extra: []
+  variant: null
+  max_spell_level: 2
+  prepare_change: restLong
+spell_slots:
+- 4
+- 3
+- 3
+- 3
+- 2
+- 1
+- 1
+pact_slots: null
 class_features:
 - class: Druid
   name: Druidic
@@ -94,15 +311,15 @@ class_features:
   source: XPHB
   level: 3
 - class: Druid
-  name: Circle Forms
+  name: Circle of the Land
   source: XPHB
   level: 3
 - class: Druid
-  name: Circle of the Moon
+  name: Circle of the Land Spells
   source: XPHB
   level: 3
 - class: Druid
-  name: Circle of the Moon Spells
+  name: Land's Aid
   source: XPHB
   level: 3
 - class: Druid
@@ -114,7 +331,7 @@ class_features:
   source: XPHB
   level: 5
 - class: Druid
-  name: Improved Circle Forms
+  name: Natural Recovery
   source: XPHB
   level: 6
 - class: Druid
@@ -134,7 +351,7 @@ class_features:
   source: XPHB
   level: 8
 - class: Druid
-  name: Moonlight Step
+  name: Nature's Ward
   source: XPHB
   level: 10
 - class: Ranger
@@ -162,19 +379,19 @@ class_features:
   source: XPHB
   level: 3
 - class: Ranger
-  name: Dread Ambusher
+  name: Fey Wanderer
   source: XPHB
   level: 3
 - class: Ranger
-  name: Gloom Stalker
+  name: Dreadful Strikes
   source: XPHB
   level: 3
 - class: Ranger
-  name: Gloom Stalker Spells
+  name: Fey Wanderer Spells
   source: XPHB
   level: 3
 - class: Ranger
-  name: Umbral Sight
+  name: Otherworldly Glamour
   source: XPHB
   level: 3
 - class: Ranger

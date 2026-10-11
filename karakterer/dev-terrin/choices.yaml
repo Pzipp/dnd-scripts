@@ -1,0 +1,63 @@
+race:
+  name: Halfling
+  source: XPHB
+  other_name: ''
+  choices: {}
+classes:
+  a1b2c3:
+    name: Rogue
+    source: XPHB
+    level: 2
+    subclass: null
+    choices:
+      skills:
+      - deception
+      - insight
+      - investigation
+      - perception
+      expertise_1:
+      - stealth
+      - perception
+      weapon_mastery:
+      - Shortsword
+      - Dagger
+background:
+  name: Criminal
+  source: XPHB
+  choices:
+    ability_split:
+      type: 2-1
+      plus2: dex
+      plus1: int
+abilities:
+  method: standard
+  rolls: {}
+  assigned:
+    STR: 14
+    DEX: 16
+    CON: 12
+    INT: 13
+    WIS: 13
+    CHA: 9
+hp_rolls:
+  a1b2c3:
+    '2': 5
+feats: {}
+spells:
+  known: []
+equipment:
+  class_package: A
+  background_package: A
+  extra: []
+  armor:
+    name: Leather Armor
+    source: XPHB
+  shield: false
+languages:
+  known:
+  - Dwarvish
+  - Orc
+settings:
+  allowed_sources:
+  - XPHB
+  half_feats: false

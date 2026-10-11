@@ -6,6 +6,11 @@ Teksten fra 5etools er engelsk og bruges kun som facit for den, der bygger
 karakter.yaml bagefter (menneske eller AI) - den vises aldrig direkte for en
 spiller.
 
+Findes der en dansk oversættelse i repoets data/<fil>-da.json (fx feats-da.json),
+lægges dens felter ovenpå 5etools' entry for entry (matchet på name+source), så resten
+af koden ser dansk tekst uden at vide det. Navne og andre strukturfelter forbliver
+5etools'; entries uden oversættelse forbliver engelske.
+
 Klassefiler scannes fra class/-mappen (class-*.json) i stedet for en fast
 liste, så en ny officiel klassefil dukker op uden kodeændring.
 
@@ -25,6 +30,8 @@ from pathlib import Path
 
 E5TOOLS_DATA = Path(os.environ.get("E5TOOLS_DATA", "/e5tools/data"))
 E5TOOLS_HOMEBREW = E5TOOLS_DATA.parent / "homebrew"
+# Danske oversættelser (<fil>-da.json) ligger i repoets data/ og lægges ovenpå 5etools' egne filer.
+DANSK_DATA = Path(os.environ.get("DANSK_DATA", Path(__file__).resolve().parents[2] / "data"))
 
 
 class E5ToolsUnavailable(Exception):
@@ -40,8 +47,51 @@ def _load_from(base: Path, rel_path: str) -> dict:
         return json.load(f)
 
 
+def _da_path(rel_path: str) -> Path:
+    """data/<fil>-da.json i repoet for en 5etools-fil, fx feats.json -> data/feats-da.json."""
+    p = Path(rel_path)
+    return DANSK_DATA / p.with_name(f"{p.stem}-da{p.suffix}")
+
+
+def _overlay_dansk(base: dict, da: dict) -> dict:
+    """Lægger de danske felter ovenpå 5etools' engelske, entry for entry (matchet på name+source).
+    Et felt i den danske fil vinder; felter den ikke har, forbliver 5etools'. Entries uden
+    dansk modstykke er uændrede."""
+    out = dict(base)
+    for key, entries in base.items():
+        da_entries = da.get(key)
+        if not isinstance(entries, list) or not isinstance(da_entries, list):
+            continue
+        by_id = {(e.get("name"), e.get("source")): e for e in da_entries if isinstance(e, dict)}
+        out[key] = [_merge_entry(e, by_id.get((e.get("name"), e.get("source")))) if isinstance(e, dict) else e
+                    for e in entries]
+    return out
+
+
+def _merge_entry(base: dict, da: dict | None) -> dict:
+    if da is None:
+        return base
+    merged = {**base, **da}
+    # additionalSpells[].name er en nøgle (fx "Cleric Spells" -> klassen "Cleric"), ikke visningstekst
+    if isinstance(base.get("additionalSpells"), list) and isinstance(merged.get("additionalSpells"), list) \
+            and len(base["additionalSpells"]) == len(merged["additionalSpells"]):
+        merged["additionalSpells"] = [{**d, "name": b["name"]} if "name" in b else d
+                                      for b, d in zip(base["additionalSpells"], merged["additionalSpells"])]
+    return merged
+
+
+@lru_cache(maxsize=None)
+def _load_dansk(rel_path: str) -> dict:
+    base = _load_from(E5TOOLS_DATA, rel_path)
+    da_file = _da_path(rel_path)
+    if not da_file.is_file():
+        return base
+    with da_file.open(encoding="utf-8") as f:
+        return _overlay_dansk(base, json.load(f))
+
+
 def _load(rel_path: str) -> dict:
-    return _load_from(E5TOOLS_DATA, rel_path)
+    return _load_dansk(rel_path)
 
 
 def available() -> bool:
@@ -251,6 +301,15 @@ def races(sources: set[str]) -> list[dict]:
     return [r for r in all_races if r.get("source") in sources]
 
 
+def subraces(race: dict, sources: set[str] | None = None) -> list[dict]:
+    """Subraces (ældre kilder) til en race: poster i races.json's `subrace`-liste med samme
+    raceName/raceSource. En subrace uden navn er racens grundvariant (Human: +1 på alt)."""
+    all_sub = _load("races.json").get("subrace", []) + _homebrew_entries("subrace")
+    return [sr for sr in all_sub
+            if sr.get("raceName") == race.get("name") and sr.get("raceSource", race.get("source")) == race.get("source")
+            and (sources is None or sr.get("source", race.get("source")) in sources)]
+
+
 def get_race(name: str, sources: set[str]) -> dict | None:
     for r in races(sources):
         if r.get("name") == name:
@@ -277,10 +336,22 @@ def _all_feats() -> list[dict]:
 
 
 def get_feat(name: str, sources: set[str]) -> dict | None:
-    for f in _all_feats():
-        if f.get("source") in sources and f.get("name") == name:
-            return f
-    return None
+    """Feat ud fra navn. Præcis match først; ellers uanset store/små bogstaver (baggrunde skriver
+    fx 'Skilled|xphb' og 'skilled|xphb' om samme feat)."""
+    pool = [f for f in _all_feats() if f.get("source") in sources]
+    return next((f for f in pool if f.get("name") == name), None) or next((f for f in pool if str(f.get("name", "")).lower() == str(name).lower()), None)
+
+
+def optional_features(sources: set[str]) -> list[dict]:
+    """Valgfrie klassefeatures (Eldritch Invocations, Metamagic, Maneuvers, Pact Boons ...): optionalfeatures.json."""
+    pool = _load("optionalfeatures.json").get("optionalfeature", []) + _homebrew_entries("optionalfeature")
+    return [f for f in pool if f.get("source") in sources]
+
+
+def feats_any(sources: set[str]) -> list[dict]:
+    """Alle feats et "feats: [{any: 1}]" kan vælge blandt (Variant Human): ikke Epic Boons og Fighting Styles,
+    som kun gives af en klassefeature. Ældre feats har ingen `category`."""
+    return [f for f in _all_feats() if f.get("source") in sources and not str(f.get("category") or "").startswith(("EB", "FS"))]
 
 
 def feats_by_category(category: str, sources: set[str]) -> list[dict]:
@@ -347,7 +418,7 @@ def class_spells(class_names: str | set[str], sources: set[str], max_level: int 
 
 def _matches_spell_attack(spell: dict, wanted: set[str]) -> bool:
     """5etools' "Spell Attack"-filter (M/R/O - Melee/Ranged/Other-Unknown, se
-    js/filter-spells.js i /srv/e5tools). spellAttack-feltet sættes kun til
+    js/filter-spells.js i /srv/dnd5etools). spellAttack-feltet sættes kun til
     "M" og/eller "R" (automatisk udledt af spell-teksten ved data-generering,
     se converterutils-spell.js) - "O" findes ikke som en faktisk værdi, det
     er UI'ets bagkat for "intet attack-kast" (feltet tomt/mangler)."""
@@ -358,7 +429,7 @@ def _matches_spell_attack(spell: dict, wanted: set[str]) -> bool:
     return bool(actual & (wanted - {"O"}))
 
 
-def spells_by_filter(sources: set[str], level: int | None = None, schools: set[str] | None = None, class_name: str | set[str] | None = None, ritual: bool | None = None, spell_attack: set[str] | None = None) -> list[dict] | None:
+def spells_by_filter(sources: set[str], level: int | set[int] | None = None, schools: set[str] | None = None, class_name: str | set[str] | None = None, ritual: bool | None = None, spell_attack: set[str] | None = None) -> list[dict] | None:
     """Løser 5etools' "choose": "level=X|school=Y;Z"-filterstrenge (bruges af
     feats som Shadow-Touched/Fey-Touched/Blessed Warrior til at give et valg
     blandt spells, der opfylder kriterierne). ritual=True matcher kun spells
@@ -367,11 +438,12 @@ def spells_by_filter(sources: set[str], level: int | None = None, schools: set[s
     returnerer "alle spells")."""
     if level is None and not schools and not class_name and ritual is None and not spell_attack:
         return None
+    levels = None if level is None else ({level} if isinstance(level, int) else set(level))
     pool = class_spells(class_name, sources, None) if class_name else _all_spells(sources)
     out = [
         s for s in pool
         if s.get("source") in sources
-        and (level is None or s.get("level") == level)
+        and (levels is None or s.get("level") in levels)
         and (not schools or s.get("school") in schools)
         and (ritual is None or bool((s.get("meta") or {}).get("ritual")) == ritual)
         and (not spell_attack or _matches_spell_attack(s, spell_attack))

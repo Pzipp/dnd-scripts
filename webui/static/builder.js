@@ -101,10 +101,131 @@ function renderTop() {
     banner.textContent = "/e5tools er ikke tilgængeligt lige nu - byggeren kan ikke slå regler op.";
   } else if (state.missing && state.missing.length) {
     banner.style.display = "block";
-    banner.textContent = `${state.missing.length} valg mangler stadig (markeret med rød ramme).`;
+    morphChildren(banner, renderMissingList());
   } else {
     banner.style.display = "none";
   }
+}
+
+// ── "Mangler"-overblik: klik på et punkt hopper til feltet ───────────────
+let missingListOpen = false;
+
+function allFeatSlots() {
+  const out = [state.race?.feat_slot, state.background?.feat_slot];
+  (state.classes || []).forEach((k) => {
+    (k.features || []).forEach((f) => out.push(f.feat_slot));
+    (k.optional_features || []).forEach((p) => (p.feat_slots || []).forEach((s) => out.push(s)));
+  });
+  return out.filter(Boolean);
+}
+
+// path fra state.missing -> {group, label, page}
+function missingInfo(path) {
+  const parts = path.split(".");
+  const byId = (list, id) => (list || []).find((x) => x.id === id);
+  const info = (group, label, page = "character") => ({ group, label, page });
+  switch (parts[0]) {
+    case "race": {
+      if (parts[1] === "name") return info("Race", "Vælg race");
+      return info("Race", byId(state.race?.sub_choices, parts[2])?.title || parts.slice(2).join("."));
+    }
+    case "classes": {
+      if (path === "classes") return info("Klasse", "Tilføj mindst én klasse");
+      const k = (state.classes || []).find((x) => x.id === parts[1]);
+      const group = k?.name || "Klasse";
+      if (parts[2] === "name") return info(group, "Vælg klasse");
+      if (parts[2] === "subclass") return info(group, "Vælg subclass");
+      const id = parts[3];
+      if (id === "skills") return info(group, `Skills (${k?.skills_count ?? ""})`);
+      const pick = byId(k?.spellcasting?.picks, id) || byId(k?.optional_features, id);
+      if (pick) return info(group, pick.title);
+      for (const f of k?.features || []) {
+        if (f.weapon_choice?.id === id) return info(group, f.weapon_choice.title);
+        if (f.expertise_choice?.id === id) return info(group, f.expertise_choice.title);
+      }
+      return info(group, id || path);
+    }
+    case "feats": {
+      const slot = allFeatSlots().find((x) => x.key === parts[1]);
+      const group = slot?.label || "Feat";
+      if (parts[2] === "choices") return info(group, byId(slot?.sub_choices, parts[3])?.title || parts[3]);
+      return info(group, "Vælg feat");
+    }
+    case "background": {
+      if (parts[1] === "name") return info("Baggrund", "Vælg baggrund");
+      if (parts[2] === "ability_split") return info("Baggrund", "Evne-bonus: fordeling");
+      return info("Baggrund", byId(state.background?.sub_choices, parts[2])?.title || parts.slice(2).join("."));
+    }
+    case "abilities":
+      return info("Evner", parts[1] === "method" ? "Vælg metode" : "Tildel alle seks evner");
+    case "languages":
+      return info("Sprog", "Vælg 2 sprog");
+    case "equipment":
+      return info("Udstyr", parts[1] === "class_package" ? "Pakke fra klassen" : "Pakke fra baggrunden", "equipment");
+    case "hp_rolls": {
+      const k = (state.classes || []).find((x) => x.id === parts[1]);
+      return info("HP-terningslag", `${k?.name || "Klasse"}, niveau ${parts[2]}`);
+    }
+    default:
+      return info("Andet", path);
+  }
+}
+
+function renderMissingList() {
+  // HP-terningslag samles til ét punkt pr. klasse (kan være 18 niveauer).
+  const items = [];
+  const hpGroups = {};
+  state.missing.forEach((path) => {
+    if (path.startsWith("hp_rolls.")) {
+      const [, cid, lvl] = path.split(".");
+      if (!hpGroups[cid]) {
+        hpGroups[cid] = { path, levels: [] };
+        items.push(hpGroups[cid]);
+      }
+      hpGroups[cid].levels.push(lvl);
+    } else {
+      items.push({ path });
+    }
+  });
+  const lis = items.map((it) => {
+    const { group, label } = missingInfo(it.path);
+    const extra = it.levels ? ` (${it.levels.length} niveauer: ${it.levels.join(", ")})` : "";
+    const text = it.levels ? `${group}: ${(state.classes || []).find((x) => x.id === it.path.split(".")[1])?.name || "Klasse"}${extra}` : `${group}: ${label}`;
+    return `<li><a href="#" data-jump="${esc(it.path)}">${esc(text)}</a></li>`;
+  }).join("");
+  return `<details class="missing-list" ${missingListOpen ? "open" : ""}>
+    <summary>${items.length} ${items.length === 1 ? "valg mangler" : "valg mangler"} stadig - klik for at se hvilke</summary>
+    <ul>${lis}</ul></details>`;
+}
+
+function findMissingTarget(path) {
+  const q = (sel) => document.querySelector(sel);
+  const exact = q(`[data-field="${path}"]`) || q(`[data-field-combo="${path}"]`) || q(`[data-field-combo-single="${path}"]`) || q(`[data-field^="${path}."]`);
+  if (exact) return exact.closest(".sub-choice, label.field, .ab") || exact;
+  const parts = path.split(".");
+  const step = parts[0] === "race" || path === "feats.race" ? "race"
+    : parts[0] === "classes" ? `class-${parts[1]}`
+    : parts[0] === "feats" ? (parts[1] === "background" ? "background" : parts[1] === "race" ? "race" : `class-${parts[1].split("_")[0]}`)
+    : parts[0] === "hp_rolls" ? `hp-${parts[1]}`
+    : parts[0] === "equipment" ? (parts[1] === "class_package" ? "equip-class" : "equip-background")
+    : parts[0];
+  return q(`details.step[data-step="${step}"]`);
+}
+
+function jumpToMissing(path) {
+  const page = missingInfo(path).page;
+  const tab = $(`.tabs button[data-page="${page}"]`);
+  if (tab && !tab.classList.contains("active")) tab.click();
+  const el = findMissingTarget(path);
+  if (!el) return;
+  $("#missing-banner details")?.removeAttribute("open"); // listen lukkes, så feltet ikke skjules bag den
+  missingListOpen = false;
+  for (let d = el.closest("details"); d; d = d.parentElement?.closest("details")) d.open = true;
+  el.scrollIntoView({ block: "center", behavior: "smooth" });
+  el.classList.remove("jump-flash");
+  void el.offsetWidth; // genstart animationen
+  el.classList.add("jump-flash");
+  setTimeout(() => el.classList.remove("jump-flash"), 2200);
 }
 
 // ── Karakter-siden ─────────────────────────────────────────────────────
@@ -192,13 +313,17 @@ function renderSubChoices(basePath, subChoices, storedChoices) {
 // Et feat-slot (ASI, Fighting Style, Epic Boon, race/baggrunds feat-valg) -
 // bruges inline, lige der hvor den feature der giver det, står.
 function renderFeatSlot(slot) {
+  // Et fastlagt feat (fx baggrundens) kan ikke vælges om: kun navn, tekst og dets undervalg vises.
+  const picker = slot.fixed
+    ? `<div class="fname">${esc(slot.chosen?.name || "")}</div>`
+    : `<select data-field-combo="feats.${slot.key}" class="${cls(!slot.chosen)}">
+        <option value="|">Vælg...</option>
+        ${optionList(slot.options, slot.chosen?.name)}
+      </select>`;
   return `
     <div class="sub-choice">
       <span>${esc(slot.label)}</span>
-      <select data-field-combo="feats.${slot.key}" class="${cls(!slot.chosen)}">
-        <option value="|">Vælg...</option>
-        ${optionList(slot.options, slot.chosen?.name)}
-      </select>
+      ${picker}
       ${slot.chosen ? `<div class="feature-list" style="margin-top:.4rem"><div class="ftext">${esc(slot.text)}</div></div>` : ""}
       ${renderSubChoices(`feats.${slot.key}.choices`, slot.sub_choices, slot.chosen?.choices)}
     </div>`;
@@ -267,16 +392,10 @@ function renderClasses(c) {
             <div class="ftext">${esc(f.text)}</div>
             ${f.feat_slot ? renderFeatSlot(f.feat_slot) : ""}
             ${f.weapon_choice ? renderWeaponChoice(`${base}.choices.weapon_mastery`, f.weapon_choice) : ""}
+            ${f.expertise_choice ? renderWeaponChoice(`${base}.choices.${f.expertise_choice.id}`, f.expertise_choice) : ""}
           </li>`).join("")}</ul>`
       : "";
-    const spellsBlock = k.is_caster
-      ? `<div class="sub-choice"><span>Spells</span><div class="checklist">
-          ${k.spell_options.map((s) => {
-            const known = (c.spells.known || []).includes(s);
-            return `<label data-field="spells.known" data-multi="1" data-value="${esc(s)}" class="${known ? "checked" : ""}"><input type="checkbox" ${known ? "checked" : ""}>${esc(s)}</label>`;
-          }).join("")}
-        </div></div>`
-      : "";
+    const spellsBlock = renderSpellcasting(k, base) + renderOptionalFeatures(k, base);
     const title = `<span>${esc(k.name || "Klasse")} ${k.is_primary ? '<span class="n">(primær - giver startudstyr)</span>' : ""}</span>
       <button type="button" class="btn secondary" data-remove-class="${k.id}">Fjern</button>`;
     const body = `
@@ -302,6 +421,68 @@ function renderClasses(c) {
   }).join("");
   const notice = isMissing("classes") ? `<p class="missing-banner">Mindst én klasse kræves.</p>` : "";
   return `${notice}${blocks}<button type="button" class="btn" id="add-class-btn">+ Tilføj klasse</button>`;
+}
+
+// Spellcasting pr. klasse: hvert valg viser KUN de spells, der kan vælges (klassens liste, højst det spell-niveau
+// klassen har slots til, ikke de altid-forberedte), og hvor mange der skal vælges. Se spellcasting.py.
+function renderSpellcasting(k, base) {
+  const sc = k.spellcasting;
+  if (!sc) return "";
+  const slots = (sc.slots || []).map((n, i) => (n ? `${i + 1}. niveau: ${n}` : "")).filter(Boolean).join(" · ");
+  const pact = sc.pact ? `Pact Magic: ${sc.pact.slots} slots af ${sc.pact.level}. niveau` : "";
+  const info = `<div class="ftext">Spellcasting-evne <b>${esc(sc.ability)}</b> · højeste spell-niveau <b>${sc.max_spell_level}</b>${slots || pact ? ` · ${esc(pact || slots)}` : ""}${sc.prepare_change === "restLong" ? " · forberedte spells skiftes efter en Long Rest" : sc.prepare_change === "level" ? " · forberedte spells skiftes ved level-stigning" : ""}</div>`;
+  const grants = (sc.grants || []).length
+    ? `<div class="sub-choice"><span>Altid forberedt / kendt (tæller ikke med)</span><div class="ftext">${sc.grants.map((g) => esc(g.name)).join(", ")}</div></div>`
+    : "";
+  const picks = sc.picks.map((p) => renderSpellPick(`${base}.choices.${p.id}`, p, takenElsewhere(k, p))).join("");
+  return `<div class="sub-choice spellcasting"><span>Spells</span>${info}${picks}${grants}</div>`;
+}
+
+// Valgfrie klassefeatures (Metamagic, Eldritch Invocations, Maneuvers): kun dem, der kan vælges (forudsætninger opfyldt).
+function renderOptionalFeatures(k, base) {
+  const picks = k.optional_features || [];
+  if (!picks.length) return "";
+  return picks.map((p) => renderSpellPick(`${base}.choices.${p.id}`, p, takenElsewhere(k, p)) + (p.feat_slots || []).map(renderFeatSlot).join("")).join("");
+}
+
+// Spells, der allerede er valgt et andet sted hos samme klasse (cantrips, spellbog, ekstra spells, spells fra
+// features), og derfor står grå her. "Forberedte" er undtaget: de vælges netop blandt spellbogens spells.
+function takenElsewhere(k, pick) {
+  const all = [...(k.spellcasting?.picks || []), ...(k.optional_features || []).filter((p) => p.kind === "feature_spell")];
+  const taken = new Set();
+  if (pick.kind === "prepared") return taken;
+  all.forEach((p) => {
+    if (p === pick || p.kind === "prepared" || p.kind === "variant" || p.kind === "optional") return;
+    (p.chosen || []).forEach((n) => taken.add(n));
+  });
+  return taken;
+}
+
+function renderSpellPick(path, p, taken = new Set()) {
+  if (p.kind === "variant") {
+    const current = p.chosen[0] || "";
+    return `<div class="sub-choice field"><label class="field"><span>${esc(p.title)}</span>
+      <select data-field="${path}"><option value="">Vælg...</option>
+      ${p.options.map((o) => `<option value="${esc(o.name)}" ${o.name === current ? "selected" : ""}>${esc(o.name)}</option>`).join("")}
+      </select></label></div>`;
+  }
+  const chosen = p.chosen || [];
+  const full = chosen.length >= p.count;
+  const state = (chosen.length === p.count || (p.kind === "prepared" && chosen.length < p.count)) && !(p.invalid || []).length ? "ok" : "bad";
+  const byLevel = {};
+  p.options.forEach((o) => (byLevel[o.level] = byLevel[o.level] || []).push(o));
+  const tips = {};
+  p.options.forEach((o) => { if (o.text) tips[o.name] = o.text; });
+  const chip = (name, extra = "") =>
+    `<label data-field="${path}" data-multi="1" data-limit="${p.count}" data-value="${esc(name)}" title="${esc(taken.has(name) && !chosen.includes(name) ? "Allerede valgt et andet sted" : tips[name] || "")}" class="${chosen.includes(name) ? "checked" : ""} ${!chosen.includes(name) && (full || taken.has(name)) ? "disabled" : ""} ${extra}"><input type="checkbox" ${chosen.includes(name) ? "checked" : ""}>${esc(name)}</label>`;
+  const heading = (lvl) => (lvl === "" ? "" : `<b>${lvl === "0" ? "Cantrips" : `Niveau ${lvl}`}</b>`);
+  const groups = Object.keys(byLevel).sort((a, b) => a - b).map((lvl) =>
+    `<div class="spell-group">${p.kind === "optional" || p.kind === "feature_spell" ? "" : heading(lvl)}<div class="checklist">${byLevel[lvl].map((o) => chip(o.name)).join("")}</div></div>`).join("");
+  const invalid = (p.invalid || []).length
+    ? `<div class="spell-group bad"><b>Kan ikke længere vælges (fjern)</b><div class="checklist">${p.invalid.map((n) => chip(n, "invalid")).join("")}</div></div>`
+    : "";
+  const empty = p.options.length ? "" : `<div class="ftext">Intet at vælge endnu${p.kind === "prepared" ? " (vælg først spellbogen)" : ""}.</div>`;
+  return `<div class="sub-choice"><span>${esc(p.title)} <span class="spell-counter ${state}">${chosen.length}/${p.count}</span></span>${empty}${groups}${invalid}</div>`;
 }
 
 function renderBackground(c) {
@@ -342,8 +523,8 @@ function renderBackground(c) {
       </select>
     </label>
     ${abilityBlock}
-    ${featBlock}
-    ${b.feat_slot ? renderFeatSlot(b.feat_slot) : ""}
+    ${renderSubChoices("background.choices", b.sub_choices, c.background.choices)}
+    ${b.feat_slot ? renderFeatSlot(b.feat_slot) : featBlock}
   `;
   return wrapDetails("background", sectionMissing("background.") || sectionMissing("feats.background"), "Baggrund", body);
 }
@@ -782,11 +963,20 @@ function wireEvents() {
       addClass();
       return;
     }
+    const jump = e.target.closest("[data-jump]");
+    if (jump) {
+      e.preventDefault();
+      jumpToMissing(jump.dataset.jump);
+      return;
+    }
     const chip = e.target.closest("[data-multi]");
     if (chip) {
       const path = chip.dataset.field;
       const val = chip.dataset.value;
       const current = getPath(state.choices, path) || [];
+      const limit = Number(chip.dataset.limit || 0);
+      if (limit && !current.includes(val) && current.length >= limit) return; // allerede fuldt antal valgt
+      if (chip.classList.contains("disabled") && !current.includes(val)) return; // grå: valgt et andet sted
       const next = current.includes(val) ? current.filter((v) => v !== val) : [...current, val];
       answer({ [path]: next });
       return;
@@ -802,6 +992,7 @@ function getPath(obj, path) {
   return path.split(".").reduce((o, k) => (o == null ? undefined : o[k]), obj);
 }
 
+$("#missing-banner").addEventListener("toggle", (e) => { missingListOpen = e.target.open; }, true);
 wireEvents();
 fetchState();
 if ($(".tabs button.active")?.dataset.page === "print") loadPrintPage();

@@ -8,25 +8,62 @@ classes:
     name: Druid
     source: XPHB
     level: 11
-    subclass: Circle of the Moon
+    subclass: Circle of the Land
     choices:
       skills:
       - arcana
       - religion
+      prepared:
+      - Charm Person
+      - Entangle
+      - Protection from Evil and Good
+      - Purify Food and Drink
+      - Beast Sense
+      - Find Traps
+      - Plant Growth
+      - Summon Fey
+      - Protection from Energy
+      - Water Breathing
+      - Dominate Beast
+      - Grasping Vine
+      - Transport via Plants
+      - Wall of Fire
+      - Awaken
+      - Geas
+      cantrips:
+      - Thorn Whip
+      - Guidance
+      - Shillelagh
+      - Poison Spray
+      subclass_variant: Tropical Land
   06a216:
     name: Ranger
     source: XPHB
     level: 6
-    subclass: Gloom Stalker
+    subclass: Fey Wanderer
     choices:
       skills:
       - animal handling
+      weapon_mastery:
+      - Light Crossbow
+      - Musket
+      expertise_2:
+      - arcana
+      prepared:
+      - Gust of Wind
+      - Entangle
+      - Speak with Animals
+      - Goodberry
+      - Hail of Thorns
+      - Find Traps
 background:
   name: Farmer
   source: XPHB
   choices:
     ability_split:
-      type: 1-1-1
+      type: 2-1
+      plus2: con
+      plus1: wis
 abilities:
   method: roll
   rolls: {}
@@ -67,8 +104,10 @@ feats:
   7e7d4c_8_abilityscoreimprovement:
     name: Piercer
     source: XPHB
+    choices:
+      ability: STR
   06a216_2_fightingstyle:
-    name: Protection
+    name: Archery
     source: XPHB
   06a216_4_abilityscoreimprovement:
     name: Ability Score Improvement
@@ -77,6 +116,10 @@ feats:
       asi:
         mode: '2'
         ability1: WIS
+  background:
+    name: Tough
+    source: XPHB
+    choices: {}
 spells:
   known: []
 equipment:
@@ -88,8 +131,8 @@ equipment:
     source: XPHB
 languages:
   known:
-  - Dwarvish
   - Goblin
+  - Draconic
 settings:
   allowed_sources:
   - XPHB

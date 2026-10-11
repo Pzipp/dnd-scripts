@@ -13,6 +13,7 @@ Output lægges i karakterer/<navn>/udskrifter/ som karakterark-farve|sorthvid og
 Se README.md og docs/ for datafilernes format.
 """
 import argparse, os, sys, tempfile, traceback
+from pathlib import Path
 
 HER = os.path.dirname(os.path.abspath(__file__))
 for d in ("scripts", "scripts/karakterark", "scripts/kort", "scripts/pdf"):
@@ -49,6 +50,24 @@ def tjek():
     navne = faelles.karakter_navne()
     if os.path.isdir(os.path.join(faelles.KARAKTERER, "_skabelon")):
         navne.append("_skabelon")                 # skabelonen skal altid kunne bygges
+    # Byggerens karakterer (choices.yaml + character.yaml + sheets.yaml) har ikke karakter.yaml/kort.yaml;
+    # de tjekkes ved at rendere arket i alle stile (kun i hukommelsen).
+    bygger = [n for n in navne if os.path.isfile(os.path.join(faelles.KARAKTERER, n, "choices.yaml"))]
+    navne = [n for n in navne if n not in bygger]
+    if bygger:
+        sys.path.insert(0, HER)
+        from webui.builder import character_yaml, render, sheets
+    for navn in bygger:
+        d = Path(faelles.KARAKTERER) / navn
+        try:
+            karakter, layout = character_yaml.load(d), sheets.load(d)
+            for stil in (None, *render.STYLE_FILES):
+                render.build(karakter, layout, stil)
+            print(f"ok     {navn:<14} builder-karakterark")
+        except Exception as e:
+            fejl_antal += 1
+            print(f"FEJL   {navn:<14} builder-karakterark: {type(e).__name__}: {e}")
+            traceback.print_exc(limit=-2)
     with tempfile.TemporaryDirectory() as tmp:
         for navn in navne:
             for modul in (karakterark, spellkort):

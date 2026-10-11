@@ -46,7 +46,7 @@ _FEAT_CATEGORY_LABELS = {
     "FS": "Fighting Style feat",
     "EB": "Epic Boon",
 }
-_TYPE_BY_KIND = {"class_feature": "klasse", "race_trait": "art", "feat": "feat"}
+_TYPE_BY_KIND = {"class_feature": "klasse", "optional_feature": "klasse", "race_trait": "art", "feat": "feat"}
 
 
 def _slug(name: str, source: str | None) -> str:
@@ -60,6 +60,8 @@ def derive_kicker(entry: dict) -> str | None:
     kind = entry["kind"]
     if kind == "class_feature" and entry.get("class") and entry.get("level"):
         return f"Klasseevne · {entry['class']} <i>level {entry['level']}</i>"
+    if kind == "optional_feature" and entry.get("class"):
+        return f"Valgfri klasseevne · {entry['class']}"
     if kind == "race_trait" and entry.get("race"):
         return f"Art · {entry['race']}"
     if kind == "feat":

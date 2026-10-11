@@ -2,7 +2,9 @@ race:
   name: Gnome
   source: XPHB
   other_name: ''
-  choices: {}
+  choices:
+    lineage: Rock Gnome
+    spell_ability: WIS
 classes:
   9989d9:
     name: Wizard
@@ -13,6 +15,92 @@ classes:
       skills:
       - history
       - religion
+      cantrips:
+      - Chill Touch
+      - Mind Sliver
+      - Minor Illusion
+      - Prestidigitation
+      - Mending
+      spellbook:
+      - Charm Person
+      - Expeditious Retreat
+      - Feather Fall
+      - Identify
+      - Ray of Sickness
+      - Shield
+      - Tenser's Floating Disk
+      - Blur
+      - Locate Object
+      - Control Water
+      - Rary's Telepathic Bond
+      - Phantasmal Force
+      - Ice Storm
+      - Dominate Person
+      - Tasha's Bubbling Cauldron
+      - Maze
+      - Incendiary Cloud
+      - True Polymorph
+      - Shapechange
+      - Programmed Illusion
+      - Summon Dragon
+      - Disintegrate
+      - Summon Elemental
+      - Summon Construct
+      - Enhance Ability
+      - Slow
+      - Leomund's Tiny Hut
+      - Fly
+      - Gaseous Form
+      - Water Breathing
+      - Major Image
+      - Summon Undead
+      - Hypnotic Pattern
+      - Locate Creature
+      - Flesh to Stone
+      - Mordenkainen's Sword
+      - Prismatic Wall
+      - Project Image
+      - Control Weather
+      - Otiluke's Freezing Sphere
+      - Eyebite
+      - Witch Bolt
+      prepared:
+      - Expeditious Retreat
+      - Feather Fall
+      - Identify
+      - Ray of Sickness
+      - Tenser's Floating Disk
+      - Blur
+      - Locate Object
+      - Control Water
+      - Rary's Telepathic Bond
+      - Hypnotic Pattern
+      - Disintegrate
+      - Prismatic Wall
+      - Programmed Illusion
+      - Incendiary Cloud
+      - Tasha's Bubbling Cauldron
+      - Gaseous Form
+      sub_spell_8:
+      - Sunburst
+      sub_spell_7:
+      - Delayed Blast Fireball
+      sub_spell_6:
+      - Forcecage
+      sub_spell_5:
+      - Chromatic Orb
+      sub_spell_4:
+      - Scorching Ray
+      sub_spell_3:
+      - Darkness
+      sub_spell_2:
+      - Gust of Wind
+      sub_spell_0:
+      - Thunderwave
+      sub_spell_1:
+      - Magic Missile
+      scholar:
+      - history
 background:
   name: Noble
   source: XPHB
@@ -21,6 +109,7 @@ background:
       type: 2-1
       plus2: int
       plus1: cha
+    gaming_set: Dice Set
 abilities:
   method: roll
   rolls: {}
@@ -58,42 +147,34 @@ feats:
     choices:
       asi:
         mode: '2'
-        ability1: WIS
+        ability1: DEX
   9989d9_8_abilityscoreimprovement:
     name: Resilient
     source: XPHB
     choices:
-      ability: INT
+      ability: STR
   9989d9_12_abilityscoreimprovement:
     name: Chef
     source: XPHB
+    choices:
+      ability: WIS
   9989d9_16_abilityscoreimprovement:
     name: Shadow-Touched
     source: XPHB
     choices:
       spell_0: Inflict Wounds
+      ability: WIS
   9989d9_19_epicboon:
     name: Boon of Recovery
     source: XPHB
     choices:
       ability: CON
+  background:
+    name: Skilled
+    source: XPHB
+    choices: {}
 spells:
-  known:
-  - Chill Touch
-  - Mind Sliver
-  - Minor Illusion
-  - Charm Person
-  - Expeditious Retreat
-  - Feather Fall
-  - Identify
-  - Ice Knife
-  - Ray of Sickness
-  - Shield
-  - Tenser's Floating Disk
-  - Blur
-  - Locate Object
-  - Control Water
-  - Rary's Telepathic Bond
+  known: []
 equipment:
   class_package: A
   background_package: A
