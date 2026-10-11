@@ -6,6 +6,11 @@ Teksten fra 5etools er engelsk og bruges kun som facit for den, der bygger
 karakter.yaml bagefter (menneske eller AI) - den vises aldrig direkte for en
 spiller.
 
+Findes der en dansk oversættelse i repoets data/<fil>-da.json (fx feats-da.json),
+lægges dens felter ovenpå 5etools' entry for entry (matchet på name+source), så resten
+af koden ser dansk tekst uden at vide det. Navne og andre strukturfelter forbliver
+5etools'; entries uden oversættelse forbliver engelske.
+
 Klassefiler scannes fra class/-mappen (class-*.json) i stedet for en fast
 liste, så en ny officiel klassefil dukker op uden kodeændring.
 
@@ -25,6 +30,8 @@ from pathlib import Path
 
 E5TOOLS_DATA = Path(os.environ.get("E5TOOLS_DATA", "/e5tools/data"))
 E5TOOLS_HOMEBREW = E5TOOLS_DATA.parent / "homebrew"
+# Danske oversættelser (<fil>-da.json) ligger i repoets data/ og lægges ovenpå 5etools' egne filer.
+DANSK_DATA = Path(os.environ.get("DANSK_DATA", Path(__file__).resolve().parents[2] / "data"))
 
 
 class E5ToolsUnavailable(Exception):
@@ -40,8 +47,51 @@ def _load_from(base: Path, rel_path: str) -> dict:
         return json.load(f)
 
 
+def _da_path(rel_path: str) -> Path:
+    """data/<fil>-da.json i repoet for en 5etools-fil, fx feats.json -> data/feats-da.json."""
+    p = Path(rel_path)
+    return DANSK_DATA / p.with_name(f"{p.stem}-da{p.suffix}")
+
+
+def _overlay_dansk(base: dict, da: dict) -> dict:
+    """Lægger de danske felter ovenpå 5etools' engelske, entry for entry (matchet på name+source).
+    Et felt i den danske fil vinder; felter den ikke har, forbliver 5etools'. Entries uden
+    dansk modstykke er uændrede."""
+    out = dict(base)
+    for key, entries in base.items():
+        da_entries = da.get(key)
+        if not isinstance(entries, list) or not isinstance(da_entries, list):
+            continue
+        by_id = {(e.get("name"), e.get("source")): e for e in da_entries if isinstance(e, dict)}
+        out[key] = [_merge_entry(e, by_id.get((e.get("name"), e.get("source")))) if isinstance(e, dict) else e
+                    for e in entries]
+    return out
+
+
+def _merge_entry(base: dict, da: dict | None) -> dict:
+    if da is None:
+        return base
+    merged = {**base, **da}
+    # additionalSpells[].name er en nøgle (fx "Cleric Spells" -> klassen "Cleric"), ikke visningstekst
+    if isinstance(base.get("additionalSpells"), list) and isinstance(merged.get("additionalSpells"), list) \
+            and len(base["additionalSpells"]) == len(merged["additionalSpells"]):
+        merged["additionalSpells"] = [{**d, "name": b["name"]} if "name" in b else d
+                                      for b, d in zip(base["additionalSpells"], merged["additionalSpells"])]
+    return merged
+
+
+@lru_cache(maxsize=None)
+def _load_dansk(rel_path: str) -> dict:
+    base = _load_from(E5TOOLS_DATA, rel_path)
+    da_file = _da_path(rel_path)
+    if not da_file.is_file():
+        return base
+    with da_file.open(encoding="utf-8") as f:
+        return _overlay_dansk(base, json.load(f))
+
+
 def _load(rel_path: str) -> dict:
-    return _load_from(E5TOOLS_DATA, rel_path)
+    return _load_dansk(rel_path)
 
 
 def available() -> bool:
