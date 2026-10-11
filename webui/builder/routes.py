@@ -7,7 +7,7 @@ from pathlib import Path
 import yaml
 from flask import Blueprint, jsonify, render_template, request, send_from_directory
 
-from . import character_yaml, descriptions, e5tools, kort, llm_client, model, render, settings
+from . import character_yaml, descriptions, e5tools, kort, layout_edit, llm_client, model, render, settings
 from . import sheets as sheets_module
 
 bp = Blueprint("builder", __name__)
@@ -98,7 +98,7 @@ def api_sheet():
     sheets = sheets_module.load(character_dir)
     stil = request.args.get("style", "farve")
     try:
-        html = render.build(character, sheets, stil)
+        html = render.build(character, sheets, stil, edit=request.args.get("edit") == "1")
     except Exception as exc:  # et dataproblem i character.yaml/sheets.yaml
         return jsonify({"error": f"Fejl i arket: {type(exc).__name__}: {exc}"}), 400
     return jsonify({"html": html, "missing_descriptions": descriptions.missing_for(character)})
@@ -285,7 +285,7 @@ def api_sheets_preview():
     character = character_yaml.load(character_dir)
     stil = payload.get("style", "farve")
     try:
-        html = render.build(character, parsed, stil)
+        html = render.build(character, parsed, stil, edit=bool(payload.get("edit")))
     except Exception as exc:  # et dataproblem i den (endnu ugemte) sheets-YAML
         return jsonify({"error": f"Fejl i arket: {type(exc).__name__}: {exc}"}), 400
     return jsonify({"html": html, "missing_descriptions": descriptions.missing_for(character)})
@@ -485,3 +485,25 @@ def api_cards_pdf():
     except SystemExit as exc:
         return jsonify({"error": str(exc.code)}), 500
     return jsonify({"pdf": f"/builder/download/{payload.get('name', '')}/{pdf_path.name}"})
+
+
+# ── Træk og slip af bokse i sheets.yaml (se layout_edit.py) ──
+@bp.get("/api/builder/layout_types")
+def api_layout_types():
+    return jsonify({"types": layout_edit.box_types()})
+
+
+@bp.post("/api/builder/layout")
+def api_layout():
+    payload = request.get_json(silent=True) or {}
+    try:
+        character_dir = _character_dir(payload.get("name", ""))
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    if not character_dir.is_dir():
+        return jsonify({"error": "Ukendt karakter."}), 404
+    try:
+        layout_edit.apply(character_dir, payload)
+    except layout_edit.LayoutError as exc:
+        return jsonify({"error": str(exc)}), 400
+    return jsonify({"yaml": sheets_module.sheets_path(character_dir).read_text(encoding="utf-8")})

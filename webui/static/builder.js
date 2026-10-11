@@ -871,11 +871,52 @@ function setPrintBanner(text, { showButton = false, enabled = true } = {}) {
   banner.style.display = "flex";
 }
 
+// ── Træk og slip af bokse ──────────────────────────────────────────────
+let dndMode = false;
+let dndTypes = null;
+
+async function toggleDnd() {
+  dndMode = !dndMode;
+  $("#dnd-btn").setAttribute("aria-pressed", String(dndMode));
+  $("#dnd-panel").style.display = dndMode ? "" : "none";
+  if (dndMode && !dndTypes) {
+    const res = await fetch("/api/builder/layout_types");
+    dndTypes = (await res.json()).types || [];
+    $("#dnd-palette").innerHTML = dndTypes.map((t) =>
+      `<span class="dnd-chip" draggable="true" data-new="${esc(t.type)}" title="${esc(t.type)}">${esc(t.label)}</span>`).join("");
+  }
+  refreshLivePreview();
+}
+
+async function layoutOp(op) {
+  setPrintBanner("Gemmer layout...");
+  const res = await fetch("/api/builder/layout", {
+    method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: NAME, ...op }),
+  });
+  const data = await res.json();
+  if (data.error) {
+    setPrintBanner(data.error);
+    return;
+  }
+  if (sheetsEditor) { // YAML-editoren viser samme fil: opdatér den, så den ikke gemmer en gammel version over træk og slip
+    sheetsSavedYaml = data.yaml;
+    sheetsEditor.dispatch({ changes: { from: 0, to: sheetsEditor.state.doc.length, insert: data.yaml } });
+  }
+  setPrintBanner("");
+  refreshLivePreview();
+}
+
+window.addEventListener("message", (e) => {
+  if (e.source !== $("#sheet-output")?.contentWindow || !e.data?.dnd || !dndMode) return;
+  const { dnd, ...op } = e.data;
+  layoutOp(op);
+});
+
 async function loadPrintPage() {
   hideManualPrompt();
   setPrintBanner("Henter karakterarket...");
   const style = $("#sheet-style")?.value || "farve";
-  const res = await fetch(`/api/builder/sheet?name=${encodeURIComponent(NAME)}&style=${encodeURIComponent(style)}`);
+  const res = await fetch(`/api/builder/sheet?name=${encodeURIComponent(NAME)}&style=${encodeURIComponent(style)}${dndMode ? "&edit=1" : ""}`);
   const data = await res.json();
   if (data.error) {
     setPrintBanner(data.error);
@@ -1012,7 +1053,7 @@ async function sheetsLint(view) {
 async function sheetsPreview() {
   const text = sheetsEditor.state.doc.toString();
   const res = await fetch("/api/builder/sheets_preview", {
-    method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: NAME, yaml: text, style: $("#sheet-style")?.value || "farve" }),
+    method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: NAME, yaml: text, style: $("#sheet-style")?.value || "farve", edit: dndMode }),
   });
   const data = await res.json();
   if (data.error) {
@@ -1126,6 +1167,13 @@ function wireEvents() {
   $("#translate-copy-btn").addEventListener("click", copyPrompt);
   $("#translate-apply-btn").addEventListener("click", applyManualResponse);
   $("#edit-layout-btn").addEventListener("click", toggleLayoutEditor);
+  $("#dnd-btn").addEventListener("click", toggleDnd);
+  $("#dnd-palette").addEventListener("dragstart", (e) => {
+    const chip = e.target.closest("[data-new]");
+    if (!chip) return;
+    e.dataTransfer.setData("text/plain", `new:${chip.dataset.new}`);
+    e.dataTransfer.effectAllowed = "copyMove";
+  });
   $("#pdf-btn").addEventListener("click", makePdf);
   $("#sheets-save-btn").addEventListener("click", saveSheetsYaml);
   $("#sheet-style")?.addEventListener("change", () => {

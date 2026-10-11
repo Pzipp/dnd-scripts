@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import os
 import re
+from contextvars import ContextVar
 
 from . import descriptions
 from . import spell_grants
@@ -761,24 +762,50 @@ def _box_error(typ, exc) -> str:
     return f"Fejl i boksen {typ!r}: {type(exc).__name__}: {exc}"
 
 
-def layout_node(node, character, env, flat=False) -> str:
+# Redigeringstilstand (træk og slip): boksene får data-path (stien til knuden i sheets.yaml, fx
+# "0/layout/1/columns/0/content/2") og beholdere data-stack (stien til listen, boksene ligger i).
+# Kun i forhåndsvisningen - almindelig HTML/PDF er uændret.
+_EDIT: ContextVar[bool] = ContextVar("sheet_edit_mode", default=False)
+
+
+def _p(path) -> str:
+    return "/".join(str(x) for x in path)
+
+
+def _node_attr(path) -> str:
+    return f' data-path="{_p(path)}"' if _EDIT.get() else ""
+
+
+def _stack_attr(path) -> str:
+    return f' data-stack="{_p(path)}"' if _EDIT.get() else ""
+
+
+def _tag_first(html: str, attrs: str) -> str:
+    """Lægger attributter på rod-elementet i et stykke HTML (boksindhold uden egen ramme)."""
+    return re.sub(r"^(\s*<[A-Za-z][^\s>/]*)", lambda m: m.group(1) + attrs, html, count=1) if attrs else html
+
+
+def layout_node(node, character, env, flat=False, path=()) -> str:
     """Én node i layout-træet: en kolonne-gruppe, en række-stak eller en boks.
 
     flat=True: boksene får ingen egen ramme (de ligger i en samlet kasse, se "merged" under columns).
+    path: knudens sti i sheets.yaml (bruges kun i redigeringstilstand).
     """
     if "columns" in node:
         cols = []
-        for k in node["columns"]:
+        for c, k in enumerate(node["columns"]):
             merged = bool(k.get("merged"))
-            inner = layout_stack(k.get("content", []), character, env, flat or merged)
+            stack = path + ("columns", c, "content")
+            inner = layout_stack(k.get("content", []), character, env, flat or merged, stack)
             if merged:
                 tight = " taet" if k.get("merged") == "tight" else ""
                 frame = "" if flat else " box"  # uden ramme (box_type: none) beholdes skriftindstillingen
                 inner = f'<div class="samlet{frame}{tight}" data-type="merged">{inner}</div>'
-            cols.append(f'<div class="kol" style="--bredde:{k.get("width", 1)}">{inner}</div>')
-        return f'<div class="kolonner">{"".join(cols)}</div>'
+            cols.append(f'<div class="kol"{_stack_attr(stack)} style="--bredde:{k.get("width", 1)}">{inner}</div>')
+        return f'<div class="kolonner"{_node_attr(path)}>{"".join(cols)}</div>'
     if "rows" in node:
-        return f'<div class="raekker">{layout_stack(node["rows"], character, env, flat)}</div>'
+        stack = path + ("rows",)
+        return f'<div class="raekker"{_node_attr(path)}{_stack_attr(stack)}>{layout_stack(node["rows"], character, env, flat, stack)}</div>'
     typ = node.get("type")
     if typ not in REGISTRY:
         raise ValueError(f"Ukendt boks-type i layout: {typ!r}. Kendte typer: {', '.join(REGISTRY)}.")
@@ -789,16 +816,17 @@ def layout_node(node, character, env, flat=False) -> str:
     except (KeyError, TypeError, ValueError, IndexError, AttributeError) as exc:
         raise ValueError(_box_error(typ, exc)) from exc
     if not inner or flat or node.get("box_type") == "none" or not reg["card"]:
-        return inner
+        return _tag_first(inner, _node_attr(path)) if inner else inner
     cls = "box small" if reg["small"] else "box"
-    return f'<div class="{cls}" data-type="{typ}">{inner}</div>'
+    return f'<div class="{cls}" data-type="{typ}"{_node_attr(path)}>{inner}</div>'
 
 
-def layout_stack(nodes, character, env, flat=False) -> str:
-    return "".join(layout_node(n, character, env, flat) for n in nodes)
+def layout_stack(nodes, character, env, flat=False, path=()) -> str:
+    """path = stien til selve listen; hver knude får path + (indeks,)."""
+    return "".join(layout_node(n, character, env, flat, path + (i,)) for i, n in enumerate(nodes))
 
 
-def page(p, character, env) -> str:
+def page(p, character, env, index=0) -> str:
     """Én side: valgfri top (title, subtitle, summary), layout og footer.
 
     top.summary udeladt helt -> character['summary'] (Klasse/Art/Baggrund,
@@ -816,7 +844,8 @@ def page(p, character, env) -> str:
                 f'<span class="epithet">{top.get("subtitle", "")}</span></div>'
                 f'{ident(summary)}</header>')
     no_frame = p.get("box_type") == "none"  # box_type: none på en side fjerner rammerne på alle bokse på siden
-    body = f'<div class="layout">{layout_stack(p.get("layout", []), character, env, no_frame)}</div>'
+    stack = (index, "layout")
+    body = f'<div class="layout"{_stack_attr(stack)}>{layout_stack(p.get("layout", []), character, env, no_frame, stack)}</div>'
     foot = f'<div class="foot">{p.get("footer", "")}</div>' if p.get("footer") else ""
     marg = {"small": " margin-small", "none": " margin-none"}.get(p.get("margin"), "")
     return f'<section class="pg s1{marg}"><div class="page">{head}{body}{foot}</div></section>'
@@ -846,6 +875,83 @@ section.pg.margin-none > .page{width:210mm;padding-top:0}
 }
 """
 
+EDIT_CSS = """
+[data-path]:not(.kolonner):not(.raekker){position:relative;cursor:grab}
+[data-path]:not(.kolonner):not(.raekker):hover{outline:2px dashed #6e2a12;outline-offset:-2px}
+[data-path].dnd-dragging{opacity:.35}
+.kol[data-stack]{min-height:28px}
+.kol[data-stack]:empty,.raekker[data-stack]:empty{outline:1px dashed #a88a5c}
+.dnd-x{position:absolute;top:2px;right:2px;z-index:5;width:18px;height:18px;line-height:16px;padding:0;border:1px solid #9c2b2b;border-radius:50%;
+ background:#fff;color:#9c2b2b;font:700 12px/16px sans-serif;cursor:pointer;display:none}
+[data-path]:hover > .dnd-x{display:block}
+.dnd-line{position:fixed;height:3px;background:#2d6e3f;border-radius:2px;pointer-events:none;z-index:99;display:none}
+"""
+
+# Kører i forhåndsvisningens iframe. Intet gemmes her: et slip sendes som besked til builderen,
+# som kalder /api/builder/layout og tegner arket forfra.
+EDIT_JS = r"""
+(function () {
+  var line = document.createElement('div'); line.className = 'dnd-line'; document.body.appendChild(line);
+  var dragging = null;
+  function send(msg) { msg.dnd = true; parent.postMessage(msg, '*'); }
+  document.querySelectorAll('[data-path]').forEach(function (el) {
+    el.draggable = true;
+    if (el.matches('.kolonner,.raekker')) return;
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'dnd-x'; x.textContent = '×'; x.title = 'Fjern boksen';
+    x.addEventListener('click', function (e) { e.stopPropagation(); e.preventDefault(); send({ op: 'remove', path: el.dataset.path }); });
+    el.appendChild(x);
+  });
+  document.addEventListener('dragstart', function (e) {
+    var el = e.target.closest ? e.target.closest('[data-path]') : null;
+    if (!el) return;
+    dragging = el; el.classList.add('dnd-dragging');
+    e.dataTransfer.setData('text/plain', 'move:' + el.dataset.path); e.dataTransfer.effectAllowed = 'move';
+    e.stopPropagation();
+  });
+  document.addEventListener('dragend', function () { if (dragging) dragging.classList.remove('dnd-dragging'); dragging = null; line.style.display = 'none'; });
+  function stackAt(e) {
+    var t = e.target.closest ? e.target.closest('[data-stack]') : null;
+    if (t) return t;
+    var pg = e.target.closest ? e.target.closest('section.pg') : null;
+    return pg ? pg.querySelector('.layout[data-stack]') : null;
+  }
+  function items(stack) {
+    return Array.prototype.filter.call(stack.querySelectorAll('[data-path]'), function (c) {
+      return c.parentElement.closest('[data-stack]') === stack && c !== dragging && !(dragging && dragging.contains(c));
+    });
+  }
+  function where(stack, e) {
+    var list = items(stack), idx = list.length, y;
+    for (var i = 0; i < list.length; i++) {
+      var r = list[i].getBoundingClientRect();
+      if (e.clientY < r.top + r.height / 2) { idx = i; break; }
+    }
+    var sr = stack.getBoundingClientRect(), left = sr.left, width = sr.width;
+    if (!list.length) y = sr.top + 2;
+    else if (idx < list.length) y = list[idx].getBoundingClientRect().top - 2;
+    else y = list[list.length - 1].getBoundingClientRect().bottom + 1;
+    return { idx: idx, y: y, left: left, width: width, list: list };
+  }
+  document.addEventListener('dragover', function (e) {
+    var stack = stackAt(e); if (!stack) return;
+    e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+    var w = where(stack, e);
+    line.style.display = 'block'; line.style.top = w.y + 'px'; line.style.left = w.left + 'px'; line.style.width = w.width + 'px';
+  });
+  document.addEventListener('drop', function (e) {
+    var stack = stackAt(e); if (!stack) return;
+    e.preventDefault(); line.style.display = 'none';
+    // index i listen af ALLE knuder i beholderen (også den, der trækkes): omregnes af serveren
+    var w = where(stack, e), all = Array.prototype.filter.call(stack.querySelectorAll('[data-path]'), function (c) { return c.parentElement.closest('[data-stack]') === stack; });
+    var index = w.idx < w.list.length ? all.indexOf(w.list[w.idx]) : all.length;
+    var data = e.dataTransfer.getData('text/plain') || '';
+    if (data.indexOf('move:') === 0) send({ op: 'move', path: data.slice(5), stack: stack.dataset.stack, index: index });
+    else if (data.indexOf('new:') === 0) send({ op: 'add', type: data.slice(4), stack: stack.dataset.stack, index: index });
+  });
+})();
+"""
+
+
 CSS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "scripts", "karakterark")
 
 
@@ -873,11 +979,17 @@ def _css(stil: str | None) -> str:
     return s + "\n" + open(os.path.join(CSS_DIR, STYLE_FILES[stil]), encoding="utf-8").read()
 
 
-def build(character: dict, sheets: dict, stil: str | None = None) -> str:
-    env = make_env(character)
-    pages = [page(p, character, env) for p in sheets.get("pages", [])]
+def build(character: dict, sheets: dict, stil: str | None = None, edit: bool = False) -> str:
+    """edit=True: forhåndsvisning til træk og slip (data-path/data-stack + et lille script)."""
+    token = _EDIT.set(edit)
+    try:
+        env = make_env(character)
+        pages = [page(p, character, env, i) for i, p in enumerate(sheets.get("pages", []))]
+    finally:
+        _EDIT.reset(token)
     title = character.get("name") or "Karakterark"
-    style = scope_css(_css(stil), "s1") + "\n" + FRAME_CSS
+    style = scope_css(_css(stil), "s1") + "\n" + FRAME_CSS + (EDIT_CSS if edit else "")
+    script = f"<script>{EDIT_JS}</script>" if edit else ""
     return f'''<!DOCTYPE html>
 <html lang="da">
 <head>
@@ -893,6 +1005,7 @@ def build(character: dict, sheets: dict, stil: str | None = None) -> str:
 <main class="sheets">
 {chr(10).join(pages)}
 </main>
+{script}
 </body>
 </html>
 '''

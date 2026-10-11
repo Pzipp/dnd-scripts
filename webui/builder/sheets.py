@@ -37,4 +37,5 @@ def save(character_dir: Path, data: dict) -> None:
 def ensure_exists(character_dir: Path) -> None:
     """Kopiér skabelonen ind, hvis karakteren ikke har en sheets.yaml endnu."""
     if not sheets_path(character_dir).is_file():
-        save(character_dir, _template())
+        # Filen kopieres som tekst (ikke gennem yaml.safe_dump), så skabelonens kommentarer følger med.
+        sheets_path(character_dir).write_text(TEMPLATE_PATH.read_text(encoding="utf-8"), encoding="utf-8")

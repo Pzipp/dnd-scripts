@@ -13,13 +13,20 @@ Findes filen ikke, kopieres skabelonen ind første gang (`webui/builder/sheets.p
 Fritekst-sektionerne (baggrund, kampagnenoter, egne træk) udfyldes i hånden,
 ligesom i dag.
 
-**Redigeres via en indbygget YAML-editor på byggerens Print-fane**
+**Redigeres via en indbygget YAML-editor på byggerens Ark-fane**
 ("Rediger layout"-knappen) - CodeMirror med syntaksfarver, linjenumre,
 fejlmarkering og live-forhåndsvisning, samme opsætning som den gamle
 YAML-editor (`/editor`, se [webui/README-yaml-editor.md](../webui/README-yaml-editor.md)),
 bare mod `/api/builder/sheets_*`-endepunkterne og `render.py` i stedet for
 `karakterark.py`. Den gamle editor redigerer IKKE `sheets.yaml` - to
 samtidige redigeringsflader mod samme fil var en dårlig idé.
+
+**Eller ved at trække boksene** (knappen "Træk og slip" på Ark-fanen): man flytter en boks i
+arket til en anden kolonne, række eller side, tilføjer en ny fra listen over bokstyper og fjerner en
+med &times;. Ændringen skrives direkte i `sheets.yaml` med `ruamel.yaml` (round-trip), så
+kommentarer og formatering bevares, og arket tegnes forfra. Kode: `webui/builder/layout_edit.py`
+og `render.build(..., edit=True)`, der kun i forhåndsvisningen lægger `data-path`/`data-stack` på
+boksene (HTML og PDF er uændrede). Står YAML-editoren åben, opdateres den med det nye indhold.
 
 ## Opbygning
 

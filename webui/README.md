@@ -96,3 +96,7 @@ Fanen **Kort** i builderen laver spil-kort (63 × 88 mm, 9 pr. A4) ud fra 5etool
 * **Lav PDF** gemmer `kort-farve.pdf` eller `kort-sorthvid.pdf` i karakterens `udskrifter/`.
 
 Kode: `builder/kort.py` (udledning, valg, bunke) og `/api/builder/cards*` i `builder/routes.py`.
+
+## Træk og slip af bokse (Ark-fanen)
+
+Knappen **Træk og slip** gør arket til en layout-editor: træk en boks til en anden placering (også på en anden side), træk en ny boks ind fra listen, eller fjern en med &times;. Det ændrer karakterens `sheets.yaml` og bevarer kommentarerne (kræver `ruamel.yaml`, som står i `requirements.txt`: byg imaget forfra efter en opdatering). Se [docs/sheets-yaml.md](../docs/sheets-yaml.md).

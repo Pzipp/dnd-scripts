@@ -30,20 +30,20 @@
 </head>
 <body>
 <header class="builder-top">
-  <h1><img class="logo" src="{{ url_for('static', filename='logo.png') }}" alt=""> Karakterbygger</h1>
+  <h1><img class="logo" src="{{ url_for('static', filename='logo.png') }}" alt=""> <span class="title-text">Karakterbygger</span></h1>
   <div class="meta">
     <a href="/builder">&larr; Alle karakterer</a>
     <span id="total-level"></span>
     <span>{{ name }}</span>
     <span class="status" id="save-status"></span>
+    <a class="gear" href="/builder/{{ name }}/settings" title="Indstillinger" aria-label="Indstillinger">&#9881;</a>
   </div>
 </header>
 <nav class="tabs">
   <button type="button" data-page="character" class="{{ 'active' if page == 'character' else '' }}">Karakter</button>
   <button type="button" data-page="equipment" class="{{ 'active' if page == 'equipment' else '' }}">Udstyr</button>
   <button type="button" data-page="cards" class="{{ 'active' if page == 'cards' else '' }}">Kort</button>
-  <button type="button" data-page="print" class="{{ 'active' if page == 'print' else '' }}">Print</button>
-  <button type="button" onclick="location.href='/builder/{{ name }}/settings'">Kilder</button>
+  <button type="button" data-page="print" class="{{ 'active' if page == 'print' else '' }}">Ark</button>
 </nav>
 <div class="workspace has-preview" id="workspace">
 <main class="sheet">
@@ -94,6 +94,11 @@
       </select>
     </label>
     <button type="button" class="btn secondary" id="edit-layout-btn" style="margin-bottom:.6rem">Rediger layout</button>
+    <button type="button" class="btn secondary" id="dnd-btn" style="margin-bottom:.6rem" aria-pressed="false">Træk og slip</button>
+    <div id="dnd-panel" style="display:none">
+      <p class="dnd-help">Træk en boks i arket for at flytte den, også til en anden kolonne eller side. Tryk på &times; for at fjerne den. Træk en ny boks fra listen ind i arket.</p>
+      <div id="dnd-palette" class="dnd-palette"></div>
+    </div>
     <button type="button" class="btn" id="pdf-btn" style="margin-bottom:.6rem">Lav PDF</button>
     <span id="pdf-status"></span>
     <div id="sheets-editor" style="display:none">

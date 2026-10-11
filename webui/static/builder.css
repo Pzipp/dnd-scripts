@@ -185,9 +185,20 @@ select.invalid, input.invalid { border-color: var(--bad); box-shadow: 0 0 0 2px 
 .live-msg.show { display: flex; }
 .live-frame.loading::after { content: ""; position: absolute; top: .5rem; right: .5rem; width: .7rem; height: .7rem; border-radius: 50%; background: var(--accent); opacity: .6; }
 @media (max-width: 1100px) {
+  /* Smal skærm: arket står under fanens indhold */
   .workspace.has-preview { display: block; padding: 0; }
-  .workspace.has-preview .live-preview { display: none; }
   .workspace.has-preview .sheet { margin: 0 auto; max-width: 920px; }
+  .workspace.has-preview .live-preview { position: static; height: 85vh; margin: 1rem .6rem 2rem; }
+}
+.builder-top .gear { font-size: 1.5rem; line-height: 1; text-decoration: none; color: var(--accent); }
+.builder-top .gear:hover { color: var(--ink); }
+@media (max-width: 700px) {
+  .builder-top .title-text { display: none; }
+  .builder-top { padding: .5rem .8rem; gap: .6rem; }
+  .builder-top .meta { flex-wrap: wrap; justify-content: flex-end; gap: .2rem .7rem; }
+  .builder-top .status { min-width: 0; }
+  .tabs { padding-left: .8rem; padding-right: .8rem; overflow-x: auto; }
+  .tabs button { padding: .5rem .9rem; }
 }
 
 /* Panelet står i en kolonne ved siden af arket: giv det topkant, og lad den aktive fane åbne ind i det */
@@ -208,3 +219,11 @@ select.invalid, input.invalid { border-color: var(--bad); box-shadow: 0 0 0 2px 
 .card-row .tag { font-size: .7rem; padding: 0 .4rem; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); }
 .card-row .tag.curated { color: var(--good); border-color: var(--good); }
 .card-row .regen { font-size: .7rem; padding: .1rem .5rem; }
+
+/* Træk og slip af bokse (Ark-fanen) */
+#dnd-btn[aria-pressed="true"] { background: var(--accent); color: #fff; }
+#dnd-panel { border: 1px solid var(--line); border-radius: .5rem; background: #fff; padding: .6rem .8rem; margin-bottom: .8rem; }
+.dnd-help { font-size: .82rem; color: var(--muted); margin: 0 0 .5rem; }
+.dnd-palette { display: flex; flex-wrap: wrap; gap: .3rem; max-height: 14rem; overflow: auto; }
+.dnd-chip { font-size: .8rem; padding: .15rem .6rem; border: 1px solid var(--line); border-radius: 999px; background: var(--parch); cursor: grab; user-select: none; }
+.dnd-chip:hover { border-color: var(--accent); color: var(--accent); }
