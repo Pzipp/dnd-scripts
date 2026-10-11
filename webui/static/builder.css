@@ -159,3 +159,12 @@ select.invalid, input.invalid { border-color: var(--bad); box-shadow: 0 0 0 2px 
 .spell-counter.bad { color: var(--bad, #b3261e); }
 .checklist label.disabled { opacity: .45; cursor: not-allowed; }
 .checklist label.invalid { border-color: var(--bad, #b3261e); }
+
+/* "Mangler"-overblik øverst: altid inden for rækkevidde, klik hopper til feltet */
+#missing-banner { position: sticky; top: 3.6rem; z-index: 9; }
+.missing-list > summary { cursor: pointer; font-weight: 600; }
+.missing-list ul { list-style: none; margin: .5rem 0 0; padding: 0; max-height: 40vh; overflow: auto; columns: 2 18rem; }
+.missing-list li { padding: .1rem 0; break-inside: avoid; }
+.missing-list a { color: var(--bad); text-decoration: underline; }
+@keyframes jump-flash { 0%, 60% { outline: 3px solid var(--bad); outline-offset: 3px; background: #fbe4e4; } 100% { outline: 3px solid transparent; } }
+.jump-flash { animation: jump-flash 2.2s ease-out; border-radius: .3rem; }

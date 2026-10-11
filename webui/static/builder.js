@@ -101,10 +101,131 @@ function renderTop() {
     banner.textContent = "/e5tools er ikke tilgængeligt lige nu - byggeren kan ikke slå regler op.";
   } else if (state.missing && state.missing.length) {
     banner.style.display = "block";
-    banner.textContent = `${state.missing.length} valg mangler stadig (markeret med rød ramme).`;
+    morphChildren(banner, renderMissingList());
   } else {
     banner.style.display = "none";
   }
+}
+
+// ── "Mangler"-overblik: klik på et punkt hopper til feltet ───────────────
+let missingListOpen = false;
+
+function allFeatSlots() {
+  const out = [state.race?.feat_slot, state.background?.feat_slot];
+  (state.classes || []).forEach((k) => {
+    (k.features || []).forEach((f) => out.push(f.feat_slot));
+    (k.optional_features || []).forEach((p) => (p.feat_slots || []).forEach((s) => out.push(s)));
+  });
+  return out.filter(Boolean);
+}
+
+// path fra state.missing -> {group, label, page}
+function missingInfo(path) {
+  const parts = path.split(".");
+  const byId = (list, id) => (list || []).find((x) => x.id === id);
+  const info = (group, label, page = "character") => ({ group, label, page });
+  switch (parts[0]) {
+    case "race": {
+      if (parts[1] === "name") return info("Race", "Vælg race");
+      return info("Race", byId(state.race?.sub_choices, parts[2])?.title || parts.slice(2).join("."));
+    }
+    case "classes": {
+      if (path === "classes") return info("Klasse", "Tilføj mindst én klasse");
+      const k = (state.classes || []).find((x) => x.id === parts[1]);
+      const group = k?.name || "Klasse";
+      if (parts[2] === "name") return info(group, "Vælg klasse");
+      if (parts[2] === "subclass") return info(group, "Vælg subclass");
+      const id = parts[3];
+      if (id === "skills") return info(group, `Skills (${k?.skills_count ?? ""})`);
+      const pick = byId(k?.spellcasting?.picks, id) || byId(k?.optional_features, id);
+      if (pick) return info(group, pick.title);
+      for (const f of k?.features || []) {
+        if (f.weapon_choice?.id === id) return info(group, f.weapon_choice.title);
+        if (f.expertise_choice?.id === id) return info(group, f.expertise_choice.title);
+      }
+      return info(group, id || path);
+    }
+    case "feats": {
+      const slot = allFeatSlots().find((x) => x.key === parts[1]);
+      const group = slot?.label || "Feat";
+      if (parts[2] === "choices") return info(group, byId(slot?.sub_choices, parts[3])?.title || parts[3]);
+      return info(group, "Vælg feat");
+    }
+    case "background": {
+      if (parts[1] === "name") return info("Baggrund", "Vælg baggrund");
+      if (parts[2] === "ability_split") return info("Baggrund", "Evne-bonus: fordeling");
+      return info("Baggrund", byId(state.background?.sub_choices, parts[2])?.title || parts.slice(2).join("."));
+    }
+    case "abilities":
+      return info("Evner", parts[1] === "method" ? "Vælg metode" : "Tildel alle seks evner");
+    case "languages":
+      return info("Sprog", "Vælg 2 sprog");
+    case "equipment":
+      return info("Udstyr", parts[1] === "class_package" ? "Pakke fra klassen" : "Pakke fra baggrunden", "equipment");
+    case "hp_rolls": {
+      const k = (state.classes || []).find((x) => x.id === parts[1]);
+      return info("HP-terningslag", `${k?.name || "Klasse"}, niveau ${parts[2]}`);
+    }
+    default:
+      return info("Andet", path);
+  }
+}
+
+function renderMissingList() {
+  // HP-terningslag samles til ét punkt pr. klasse (kan være 18 niveauer).
+  const items = [];
+  const hpGroups = {};
+  state.missing.forEach((path) => {
+    if (path.startsWith("hp_rolls.")) {
+      const [, cid, lvl] = path.split(".");
+      if (!hpGroups[cid]) {
+        hpGroups[cid] = { path, levels: [] };
+        items.push(hpGroups[cid]);
+      }
+      hpGroups[cid].levels.push(lvl);
+    } else {
+      items.push({ path });
+    }
+  });
+  const lis = items.map((it) => {
+    const { group, label } = missingInfo(it.path);
+    const extra = it.levels ? ` (${it.levels.length} niveauer: ${it.levels.join(", ")})` : "";
+    const text = it.levels ? `${group}: ${(state.classes || []).find((x) => x.id === it.path.split(".")[1])?.name || "Klasse"}${extra}` : `${group}: ${label}`;
+    return `<li><a href="#" data-jump="${esc(it.path)}">${esc(text)}</a></li>`;
+  }).join("");
+  return `<details class="missing-list" ${missingListOpen ? "open" : ""}>
+    <summary>${items.length} ${items.length === 1 ? "valg mangler" : "valg mangler"} stadig - klik for at se hvilke</summary>
+    <ul>${lis}</ul></details>`;
+}
+
+function findMissingTarget(path) {
+  const q = (sel) => document.querySelector(sel);
+  const exact = q(`[data-field="${path}"]`) || q(`[data-field-combo="${path}"]`) || q(`[data-field-combo-single="${path}"]`) || q(`[data-field^="${path}."]`);
+  if (exact) return exact.closest(".sub-choice, label.field, .ab") || exact;
+  const parts = path.split(".");
+  const step = parts[0] === "race" || path === "feats.race" ? "race"
+    : parts[0] === "classes" ? `class-${parts[1]}`
+    : parts[0] === "feats" ? (parts[1] === "background" ? "background" : parts[1] === "race" ? "race" : `class-${parts[1].split("_")[0]}`)
+    : parts[0] === "hp_rolls" ? `hp-${parts[1]}`
+    : parts[0] === "equipment" ? (parts[1] === "class_package" ? "equip-class" : "equip-background")
+    : parts[0];
+  return q(`details.step[data-step="${step}"]`);
+}
+
+function jumpToMissing(path) {
+  const page = missingInfo(path).page;
+  const tab = $(`.tabs button[data-page="${page}"]`);
+  if (tab && !tab.classList.contains("active")) tab.click();
+  const el = findMissingTarget(path);
+  if (!el) return;
+  $("#missing-banner details")?.removeAttribute("open"); // listen lukkes, så feltet ikke skjules bag den
+  missingListOpen = false;
+  for (let d = el.closest("details"); d; d = d.parentElement?.closest("details")) d.open = true;
+  el.scrollIntoView({ block: "center", behavior: "smooth" });
+  el.classList.remove("jump-flash");
+  void el.offsetWidth; // genstart animationen
+  el.classList.add("jump-flash");
+  setTimeout(() => el.classList.remove("jump-flash"), 2200);
 }
 
 // ── Karakter-siden ─────────────────────────────────────────────────────
@@ -347,7 +468,7 @@ function renderSpellPick(path, p, taken = new Set()) {
   }
   const chosen = p.chosen || [];
   const full = chosen.length >= p.count;
-  const state = chosen.length === p.count && !(p.invalid || []).length ? "ok" : "bad";
+  const state = (chosen.length === p.count || (p.kind === "prepared" && chosen.length < p.count)) && !(p.invalid || []).length ? "ok" : "bad";
   const byLevel = {};
   p.options.forEach((o) => (byLevel[o.level] = byLevel[o.level] || []).push(o));
   const tips = {};
@@ -842,6 +963,12 @@ function wireEvents() {
       addClass();
       return;
     }
+    const jump = e.target.closest("[data-jump]");
+    if (jump) {
+      e.preventDefault();
+      jumpToMissing(jump.dataset.jump);
+      return;
+    }
     const chip = e.target.closest("[data-multi]");
     if (chip) {
       const path = chip.dataset.field;
@@ -865,6 +992,7 @@ function getPath(obj, path) {
   return path.split(".").reduce((o, k) => (o == null ? undefined : o[k]), obj);
 }
 
+$("#missing-banner").addEventListener("toggle", (e) => { missingListOpen = e.target.open; }, true);
 wireEvents();
 fetchState();
 if ($(".tabs button.active")?.dataset.page === "print") loadPrintPage();

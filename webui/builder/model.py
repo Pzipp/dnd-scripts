@@ -1103,7 +1103,10 @@ def _spellcasting_state(class_obj: dict, subclass_obj: dict | None, class_name: 
         chosen = [raw] if isinstance(raw, str) and raw else list(raw or [])
         pick["chosen"] = chosen
         pick["invalid"] = spellcasting.stale(pick, chosen)
-        if len([c for c in chosen if c not in pick["invalid"]]) != pick["count"] or pick["invalid"] or len(chosen) > pick["count"]:
+        valid = len([c for c in chosen if c not in pick["invalid"]])
+        # Forberedte spells er valgfrie (gruppen bruger printede kort): for få er ok, for mange/ugyldige er ikke.
+        too_few = valid != pick["count"] and pick["kind"] != "prepared"
+        if too_few or pick["invalid"] or len(chosen) > pick["count"]:
             missing.append(f"classes.{cid}.choices.{pick['id']}")
     return built
 
