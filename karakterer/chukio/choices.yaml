@@ -1,0 +1,74 @@
+race:
+  name: Human
+  source: XPHB
+  other_name: ''
+  choices:
+    size: Medium
+    skill:
+    - stealth
+classes:
+  c4f1a0:
+    name: Fighter
+    source: XPHB
+    level: 2
+    subclass: null
+    choices:
+      skills:
+      - perception
+      - survival
+      weapon_mastery:
+      - Scimitar
+      - Greatsword
+      - Sling
+background:
+  name: Soldier
+  source: XPHB
+  choices:
+    ability_split:
+      type: 2-1
+      plus2: str
+      plus1: dex
+abilities:
+  method: roll
+  rolls: {}
+  assigned:
+    STR: 13
+    DEX: 14
+    CON: 12
+    INT: 14
+    WIS: 16
+    CHA: 18
+hp_rolls:
+  c4f1a0:
+    '2': 6
+feats:
+  race:
+    name: Alert
+    source: XPHB
+    choices: {}
+  c4f1a0_1_fightingstyle:
+    name: Two-Weapon Fighting
+    source: XPHB
+    choices: {}
+  background:
+    name: Savage Attacker
+    source: XPHB
+    choices: {}
+spells:
+  known: []
+equipment:
+  class_package: null
+  background_package: null
+  extra: []
+  armor:
+    name: null
+    source: null
+  shield: false
+languages:
+  known:
+  - Elvish
+  - Sylvan
+settings:
+  allowed_sources:
+  - XPHB
+  half_feats: false

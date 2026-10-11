@@ -1,0 +1,85 @@
+race:
+  name: Tiefling
+  source: XPHB
+  other_name: ''
+  choices:
+    lineage: Abyssal
+    spell_ability: CHA
+classes:
+  a1b2c3:
+    name: Warlock
+    source: XPHB
+    level: 2
+    subclass: null
+    choices:
+      skills:
+      - arcana
+      - intimidation
+      cantrips:
+      - Eldritch Blast
+      - Minor Illusion
+      prepared:
+      - Hex
+      - Armor of Agathys
+      - Witch Bolt
+      opt_eldritch-invocations:
+      - Pact of the Tome
+      - Agonizing Blast
+      - Armor of Shadows
+      ofs_pact-of-the-tome_0_0:
+      - Fire Bolt
+      - Shocking Grasp
+      - Shape Water
+      ofs_pact-of-the-tome_0_1:
+      - Detect Magic
+      - Comprehend Languages
+background:
+  name: Acolyte
+  source: XPHB
+  choices:
+    ability_split:
+      type: 2-1
+      plus2: cha
+      plus1: wis
+abilities:
+  method: standard
+  rolls: {}
+  assigned:
+    STR: 10
+    DEX: 15
+    CON: 14
+    INT: 8
+    WIS: 8
+    CHA: 15
+hp_rolls: {}
+feats:
+  background:
+    name: Magic Initiate
+    source: XPHB
+    choices:
+      origin: Cleric
+      origin_ability: CHA
+      origin_spell_0: Cure Wounds
+      origin_spell_1:
+      - Guidance
+      - Spare the Dying
+spells:
+  known: []
+equipment:
+  class_package: null
+  background_package: null
+  extra: []
+  armor:
+    name: null
+    source: null
+  shield: false
+languages:
+  known:
+  - Abyssal
+  - Orc
+  - Sylvan
+settings:
+  allowed_sources:
+  - XPHB
+  - XGE
+  half_feats: false

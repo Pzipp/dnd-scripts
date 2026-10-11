@@ -1,0 +1,263 @@
+pages:
+- margin: small
+  top:
+    summary:
+    - - Klasse
+      - Rogue 2
+    - - Art
+      - Felis <i>(Small)</i>
+    - - Baggrund
+      - Wayfarer
+    - - Spiller
+      - Rikke
+  layout:
+  - type: stats
+  - columns:
+    - width: 52
+      content:
+      - type: abilities
+      - type: passive
+        title: Passive sanser
+      - type: languages
+        title: Sprog <em>Languages</em>
+        text: Common, Goblin, Orc, Undercommon, <em>Thieves' Cant</em>
+    - width: 140
+      content:
+      - type: attacks
+        title: Angreb <em>· Attacks</em>
+        attacks:
+        - - Kortsværd <em>Shortsword</em>
+          - '{+DEX+PB}'
+          - 1d6{+DEX} Piercing
+          - Finesse, Light · ingen mastery
+        - - Dolk ×2 <em>Dagger</em>
+          - '{+DEX+PB}'
+          - 1d4{+DEX} Piercing
+          - <b>Nick</b> · kast 20/60 ft
+        - - Dolk (ekstra) <em>Dagger</em>
+          - '{+DEX+PB}'
+          - 1d4 Piercing
+          - 'Light-ekstraangreb: ingen DEX til skaden'
+        - - Kortbue <em>Shortbow</em>
+          - '{+DEX+PB}'
+          - 1d6{+DEX} Piercing
+          - <b>Vex</b> · 80/320 ft · to hænder · 20 pile
+        - - Ubevæbnet <em>Unarmed Strike</em>
+          - '{+STR+PB}'
+          - '{1+STR} Bludgeoning'
+          - ''
+      - type: rules
+        title: Snigangreb
+        subtitle: Sneak Attack +1d6, én gang pr. tur
+        items:
+        - Kræver <em>Finesse</em>- eller afstandsvåben (alle dine våben undtagen ubevæbnet).
+        - Og <b>enten</b> <em>Advantage</em> på angrebet, <b>eller</b> en allieret inden for 5 ft af målet (ikke <em>Incapacitated</em>), og du har ikke <em>Disadvantage</em>.
+        - Kan bruges på et af de to nærkampsangreb. Ram med det første, så du ikke spilder chancen.
+      - columns:
+        - width: 1
+          content:
+          - type: features
+            title: Evner &amp; træk <em>· Features</em>
+            items:
+            - name: Kattens Held []
+              tag: 1× Long Rest
+              text: 'Slår du 1 på en d20 (angreb, save, check): slå om, du skal bruge det nye slag.'
+            - name: Stædig Uvilje [][]
+              tag: Long Rest
+              text: <em>Advantage</em> på saves mod at blive / slippe fri af <em>Charmed</em> eller <em>Frightened</em>. Antal = PB (3 fra level 5).
+            - name: Lige på Alle Fire
+              text: <em>Advantage</em> på saves mod <em>Prone</em>. Fald ≤ 20 ft tæller som 10 ft (1d6), og du lander på benene.
+            - name: Mørkesyn <em>Darkvision</em>
+              text: 60 ft. Mørke ses som svagt lys, kun i gråtoner.
+            - name: Thieves' Cant
+              text: Tyvenes hemmelige sprog og tegn.
+        - width: 1
+          content:
+          - type: bonus_actions
+            title: Bonus actions
+            items:
+            - name: Cunning Action
+              text: <em>Dash</em> (60 ft i alt), <em>Disengage</em> eller <em>Hide</em>.
+            - name: Hide
+              text: 'Stealth {+DEX+2*PB} mod DC 15. Kræver <em>Heavily Obscured</em> eller ¾ dækning. Lykkes det: <em>Invisible</em> → fordel → Sneak Attack.'
+          - type: turn
+            subtitle: afstand
+            title: Bue med Vex
+            items:
+            - '<b>Attack</b>: Shortbow. Rammer du → <b>Vex</b> giver <em>Advantage</em> på næste angreb mod samme mål.'
+            - 'Næste tur: skyd med <em>Advantage</em> → <b>Sneak Attack</b> (1d6{+DEX} + 1d6).'
+            - '<b>Bonus Action</b>: <em>Hide</em> eller flyt dig væk.'
+          - type: turn
+            subtitle: nærkamp
+            title: Sværd + dolk
+            items:
+            - '<b>Attack</b>: Shortsword (står en allieret ved målet → <b>Sneak Attack</b>).'
+            - 'Samme <b>Attack</b>-handling: dolk-ekstraangreb via <b>Nick</b> (bruger ikke din <em>Bonus Action</em>).'
+            - '<b>Bonus Action</b>: <em>Disengage</em> og smut væk.'
+  footer: 'D&amp;D 2024 · PHB 2024 s. 129–130 (Rogue). Felis er en hjemmelavet race. Light-reglen: ekstraangrebet skal være med et <b>andet</b> Light-våben.'
+- margin: small
+  top:
+    subtitle: Hvad kan jeg gøre?
+    summary:
+    - - Slag
+      - d20 + tallet
+    - - Fordel
+      - 2 d20, tag højeste
+    - - Ulempe
+      - 2 d20, tag laveste
+  box_type: none
+  layout:
+  - type: actions
+    bonus:
+      Dash: Cunning Action
+      Disengage: Cunning Action
+      Hide: Cunning Action
+  - columns:
+    - width: 1
+      merged: tight
+      content:
+      - type: unarmed
+      - type: movement
+      - type: extra
+        title: Felis
+        items:
+        - '<b>Lige på Alle Fire</b>: fald ≤ 20 ft tæller som 10 ft (1d6), og du lander på benene. Fordel på saves mod <i>Prone</i>.'
+        - '<b>Mørkesyn</b> 60 ft: mørke tæller som <i>Heavily Obscured</i>, så du kan gemme dig der for fjender uden mørkesyn, mens du selv ser.'
+      - type: death_saves
+      - type: mastery
+      - type: useful
+    - width: 1.25
+      merged: tight
+      content:
+      - type: skill_checks
+        tools:
+        - name: Thieves' Tools
+          ability: DEX
+          use: Dirke en lås, desarmere en fælde
+        - name: Disguise Kit
+          ability: CHA
+          use: Forklæde sig
+      - type: conditions
+  footer: 'Kvist · Handlinger og slag · Kilde: Player''s Handbook 2024 · kap. 1 (handlinger), kap. 6 (Weapon Mastery) og Rules Glossary'
+- margin: small
+  top:
+    subtitle: Udstyr
+    summary:
+    - - Klasse
+      - Rogue 2
+    - - Opdateres
+      - Løbende i spillet
+  layout:
+  - columns:
+    - width: 1
+      content:
+      - type: weapons
+        title: Våben og rustning
+        items:
+        - Læderrustning <i>Leather Armor</i> · AC 11 + DEX
+        - Kortsværd <i>Shortsword</i> · 1d6 Piercing
+        - Dolk ×2 <i>Dagger</i> · 1d4 Piercing · kast 20/60 ft · <i>Nick</i>
+        - Kortbue <i>Shortbow</i> · 1d6 Piercing · 80/320 ft · <i>Vex</i>
+        - Pile <i>Arrows</i> [][][][][] [][][][][] [][][][][] [][][][][]
+        blank_lines: 1
+      - type: gear
+        title: Udstyr <i>Equipment</i>
+        items:
+        - Tyveværktøj <i>Thieves' Tools</i>
+        - Rygsæk <i>Backpack</i> · Soverulle <i>Bedroll</i> · Rejsetøj <i>Traveler's Clothes</i> · Punge <i>Pouch</i> ×2 · Kogegrej <i>Cook's Utensils</i> · Spillekort <i>Playing Cards</i>
+        - Reb <i>Rope</i> · Brækjern <i>Crowbar</i> · Blændlygte <i>Bullseye Lantern</i> · Klokke <i>Bell</i> · Fyrtøj <i>Tinderbox</i> · Vandsæk <i>Waterskin</i>
+        - Metalkugler <i>Ball Bearings</i> (1.000)
+        - Olie <i>Oil</i> [][][][][][][]
+        - Lys <i>Candle</i> [][][][][][][][][][]
+        - Rationer <i>Rations</i> [][][][][]
+        blank_lines: 6
+      - type: list
+        title: Mad og fund
+        items:
+        - Hindbær, 3-4 håndfulde
+        - Bærblanding, 4-5 håndfulde
+        - Urter
+        - 'Krydderikit: salt, peber, sukkertop'
+        - Ødelagt skind
+        blank_lines: 5
+      - type: money
+        title: Penge <i>Coins</i>
+    - width: 1
+      content:
+      - type: special
+        title: Særlige genstande
+        items: []
+        blank_lines: 5
+      - type: campaign
+        title: Kampagne og mission
+        items: []
+        blank_lines: 14
+      - type: places
+        title: Steder
+        items: []
+        blank_lines: 8
+      - type: people
+        title: Personer og væsner
+        items: []
+        blank_lines: 13
+  footer: Kvist · Udstyr
+- margin: small
+  top:
+    subtitle: Baggrund og personlighed
+    summary:
+    - - Art
+      - Felis
+    - - Baggrund
+      - Wayfarer
+    - - Spiller
+      - Rikke
+  layout:
+  - columns:
+    - width: 1
+      content:
+      - type: appearance
+        title: Udseende <i>Appearance</i>
+        fields:
+        - - Alder
+          - ''
+        - - Højde
+          - ''
+        - - Vægt
+          - ''
+        - - Øjne
+          - ''
+        - - Pels
+          - ''
+        - - Hale
+          - ''
+      - type: backstory
+        title: Historie <i>Backstory</i>
+        paragraphs:
+        - Startede som sidekarakter og spilles nu af Rikke.
+        blank_lines: 8
+      - type: training
+        title: Træning og valg <i>Proficiencies</i>
+    - width: 1
+      content:
+      - type: personality
+        title: Personlighed
+        items:
+        - '<b>Felis</b>: nysgerrig og eventyrlysten, heldig, listig, stædig og tyvagtig.'
+        blank_lines: 3
+      - type: family
+        title: Familie og venner
+        items: []
+        blank_lines: 5
+      - type: enemies
+        title: Fjender og rivaler
+        items: []
+        blank_lines: 5
+      - type: goals
+        title: Mål og drømme
+        items: []
+        blank_lines: 5
+      - type: secrets
+        title: Hemmeligheder
+        items: []
+        blank_lines: 5
+  footer: Kvist · Baggrund og personlighed

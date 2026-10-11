@@ -1,0 +1,139 @@
+name: Chukio
+level: 2
+race:
+  name: Human
+  source: XPHB
+background:
+  name: Soldier
+  source: XPHB
+classes:
+- name: Fighter
+  source: XPHB
+  level: 2
+  subclass: null
+abilities:
+  STR: 15
+  DEX: 15
+  CON: 12
+  INT: 14
+  WIS: 16
+  CHA: 18
+proficiency_bonus: 2
+hp: 18
+hit_dice:
+- die: 10
+  count: 2
+ac: 12
+ac_note: 10 + DEX (ingen rustning)
+initiative: '{+DEX+PB}'
+speed: 30
+hit_die: 10
+saves:
+- STR
+- CON
+skills:
+- athletics
+- intimidation
+- perception
+- stealth
+- survival
+expertise: []
+tools: []
+languages: Common, Elvish, Sylvan
+can_use:
+  armor: light, medium, heavy, shield
+  weapons: simple, martial
+size: Medium
+speeds:
+  walk: 30
+senses: {}
+resistances: []
+immunities: []
+vulnerabilities: []
+condition_immunities: []
+granted_spells: []
+masteries:
+- - Nick
+  - Scimitar
+- - Graze
+  - Greatsword
+- - Slow
+  - Sling
+feats:
+- name: Alert
+  source: XPHB
+- name: Two-Weapon Fighting
+  source: XPHB
+- name: Savage Attacker
+  source: XPHB
+spells_known: []
+optional_features: []
+spellcasting: []
+spell_slots: []
+pact_slots: null
+class_features:
+- class: Fighter
+  name: Fighting Style
+  source: XPHB
+  level: 1
+- class: Fighter
+  name: Second Wind
+  source: XPHB
+  level: 1
+- class: Fighter
+  name: Weapon Mastery
+  source: XPHB
+  level: 1
+- class: Fighter
+  name: Tactical Mind
+  source: XPHB
+  level: 2
+race_traits:
+- name: Opfindsom (Resourceful)
+  source: XPHB
+- name: Dygtig (Skillful)
+  source: XPHB
+- name: Alsidig (Versatile)
+  source: XPHB
+resources:
+- name: Second Wind
+  max: 2
+  recharge: long_rest
+  from: Fighter
+class_numbers:
+- owner: Fighter
+  label: Action Surge
+  value: '1'
+- owner: Fighter
+  label: Second Wind
+  value: '2'
+activations:
+- name: Alert
+  source: XPHB
+  kind: feat
+  types: []
+  roll: null
+- name: Second Wind
+  source: XPHB
+  kind: class_feature
+  class: Fighter
+  level: 1
+  types:
+  - bonus
+  roll: 1d10+2
+- name: Tactical Mind
+  source: XPHB
+  kind: class_feature
+  class: Fighter
+  level: 2
+  types: []
+  roll: 1d10
+modifiers: []
+extra_training: []
+summary:
+- - Klasse
+  - Fighter 2
+- - Art
+  - Human
+- - Baggrund
+  - Soldier

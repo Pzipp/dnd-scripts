@@ -1,0 +1,140 @@
+# Udledt af choices.yaml (webui/builder/character_yaml.py) og derefter RETTET I HÅNDEN på felter byggeren ikke kan udlede for
+# den hjemmelavede race Felis og for Rogue Expertise (se rapport): skills (+survival), expertise, size, senses, race, summary, languages.
+# Overskrives, næste gang choices.yaml gemmes i byggeren.
+name: Kvist
+level: 2
+race:
+  name: Felis
+  source: null
+background:
+  name: Wayfarer
+  source: XPHB
+classes:
+- name: Rogue
+  source: XPHB
+  level: 2
+  subclass: null
+abilities:
+  STR: 8
+  DEX: 17
+  CON: 13
+  INT: 12
+  WIS: 10
+  CHA: 15
+proficiency_bonus: 2
+hp: 15
+hit_dice:
+- die: 8
+  count: 2
+ac: 14
+ac_note: Leather Armor + DEX
+initiative: '{+DEX}'
+speed: 30
+hit_die: 8
+saves:
+- DEX
+- INT
+skills:
+- acrobatics
+- deception
+- insight
+- perception
+- sleight of hand
+- stealth
+- survival
+expertise:
+- deception
+- stealth
+tools:
+- thieves' tools
+languages: Common, Goblin, Orc, Undercommon, Thieves' Cant
+can_use:
+  armor: light
+  weapons: simple, Martial weapons that have the Finesse or Light property
+size: Small
+speeds:
+  walk: 30
+senses:
+  darkvision: 60
+resistances: []
+immunities: []
+vulnerabilities: []
+condition_immunities: []
+granted_spells: []
+masteries:
+- - Vex
+  - Shortbow
+- - Nick
+  - Dagger
+feats:
+- name: Lucky
+  source: XPHB
+spells_known: []
+optional_features: []
+spellcasting: []
+spell_slots: []
+pact_slots: null
+class_features:
+- class: Rogue
+  name: Sneak Attack
+  source: XPHB
+  level: 1
+- class: Rogue
+  name: Thieves' Cant
+  source: XPHB
+  level: 1
+- class: Rogue
+  name: Weapon Mastery
+  source: XPHB
+  level: 1
+- class: Rogue
+  name: Cunning Action
+  source: XPHB
+  level: 2
+race_traits: []
+resources:
+- name: Lucky
+  max: 2
+  recharge: long_rest
+  from: feat
+class_numbers:
+- owner: Rogue
+  label: Sneak Attack
+  value: 1d6
+activations:
+- name: Lucky
+  source: XPHB
+  kind: feat
+  types: []
+  roll: null
+- name: Sneak Attack
+  source: XPHB
+  kind: class_feature
+  class: Rogue
+  level: 1
+  types: []
+  roll: 1d6
+- name: Thieves' Cant
+  source: XPHB
+  kind: class_feature
+  class: Rogue
+  level: 1
+  types: []
+  roll: null
+- name: Cunning Action
+  source: XPHB
+  kind: class_feature
+  class: Rogue
+  level: 2
+  types:
+  - bonus
+  roll: null
+modifiers: []
+extra_training: []
+summary:
+- - Klasse
+  - Rogue 2
+- - Art
+  - Felis
+- - Baggrund
+  - Wayfarer
