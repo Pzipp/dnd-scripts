@@ -20,6 +20,8 @@
 
 -
 
-Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+## AI-hjælp
 
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
+<!-- Hvis et AI-værktøj har skrevet eller rettet i ændringen: nævn hvilket. Lad værktøjet selv tilføje sin egen attribution; den skal ikke stå fast i skabelonen. Ellers skriv "Ingen". -->
+
+-
