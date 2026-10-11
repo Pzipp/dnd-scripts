@@ -25,6 +25,9 @@ STIER = ARB / "stier.json"
 BATCH_TEGN = 9000
 
 TAG = re.compile(r"\{@[^{}]*\}")
+# Opslagsfiler (spells-*.json, races.json, feats.json): kun poster i disse lister; navnet på selve
+# posten (besværgelse, species, feat) står på engelsk og udtrækkes derfor ikke.
+ENTITETER = {"spell", "race", "subrace", "feat"}
 STRENGE_I = {"entries", "entry", "items", "row", "rows", "footnotes", "colLabels", "colLabelRows", "cells", "caption", "title", "by"}
 
 
@@ -44,7 +47,21 @@ def find(node, sti=(), ctx=None, ude=None):
         if node.get("type") == "statblock":
             return
         for k, v in node.items():
-            if k == "name" and isinstance(v, str):
+            if sti and sti[0] in ENTITETER and k == "name" and (len(sti) == 2 or (len(sti) == 4 and sti[2] == "_versions")):
+                continue  # navn på posten eller på en variant (_versions)
+            if sti and sti[0] in ENTITETER and k in ("_copy", "_abstract", "additionalSpells"):
+                continue  # henvisninger til andre poster/besværgelser
+            if sti and sti[0] in ENTITETER and k == "components" and isinstance(v, dict) and "m" in v:
+                m = v["m"]
+                if isinstance(m, dict):
+                    find(m.get("text"), sti + (k, "m", "text"), True, ude)
+                else:
+                    find(m, sti + (k, "m"), True, ude)
+            elif sti and sti[0] in ENTITETER and k == "time":
+                find(v, sti + (k,), False, ude)
+            elif sti and sti[0] in ENTITETER and k == "condition" and isinstance(v, str):
+                find(v, sti + (k,), True, ude)
+            elif k == "name" and isinstance(v, str):
                 find(v, sti + (k,), True, ude)
             elif k in STRENGE_I:
                 find(v, sti + (k,), True, ude)
@@ -140,6 +157,37 @@ def flet(nr, fil):
     print("skrev", DA / navn)
 
 
+def sti_er_opslag(d):
+    return any(k in d for k in ENTITETER)
+
+
+def ret_replace(ud, orig):
+    """`_mod ... replace: "<trinavn>"` peger på et egenskabsnavn. Er navnet oversat, så følg med."""
+    kort = {}
+    def navne(a, b):
+        if isinstance(a, dict) and isinstance(b, dict):
+            if isinstance(a.get("name"), str) and isinstance(b.get("name"), str) and a["name"] != b["name"] and "entries" in a:
+                kort.setdefault(a["name"], b["name"])
+            for k in a:
+                if k in b: navne(a[k], b[k])
+        elif isinstance(a, list) and isinstance(b, list):
+            for x, y in zip(a, b): navne(x, y)
+    navne(orig, ud)
+    uloest = set()
+    def ret(n):
+        if isinstance(n, dict):
+            r = n.get("replace")
+            if n.get("mode") in ("replaceArr", "replaceOrAppendArr", "removeArr") and isinstance(r, str):
+                if r in kort: n["replace"] = kort[r]
+                else: uloest.add(r)
+            for v in n.values(): ret(v)
+        elif isinstance(n, list):
+            for v in n: ret(v)
+    ret(ud)
+    if uloest:
+        print("replace uden oversat navn (uændret, tjek):", sorted(uloest)[:10], f"({len(uloest)})")
+
+
 def saml():
     d = json.load(open(KILDE))
     ud = copy.deepcopy(d)
@@ -151,6 +199,8 @@ def saml():
         for k, t in laes(DA / n).items():
             sti = stier[int(k)]
             hent(ud, sti[:-1])[sti[-1]] = t; antal += 1
+    if sti_er_opslag(ud):
+        ret_replace(ud, d)
     MAL.write_text(json.dumps(ud, ensure_ascii=False, indent=2) + "\n")
     print(f"{antal} tekster oversat -> {MAL}")
 

@@ -26,6 +26,14 @@ Det samlede resultat `book-<bog>-da.json` genereres. Ret aldrig i den, men i `<b
 
 Genoptagelse efter afbrydelse: `status` viser antal færdige batches, `naeste` giver den næste. Start den næste batch selv, når en er færdig, til `naeste` melder, at alle er oversat.
 
+## Opslagsfiler (spells, races, feats)
+
+Samme værktøj bruges til 5etools' opslagsfiler. Bog-id er et frit navn, og kilden er `data/books/book-<id>.json` (lav et symlink til filen i `/srv/dnd5etools/data/`, fx `ln -s /srv/dnd5etools/data/spells/spells-xphb.json ../book-spells-xphb.json` og `.../races.json` som `../book-races.json`). Arbejdsgangen er den samme. Forskelle:
+
+* Navne på poster i listerne `spell`, `race`, `subrace` og `feat` (og på `_versions`) udtrækkes ikke. `_copy`, `_abstract` og `additionalSpells` røres ikke.
+* Materialekomponenter (`components.m`) og `time[].condition` udtrækkes.
+* `saml` retter `_mod ... replace`-henvisninger til oversatte trækoverskrifter og melder dem, der ikke kunne findes.
+
 ## Hvad oversættes
 
 `udtraek` tager tekstværdier i `name`, `entries`, `entry`, `items`, `row`/`rows`, `colLabels`, `footnotes`, `caption`, `title` og `by`. `statblock`-referencer, `credit`, `source`, `id`, `page`, `href` og andre tekniske felter røres ikke. Strenge uden bogstaver uden for tags udtrækkes ikke.

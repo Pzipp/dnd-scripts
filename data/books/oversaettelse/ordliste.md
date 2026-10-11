@@ -27,3 +27,13 @@ Opportunity Attack lejlighedsangreb · Difficulty Class (DC) sværhedsgrad · He
 Exhaustion udmattelse · Blinded blændet · Charmed charmeret · Deafened døv · Frightened bange ·
 Grappled grebet · Incapacitated uduelig · Invisible usynlig · Paralyzed lammet · Petrified forstenet ·
 Poisoned forgiftet · Prone liggende · Restrained fastholdt · Stunned bedøvet · Unconscious bevidstløs
+
+## Besværgelser og species (opslagsfiler)
+- Gælder `spells-*.json`, `races.json` og `feats.json`: Navnet på selve besværgelsen, species, subrace eller feat udtrækkes ikke og står på engelsk. Trækoverskrifter og valgmuligheder inde i teksten oversættes som almindelige overskrifter.
+- Skade og redningsslag: `Acid-skade`, `Dexterity-redningsslag` (engelsk type + dansk grundord). Væsenstyper, størrelser og våbenkategorier (Beast, Large, Ranged) står på engelsk.
+- Handlings-tags: `{@action Magic|XPHB}-handling`. Tilstande: `tilstanden {@condition Charmed|XPHB}`.
+- "Using a Higher-Level Spell Slot" = `Brug af en højere besværgelsesplads`. "Cantrip Upgrade" = `Cantrip-opgradering`.
+- Materialekomponenter oversættes som korte danske navneled (`en bid mad`); beløb skrives `1.000 GP`.
+- `ft.`/`feet` i løbende tekst: `fod`; `miles` = `mile`, `inch` = `tomme`.
+- Species-træk (overskrifter): `Dansk titel (English Name)`, så navnet kan genkendes mod bogen. Faste: `Alder (Age)`, `Størrelse (Size)`, `Sprog (Languages)`, `Væsenstype (Creature Type)`. Senses og regelord står alene: `Darkvision`, `Alignment`. Samme engelske træknavn oversættes ens overalt, fordi `_mod ... replace` slår navnet op.
+- Ældre tekster uden tags: `proficient`/`proficiency` beholdes, `resistance mod Necrotic-skade`, `fordel (advantage)`, `lang hvile`, `bonushandling`, `færdighedsbonus`, `flyvehastighed`.
