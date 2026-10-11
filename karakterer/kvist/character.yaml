@@ -1,11 +1,10 @@
-# Udledt af choices.yaml (webui/builder/character_yaml.py) og derefter RETTET I HÅNDEN på felter byggeren ikke kan udlede for
-# den hjemmelavede race Felis og for Rogue Expertise (se rapport): skills (+survival), expertise, size, senses, race, summary, languages.
-# Overskrives, næste gang choices.yaml gemmes i byggeren.
+# Udledt af choices.yaml (webui/builder/character_yaml.py). Eneste håndrettelse: languages, fordi byggeren ikke udleder
+# racesprog (Undercommon fra Felis) eller Thieves' Cant. Overskrives, næste gang choices.yaml gemmes i byggeren.
 name: Kvist
 level: 2
 race:
   name: Felis
-  source: null
+  source: FELIS
 background:
   name: Wayfarer
   source: XPHB
@@ -76,6 +75,10 @@ spell_slots: []
 pact_slots: null
 class_features:
 - class: Rogue
+  name: Expertise
+  source: XPHB
+  level: 1
+- class: Rogue
   name: Sneak Attack
   source: XPHB
   level: 1
@@ -91,7 +94,15 @@ class_features:
   name: Cunning Action
   source: XPHB
   level: 2
-race_traits: []
+race_traits:
+- name: Kattens Held
+  source: FELIS
+- name: Stædig Uvilje
+  source: FELIS
+- name: Lige på Alle Fire
+  source: FELIS
+- name: Mørkesyn
+  source: FELIS
 resources:
 - name: Lucky
   max: 2
@@ -105,6 +116,13 @@ activations:
 - name: Lucky
   source: XPHB
   kind: feat
+  types: []
+  roll: null
+- name: Expertise
+  source: XPHB
+  kind: class_feature
+  class: Rogue
+  level: 1
   types: []
   roll: null
 - name: Sneak Attack

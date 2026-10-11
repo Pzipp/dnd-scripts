@@ -1,7 +1,7 @@
 race:
-  name: Andet (hjemmelavet)
-  source: null
-  other_name: Felis
+  name: Felis
+  source: FELIS
+  other_name: ''
   choices: {}
 classes:
   a1b2c3:
@@ -60,4 +60,5 @@ languages:
 settings:
   allowed_sources:
   - XPHB
+  - FELIS
   half_feats: false
