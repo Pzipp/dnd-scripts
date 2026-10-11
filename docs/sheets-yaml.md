@@ -1,12 +1,14 @@
 # Karakterark (nyt system): format for `sheets.yaml`
 
-Én fil pr. choices.yaml-karakter: `karakterer/<navn>/sheets.yaml`. Spiller
+Én fil pr. karakter med `character.yaml`: `karakterer/<navn>/sheets.yaml`. Spiller
 den samme rolle som den gamle `karakter.yaml`s [`sider:`-sektion](karakterark-yaml.md#layout)
 - samme layout-sprog (bokse, kolonner, rækker), bare med engelske nøgler.
 
 Skabelon: [`karakterer/_skabelon/sheets.yaml`](../karakterer/_skabelon/sheets.yaml).
-Findes filen ikke, kopieres skabelonen ind første gang (`webui/builder/sheets.py`s
-`ensure_exists()`), ligesom skabelonen i dag kopieres manuelt med `cp -r`.
+Findes filen ikke, bruges skabelonen som standard. Byggeren kopierer den ind første gang
+(`webui/builder/sheets.py`s `ensure_exists()`); `python3 dnd.py ark` og Ark-fanen for en karakter med kun
+`character.yaml` læser den uden at skrive filen. `python3 dnd.py tjek-ark <navn>` kontrollerer
+`sheets.yaml` (boks-typer, nøgler, formler), se [character-yaml.md](character-yaml.md#hvad-tjek-ark-kontrollerer).
 
 **Redigeres frit, overskrives aldrig automatisk** - i modsætning til
 [`character.yaml`](character-yaml.md), som genberegnes ved hvert gem.

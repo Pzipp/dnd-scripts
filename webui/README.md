@@ -6,6 +6,8 @@ Webui'en er hovedvejen til nye karakterer. `/` er en menu med karakterbyggeren o
 
 En karakter kan være lavet med byggeren (`valak`, `terrin`, `chukio` og `kvist` har både nye og gamle filer) eller direkte i filsystemet. Den ældre kommandolinje (`dnd.py`) er stadig i brug til de karakterer, der ikke er konverteret.
 
+**Kun ark.** En karakter med `character.yaml` men uden `choices.yaml` (skrevet i hånden eller af en LLM, se [docs/character-yaml.md](../docs/character-yaml.md) og [docs/llm-karakter-prompt.md](../docs/llm-karakter-prompt.md)) står i en separat liste, "Kun ark", på `/builder`. Den åbner på Ark-fanen (`/builder/<navn>/print`); Kort-fanen virker også. Karakter-, Udstyr- og Indstillinger-siderne kræver `choices.yaml`: de sender videre til Ark-fanen, og de API'er, der gemmer byggerens valg, svarer 409, så `character.yaml` aldrig overskrives. Har karakteren ingen `sheets.yaml`, bruger Ark-fanen standarden fra `karakterer/_skabelon/sheets.yaml` uden at skrive filen; den oprettes først, når man gemmer layoutet eller flytter en boks. Samme ark laves fra kommandolinjen med `python3 dnd.py ark <navn>`.
+
 ## Kør
 
 Fra projektets rod:

@@ -1,8 +1,9 @@
 # Karakterark (nyt system): format for `character.yaml`
 
-Én fil pr. choices.yaml-karakter: `karakterer/<navn>/character.yaml`. Engelsk-
-nøglet, i modsætning til den gamle [`karakter.yaml`](karakterark-yaml.md).
-Genereres af `webui/builder/character_yaml.py`.
+Én fil pr. karakter: `karakterer/<navn>/character.yaml`. Engelsk-nøglet, i
+modsætning til den gamle [`karakter.yaml`](karakterark-yaml.md). Genereres af
+`webui/builder/character_yaml.py` (når der er en `choices.yaml`) eller skrives
+direkte (se [Uden byggeren](#uden-byggeren-characteryaml-som-primær-fil)).
 
 Findes der en `choices.yaml` (se [choices-yaml.md](choices-yaml.md)) for
 karakteren, er `character.yaml` en AFLEDT fil: den genberegnes og
@@ -11,8 +12,68 @@ overskrives, hver gang choices.yaml gemmes (`derive_and_save()`). Kun
 `character.yaml` i hånden for en sådan karakter, det bliver overskrevet.
 
 Findes der INGEN `choices.yaml`, er `character.yaml` i stedet den primære
-fil - skrevet direkte, af builder-UI'en eller af et LLM. Denne vej er endnu
-ikke bygget (kun formatet er klar til det).
+fil, skrevet i hånden eller af en LLM. Så røres den aldrig af byggeren. Vejen
+er beskrevet i næste afsnit.
+
+## Uden byggeren: `character.yaml` som primær fil
+
+En karakter kan laves uden den visuelle bygger:
+
+1. En LLM får prompten i [llm-karakter-prompt.md](llm-karakter-prompt.md) og brugerens beskrivelse af karakteren
+   og skriver `karakterer/<navn>/character.yaml` efter formatet nedenfor. Tal, navne og regler slås op i 5etools,
+   ikke gættes; `python3 dnd.py llm-opslag` er værktøjet til opslagene.
+2. `python3 dnd.py tjek-ark <navn>` kontrollerer filen og peger på hver fejl med linje og kolonne.
+3. `python3 dnd.py ark <navn> [--stil <tema>|alle] [--pdf]` laver arket af `character.yaml` og `sheets.yaml`.
+   Mangler `sheets.yaml`, bruges standarden `karakterer/_skabelon/sheets.yaml` (filen skrives ikke). Kontrollen
+   kører først, og `ark` stopper ved en fejl. Temaerne er dem i `STYLE_FILES` i `webui/builder/render.py`
+   (`farve`, `sorthvid`, `moderne`, `skov`, ...). Filerne lægges i `karakterer/<navn>/udskrifter/` som
+   `karakterark-<tema>.html|pdf`, samme navne som webuiens Ark-fane.
+
+Webui'en viser karakteren under "Kun ark" på `/builder` og åbner den på Ark-fanen (og Kort-fanen). Karakter- og
+Udstyr-fanen kræver `choices.yaml` og er skjult; byggeren kan ikke gemme valg for en karakter uden
+`choices.yaml`, da det ville overskrive `character.yaml`. `dnd.py liste` markerer den med "kun ark", og
+`dnd.py tjek` kontrollerer og bygger den i alle temaer.
+
+### Hvad `tjek-ark` kontrollerer
+
+Kode: `webui/builder/character_check.py`. Intet netværk og ingen LLM. Hvert fund har linje og kolonne og er en
+**FEJL** (arket kan ikke bygges, eller tallene bliver forkerte; `tjek-ark` slutter med exit 1) eller en **ADVARSEL**
+(mistænkeligt, men arket bygges). Tastefejl får et forslag ("Mente du 'insight'?").
+
+`character.yaml`:
+
+* YAML-syntaks og dobbelte nøgler.
+* **Påkrævede felter:** `name`, `level`, `race`, `background`, `classes`, `abilities`, `proficiency_bonus`, `hp`,
+  `hit_dice`, `ac`, `speed`, `saves`, `skills`. Mangler `initiative`, `languages`, `can_use` eller `summary`, er det en
+  advarsel (arket bruger en standard eller et tomt felt). Ukendte nøgler er en advarsel.
+* **Typer og værdier:** `level` 1-20; `abilities` har præcis STR, DEX, CON, INT, WIS, CHA som hele tal (over 20 er en
+  advarsel); `saves` er evner; `skills` er 5etools' skillnavne med små bogstaver (`sleight of hand`);
+  `hit_dice` har `die` (6/8/10/12) og `count`; `speeds`, `senses`, `size`, `masteries` (de otte Weapon Mastery-navne),
+  `resources`, `class_numbers`, `modifiers`, `activations`, `summary`, `spell_slots` og `pact_slots` har den form, `render.py` læser.
+* **Sammenhæng:** `level` er summen af `classes[].level`; `proficiency_bonus` passer til level (2/3/4/5/6);
+  `hit_dice` giver lige så mange terninger som level; `expertise` står også i `skills` (værktøj i `tools` er tilladt);
+  `hp` er ikke under 1 (null er en advarsel) og ikke urimeligt højt eller lavt for levelet; `speeds.walk` er lig `speed`;
+  subclass mangler på niveau 3 eller derover (advarsel); en klasse står ikke to gange.
+* **Formler** i `{...}` (`ac`, `initiative`, `languages` og al anden tekst): kun tal, STR..CHA, PB og `+ - * /`, ellers FEJL. Kald og
+  attributter afvises altid, fordi `render.fmt()` ellers ville køre dem.
+* **5etools** (kun hvis `E5TOOLS_DATA` findes; ellers springes det over, og `tjek-ark` skriver en note): race, baggrund og klasse
+  findes under den angivne `source` (FEJL, hvis kilden findes, men navnet ikke gør; en ukendt kilde er en advarsel, da den kan være
+  homebrew); `subclass`, feats og spells findes (advarsel); `saves` indeholder primærklassens saves; `hit_dice` passer til
+  klassernes terninger.
+
+`sheets.yaml` (eller standarden): YAML-syntaks, `pages`, sidenøgler (`top`, `layout`, `footer`, `margin`, `box_type`), kolonner
+(`width` er et positivt tal, `content`, `merged`), boks-typer (kendte typer er `REGISTRY` i `render.py`), nøgler, som boksen ikke bruger
+(advarsel), og formler. Når `character.yaml` er uden fejl, renderes hver boks for sig mod karakteren (samme kode som arket), så fejl som
+"Mangler feltet 'subtitle' i boksen 'turn'" peger på boksens linje.
+
+### Hvad kontrollen ikke kan
+
+* At race-, klasse- og feat-egenskaber er regnet rigtigt: `hp`, `ac`, `initiative`, `speed`, senses og resistances kontrolleres kun for
+  form og groft rimelige grænser, ikke mod reglerne. `hp` kan ikke afgøres, fordi terningslag er spillerens valg.
+* At skills, tools og sprog er dem, baggrunden og klassen giver, og at antallet af valg er rigtigt.
+* At spells, `spell_slots` og `spellcasting` passer til klassens tabel (kun form og evne).
+* At teksten i `sheets.yaml` er rigtig, eller at et ark ser pænt ud: kig på arket (A4-siderne klipper tekst, der er for lang).
+* Homebrew uden for 5etools: kilder, der ikke findes, giver kun en advarsel.
 
 ## Opbygning
 

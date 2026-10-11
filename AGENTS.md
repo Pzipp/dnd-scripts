@@ -30,6 +30,9 @@ python3 dnd.py kort <navn>        [--stil farve|sorthvid|begge] [--pdf]
 python3 dnd.py alt <navn> --pdf               # begge dele
 python3 dnd.py alt --alle --pdf               # alle karakterer
 python3 dnd.py tjek                           # byg alt; meld fejl i data. KØR FØR DU GEMMER
+python3 dnd.py tjek-ark <navn>                # kontrollér character.yaml + sheets.yaml (linje og kolonne)
+python3 dnd.py ark <navn> [--stil <tema>|alle] [--pdf]   # ark direkte fra character.yaml + sheets.yaml
+python3 dnd.py llm-opslag ...                 # opslag i 5etools til dig (scripts/data/llm_opslag.py)
 ```
 
 `pip install -r requirements.txt` (PyYAML og Playwright; Chromium med `playwright install chromium`). Webui'en kræver desuden `pip install -r webui/requirements.txt` (Flask, ruamel.yaml). Uden internet: brug `--skrifttyper` (se `scripts/pdf/README.md`), ellers får PDF'en forkerte skrifttyper og kortene kan ombrydes anderledes.
@@ -55,7 +58,19 @@ python3 dnd.py tjek                           # byg alt; meld fejl i data. KØR 
 | `vol/` | Runtime-data, ikke i git (`vol/homebrew/*` og `vol/karakterer/`); kun `vol/homebrew/index.json` er sporet |
 | `docs/` | Formater, navnekonvention, todo |
 
-## Sådan laver du en ny karakter (arbejdsgang)
+## Sådan laver du en ny karakter med `character.yaml` (LLM-vejen, uden bygger)
+
+Brugeren beskriver en karakter, og du skriver `karakterer/<navn>/character.yaml` (ikke `karakter.yaml`, og ingen `choices.yaml`).
+
+1. Læs `docs/llm-karakter-prompt.md` (reglerne for dig) og `docs/character-yaml.md` (formatet). Spørg, hvis du mangler det væsentlige: klasse og level, art, baggrund, evner, udstyr. Gæt ikke på tal.
+2. Slå regler op i stedet for at huske dem: `python3 dnd.py llm-opslag` (race, klasse, feats, spells fra 5etools).
+3. `mkdir karakterer/<navn>` (små bogstaver og bindestreg) og skriv `character.yaml`. Tal som `proficiency_bonus`, `hit_dice` og saves følger levelet og klassen.
+4. `python3 dnd.py tjek-ark <navn>` og ret hver FEJL (linje og kolonne står i beskeden) og hver ADVARSEL, du kan. Gentag, til der ingen fejl er.
+5. `python3 dnd.py ark <navn> --pdf`, derefter **kig på resultatet** (HTML eller PDF-siderne; tekst, der er for lang, klippes ved kanten af A4-siden). Har karakteren ingen `sheets.yaml`, bruges standarden `karakterer/_skabelon/sheets.yaml`; ret den kun i en egen `karakterer/<navn>/sheets.yaml` (se `docs/sheets-yaml.md`).
+
+Kontrollen finder tastefejl, manglende felter og tal, der ikke passer sammen. Den kan ikke se, om reglerne er regnet rigtigt (HP, AC, valg fra klasse og baggrund), så tjek dem selv mod PHB 2024.
+
+## Sådan laver du en ny karakter (ældre `karakter.yaml`, arbejdsgang)
 
 Hovedvejen er webui'en: opret en karakter på `/builder`, vælg art, klasse, baggrund, evner, feats, spells og udstyr, vælg kort, og lav ark og PDF på fanerne Kort og Ark. Layoutet (`sheets.yaml`) redigeres i fanen Ark (YAML-editor eller træk og slip). `character.yaml` genberegnes ved hvert gem; ret valg i byggeren, ikke i den fil.
 

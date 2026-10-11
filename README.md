@@ -4,14 +4,14 @@ Gruppens værktøjer til **D&D 2024** på dansk: print-klare **karakterark** og 
 
 Bruges af både mennesker og AI-assistenter (Claude, Gemini, ChatGPT/Codex m.fl.). AI'er læser [`AGENTS.md`](AGENTS.md) først.
 
-## To måder at arbejde på
+## Tre måder at arbejde på
 
-| | Webui med karakterbygger (hovedvejen) | Kommandolinje (ældre) |
-|---|---|---|
-| Start | `python webui/app.py`, eller Docker | `python3 dnd.py ...` |
-| Karakterens filer | `choices.yaml`, `character.yaml`, `sheets.yaml`, `kort.yaml` | `karakter.yaml`, `kort.yaml` |
-| Passer til | Nye karakterer. Faner: Karakter, Udstyr, Kort, Ark | Karakterer skrevet i hånden |
-| Læs | [`webui/README.md`](webui/README.md) | resten af denne fil |
+| | Webui med karakterbygger (hovedvejen) | `character.yaml` uden bygger (LLM) | Kommandolinje (ældre) |
+|---|---|---|---|
+| Start | `python webui/app.py`, eller Docker | `python3 dnd.py tjek-ark` og `ark` | `python3 dnd.py ...` |
+| Karakterens filer | `choices.yaml`, `character.yaml`, `sheets.yaml`, `kort.yaml` | `character.yaml` (+ `sheets.yaml`, ellers standarden) | `karakter.yaml`, `kort.yaml` |
+| Passer til | Nye karakterer. Faner: Karakter, Udstyr, Kort, Ark | Nye karakterer, skrevet af en LLM ud fra en beskrivelse | Karakterer skrevet i hånden |
+| Læs | [`webui/README.md`](webui/README.md) | [`docs/character-yaml.md`](docs/character-yaml.md), [`docs/llm-karakter-prompt.md`](docs/llm-karakter-prompt.md) | resten af denne fil |
 
 En karakter kan have begge slags filer (`valak`, `terrin`, `chukio` og `kvist` er konverteret til det nye format og beholder deres gamle filer). Flere karakterer er ikke konverteret endnu og bruges kun med `dnd.py`.
 
@@ -39,7 +39,7 @@ python3 dnd.py alt valak --pdf      # karakterark + kort for Valak, som HTML og 
 python3 dnd.py tjek                 # byg alt og meld fejl i data (kør før du gemmer)
 ```
 
-`dnd.py` bruger `karakter.yaml` og `kort.yaml`. `dnd.py kort` virker også for byggerens karakterer, fordi de har en `kort.yaml`. Karakterark for byggerens karakterer laves i webui'en (fanen Ark).
+`dnd.py karakterark` bruger `karakter.yaml` og `kort.yaml`. `dnd.py kort` virker også for byggerens karakterer, fordi de har en `kort.yaml`. Karakterark af `character.yaml` laves med `dnd.py ark` (se nedenfor) eller i webui'en (fanen Ark).
 
 Output lægges i `karakterer/<navn>/udskrifter/`:
 
@@ -50,10 +50,22 @@ Output lægges i `karakterer/<navn>/udskrifter/`:
 
 Webui'en gemmer også ark-temaer (`karakterark-<tema>`) og kort-temaer (`kort-<tema>`) her. `.html` åbnes i en browser. `.pdf` er klar til print (A4, margin 0, 100 %). Alle printbare ting findes i både **farve** og **sort/hvid**. Med `dnd.py` vælges stil med `--stil farve`, `--stil sorthvid` eller (standard) `--stil begge`.
 
+## Karakterark uden bygger (`character.yaml`)
+
+En LLM skriver `karakterer/<navn>/character.yaml` ud fra prompten i [`docs/llm-karakter-prompt.md`](docs/llm-karakter-prompt.md) og din beskrivelse. Arket laves af den og `sheets.yaml`; mangler `sheets.yaml`, bruges standarden `karakterer/_skabelon/sheets.yaml`.
+
+```bash
+python3 dnd.py tjek-ark min-karakter                 # kontrol med linje og kolonne (exit 1 ved fejl)
+python3 dnd.py ark min-karakter --pdf                # HTML og PDF i farve
+python3 dnd.py ark min-karakter --stil alle --pdf    # alle ark-temaer (farve, sorthvid, moderne, skov, ...)
+```
+
+`ark` kører kontrollen først og stopper ved en fejl. Kontrollen (`webui/builder/character_check.py`) tjekker påkrævede felter, typer, evner, skills, level mod classes, proficiency bonus mod level, hit dice og formler, og slår race, baggrund, klasse, subclass, feats og spells op i 5etools, hvis `E5TOOLS_DATA` findes. Den er beskrevet i [`docs/character-yaml.md`](docs/character-yaml.md). I webui'en står karakteren under "Kun ark" på `/builder`. `python3 dnd.py llm-opslag` er opslagsværktøjet til LLM'en.
+
 ## Mapper
 
 ```
-dnd.py                  den ældre kommandolinje: liste · karakterark · kort · alt · tjek
+dnd.py                  kommandolinjen: liste · karakterark · kort · alt · tjek · tjek-ark · ark · llm-opslag
 AGENTS.md               instruktioner til AI-assistenter (CLAUDE.md og GEMINI.md peger hertil)
 webui/                  webui: menu, karakterbygger (/builder)
   builder/              byggerens kode: valg, udregning, ark, kort, 5etools-opslag
@@ -61,7 +73,7 @@ webui/                  webui: menu, karakterbygger (/builder)
 karakterer/
   <navn>/               én mappe pr. karakter
     choices.yaml        byggerens rå valg (nyt system)
-    character.yaml      udregnede stats, genberegnes ved hvert gem (nyt system)
+    character.yaml      udregnede stats, genberegnes ved hvert gem (nyt system); uden choices.yaml er den primær og skrives af en LLM
     sheets.yaml         arkets layout, redigeres frit (nyt system)
     kort.yaml           kortbunken (id'er fra bibliotek/, evt. egne kort)
     karakter.yaml       karakterarket i det ældre format (typisk 4 sider)
@@ -78,6 +90,8 @@ vol/                    runtime-data i Docker (ikke i git, bortset fra vol/homeb
 ## Lav en ny karakter
 
 I webui'en: åbn `/builder`, opret en karakter, og vælg art, klasse, baggrund, evner, feats, spells og udstyr. Lav kort og ark på fanerne Kort og Ark.
+
+Med en LLM i stedet for byggeren: giv den [`docs/llm-karakter-prompt.md`](docs/llm-karakter-prompt.md) og din beskrivelse, læg resultatet i `karakterer/<navn>/character.yaml`, og kør `python3 dnd.py tjek-ark <navn>` og `python3 dnd.py ark <navn> --pdf`.
 
 Det ældre format (`karakter.yaml`):
 
@@ -101,7 +115,7 @@ Skabelonen har kommentarer ved hvert felt. Se også [`docs/karakterark-yaml.md`]
 
 ## Hvis du bruger en AI
 
-Giv den adgang til repoet og sig, hvad du vil ("lav et karakterark til min halfling rogue"). Den læser `AGENTS.md`. Til nye karakterer bruger du webui'en; til ældre karakterer kopierer den skabelonen, kører `python3 dnd.py tjek` og viser dig resultatet. Uden internet kan den stadig lave PDF: se [`scripts/pdf/README.md`](scripts/pdf/README.md).
+Giv den adgang til repoet og sig, hvad du vil ("lav et karakterark til min halfling rogue"). Den læser `AGENTS.md`. Til nye karakterer bruger du webui'en, eller den skriver `character.yaml` efter [`docs/llm-karakter-prompt.md`](docs/llm-karakter-prompt.md) og kontrollerer den med `python3 dnd.py tjek-ark`; til ældre karakterer kopierer den skabelonen, kører `python3 dnd.py tjek` og viser dig resultatet. Uden internet kan den stadig lave PDF: se [`scripts/pdf/README.md`](scripts/pdf/README.md).
 
 ## Bidrag
 
