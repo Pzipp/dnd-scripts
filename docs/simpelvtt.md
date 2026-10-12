@@ -21,12 +21,12 @@ Upload: png, jpg, webp og gif (kontrolleret på både endelse og filens første 
 
 ## Brug
 
-* **EDIT** (blå): det eneste sted, hvor noget kan ændres i biblioteket: opret, omdøb og slet kampagner og rooms; upload (knapper og træk fra computeren); flyt billeder ved at trække dem til et andet room/kampagnen eller med "Flyt…"-menuen; slet billeder. Filer kan også trækkes direkte fra computeren ind på et room.
+* **EDIT** (blå): det eneste sted, hvor noget kan ændres i biblioteket: opret, omdøb og slet kampagner og rooms; upload (knapper og træk fra computeren); flyt billeder ved at trække dem til et andet room/kampagnen eller med "Flyt…"-menuen; omdøb billeder (knappen "Omdøb" på kortet); slet billeder. Filer kan også trækkes direkte fra computeren ind på et room.
 * **PLAY** (grøn): vælg kampagne i dropdown; dens rooms vises som sektioner med miniaturer. Klik på et kort for at vise det, og justér visningen (zoom, pan, grid, rotation). Upload, nyt room, flyt, slet, omdøb og træk-og-slip findes ikke i PLAY: knapperne er skjult, drop-targets og handlere er slået fra, og skift af tilstand rydder en halvfærdig filvælger. Det er kun UI; API'et er åbent.
 * Preview til højre viser, hvad spillerne ser. Træk i det for at panne, hjul/+/- for at zoome; vælg om **Billede** eller **Grid** skal flyttes. Billede og grid har hver sin zoom og pan. Skydere/felter: billedzoom, grid til/fra, celle (px), farve, gennemsigtighed, gridzoom, offset X/Y.
 * **Åbn spillerskærm** åbner `/simpelvtt/vis` i en ny fane (genbruger fanen, hvis den allerede er åben). Her er knappen "Fuldskærm" (eller tasten F).
 
-**Rotation:** knapperne ↺ 90° / ↻ 90° og en skyder (0–359°, fri vinkel) under Billede i PLAY. Vinklen (`img.rot`, grader, normaliseres til 0–360) gemmes pr. kort i visningen og synkroniseres til spillerskærmen. Billedet drejes om sit eget midtpunkt; gridet roterer ikke med, men beholder sin egen zoom og offset.
+**Rotation:** én knap "↻ Roter 90°" under Billede i PLAY (ét klik = 90° med uret; ingen skyder eller fri vinkel). Vinklen (`img.rot`, grader, normaliseres af API'et til 0/90/180/270) gemmes pr. kort i visningen og synkroniseres til spillerskærmen. Billedet drejes om sit eget midtpunkt; gridet roterer ikke med, men beholder sin egen zoom og offset.
 
 Zoom 1 betyder, at billedet passer i vinduet (for et roteret billede regnes med den omsluttende boks om det roterede billede, så det ikke klippes); pan er brøkdele af vinduets størrelse. Det giver samme udsnit på alle skærmstørrelser. Cellestørrelsen er i billedpixel og skaleres med billedets "passer i vinduet"-faktor og gridzoom.
 
@@ -43,6 +43,7 @@ Serveren er sandheden. `state.json` husker det aktive kort og en `rev`-tæller, 
 | `POST/PATCH/DELETE room` | `{campaign, name}` / `{campaign, name, to}` / `{campaign, name}` |
 | `POST upload` | multipart: `campaign`, `room` (valgfri), `files` (flere) |
 | `POST move` | `{image, campaign, room}` (room tom = løst i kampagnen) |
+| `PATCH image` | `{image, to}`: omdøb filnavnet (endelsen bevares; renset som ved upload; dublet får ` (2)`). Visning, aktivt kort og miniaturer følger med |
 | `DELETE image` | `{image}` |
 | `GET state?rev=N` / `PUT state` | Aktivt kort og visning / `{image}` (`null` = tom skærm) |
 | `GET view?image=` / `PUT view` | Gemt visning for et kort / `{image, view}` |
@@ -51,4 +52,4 @@ Et billede angives som `kampagne/room/fil` eller `kampagne/fil`. Billeder: `GET 
 
 ## Begrænsninger
 
-Ingen login og ingen roller; spillerskærmen kan ikke ændre noget, men API'et er åbent. Kun ét aktivt kort ad gangen (ét bord). Billeder omdøbes ikke i UI'et. Ingen tokens, tåge eller måleværktøj.
+Ingen login og ingen roller; spillerskærmen kan ikke ændre noget, men API'et er åbent. Kun ét aktivt kort ad gangen (ét bord). Ingen tokens, tåge eller måleværktøj.

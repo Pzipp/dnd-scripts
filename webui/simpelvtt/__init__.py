@@ -139,7 +139,7 @@ def clean_view(v) -> dict:
     d, v = default_view(), (v if isinstance(v, dict) else {})
     i, g = v.get("img") or {}, v.get("grid") or {}
     d["img"] = {"zoom": num(i.get("zoom"), 0.05, 40, 1), "x": num(i.get("x"), -50, 50, 0), "y": num(i.get("y"), -50, 50, 0),
-                "rot": round(num(i.get("rot"), -1e6, 1e6, 0) % 360, 2)}
+                "rot": int(round(num(i.get("rot"), -1e6, 1e6, 0) / 90)) * 90 % 360}
     color = g.get("color")
     d["grid"] = {"on": bool(g.get("on")), "size": num(g.get("size"), 4, 2000, 70),
                  "color": color if isinstance(color, str) and re.fullmatch(r"#[0-9a-fA-F]{6}", color) else "#ffffff",
@@ -309,6 +309,33 @@ def move():
         shutil.move(str(src), str(target))
         remap_refs(old, ref_of(target))
     return jsonify({"ok": True, "image": ref_of(target)})
+
+
+@bp.patch("/api/simpelvtt/image")
+def image_rename():
+    """Omdøb billedets filnavn (endelsen bevares). Visning, aktivt kort og miniaturer følger med."""
+    d = request.get_json(silent=True) or {}
+    with LOCK:
+        src = image_path(d.get("image"))
+        stem = BAD_NAME.sub("", str(d.get("to") or "")).strip()
+        if Path(stem).suffix.lower() in EXT:
+            stem = stem[:-len(Path(stem).suffix)]
+        stem = stem.strip().lstrip(".")
+        if not stem:
+            raise Fejl("Ugyldigt navn.")
+        new_name = clean_filename(stem[:140] + src.suffix)
+        if new_name == src.name:
+            return jsonify({"ok": True, "image": ref_of(src)})
+        target = unique(src.parent, new_name)
+        old = ref_of(src)
+        src.rename(target)
+        new = ref_of(target)
+        prefix = re.sub(r"[^\w.-]", "_", old) + "_"
+        for t in THUMBS.glob("*.jpg") if THUMBS.is_dir() else []:
+            if t.name.startswith(prefix):
+                t.unlink(missing_ok=True)
+        remap_refs(old, new)
+    return jsonify({"ok": True, "image": new})
 
 
 @bp.delete("/api/simpelvtt/image")

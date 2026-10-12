@@ -42,7 +42,7 @@
     const t = el('div', { class: 'thumb' + (S.cur === ref ? ' cur' : ''), draggable: S.mode === 'edit' ? 'true' : 'false', 'data-ref': ref },
       el('img', { src: '/simpelvtt/thumb/' + enc(ref), loading: 'lazy', alt: file, onclick: () => { if (S.mode === 'play') show(ref); } }),
       el('div', { class: 'n', title: file }, file),
-      el('div', { class: 'acts only-edit' }, sel, el('button', { class: 'sm danger', title: 'Slet', onclick: async () => { if (S.mode === 'edit' && confirm('Slet ' + file + '?') && await call('DELETE', 'image', { image: ref })) { if (S.cur === ref) S.cur = null; loadTree(); } } }, '✕')));
+      el('div', { class: 'acts only-edit' }, sel, el('button', { class: 'sm', title: 'Omdøb', onclick: () => { const st = file.replace(/\.[^.]+$/, ''); ask('Nyt navn på billedet (endelsen bevares)', st, async v => { const d = await call('PATCH', 'image', { image: ref, to: v }); if (d && S.cur === ref) S.cur = d.image; return d; }); } }, 'Omdøb'), el('button', { class: 'sm danger', title: 'Slet', onclick: async () => { if (S.mode === 'edit' && confirm('Slet ' + file + '?') && await call('DELETE', 'image', { image: ref })) { if (S.cur === ref) S.cur = null; loadTree(); } } }, '✕')));
     t.addEventListener('dragstart', e => { if (S.mode !== 'edit') { e.preventDefault(); return; } e.dataTransfer.setData('text/x-vtt-ref', ref); e.dataTransfer.effectAllowed = 'move'; });
     return t;
   }
@@ -140,9 +140,8 @@
   });
   box.addEventListener('pointerup', () => { drag = null; }); box.addEventListener('pointercancel', () => { drag = null; });
   const bind = (id, fn, ev) => $(id).addEventListener(ev || 'input', () => { if (!S.view) return; fn($(id)); syncCtl(id); save(); });
-  bind('irot', e => S.view.img.rot = +e.value);
-  const rotBy = d => { if (!S.view || !S.cur) return; S.view.img.rot = (((S.view.img.rot || 0) + d) % 360 + 360) % 360; syncCtl(); save(); };
-  $('rotl').onclick = () => rotBy(-90); $('rotr').onclick = () => rotBy(90);
+  const rotBy = d => { if (!S.view || !S.cur) return; S.view.img.rot = ((Math.round(((S.view.img.rot || 0) + d) / 90) * 90) % 360 + 360) % 360; syncCtl(); save(); };
+  $('rotr').onclick = () => rotBy(90);
   bind('iz', e => S.view.img.zoom = +e.value); bind('gz', e => S.view.grid.zoom = +e.value);
   bind('gon', e => S.view.grid.on = e.checked, 'change'); bind('gsize', e => S.view.grid.size = clamp(+e.value || 70, 4, 2000));
   bind('gcol', e => S.view.grid.color = e.value); bind('galpha', e => S.view.grid.alpha = +e.value);
@@ -150,9 +149,9 @@
   function syncCtl(skip) {
     const v = S.view; if (!v) return;
     const set = (id, val) => { if (id !== skip) $(id).value = val; };
-    set('irot', v.img.rot || 0); set('iz', v.img.zoom); set('gz', v.grid.zoom); set('gsize', v.grid.size); set('gcol', v.grid.color); set('galpha', v.grid.alpha); set('gox', v.grid.ox); set('goy', v.grid.oy);
+    set('iz', v.img.zoom); set('gz', v.grid.zoom); set('gsize', v.grid.size); set('gcol', v.grid.color); set('galpha', v.grid.alpha); set('gox', v.grid.ox); set('goy', v.grid.oy);
     $('gon').checked = v.grid.on;
-    $('irot_o').textContent = Math.round(v.img.rot || 0) + '°'; $('izo').textContent = v.img.zoom.toFixed(2) + '×'; $('gzo').textContent = v.grid.zoom.toFixed(2) + '×'; $('galphao').textContent = Math.round(v.grid.alpha * 100) + '%';
+    $('izo').textContent = v.img.zoom.toFixed(2) + '×'; $('gzo').textContent = v.grid.zoom.toFixed(2) + '×'; $('galphao').textContent = Math.round(v.grid.alpha * 100) + '%';
   }
 
   async function init() {

@@ -26,7 +26,10 @@ body[data-mode=edit] main { grid-template-columns:1fr; }
 .thumb.cur { border-color:var(--play); } .thumb img { display:block; width:100%; height:80px; object-fit:cover; background:#000; }
 body[data-mode=play] .thumb img { cursor:pointer; }
 .thumb .n { padding:2px 4px; font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.thumb .acts { display:flex; gap:3px; padding:0 3px 3px; } .thumb select { min-height:28px; width:0; flex:1; font-size:11px; padding:0 2px; }
+.thumb { width:150px; }
+.thumb .acts { gap:4px; padding:0 4px 4px; flex-wrap:wrap; } body[data-mode=edit] .thumb .acts.only-edit { display:flex !important; }
+.thumb select { min-height:32px; flex:1 1 100%; min-width:0; width:100%; font-size:12px; padding:0 4px; }
+.thumb .acts button { flex:1 1 auto; }
 .muted { color:var(--muted); font-size:12px; }
 #stage { position:sticky; top:62px; } .view { position:relative; overflow:hidden; background:#000; width:100%; aspect-ratio:16/9; border:1px solid var(--line); border-radius:6px; touch-action:none; cursor:grab; }
 .view img, .view canvas { position:absolute; left:0; top:0; user-select:none; -webkit-user-drag:none; max-width:none; }
