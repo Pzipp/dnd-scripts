@@ -1,5 +1,5 @@
 // Fælles visning: billede og grid tegnes ens på DM-skærmens preview og på spillerskærmen.
-// Zoom 1 = billedet passer ind i vinduet. x/y er brøkdele af vinduets bredde/højde (uafhængige for billede og grid).
+// Zoom 1 = det roterede billede passer ind i vinduet. x/y er brøkdele af vinduets bredde/højde (uafhængige for billede og grid).
 window.vttRender = function (box, img, canvas, view) {
   const W = box.clientWidth, H = box.clientHeight, nw = img.naturalWidth, nh = img.naturalHeight;
   if (!W || !H) return;
@@ -9,9 +9,11 @@ window.vttRender = function (box, img, canvas, view) {
   const ctx = canvas.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
   if (!nw || !nh) { img.style.display = 'none'; return; }
   img.style.display = '';
-  const fit = Math.min(W / nw, H / nh), s = fit * view.img.zoom;
+  const rot = (view.img.rot || 0) * Math.PI / 180, ca = Math.abs(Math.cos(rot)), sa = Math.abs(Math.sin(rot));
+  const bw = nw * ca + nh * sa, bh = nw * sa + nh * ca;  // omsluttende boks om det roterede billede
+  const fit = Math.min(W / bw, H / bh), s = fit * view.img.zoom;
   img.style.width = nw * s + 'px'; img.style.height = nh * s + 'px';
-  img.style.transform = `translate(${W / 2 + view.img.x * W - nw * s / 2}px, ${H / 2 + view.img.y * H - nh * s / 2}px)`;
+  img.style.transform = `translate(${W / 2 + view.img.x * W - nw * s / 2}px, ${H / 2 + view.img.y * H - nh * s / 2}px) rotate(${view.img.rot || 0}deg)`;
   const g = view.grid, cell = g.size * fit * g.zoom;
   if (!g.on || cell < 4) return;
   const ox = W / 2 + g.x * W + g.ox * fit * g.zoom, oy = H / 2 + g.y * H + g.oy * fit * g.zoom;

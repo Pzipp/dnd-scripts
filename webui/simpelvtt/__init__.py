@@ -131,14 +131,15 @@ def num(v, lo, hi, default):
 
 
 def default_view() -> dict:
-    return {"img": {"zoom": 1, "x": 0, "y": 0},
+    return {"img": {"zoom": 1, "x": 0, "y": 0, "rot": 0},
             "grid": {"on": False, "size": 70, "color": "#ffffff", "alpha": 0.4, "ox": 0, "oy": 0, "zoom": 1, "x": 0, "y": 0}}
 
 
 def clean_view(v) -> dict:
     d, v = default_view(), (v if isinstance(v, dict) else {})
     i, g = v.get("img") or {}, v.get("grid") or {}
-    d["img"] = {"zoom": num(i.get("zoom"), 0.05, 40, 1), "x": num(i.get("x"), -50, 50, 0), "y": num(i.get("y"), -50, 50, 0)}
+    d["img"] = {"zoom": num(i.get("zoom"), 0.05, 40, 1), "x": num(i.get("x"), -50, 50, 0), "y": num(i.get("y"), -50, 50, 0),
+                "rot": round(num(i.get("rot"), -1e6, 1e6, 0) % 360, 2)}
     color = g.get("color")
     d["grid"] = {"on": bool(g.get("on")), "size": num(g.get("size"), 4, 2000, 70),
                  "color": color if isinstance(color, str) and re.fullmatch(r"#[0-9a-fA-F]{6}", color) else "#ffffff",

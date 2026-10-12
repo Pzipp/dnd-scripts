@@ -11,7 +11,7 @@ Kun to niveauer: **kampagne** (øverste mappe) og **room** (undermappe). Billede
 | Sti | Indhold |
 |---|---|
 | `campaigns/<kampagne>/[<room>/]<fil>` | Uploadede billeder |
-| `views.json` | Gemt visning pr. kort (zoom/pan for billede og grid, grid-indstillinger) |
+| `views.json` | Gemt visning pr. kort (zoom/pan/rotation for billede, zoom/pan for grid, grid-indstillinger) |
 | `state.json` | Hvilket kort spillerskærmen viser nu, plus en tæller (`rev`) |
 | `.thumbs/` | Miniaturer (kræver Pillow; ellers bruges originalen) |
 
@@ -21,12 +21,14 @@ Upload: png, jpg, webp og gif (kontrolleret på både endelse og filens første 
 
 ## Brug
 
-* **EDIT** (blå): opret, omdøb og slet kampagner og rooms; upload; flyt billeder ved at trække dem til et andet room/kampagnen eller med "Flyt…"-menuen; slet billeder. Filer kan også trækkes direkte fra computeren ind på et room.
-* **PLAY** (grøn): vælg kampagne i dropdown; dens rooms vises som sektioner med miniaturer. Klik på et kort for at vise det. Upload, flyt og slet virker også her.
+* **EDIT** (blå): det eneste sted, hvor noget kan ændres i biblioteket: opret, omdøb og slet kampagner og rooms; upload (knapper og træk fra computeren); flyt billeder ved at trække dem til et andet room/kampagnen eller med "Flyt…"-menuen; slet billeder. Filer kan også trækkes direkte fra computeren ind på et room.
+* **PLAY** (grøn): vælg kampagne i dropdown; dens rooms vises som sektioner med miniaturer. Klik på et kort for at vise det, og justér visningen (zoom, pan, grid, rotation). Upload, nyt room, flyt, slet, omdøb og træk-og-slip findes ikke i PLAY: knapperne er skjult, drop-targets og handlere er slået fra, og skift af tilstand rydder en halvfærdig filvælger. Det er kun UI; API'et er åbent.
 * Preview til højre viser, hvad spillerne ser. Træk i det for at panne, hjul/+/- for at zoome; vælg om **Billede** eller **Grid** skal flyttes. Billede og grid har hver sin zoom og pan. Skydere/felter: billedzoom, grid til/fra, celle (px), farve, gennemsigtighed, gridzoom, offset X/Y.
 * **Åbn spillerskærm** åbner `/simpelvtt/vis` i en ny fane (genbruger fanen, hvis den allerede er åben). Her er knappen "Fuldskærm" (eller tasten F).
 
-Zoom 1 betyder, at billedet passer i vinduet; pan er brøkdele af vinduets størrelse. Det giver samme udsnit på alle skærmstørrelser. Cellestørrelsen er i billedpixel og skaleres med billedets "passer i vinduet"-faktor og gridzoom.
+**Rotation:** knapperne ↺ 90° / ↻ 90° og en skyder (0–359°, fri vinkel) under Billede i PLAY. Vinklen (`img.rot`, grader, normaliseres til 0–360) gemmes pr. kort i visningen og synkroniseres til spillerskærmen. Billedet drejes om sit eget midtpunkt; gridet roterer ikke med, men beholder sin egen zoom og offset.
+
+Zoom 1 betyder, at billedet passer i vinduet (for et roteret billede regnes med den omsluttende boks om det roterede billede, så det ikke klippes); pan er brøkdele af vinduets størrelse. Det giver samme udsnit på alle skærmstørrelser. Cellestørrelsen er i billedpixel og skaleres med billedets "passer i vinduet"-faktor og gridzoom.
 
 ## Synk
 

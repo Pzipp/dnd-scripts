@@ -36,20 +36,21 @@
 
   function thumb(camp, room, file) {
     const ref = room ? `${camp}/${room}/${file}` : `${camp}/${file}`;
-    const sel = el('select', { title: 'Flyt til', onchange: async () => { const [c, r] = JSON.parse(sel.value); sel.value = ''; if (await call('POST', 'move', { image: ref, campaign: c, room: r })) loadTree(); } },
+    const sel = el('select', { title: 'Flyt til', onchange: async () => { if (S.mode !== 'edit') return; const [c, r] = JSON.parse(sel.value); sel.value = ''; if (await call('POST', 'move', { image: ref, campaign: c, room: r })) loadTree(); } },
       el('option', { value: '' }, 'Flyt…'));
     for (const d of dests()) sel.append(el('option', { value: JSON.stringify([d.c, d.r]) }, d.label));
-    const t = el('div', { class: 'thumb' + (S.cur === ref ? ' cur' : ''), draggable: 'true', 'data-ref': ref },
+    const t = el('div', { class: 'thumb' + (S.cur === ref ? ' cur' : ''), draggable: S.mode === 'edit' ? 'true' : 'false', 'data-ref': ref },
       el('img', { src: '/simpelvtt/thumb/' + enc(ref), loading: 'lazy', alt: file, onclick: () => { if (S.mode === 'play') show(ref); } }),
       el('div', { class: 'n', title: file }, file),
-      el('div', { class: 'acts' }, sel, el('button', { class: 'sm danger', title: 'Slet', onclick: async () => { if (confirm('Slet ' + file + '?') && await call('DELETE', 'image', { image: ref })) { if (S.cur === ref) S.cur = null; loadTree(); } } }, '✕')));
-    t.addEventListener('dragstart', e => { e.dataTransfer.setData('text/x-vtt-ref', ref); e.dataTransfer.effectAllowed = 'move'; });
+      el('div', { class: 'acts only-edit' }, sel, el('button', { class: 'sm danger', title: 'Slet', onclick: async () => { if (S.mode === 'edit' && confirm('Slet ' + file + '?') && await call('DELETE', 'image', { image: ref })) { if (S.cur === ref) S.cur = null; loadTree(); } } }, '✕')));
+    t.addEventListener('dragstart', e => { if (S.mode !== 'edit') { e.preventDefault(); return; } e.dataTransfer.setData('text/x-vtt-ref', ref); e.dataTransfer.effectAllowed = 'move'; });
     return t;
   }
   function dropZone(node, camp, room) {
-    node.addEventListener('dragover', e => { e.preventDefault(); node.classList.add('over'); e.stopPropagation(); });
+    node.addEventListener('dragover', e => { if (S.mode !== 'edit') return; e.preventDefault(); node.classList.add('over'); e.stopPropagation(); });
     node.addEventListener('dragleave', () => node.classList.remove('over'));
     node.addEventListener('drop', async e => {
+      if (S.mode !== 'edit') return;
       e.preventDefault(); e.stopPropagation(); node.classList.remove('over');
       const ref = e.dataTransfer.getData('text/x-vtt-ref');
       if (ref) { if (await call('POST', 'move', { image: ref, campaign: camp, room })) loadTree(); }
@@ -57,9 +58,10 @@
     });
   }
   let pending = null;
-  function pickFiles(camp, room) { pending = { camp, room }; $('fileIn').click(); }
-  $('fileIn').addEventListener('change', e => { if (pending && e.target.files.length) upload(pending.camp, pending.room, e.target.files); e.target.value = ''; });
+  function pickFiles(camp, room) { if (S.mode !== 'edit') return; pending = { camp, room }; $('fileIn').click(); }
+  $('fileIn').addEventListener('change', e => { if (S.mode === 'edit' && pending && e.target.files.length) upload(pending.camp, pending.room, e.target.files); e.target.value = ''; });
   async function upload(camp, room, files) {
+    if (S.mode !== 'edit') return;
     const fd = new FormData(); fd.append('campaign', camp); fd.append('room', room || '');
     for (const f of files) fd.append('files', f);
     msg('Uploader ' + files.length + ' fil(er)…');
@@ -67,28 +69,28 @@
     if (d) msg(d.errors.length ? d.errors.join(' | ') : 'Uploadet ' + d.saved.length + '.');
     loadTree();
   }
-  async function ask(label, def, fn) { const v = prompt(label, def || ''); if (v && v.trim() && v.trim() !== def && await fn(v.trim())) loadTree(); }
+  async function ask(label, def, fn) { if (S.mode !== 'edit') return; const v = prompt(label, def || ''); if (v && v.trim() && v.trim() !== def && await fn(v.trim())) loadTree(); }
 
   function roomBlock(c, r) {
     const b = el('div', { class: 'room' },
       el('header', {}, el('h3', {}, r.name),
-        el('button', { class: 'sm', onclick: () => pickFiles(c.name, r.name) }, 'Upload'),
+        el('button', { class: 'sm only-edit', onclick: () => pickFiles(c.name, r.name) }, 'Upload'),
         el('button', { class: 'sm only-edit', onclick: () => ask('Nyt navn på room', r.name, v => call('PATCH', 'room', { campaign: c.name, name: r.name, to: v })) }, 'Omdøb'),
-        el('button', { class: 'sm danger only-edit', onclick: async () => { if (confirm(`Slet room "${r.name}" og alle dets billeder?`) && await call('DELETE', 'room', { campaign: c.name, name: r.name })) loadTree(); } }, 'Slet')),
+        el('button', { class: 'sm danger only-edit', onclick: async () => { if (S.mode === 'edit' && confirm(`Slet room "${r.name}" og alle dets billeder?`) && await call('DELETE', 'room', { campaign: c.name, name: r.name })) loadTree(); } }, 'Slet')),
       el('div', { class: 'thumbs' }, ...r.images.map(f => thumb(c.name, r.name, f))));
-    if (!r.images.length) b.append(el('div', { class: 'muted' }, 'Tomt – træk billeder hertil eller upload.'));
+    if (!r.images.length) b.append(el('div', { class: 'muted only-edit' }, 'Tomt – træk billeder hertil eller upload.'));
     dropZone(b, c.name, r.name);
     return b;
   }
   function campBlock(c, full) {
-    const loose = el('div', { class: 'room' }, el('header', {}, el('h3', {}, 'Løse billeder i kampagnen'), el('button', { class: 'sm', onclick: () => pickFiles(c.name, '') }, 'Upload')),
+    const loose = el('div', { class: 'room' }, el('header', {}, el('h3', {}, 'Løse billeder i kampagnen'), el('button', { class: 'sm only-edit', onclick: () => pickFiles(c.name, '') }, 'Upload')),
       el('div', { class: 'thumbs' }, ...c.images.map(f => thumb(c.name, '', f))));
     dropZone(loose, c.name, '');
     const head = el('header', {}, el('h2', {}, c.name),
-      el('button', { class: 'sm', onclick: () => ask('Navn på nyt room', '', v => call('POST', 'room', { campaign: c.name, name: v })) }, '+ Room'));
-    if (full) head.append(
-      el('button', { class: 'sm', onclick: () => ask('Nyt navn på kampagne', c.name, v => call('PATCH', 'campaign', { name: c.name, to: v })) }, 'Omdøb'),
-      el('button', { class: 'sm danger', onclick: async () => { if (confirm(`Slet kampagnen "${c.name}" med alle rooms og billeder?`) && await call('DELETE', 'campaign', { name: c.name })) loadTree(); } }, 'Slet'));
+      el('button', { class: 'sm only-edit', onclick: () => ask('Navn på nyt room', '', v => call('POST', 'room', { campaign: c.name, name: v })) }, '+ Room'));
+    if (full) head.append(  // kun i EDIT
+      el('button', { class: 'sm only-edit', onclick: () => ask('Nyt navn på kampagne', c.name, v => call('PATCH', 'campaign', { name: c.name, to: v })) }, 'Omdøb'),
+      el('button', { class: 'sm danger only-edit', onclick: async () => { if (S.mode === 'edit' && confirm(`Slet kampagnen "${c.name}" med alle rooms og billeder?`) && await call('DELETE', 'campaign', { name: c.name })) loadTree(); } }, 'Slet'));
     return el('div', { class: 'camp' }, head, ...c.rooms.map(r => roomBlock(c, r)), loose);
   }
   function renderTree() {
@@ -99,7 +101,7 @@
   }
 
   // ---------- tilstand ----------
-  function setMode(m) { S.mode = m; document.body.dataset.mode = m; for (const b of document.querySelectorAll('.mode button')) b.classList.toggle('on', b.dataset.m === m); store.set('vtt-mode', m); renderTree(); draw(); }
+  function setMode(m) { S.mode = m; pending = null; document.body.dataset.mode = m; for (const b of document.querySelectorAll('.mode button')) b.classList.toggle('on', b.dataset.m === m); store.set('vtt-mode', m); renderTree(); draw(); }
   document.querySelectorAll('.mode button').forEach(b => b.addEventListener('click', () => setMode(b.dataset.m)));
   $('campSel').addEventListener('change', e => { S.camp = e.target.value; store.set('vtt-camp', S.camp); renderTree(); });
   $('newCamp').addEventListener('click', () => ask('Navn på ny kampagne', '', v => call('POST', 'campaign', { name: v })));
@@ -138,6 +140,9 @@
   });
   box.addEventListener('pointerup', () => { drag = null; }); box.addEventListener('pointercancel', () => { drag = null; });
   const bind = (id, fn, ev) => $(id).addEventListener(ev || 'input', () => { if (!S.view) return; fn($(id)); syncCtl(id); save(); });
+  bind('irot', e => S.view.img.rot = +e.value);
+  const rotBy = d => { if (!S.view || !S.cur) return; S.view.img.rot = (((S.view.img.rot || 0) + d) % 360 + 360) % 360; syncCtl(); save(); };
+  $('rotl').onclick = () => rotBy(-90); $('rotr').onclick = () => rotBy(90);
   bind('iz', e => S.view.img.zoom = +e.value); bind('gz', e => S.view.grid.zoom = +e.value);
   bind('gon', e => S.view.grid.on = e.checked, 'change'); bind('gsize', e => S.view.grid.size = clamp(+e.value || 70, 4, 2000));
   bind('gcol', e => S.view.grid.color = e.value); bind('galpha', e => S.view.grid.alpha = +e.value);
@@ -145,16 +150,16 @@
   function syncCtl(skip) {
     const v = S.view; if (!v) return;
     const set = (id, val) => { if (id !== skip) $(id).value = val; };
-    set('iz', v.img.zoom); set('gz', v.grid.zoom); set('gsize', v.grid.size); set('gcol', v.grid.color); set('galpha', v.grid.alpha); set('gox', v.grid.ox); set('goy', v.grid.oy);
+    set('irot', v.img.rot || 0); set('iz', v.img.zoom); set('gz', v.grid.zoom); set('gsize', v.grid.size); set('gcol', v.grid.color); set('galpha', v.grid.alpha); set('gox', v.grid.ox); set('goy', v.grid.oy);
     $('gon').checked = v.grid.on;
-    $('izo').textContent = v.img.zoom.toFixed(2) + '×'; $('gzo').textContent = v.grid.zoom.toFixed(2) + '×'; $('galphao').textContent = Math.round(v.grid.alpha * 100) + '%';
+    $('irot_o').textContent = Math.round(v.img.rot || 0) + '°'; $('izo').textContent = v.img.zoom.toFixed(2) + '×'; $('gzo').textContent = v.grid.zoom.toFixed(2) + '×'; $('galphao').textContent = Math.round(v.grid.alpha * 100) + '%';
   }
 
   async function init() {
     S.camp = store.get('vtt-camp');
     const d = await call('GET', 'state?rev=-1');
     if (d && d.image) { S.cur = d.image; S.view = d.view; syncCtl(); applyImage(); }
-    else { S.view = { img: { zoom: 1, x: 0, y: 0 }, grid: { on: false, size: 70, color: '#ffffff', alpha: .4, ox: 0, oy: 0, zoom: 1, x: 0, y: 0 } }; syncCtl(); }
+    else { S.view = { img: { zoom: 1, x: 0, y: 0, rot: 0 }, grid: { on: false, size: 70, color: '#ffffff', alpha: .4, ox: 0, oy: 0, zoom: 1, x: 0, y: 0 } }; syncCtl(); }
     await loadTree();
     setMode(store.get('vtt-mode') === 'edit' ? 'edit' : 'play');
   }
