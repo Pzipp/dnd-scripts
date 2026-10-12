@@ -19,6 +19,8 @@ Nye karakterer bygges i webui'en. Ældre karakterer (`karakter.yaml`) bruges sta
 
 ## Kommandoer
 
+Porte i homelab: dev-containeren `dnd-webui-dev` svarer på `http://localhost:8082`, prod (`../dnd-scripts`) på 8081; 8080 er kun containerens interne port og standarden for `python webui/app.py`. Test mod 8082, aldrig 8081 (prod).
+
 Webui'en (nyt system) køres fra roden: `python webui/app.py` (se `webui/README.md`) eller i Docker. Alle karakterbyggerens data kommer fra 5etools' regeldata, som skal være mountet på `/e5tools`.
 
 Ældre kommandolinje (`karakter.yaml`; `kort.yaml` virker også for byggerens karakterer):

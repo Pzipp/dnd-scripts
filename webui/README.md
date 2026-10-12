@@ -46,13 +46,13 @@ Byggeren kræver 5etools' regeldata (JSON) mountet read-only på `/e5tools`, med
 
 ### 5etools i browseren (`/5etools/`)
 
-Webuien serverer selve 5etools-siden fra `/e5tools` på `/5etools/` (fx `http://localhost:8081/5etools/`). Her kan gruppens homebrew ses i 5etools: `vol/homebrew` ligger som `/5etools/homebrew/`, og filerne i `index.json`s `toImport` indlæses via 5etools' egen "Manage Homebrew". Ruten (`e5tools_site` i `app.py`) er skrivebeskyttet, afviser stier der starter med `.` (fx `.git`) og `homebrew/kilder/` (arkiverede kilder). Der er ingen login, så den skal ikke eksponeres udadtil: 5etools' indhold er ophavsretligt beskyttet. Kræver genstart af containeren efter en kodeændring.
+Webuien serverer selve 5etools-siden fra `/e5tools` på `/5etools/` (fx `http://localhost:8082/5etools/` på dev). Her kan gruppens homebrew ses i 5etools: `vol/homebrew` ligger som `/5etools/homebrew/`, og filerne i `index.json`s `toImport` indlæses via 5etools' egen "Manage Homebrew". Ruten (`e5tools_site` i `app.py`) er skrivebeskyttet, afviser stier der starter med `.` (fx `.git`) og `homebrew/kilder/` (arkiverede kilder). Der er ingen login, så den skal ikke eksponeres udadtil: 5etools' indhold er ophavsretligt beskyttet. Kræver genstart af containeren efter en kodeændring.
 
 ## Kør i Docker
 
 Repoet har en `Dockerfile` (Python 3.12, Flask, PyYAML, ruamel.yaml og Playwright med Chromium til PDF) og en `docker-compose.yml`. Imaget er stort (Chromium), så den første build tager et stykke tid. Containeren lytter internt på port 8080 (`PORT` i `Dockerfile`).
 
-`docker-compose.yml` er tilpasset homelab-opsætningen: containeren `dnd-webui-dev`, det eksterne netværk `proxy`, 5etools-klonen mountet på `/e5tools` og `vol/homebrew` oven på `/e5tools/homebrew`. En tjeneste `5etools-updater` kører først og opdaterer 5etools-klonen, hvis `UPDATE_E5TOOLS=true`. Compose-filen publicerer porten som `${DND_BIND_IP:-127.0.0.1}:${DND_PORT:-8081}:8080`. Standardporten i compose er altså 8081; `.env.example` foreslår 8080. Fra projektets rod:
+`docker-compose.yml` er tilpasset homelab-opsætningen: containeren `dnd-webui-dev`, det eksterne netværk `proxy`, 5etools-klonen mountet på `/e5tools` og `vol/homebrew` oven på `/e5tools/homebrew`. En tjeneste `5etools-updater` kører først og opdaterer 5etools-klonen, hvis `UPDATE_E5TOOLS=true`. Compose-filen publicerer porten som `${DND_BIND_IP:-127.0.0.1}:${DND_PORT:-8081}:8080`. Porte på værten: **dev (`dnd-webui-dev`, denne mappe) kører på 8082, prod (`../dnd-scripts`) på 8081**; internt i containeren er det altid 8080. Hent aldrig porten fra gætværk; den står i `.env` (`DND_PORT`). Fra projektets rod:
 
 ```bash
 cp .env.example .env     # ret efter behov (se nedenfor)

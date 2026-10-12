@@ -2,7 +2,7 @@
 # docker-compose.yml (den kan ændre sig, og kammeraten har sin egen opsætning).
 # Koden og Dockerfile kommer fra ../dnd-scripts-dev, der bygges og bind-mountes derfra.
 #
-# Port 8081 er kun til lokal test (127.0.0.1). Udefra-adgang går via nginx (todo-sebastian punkt 44),
+# Porte (værts-side): dev (denne fil, dnd-webui-dev) = 8082, prod (../dnd-scripts) = 8081. Begge kun lokalt (127.0.0.1). Udefra-adgang går via nginx (todo-sebastian punkt 44),
 # og containeren er på proxy-netværket, så nginx kan nå den.
 name: dnd
 
@@ -52,7 +52,7 @@ services:
       - ./vol/homebrew:/e5tools/homebrew
 
     ports:
-      - "${DND_BIND_IP:-127.0.0.1}:${DND_PORT:-8081}:8080"
+      - "${DND_BIND_IP:-127.0.0.1}:${DND_PORT:-8082}:8080"
 
     environment:
       - TZ=Europe/Copenhagen
