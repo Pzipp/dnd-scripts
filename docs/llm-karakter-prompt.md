@@ -40,7 +40,7 @@ Til sidst: opsummering, bekræftelse, filen.
 
 ## 3. Hvad der er i filen, og hvad der ikke er
 
-`character.yaml` indeholder **udregnede stats og valg**. Den indeholder **ikke**: våben og angrebstabel, udstyrsliste, penge, historie, udseende. De står i `sheets.yaml` (arkets layout), som brugeren redigerer i hånden, og som du ikke skriver. Mangler `sheets.yaml`, bruger værktøjet standardlayoutet (en skabelon med et eksempelangreb, som brugeren selv retter). Efter filen giver du en kort liste med angrebslinjer og udstyr til `sheets.yaml` (afsnit 8).
+`character.yaml` indeholder **udregnede stats og valg**. Den indeholder **ikke**: udstyrsliste (ud over `weapons`), penge, historie, udseende. De står i `sheets.yaml` (arkets layout), som brugeren redigerer i hånden, og som du ikke skriver. Mangler `sheets.yaml`, laver værktøjet et neutralt standardlayout ud fra din `character.yaml` (spells og cantrips pr. level, angreb af `weapons`, evner, ressourcer; se `docs/sheets-yaml.md`). Skriv derfor `weapons` (valgfri liste, format i `docs/character-yaml.md`), så angrebstabellen bliver rigtig. Efter filen giver du en kort liste med udstyr til `sheets.yaml` (afsnit 8).
 
 ## 4. Regler, der afgør felterne
 
@@ -363,7 +363,7 @@ Fragmentet viser kun de felter, multiklasse ændrer. Aid, Bless, Cure Wounds og 
 
 Efter kodeblokken skriver du, **uden for kodeblokken**, korte lister på dansk:
 
-1. **Angreb** til `sheets.yaml` (boksen `attacks`), én linje pr. våben og angreb, i formatet `[Dansk navn <em>English Name</em>, '{+STR+PB}', '1d8{+STR} Slashing', 'Versatile 1d10 · Mastery: Sap']`. Angrebsslag: `{+STR+PB}` eller `{+DEX+PB}` (Finesse: den højeste), skade `terning{+modifier} Skadetype`, noter med egenskaber og Mastery. Cantrips med angreb: `'{+PB+INT}'` og terningen (Fire Bolt 1d10 Fire, 2d10 fra niveau 5).
+1. **Angreb:** våbnene står i `weapons` i `character.yaml`, og standardlayoutet regner angrebene ud. Kun ekstra angreb (fx cantrips med angreb) skrives til `sheets.yaml` (boksen `attacks`, efter `auto: true`), én linje pr. angreb, i formatet `[Dansk navn <em>English Name</em>, '{+STR+PB}', '1d8{+STR} Slashing', 'Versatile 1d10 · Mastery: Sap']`. Angrebsslag: `{+STR+PB}` eller `{+DEX+PB}` (Finesse: den højeste), skade `terning{+modifier} Skadetype`, noter med egenskaber og Mastery. Cantrips med angreb: `'{+PB+INT}'` og terningen (Fire Bolt 1d10 Fire, 2d10 fra niveau 5).
 2. **Udstyr** (rustning, våben, pakke, guld) som liste til boksene `weapons`, `gear`, `money` i `sheets.yaml`.
 3. **Åbne punkter** (afsnit 11).
 4. Hvordan brugeren kører det: se afsnit 9.
@@ -416,7 +416,7 @@ Skriv det, der gælder, som en kort punktliste efter filen:
 * **Homebrew-art/-baggrund/-klasse** (eller noget uden for XPHB): brugeren skal selv oplyse tallene (speed, size, senses, resistances, træk). Skriv `race: {name: <navnet>, source: Hjemmelavet}` (en kilde, som 5etools ikke kender, giver kun en advarsel; en tom `source` giver en FEJL "findes ikke i 5etools"). Har brugeren en registreret homebrew-kilde, brug dens kildekode (fx `SebastianFelisDA` for Felis-arten). Sæt `size`, `speeds`, `senses` og `race_traits` (med den samme `source`) manuelt. Hjemmelavede navne må godt være danske; markér dem som hjemmelavede i dit svar. `other_name` findes kun i byggerens `choices.yaml`; i `character.yaml` er artens `name` selve navnet.
 * **Sprog fra klassen** (Thieves' Cant, Druidic) og Deft Explorer-sprog skrives i `languages` af dig; de beregnes ikke andre steder.
 * **Features med betingelser** (Fast Movement uden Heavy armor, Unarmored Movement uden rustning og skjold, Defense med rustning) tager du højde for i tallene; skriv i åbne punkter, hvis rustningsvalget senere ændrer dem.
-* **Udstyr, angreb, penge, historie, udseende:** står kun i `sheets.yaml`, ikke i `character.yaml` (afsnit 3 og 8).
+* **Udstyr, penge, historie, udseende:** står kun i `sheets.yaml`, ikke i `character.yaml`. Våben står i `weapons` (afsnit 3 og 8).
 * **Kort (spell- og evnekort)** laves i andre værktøjer, ikke her.
 * **Terninger:** du slår aldrig for brugeren. Mangler et HP-slag eller en evnescore, spørg.
 * **Regler du er i tvivl om:** kendte åbne punkter er (1) om en ikke-Heavy-trænet multiclass må bære den valgte rustning, (2) om et feat/en subclass-feature giver en ekstra sans, speed eller AC, der ikke står i dette dokument, (3) valgfrie felter (`resources`, `class_numbers`, `activations`), hvor du kun skriver det, du er sikker på. Skriv sådan noget som et åbent punkt, ikke som en rettelse.

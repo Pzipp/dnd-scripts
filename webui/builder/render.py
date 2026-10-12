@@ -21,6 +21,7 @@ from contextvars import ContextVar
 
 from . import descriptions
 from . import spell_grants
+from . import spellbox
 
 ABILITY_ROWS = [("STR", "Styrke", "str"), ("DEX", "Smidighed", "dex"), ("CON", "Udholdenhed", "con"),
                 ("INT", "Intelligens", "int"), ("WIS", "Visdom", "wis"), ("CHA", "Karisma", "cha")]
@@ -342,17 +343,67 @@ def box_languages(node, character, env):
     """Uden text falder tilbage til character['languages'] (Common + de 2
     valgt i byggeren, se character_yaml._languages()) - samme auto-mønster
     som box_passive(). text kan stadig angives for at overstyre/tilføje
-    klasse-/feature-tildelte sprog (fx Thieves' Cant), som IKKE er talt med
-    automatisk, se character_yaml.py's modul-docstring."""
+    frit valgte ekstra sprog fra features, som ikke er talt med automatisk (klassens egne, fx Thieves' Cant, er)."""
     text = node.get("text")
     if text is None:
         text = character.get("languages", "Common")
     return f'<h2>{node["title"]}</h2>{fmt(text, env)}'
 
 
+def _weapon_proficient(character: dict, w: dict) -> bool:
+    """Trænet i våbnet ud fra can_use.weapons ('simple, martial', eller 'simple, Martial weapons that have the Finesse or Light property')."""
+    text = str((character.get("can_use") or {}).get("weapons", "")).lower()
+    cat = str(w.get("category", "")).lower()
+    if not cat or cat not in text:
+        return False
+    if cat == "martial" and "that have" in text:  # fx Rogue: "Martial weapons that have the Finesse or Light property"
+        return any(p.lower() in text for p in w.get("properties", []))
+    return True
+
+
+def _weapon_name(w: dict) -> str:
+    """Dansk navn øverst og engelsk under (navnekonvention): 'Dolk <em>Dagger</em>'; uden dansk navn kun det engelske. Antal > 1 foran."""
+    name = f"{w['name_da']} <em>{w['name']}</em>" if w.get("name_da") else w["name"]
+    return f"{w['quantity']}× {name}" if w.get("quantity", 1) > 1 else name
+
+
+def weapon_attack(character: dict, env: dict, w: dict) -> list:
+    """[navn, træf, skade, note] for ét våben: STR (nærkamp), DEX (ranged) eller den højeste af dem (Finesse)."""
+    props = w.get("properties", [])
+    if w.get("ranged"):
+        ab = "DEX"
+    elif "Finesse" in props:
+        ab = "DEX" if env.get("DEX", 0) > env.get("STR", 0) else "STR"
+    else:
+        ab = "STR"
+    pb = "+PB" if _weapon_proficient(character, w) else ""
+    dmg = f"{w['damage']}{{+{ab}}} {w.get('damage_type', '')}".strip() if w.get("damage") else ""
+    notes = []
+    for p in props:
+        if p == "Versatile" and w.get("damage_versatile"):
+            notes.append(f"Versatile ({w['damage_versatile']})")
+        elif p in ("Thrown", "Ammunition") and w.get("range"):
+            notes.append(f"{p} ({w['range']} ft)")
+        else:
+            notes.append(p)
+    if any(m[1] == w["name"] for m in character.get("masteries") or []):
+        notes.append("Mastery: " + ", ".join(m[0] for m in character["masteries"] if m[1] == w["name"]))
+    return [_weapon_name(w), f"{{+{ab}{pb}}}", dmg, ", ".join(notes)]
+
+
+def auto_attacks(character: dict, env: dict) -> list[list]:
+    rows = [weapon_attack(character, env, w) for w in character.get("weapons") or []]
+    if not rows:
+        rows = [["Unarmed Strike", "{+STR+PB}", "1{+STR} Bludgeoning", ""]]
+    return rows
+
+
 def box_attacks(node, character, env):
+    """attacks: [[navn, træf, skade, note]] skrevet i hånden. auto: true bygger rækkerne af character.yaml's weapons
+    (uden våben: Unarmed Strike), og attacks: lægges til bagefter."""
+    rows = (auto_attacks(character, env) if node.get("auto") else []) + list(node.get("attacks", []))
     o = [f'<h2>{node["title"]}</h2><table><tr><th>Våben</th><th>Ramme</th><th>Skade</th><th>Noter</th></tr>']
-    for n, hit, dmg, note in node.get("attacks", []):
+    for n, hit, dmg, note in rows:
         o.append(f'<tr><td class="n">{dual_name(n, env)}</td><td>{formula_cell(hit, env, roll=True)}</td>'
                  f'<td class="nw">{formula_cell(dmg, env, roll=False)}</td><td>{fmt(note, env)}</td></tr>')
     o.append("</table>")
@@ -364,7 +415,11 @@ def box_rules(node, character, env):
     return h + '<ul class="t">' + "".join(f"<li>{fmt(p, env)}</li>" for p in node.get("items", [])) + "</ul>"
 
 
-def _auto_feat_items(character: dict, exclude: list[str]) -> list[dict]:
+# Klassefeatures, der ikke giver mening som egen post på arket: valg-pladsholdere og spellcasting (har sin egen side).
+_SKIP_FEATURES = {"ability score improvement", "subclass feature", "epic boon", "spellcasting", "pact magic"}
+
+
+def _auto_feat_items(character: dict, exclude: list[str], include=None) -> list[dict]:
     """items til box_features(), automatisk fra character['feats'] i stedet
     for hånd-skrevet i sheets.yaml - navn + dansk beskrivelse via
     descriptions.lookup() (samme opslagskæde som "mangler beskrivelse"-
@@ -372,15 +427,29 @@ def _auto_feat_items(character: dict, exclude: list[str]) -> list[dict]:
     exclude: liste af feat-navne (case-insensitive) der IKKE skal vises her
     - fx hvis spilleren selv vil skrive én af dem i hånden et andet sted."""
     excluded = {n.lower() for n in exclude}
-    items = []
-    for f in character.get("feats", []):
-        if f["name"].lower() in excluded:
+    include = include or ["feats"]
+    pools = []
+    if "class_features" in include:
+        pools += [(f, f"Niveau {f['level']}" if f.get("level") else None) for f in character.get("class_features", [])
+                  if f["name"].lower() not in _SKIP_FEATURES and not f["name"].lower().endswith(" subclass")]
+    if "race_traits" in include:
+        pools += [(t, None) for t in character.get("race_traits", [])]
+    if "feats" in include:
+        pools += [(f, None) for f in character.get("feats", []) if f["name"].lower() not in _SKIP_FEATURES]
+    items, seen = [], set()
+    for f, tag in pools:
+        key = f["name"].lower()
+        if key in excluded or key in seen:
             continue
+        seen.add(key)
         found = descriptions.lookup(f["name"], f.get("source"))
         name_da = found.get("name_da") if found else None
         text = (found.get("description_da") if found else None) or ""
         display_name = f'{f["name"]} <i>· {name_da}</i>' if name_da else f["name"]
-        items.append({"name": display_name, "text": text})
+        item = {"name": display_name, "text": text}
+        if tag:
+            item["tag"] = tag
+        items.append(item)
     return items
 
 
@@ -440,7 +509,7 @@ def box_features(node, character, env):
     elif node.get("type") in _ACTIVATION_KINDS:
         items = _auto_activation_items(character, node.get("exclude", []), _ACTIVATION_KINDS[node["type"]])
     else:
-        items = _auto_feat_items(character, node.get("exclude", []))
+        items = _auto_feat_items(character, node.get("exclude", []), node.get("include"))
     if node.get("auto") and not items:
         return ""  # automatisk boks uden indhold (fx Reactions for en karakter uden) udelades helt
     for i, t in enumerate(items):
@@ -596,8 +665,30 @@ def _list(items, blank_lines, env) -> str:
     return f'<ul class="ruled">{rows}</ul>' if rows else ""
 
 
+def equipment_lines(character: dict) -> list[str]:
+    """Våben (navn, skade, egenskaber) og rustning for boksen 'Våben og rustning' med auto: true."""
+    out = []
+    if character.get("ac_note"):
+        out.append(f"<b>Rustning</b>: {character['ac_note']} · AC {character.get('ac', '')}")
+    for w in character.get("weapons") or []:
+        bits = [b for b in (f"{w['damage']} {w.get('damage_type', '')}".strip() if w.get("damage") else "", ", ".join(w.get("properties", [])),
+                            f"range {w['range']} ft" if w.get("range") else "") if b]
+        name = f"<b>{w['name_da']}</b> <em>{w['name']}</em>" if w.get("name_da") else f"<b>{w['name']}</b>"
+        if w.get("quantity", 1) > 1:
+            name = f"{w['quantity']}× {name}"
+        out.append(f"{name} · {' · '.join(bits)}" if bits else name)
+    return out
+
+
+def inventory_lines(character: dict) -> list[str]:
+    """Det øvrige udstyr (character.yaml: inventory) til boksen 'Udstyr' med auto: true: 'Backpack ×2'."""
+    return [f"{i['name']} ×{i['quantity']}" if i.get("quantity", 1) > 1 else i["name"] for i in character.get("inventory") or [] if i.get("name")]
+
+
 def box_list(node, character, env):
-    return _h2(node) + _list(node.get("items", []), node.get("blank_lines", 0), env)
+    auto = (inventory_lines(character) if node.get("type") == "gear" else equipment_lines(character)) if node.get("auto") else []
+    items = auto + list(node.get("items", []))
+    return _h2(node) + _list(items, node.get("blank_lines", 0), env)
 
 
 def box_training(node, character, env):
@@ -619,7 +710,11 @@ def box_facts(node, character, env):
 
 
 def box_magic(node, character, env):
-    """Besværgelser: DC-celler, besværgelseslister (label og text) og slots (afkrydsning)."""
+    """Besværgelser: DC-celler, besværgelseslister (label og text) og slots (afkrydsning).
+    auto: true henter DC-celler og tællere fra character.yaml (spellcasting, granted_spells); dc/lists/slots lægges til bagefter."""
+    if node.get("auto"):
+        auto = spellbox.magic_auto(character)
+        node = {**node, "dc": auto["dc"] + list(node.get("dc", [])), "lists": auto["lists"] + list(node.get("lists", []))}
     dc = "".join(
         f'<div class="stat magi-celle"><div class="lbl">{c.get("name", "")}</div>'
         f'<div class="big">{fmt(c.get("roll", ""), env)}</div>'
@@ -637,6 +732,17 @@ def box_magic(node, character, env):
     if slots:
         o += f'<p class="magi-slots">{slots}</p>'
     return o
+
+
+def box_cantrips(node, character, env):
+    """Alle cantrips (level 0) fra klassen, race og feats i én liste. Aldrig blandet med spells (se box_spells)."""
+    return spellbox.cantrips_html(character, node, _h2(node))
+
+
+def box_spells(node, character, env):
+    """Spells fra level 1 og op, grupperet og sorteret efter level med slots i hver level-overskrift.
+    list: prepared (standard) | spellbook | all."""
+    return spellbox.spells_html(character, node, _h2(node))
 
 
 def box_granted_spells(node, character, env):
@@ -712,6 +818,8 @@ REGISTRY = {
     "passive": _box(box_passive),
     "languages": _box(box_languages, small=True),
     "magic": _box(box_magic, "Magi <i>Spellcasting</i>"),
+    "cantrips": _box(box_cantrips, "Cantrips <i>level 0</i>", small=True),
+    "spells": _box(box_spells, "Spells <i>efter level</i>", small=True),
     "granted_spells": _box(box_granted_spells, "Tildelte spells <i>Granted spells</i>", small=True),
     "attacks": _box(box_attacks),
     "rules": _box(box_rules, small=True),

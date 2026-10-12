@@ -41,7 +41,7 @@ Et typisk ark har fire sider: karakterark, handlinger, udstyr og baggrund (og i 
 | Fil | Indhold |
 |---|---|
 | `karakterark.py` | Generatoren |
-| `sheets.css` | Den fælles stil for alle sider. **Farve**. Deles uændret med det nye systems `webui/builder/render.py` |
+| `sheets.css` | Den fælles stil for alle sider. **Farve**. Deles uændret med det nye systems `webui/builder/render.py` (også spell-tabellerne `table.spl`, `.spl2`, `.fl`, `.pm` til boks-typerne `spells` og `cantrips`) |
 | `sheets-bw.css` | Lægges oven på `sheets.css` i sort/hvid |
 | `sheets-modern.css` | Tema `moderne`: lægges oven på `sheets.css` (kun webui'en) |
 | `sheets-forest.css` | Tema `skov` |

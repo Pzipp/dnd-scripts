@@ -42,8 +42,8 @@ python3 dnd.py llm-opslag ...                 # opslag i 5etools til dig (script
 | Sti | Hvad |
 |---|---|
 | `dnd.py` | Indgangspunkt for den ældre kommandolinje |
-| `webui/` | Flask-webui: menu (`/`), og karakterbygger (`/builder`). Se `webui/README.md` |
-| `webui/builder/` | Byggerens kode: `model.py` (valg og state), `character_yaml.py` (udregning), `render.py` (ark), `kort.py`/`cards.py` (kort), `e5tools.py` (opslag og dansk overlay), `copies.py`/`versions.py` (`_copy`, `_versions`), `descriptions.py`/`effects.py`/`llm_client.py` (danske beskrivelser og effekter), `baggrund.py`, `layout_edit.py`, `routes.py` |
+| `webui/` | Flask-webui: menu (`/`), karakterbygger (`/builder`) og simpelt VTT (`/simpelvtt`, kode i `webui/simpelvtt/`, se `docs/simpelvtt.md`). Se `webui/README.md` |
+| `webui/builder/` | Byggerens kode: `model.py` (valg og state), `character_yaml.py` (udregning), `render.py` (ark), `default_layout.py` (standardlayout, når `sheets.yaml` mangler), `spellbox.py` (spell- og cantrip-lister), `kort.py`/`cards.py` (kort), `e5tools.py` (opslag og dansk overlay), `copies.py`/`versions.py` (`_copy`, `_versions`), `descriptions.py`/`effects.py`/`llm_client.py` (danske beskrivelser og effekter), `baggrund.py`, `layout_edit.py`, `routes.py` |
 | `webui/static/` | CSS/JS til webui'en, `baggrunde/` (billeder til ark og kort), `theme-*.css` (sidetemaer, endnu ikke tilsluttet) |
 | `karakterer/<navn>/` | Én mappe pr. karakter, se tabellen ovenfor. Ældre: `karakter.yaml` (`docs/karakterark-yaml.md`) |
 | `karakterer/<navn>/udskrifter/` | **Genereret, ikke i git.** Redigér aldrig i hånden |
@@ -55,7 +55,7 @@ python3 dnd.py llm-opslag ...                 # opslag i 5etools til dig (script
 | `data/*-da.json`, `data/spells/`, `data/class/` | Danske oversættelser af 5etools-data, lagt ovenpå af `e5tools.py`. **Ikke i git** (bortset fra `feats-da.json`). Se `data/books/oversaettelse/CLAUDE.md` |
 | `data/books/` | Kilder og arbejdsfiler til oversættelse. Værktøjet i `data/books/oversaettelse/` er i git, resten ikke |
 | `data/feats-XPHB-da.yaml` | Alle XPHB-feats med danske felter. Lav/opdatér med `scripts/data/feats_xphb.py`. Format: `docs/feats-xphb-da.md` |
-| `vol/` | Runtime-data, ikke i git (`vol/homebrew/*` og `vol/karakterer/`); kun `vol/homebrew/index.json` er sporet |
+| `vol/` | Runtime-data, ikke i git (`vol/homebrew/*`, `vol/karakterer/` og `vol/simpelvtt/`); kun `vol/homebrew/index.json` er sporet |
 | `docs/` | Formater, navnekonvention, todo |
 
 ## Sådan laver du en ny karakter med `character.yaml` (LLM-vejen, uden bygger)
@@ -66,7 +66,7 @@ Brugeren beskriver en karakter, og du skriver `karakterer/<navn>/character.yaml`
 2. Slå regler op i stedet for at huske dem: `python3 dnd.py llm-opslag` (race, klasse, feats, spells fra 5etools).
 3. `mkdir karakterer/<navn>` (små bogstaver og bindestreg) og skriv `character.yaml`. Tal som `proficiency_bonus`, `hit_dice` og saves følger levelet og klassen.
 4. `python3 dnd.py tjek-ark <navn>` og ret hver FEJL (linje og kolonne står i beskeden) og hver ADVARSEL, du kan. Gentag, til der ingen fejl er.
-5. `python3 dnd.py ark <navn> --pdf`, derefter **kig på resultatet** (HTML eller PDF-siderne; tekst, der er for lang, klippes ved kanten af A4-siden). Har karakteren ingen `sheets.yaml`, bruges standarden `karakterer/_skabelon/sheets.yaml`; ret den kun i en egen `karakterer/<navn>/sheets.yaml` (se `docs/sheets-yaml.md`).
+5. `python3 dnd.py ark <navn> --pdf`, derefter **kig på resultatet** (HTML eller PDF-siderne; tekst, der er for lang, klippes ved kanten af A4-siden). Har karakteren ingen `sheets.yaml`, laver `webui/builder/default_layout.py` et neutralt standardlayout ud fra `character.yaml` (spells, cantrips, angreb, evner); ret layoutet kun i en egen `karakterer/<navn>/sheets.yaml` (se `docs/sheets-yaml.md`).
 
 Kontrollen finder tastefejl, manglende felter og tal, der ikke passer sammen. Den kan ikke se, om reglerne er regnet rigtigt (HP, AC, valg fra klasse og baggrund), så tjek dem selv mod PHB 2024.
 
@@ -110,7 +110,7 @@ Hovedvejen er webui'en: opret en karakter på `/builder`, vælg art, klasse, bag
 * **Redigér ikke** filer i `udskrifter/` i hånden. Generér dem igen.
 * **Slet eller overskriv ikke** en anden spillers karakter uden at spørge. Hver spiller ejer sin mappe i `karakterer/`.
 * Commit **ikke** genererede filer: hele `udskrifter/` (HTML og PDF) og `__pycache__` er i `.gitignore`. Der er ingen færdige PDF'er i repoet; de laves i webui'en eller med `python3 dnd.py ... --pdf`.
-* Commit ikke bogtekster og oversættelser af dem (`data/books/*.json`, `data/*-da.json`, `data/spells/`, `data/class/`; ophavsretligt materiale), `.env`, `vol/karakterer/`, eller indhold i `vol/homebrew/` (undtagen `index.json`). Se `.gitignore`.
+* Commit ikke bogtekster og oversættelser af dem (`data/books/*.json`, `data/*-da.json`, `data/spells/`, `data/class/`; ophavsretligt materiale), `.env`, `vol/karakterer/`, `vol/simpelvtt/`, eller indhold i `vol/homebrew/` (undtagen `index.json`). Se `.gitignore`.
 * Foretræk at lave ændringer på en **gren** og lade en pull request gennemgå dem. Skriv ikke direkte til `main`, medmindre ejeren siger det.
 * Ret ikke i `scripts/` for at løse et dataproblem i en enkelt karakter. Brug `egne:` eller karakterens egen fil.
 * Læg ikke adgangskoder, nøgler, domænenavne eller personlige oplysninger i repoet. Repoet er offentligt. Lokal konfiguration (port, LLM-endpoint og -nøgle) står i `.env`, som ikke er i git.

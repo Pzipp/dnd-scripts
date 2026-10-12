@@ -25,6 +25,7 @@ import yaml
 
 from . import e5tools as e
 from . import feat_rules
+from . import items
 from . import races
 from . import settings
 from . import optionalfeatures
@@ -45,7 +46,7 @@ def empty_character() -> dict:
         "hp_rolls": {},
         "feats": {},  # {slot_key: {name, source, choices}} - slot_key er "<class_id>_<niveau>" for ASI, eller "race"/"background"
         "spells": {"known": []},  # kun hvilke spells karakteren kender - prepared/known pr. dag styres af de printede kort, ikke her
-        "equipment": {"class_package": None, "background_package": None, "extra": [], "armor": {"name": None, "source": None}, "shield": False},
+        "equipment": {"class_package": None, "background_package": None, "extra": [], "armor": {"name": None, "source": None}, "shield": False, "items": [], "picks": {}},
         "languages": {"known": []},  # PHB 2024 kap. 2: Common (fast) + 2 valgt/rullet fra Standard Languages-tabellen
         # Pr. karakter, ikke delt - to gruppemedlemmer kan have forskellige
         # tilladte kilder/husregler i gang samtidig.
@@ -241,6 +242,27 @@ def _describe_equipment_entry(entry: dict) -> str:
         }
         return labels.get(entry["equipmentType"], entry["equipmentType"])
     return str(entry)
+
+
+def pick_slots(prefix: str, package: list | None, data: dict, sources: set[str]) -> list[dict]:
+    """De valg i en startpakke ('ét Simple-våben', 'et Musical Instrument' = equipmentType-poster): én plads pr. stk.
+    {id: 'class_A_3_0', label, options: [{name, source, label}], chosen: {name, source}}. Valget gemmes i
+    equipment.picks.<id> og regnes med i character.yaml (weapons/inventory)."""
+    slots = []
+    catalog = None
+    key = (data.get("equipment") or {}).get(f"{prefix}_package")
+    for index, entry in enumerate(package or []):
+        kind = entry.get("equipmentType") if isinstance(entry, dict) else None
+        flt = items.PICK_FILTERS.get(kind or "")
+        if not flt:
+            continue
+        catalog = catalog if catalog is not None else items.catalog(sources)
+        options = _label_options([{"name": x["name"], "source": x["source"]} for x in catalog if items.matches(x, flt)])
+        for n in range(entry.get("quantity") or 1):
+            pid = f"{prefix}_{key}_{index}_{n}"
+            slots.append({"id": pid, "label": items.PICK_LABELS.get(kind, kind), "options": options,
+                          "chosen": ((data.get("equipment") or {}).get("picks") or {}).get(pid) or {}})
+    return slots
 
 
 def _resolve_package(entries: list[dict]) -> list[str]:
@@ -1070,6 +1092,9 @@ def normalize(data: dict) -> dict:
     (`feats.background`), så dens undervalg (Skilled: 3 skills/tools, Magic Initiate: spells,
     Crafter/Musician: værktøj) kan gemmes og giver karakteren det, de skal. Skifter feat'et,
     nulstilles dens valg."""
+    equipment = data.setdefault("equipment", {})
+    equipment.setdefault("items", [])  # udstyrsvælgerens ting, se docs/choices-yaml.md
+    equipment.setdefault("picks", {})  # valg i startpakkerne ('ét Simple-våben')
     if not e.available():
         return data
     sources = set((data.get("settings") or {}).get("allowed_sources") or settings.DEFAULT_SOURCES)
@@ -1388,6 +1413,8 @@ def state(data: dict) -> dict:
     background_equipment_raw = (background_obj or {}).get("startingEquipment", [{}])[0]
     class_packages = {k: _resolve_package(v) for k, v in sorted(class_equipment_raw.items())}
     background_packages = {k: _resolve_package(v) for k, v in sorted(background_equipment_raw.items())}
+    class_slots = pick_slots("class", class_equipment_raw.get(data["equipment"].get("class_package")), data, sources)
+    background_slots = pick_slots("background", background_equipment_raw.get(data["equipment"].get("background_package")), data, sources)
     if class_packages and not data["equipment"].get("class_package"):
         missing.append("equipment.class_package")
     if background_packages and not data["equipment"].get("background_package"):
@@ -1425,6 +1452,9 @@ def state(data: dict) -> dict:
             "feat_slot": background_feat_slot, "sub_choices": background_sub_choices,
         },
         "hp_levels": hp_levels,
-        "equipment": {"class_packages": class_packages, "background_packages": background_packages, "armor_options": armor_options},
+        "equipment": {
+            "class_packages": class_packages, "background_packages": background_packages, "armor_options": armor_options,
+            "pick_slots": {"class": class_slots, "background": background_slots},
+        },
         "language_options": language_options,
     }

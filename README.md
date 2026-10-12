@@ -9,7 +9,7 @@ Bruges af både mennesker og AI-assistenter (Claude, Gemini, ChatGPT/Codex m.fl.
 | | Webui med karakterbygger (hovedvejen) | `character.yaml` uden bygger (LLM) | Kommandolinje (ældre) |
 |---|---|---|---|
 | Start | `python webui/app.py`, eller Docker | `python3 dnd.py tjek-ark` og `ark` | `python3 dnd.py ...` |
-| Karakterens filer | `choices.yaml`, `character.yaml`, `sheets.yaml`, `kort.yaml` | `character.yaml` (+ `sheets.yaml`, ellers standarden) | `karakter.yaml`, `kort.yaml` |
+| Karakterens filer | `choices.yaml`, `character.yaml`, `sheets.yaml`, `kort.yaml` | `character.yaml` (+ `sheets.yaml`, ellers et standardlayout ud fra karakteren) | `karakter.yaml`, `kort.yaml` |
 | Passer til | Nye karakterer. Faner: Karakter, Udstyr, Kort, Ark | Nye karakterer, skrevet af en LLM ud fra en beskrivelse | Karakterer skrevet i hånden |
 | Læs | [`webui/README.md`](webui/README.md) | [`docs/character-yaml.md`](docs/character-yaml.md), [`docs/llm-karakter-prompt.md`](docs/llm-karakter-prompt.md) | resten af denne fil |
 
@@ -52,7 +52,7 @@ Webui'en gemmer også ark-temaer (`karakterark-<tema>`) og kort-temaer (`kort-<t
 
 ## Karakterark uden bygger (`character.yaml`)
 
-En LLM skriver `karakterer/<navn>/character.yaml` ud fra prompten i [`docs/llm-karakter-prompt.md`](docs/llm-karakter-prompt.md) og din beskrivelse. Arket laves af den og `sheets.yaml`; mangler `sheets.yaml`, bruges standarden `karakterer/_skabelon/sheets.yaml`.
+En LLM skriver `karakterer/<navn>/character.yaml` ud fra prompten i [`docs/llm-karakter-prompt.md`](docs/llm-karakter-prompt.md) og din beskrivelse. Arket laves af den og `sheets.yaml`; mangler `sheets.yaml`, laves et neutralt standardlayout ud fra `character.yaml` (spells og cantrips pr. level, angreb af våben, evner; `webui/builder/default_layout.py`, se [`docs/sheets-yaml.md`](docs/sheets-yaml.md)).
 
 ```bash
 python3 dnd.py tjek-ark min-karakter                 # kontrol med linje og kolonne (exit 1 ved fejl)

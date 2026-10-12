@@ -20,7 +20,7 @@ from typing import NamedTuple
 import yaml
 from yaml.nodes import MappingNode, ScalarNode, SequenceNode
 
-from . import character_yaml, render
+from . import character_yaml, default_layout, render
 
 ABILITIES = ["STR", "DEX", "CON", "INT", "WIS", "CHA"]
 SIZES = ["Tiny", "Small", "Medium", "Large", "Huge", "Gargantuan"]
@@ -602,6 +602,8 @@ class CharacterCheck:
         self.feat_list("optional_features", ("name",))
         self.named_list("class_features", ("name", "class"), {"level": "int"})
         self.named_list("granted_spells", ("name",))
+        self.named_list("weapons", ("name",), {"quantity": "int"})
+        self.named_list("inventory", ("name",), {"quantity": "int"})
 
     def feat_list(self, key, required):
         self.named_list(key, required)
@@ -758,14 +760,17 @@ COLUMN_KEYS = ["width", "content", "merged"]
 _LIST_BOXES = {"weapons", "gear", "special", "campaign", "places", "people", "traits", "personality", "family", "enemies",
                "goals", "secrets", "list", "text", "training"}
 EXTRA_BOX_KEYS = {
-    "stats": ["fields"], "passive": ["items"], "languages": ["text"], "magic": ["dc", "lists", "slots"],
-    "attacks": ["attacks"], "rules": ["items"], "extra": ["items"], "turn": ["items"],
-    "features": ["items", "auto", "exclude"], "bonus_actions": ["items", "auto", "exclude"],
+    "stats": ["fields"], "passive": ["items"], "languages": ["text"], "magic": ["auto", "dc", "lists", "slots"],
+    "cantrips": [], "spells": ["list", "split"],
+    "attacks": ["attacks", "auto"], "rules": ["items"], "extra": ["items"], "turn": ["items"],
+    "features": ["items", "auto", "exclude", "include"], "bonus_actions": ["items", "auto", "exclude"],
     "reactions": ["items", "auto", "exclude"], "action_features": ["items", "auto", "exclude"],
     "actions": ["bonus"], "skill_checks": ["tools"], "backstory": ["paragraphs", "blank_lines"],
     "facts": ["fields"], "appearance": ["fields"], "money": [],
     **{t: ["items", "blank_lines"] for t in _LIST_BOXES},
 }
+EXTRA_BOX_KEYS["weapons"] = ["items", "blank_lines", "auto"]
+EXTRA_BOX_KEYS["gear"] = ["items", "blank_lines", "auto"]
 MARGINS = ["small", "none"]
 
 
@@ -940,8 +945,11 @@ def check_dir(character_dir: Path, lookup: Lookup | None = None) -> list[tuple[s
     spath = sheets_module.sheets_path(character_dir)
     if spath.is_file():
         out += [("sheets.yaml", i) for i in check_sheets_text(_read(spath), character)]
-    else:
-        out += [("_skabelon/sheets.yaml", i) for i in check_sheets_text(_read(sheets_module.TEMPLATE_PATH), character) if i.level == "fejl"]
+    elif character is not None:
+        # Uden sheets.yaml bruges standardlayoutet, som default_layout laver ud fra character.yaml
+        import yaml as _yaml
+        text = _yaml.safe_dump(default_layout.build(character), allow_unicode=True, sort_keys=False)
+        out += [("(standardlayout)", i) for i in check_sheets_text(text, character) if i.level == "fejl"]
     return out
 
 

@@ -866,14 +866,132 @@ function renderClassHp(k, c) {
 }
 
 // ── Udstyrs-siden ──────────────────────────────────────────────────────
+// Udstyrskatalog (GET /api/builder/items): hentes én gang pr. sæt tilladte kilder og filtreres i browseren.
+let itemCatalog = null;
+let itemCatalogKey = null;
+let itemCatalogLoading = false;
+const picker = { q: "", kind: "", category: "", range: "", atype: "", limit: 60 };
+
+function sourcesKey() {
+  return ((state.choices.settings || {}).allowed_sources || []).join(",");
+}
+
+async function ensureItemCatalog() {
+  const key = sourcesKey();
+  if (itemCatalogLoading || itemCatalogKey === key) return;
+  itemCatalogLoading = true;
+  try {
+    const res = await fetch(`/api/builder/items?name=${encodeURIComponent(NAME)}`);
+    const data = await res.json();
+    itemCatalog = data;
+    itemCatalogKey = key;
+  } catch (err) {
+    itemCatalog = { items: [], kinds: {} };
+    itemCatalogKey = key;
+  }
+  itemCatalogLoading = false;
+  morphChildren($("#page-equipment"), renderEquipmentPage());
+}
+
+function itemStats(it) {
+  const bits = [];
+  if (it.kind === "weapon") {
+    bits.push(`${it.category === "martial" ? "Martial" : "Simple"} ${it.ranged ? "Ranged" : "Melee"}`);
+    if (it.damage) bits.push(it.damage);
+    if (it.properties?.length) bits.push(it.properties.join(", "));
+    if (it.range) bits.push(`range ${it.range} ft`);
+    if (it.mastery) bits.push(`Mastery: ${it.mastery}`);
+  } else if (it.kind === "armor") {
+    const dex = it.armor_type === "Light" ? " + DEX" : it.armor_type === "Medium" ? " + DEX (maks 2)" : "";
+    bits.push(`${it.armor_type}: AC ${it.ac}${dex}`);
+    if (it.strength) bits.push(`Str ${it.strength}`);
+    if (it.stealth) bits.push("Stealth: Disadvantage");
+  } else if (it.kind === "shield") {
+    bits.push(`AC +${it.ac ?? 2}`);
+  }
+  if (it.weight) bits.push(it.weight);
+  if (it.price) bits.push(it.price);
+  return bits.join(" · ");
+}
+
+function filteredItems() {
+  const q = picker.q.trim().toLowerCase();
+  return (itemCatalog?.items || []).filter((it) =>
+    (!picker.kind || it.kind === picker.kind)
+    && (!q || it.name.toLowerCase().includes(q))
+    && (it.kind !== "weapon" || ((!picker.category || it.category === picker.category) && (!picker.range || (picker.range === "ranged") === it.ranged)))
+    && (it.kind !== "armor" || !picker.atype || it.armor_type === picker.atype));
+}
+
+function pickerResults() {
+  if (!itemCatalog) return `<p class="muted">Henter udstyrskatalog...</p>`;
+  const all = filteredItems();
+  const shown = all.slice(0, picker.limit);
+  const rows = shown.map((it) => `
+    <div class="pick-row">
+      <div class="pick-main"><strong>${esc(it.name)}</strong>${it.source !== "XPHB" ? ` <small>(${esc(it.source)})</small>` : ""}
+        <div class="pick-stats">${esc(itemStats(it))}</div></div>
+      <button type="button" class="btn secondary" data-pick-add="${esc(it.name)}|${esc(it.source ?? "")}">${it.kind === "armor" ? "Tag på" : it.kind === "shield" ? "Tag på" : "Tilføj"}</button>
+    </div>`).join("");
+  const more = all.length > shown.length ? `<button type="button" class="btn secondary" data-pick-more>Vis flere (${shown.length} af ${all.length})</button>` : "";
+  return rows ? rows + more : `<p class="muted">Ingen ting matcher filteret.</p>`;
+}
+
+function pickerSelected() {
+  const c = state.choices.equipment;
+  const find = (name, source) => (itemCatalog?.items || []).find((i) => i.name === name && (i.source === source || !source));
+  const rows = [];
+  if (c.armor?.name) {
+    const it = find(c.armor.name, c.armor.source);
+    rows.push(`<div class="pick-row"><div class="pick-main"><strong>${esc(c.armor.name)}</strong> <small>(båret rustning)</small>
+      <div class="pick-stats">${it ? esc(itemStats(it)) : ""}</div></div>
+      <button type="button" class="btn secondary" data-pick-armor-off>Fjern</button></div>`);
+  }
+  if (c.shield) {
+    rows.push(`<div class="pick-row"><div class="pick-main"><strong>Shield</strong> <small>(båret, +2 AC)</small></div>
+      <button type="button" class="btn secondary" data-pick-shield-off>Fjern</button></div>`);
+  }
+  (c.items || []).forEach((entry, idx) => {
+    const it = find(entry.name, entry.source);
+    rows.push(`<div class="pick-row"><div class="pick-main"><strong>${esc(entry.name)}</strong>
+      <div class="pick-stats">${it ? esc(itemStats(it)) : ""}</div></div>
+      <input type="number" min="1" max="999" class="pick-qty" data-pick-qty="${idx}" value="${entry.quantity || 1}" title="Antal">
+      <button type="button" class="btn secondary" data-pick-remove="${idx}">Fjern</button></div>`);
+  });
+  return rows.length ? rows.join("") : `<p class="muted">Intet valgt endnu. Startpakkernes udstyr kommer med automatisk.</p>`;
+}
+
+function pickerBody() {
+  const kinds = itemCatalog?.kinds || {};
+  const sel = (id, value, options) => `<select data-pick-filter="${id}">${options.map(([v, l]) => `<option value="${v}" ${v === value ? "selected" : ""}>${l}</option>`).join("")}</select>`;
+  return `
+    <h4>Valgt udstyr</h4>
+    <div id="pick-selected">${pickerSelected()}</div>
+    <h4>Find udstyr</h4>
+    <div class="pick-filters">
+      <input type="search" placeholder="Søg på navn..." data-pick-filter="q" value="${esc(picker.q)}">
+      ${sel("kind", picker.kind, [["", "Alle slags"], ...Object.entries(kinds)])}
+      ${picker.kind === "weapon" ? sel("category", picker.category, [["", "Simple + Martial"], ["simple", "Simple"], ["martial", "Martial"]]) + sel("range", picker.range, [["", "Melee + Ranged"], ["melee", "Melee"], ["ranged", "Ranged"]]) : ""}
+      ${picker.kind === "armor" ? sel("atype", picker.atype, [["", "Light + Medium + Heavy"], ["Light", "Light"], ["Medium", "Medium"], ["Heavy", "Heavy"]]) : ""}
+    </div>
+    <div id="pick-results">${pickerResults()}</div>`;
+}
+
 function renderEquipmentPage() {
   const c = state.choices;
-  const pkg = (packages, field, chosenKey) => Object.entries(packages || {})
+  ensureItemCatalog();
+  const slots = (list) => (list || []).map((slot) => `
+    <label class="field"><span>Vælg ${esc(slot.label)}</span>
+      <select data-field-combo="equipment.picks.${slot.id}">
+        <option value="">Vælg...</option>${optionList(slot.options, slot.chosen?.name)}
+      </select>
+    </label>`).join("");
+  const pkg = (packages, field, chosenKey, slotList) => Object.entries(packages || {})
     .map(([key, items]) => `
       <div class="equip-pkg ${chosenKey === key ? "chosen" : ""}" data-field="${field}" data-value="${key}">
         <strong>Pakke ${key}</strong>
         <ul>${items.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>
-      </div>`).join("");
+      </div>`).join("") + slots(slotList);
   const armorBody = `
     <label class="field"><span>Rustning</span>
       <select data-field-combo="equipment.armor">
@@ -885,11 +1003,18 @@ function renderEquipmentPage() {
       Shield <small>(+2 AC, kan bæres sammen med enhver rustning)</small>
     </label>
   `;
+  const slotsOf = state.equipment.pick_slots || {};
   return `
     ${wrapDetails("equip-armor", false, "Rustning (AC)", armorBody)}
-    ${wrapDetails("equip-class", isMissing("equipment.class_package"), "Udstyr fra klasse", pkg(state.equipment.class_packages, "equipment.class_package", c.equipment.class_package))}
-    ${wrapDetails("equip-background", isMissing("equipment.background_package"), "Udstyr fra baggrund", pkg(state.equipment.background_packages, "equipment.background_package", c.equipment.background_package))}
+    ${wrapDetails("equip-class", isMissing("equipment.class_package"), "Udstyr fra klasse", pkg(state.equipment.class_packages, "equipment.class_package", c.equipment.class_package, slotsOf.class))}
+    ${wrapDetails("equip-background", isMissing("equipment.background_package"), "Udstyr fra baggrund", pkg(state.equipment.background_packages, "equipment.background_package", c.equipment.background_package, slotsOf.background))}
+    ${wrapDetails("equip-picker", false, "Udstyrsvælger (våben, rustning, eventyrudstyr ...)", pickerBody())}
   `;
+}
+
+function refreshPicker() {
+  const res = $("#pick-results");
+  if (res) morphChildren(res, pickerResults());
 }
 
 // <details> bygges helt om ved hvert svar (innerHTML), så vi skal selv huske
@@ -1260,11 +1385,32 @@ function wireEvents() {
   });
 
   document.querySelector("main").addEventListener("input", (e) => {
+    const filter = e.target.closest("[data-pick-filter]");
+    if (filter) {  // kun resultatlisten tegnes om, så søgefeltet beholder fokus
+      picker[filter.dataset.pickFilter] = filter.value;
+      picker.limit = 60;
+      refreshPicker();
+      return;
+    }
     const el = e.target.closest("input[data-field]");
     if (el && !el.dataset.multi && (el.type === "text" || el.type === "number")) answerWhileTyping(el);
   });
 
   document.querySelector("main").addEventListener("change", (e) => {
+    const filter = e.target.closest("select[data-pick-filter]");
+    if (filter) {
+      picker[filter.dataset.pickFilter] = filter.value;
+      if (filter.dataset.pickFilter === "kind") Object.assign(picker, { category: "", range: "", atype: "" });
+      picker.limit = 60;
+      morphChildren($("#page-equipment"), renderEquipmentPage());
+      return;
+    }
+    const qty = e.target.closest("[data-pick-qty]");
+    if (qty) {
+      const next = (state.choices.equipment.items || []).map((x, i) => (i === Number(qty.dataset.pickQty) ? { ...x, quantity: Math.max(1, Number(qty.value) || 1) } : x));
+      answer({ "equipment.items": next });
+      return;
+    }
     clearTimeout(typingTimer); // blur gemmer selv
     const comboEl = e.target.closest("[data-field-combo]");
     if (comboEl) {
@@ -1289,6 +1435,27 @@ function wireEvents() {
   });
 
   document.querySelector("main").addEventListener("click", (e) => {
+    const addBtn = e.target.closest("[data-pick-add]");
+    if (addBtn) {
+      const { name, source } = parseCombo(addBtn.dataset.pickAdd);
+      const it = (itemCatalog?.items || []).find((i) => i.name === name && (i.source || null) === source);
+      if (it?.kind === "armor") answer({ "equipment.armor.name": name, "equipment.armor.source": source });
+      else if (it?.kind === "shield") answer({ "equipment.shield": true });
+      else {
+        const items = state.choices.equipment.items || [];
+        const same = items.find((x) => x.name === name && (x.source || null) === source);
+        answer({ "equipment.items": same ? items.map((x) => (x === same ? { ...x, quantity: (x.quantity || 1) + 1 } : x)) : [...items, { name, source, quantity: 1 }] });
+      }
+      return;
+    }
+    const rm = e.target.closest("[data-pick-remove]");
+    if (rm) {
+      answer({ "equipment.items": (state.choices.equipment.items || []).filter((_, i) => i !== Number(rm.dataset.pickRemove)) });
+      return;
+    }
+    if (e.target.closest("[data-pick-armor-off]")) { answer({ "equipment.armor.name": null, "equipment.armor.source": null }); return; }
+    if (e.target.closest("[data-pick-shield-off]")) { answer({ "equipment.shield": false }); return; }
+    if (e.target.closest("[data-pick-more]")) { picker.limit += 60; refreshPicker(); return; }
     const removeBtn = e.target.closest("[data-remove-class]");
     if (removeBtn) {
       e.preventDefault(); // ellers lukker/åbner klikket også <details>, da knappen sidder i <summary>

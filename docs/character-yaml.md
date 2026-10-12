@@ -24,7 +24,7 @@ En karakter kan laves uden den visuelle bygger:
    ikke gættes; `python3 dnd.py llm-opslag` er værktøjet til opslagene.
 2. `python3 dnd.py tjek-ark <navn>` kontrollerer filen og peger på hver fejl med linje og kolonne.
 3. `python3 dnd.py ark <navn> [--stil <tema>|alle] [--pdf]` laver arket af `character.yaml` og `sheets.yaml`.
-   Mangler `sheets.yaml`, bruges standarden `karakterer/_skabelon/sheets.yaml` (filen skrives ikke). Kontrollen
+   Mangler `sheets.yaml`, bruges standardlayoutet fra `webui/builder/default_layout.py` (filen skrives ikke), se [sheets-yaml.md](sheets-yaml.md#standardlayout). Kontrollen
    kører først, og `ark` stopper ved en fejl. Temaerne er dem i `STYLE_FILES` i `webui/builder/render.py`
    (`farve`, `sorthvid`, `moderne`, `skov`, ...). Filerne lægges i `karakterer/<navn>/udskrifter/` som
    `karakterark-<tema>.html|pdf`, samme navne som webuiens Ark-fane.
@@ -117,6 +117,9 @@ activations:                   # hvilke features der er action/bonus/reaction (F
 modifiers:                     # fordele/bonusser, der ikke er regnet ind i arkets tal (Foundry-data)
 - {from: Danger Sense, what: DEX saves, value: fordel, note: '', active: true}
 masteries: [[Vex, Shortsword]]  # [egenskab, våben] fra classes.*.choices.weapon_mastery - se character_yaml._masteries()
+weapons:                       # valgfri: våben til angrebsboksen og udstyrslisten, se "Våben" nedenfor
+- {name: Shortsword, source: XPHB, category: martial, ranged: false, damage: 1d6, damage_type: Piercing, properties: [Finesse, Light], mastery: Vex}
+inventory: [{name: Backpack, source: XPHB, quantity: 1}]   # valgfri: det øvrige udstyr (ikke våben), se "Våben" nedenfor
 feats: [{name: Tavern Brawler, source: XPHB}]
 spells_known: [{name: Fire Bolt, source: XPHB}]   # spillerens egne valg: cantrips, forberedte, arcanum, ekstra (ikke spellbogen)
 optional_features: [{name: Careful Spell, source: XPHB, types: [MM], class: Sorcerer}]   # valgte Metamagic/Invocations/Maneuvers
@@ -130,6 +133,10 @@ race_traits: [{name: Darkvision, source: XPHB}]
 extra_training: []
 summary: [[Klasse, Fighter 5], [Art, Human], [Baggrund, Soldier]]
 ```
+
+## Våben
+
+`weapons` er en valgfri liste. Boksen `attacks` med `auto: true` laver én række pr. våben (træf `d20 + STR/DEX + PB`, skade, egenskaber, Mastery), og `weapons` med `auto: true` lister dem sammen med rustningen (`ac_note`). Byggeren udleder listen af startpakkerne for primærklassen og baggrunden (`equipment.class_package`/`background_package`), valg i pakkerne (`equipment.picks`, fx "ét Simple-våben"), udstyrsvælgeren (`equipment.items`) og navne i `equipment.extra` (`character_yaml._equipment()`). Samme ting nævnt flere gange lægges sammen (`quantity`, kun med hvis over 1). `name_da` er et dansk navn til angrebstabellen (`Dolk <em>Dagger</em>`; kun for våben, `items.NAME_DA` kender). `inventory` er alt det øvrige udstyr fra de samme kilder: `name`, `source`, `quantity` (ukendt fritekst har kun `name` og `quantity`). Boksen `gear` med `auto: true` lister `inventory`. Uden våben viser angrebsboksen Unarmed Strike. Felter: `name` (påkrævet), `category` (`simple`/`martial`, afgør PB ud fra `can_use.weapons`), `ranged` (true: DEX), `damage`, `damage_type`, `damage_versatile`, `properties` (Finesse, Light, Thrown, Versatile, Two-Handed, Ammunition ...), `range` (`20/60`), `mastery`.
 
 ## Klassens spellcasting
 
@@ -236,12 +243,7 @@ Entries, hvor Foundry giver HP eller initiativ, sendes ikke til LLM-effekt-udtr�
 - `languages`: løst ved at tracke PHB 2024 kap. 2's "Choose Languages"-regel
   direkte (`languages.known`, 2 sprog valgt fra Standard Languages-tabellen,
   se [choices-yaml.md](choices-yaml.md)) - `character_yaml._languages()`
-  bygger `"Common, " + ", ".join(known)`. **Kendt, BEVIDST gap:** "Your
-  class and other features might also give you languages" (fx Rogue får
-  Thieves' Cant, Druid får Druidic) tælles IKKE med her - de vises kun som
-  tekst i den feature, der giver dem (Træning og valg), ikke tilføjet til
-  `languages`-linjen. Der er ingen generel, sikker regel i 5etools' data for
-  at opdage ALLE den slags class-tildelte sprog automatisk.
+  bygger `"Common, " + ", ".join(known)`. Dertil kommer sprog, en klassefeature med sprogets navn giver (Rogue: Thieves' Cant, Druid: Druidic; sprogene findes i 5etools' `languages.json` som type `rare`/`secret`), `character_yaml._class_languages()`. **Ikke med:** frit valgte ekstra sprog fra features (fx det ekstra sprog til Thieves' Cant, Ranger Deft Explorer).
 
 Alle tre genberegnes altid og overskriver BEVIDST en manuel rettelse (samme
 "enkelt og forudsigeligt"-aftale som resten af systemet). `render.py` læser

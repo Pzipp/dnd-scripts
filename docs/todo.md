@@ -38,9 +38,6 @@ for effekt-udtræks-designet.
 
 ## LLM-vejen (`character.yaml` uden bygger)
 
-- **Standard-`sheets.yaml` er tilpasset en Rogue** (Shortsword-angreb, Sneak Attack-regel, Cunning Action, Thieves' Tools) og har
-  ingen `magic`-boks. Et ark af `dnd.py ark` uden egen `sheets.yaml` viser derfor pladsholdere og ingen spells for en caster.
-  Overvej en neutral standard, eller at LLM'en også skriver `sheets.yaml` (angreb, spells, regler).
 - **Kontrollen i layout-editoren:** `character_check.check_sheets_text()` kunne kobles på `/api/builder/sheets_check`, så Ark-fanens
   editor markerer ukendte bokstyper og nøgler (i dag kun YAML-syntaks).
 - **`tjek-ark` på byggerens egne karakterer** (med `choices.yaml`) er ikke koblet på `dnd.py tjek`; kontrollen giver dog ingen fejl på dem.

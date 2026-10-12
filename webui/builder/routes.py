@@ -8,7 +8,7 @@ from urllib.parse import quote
 import yaml
 from flask import Blueprint, jsonify, redirect, render_template, request, send_file, send_from_directory
 
-from . import baggrund, character_yaml, descriptions, e5tools, kort, layout_edit, llm_client, model, render, settings
+from . import baggrund, character_yaml, descriptions, e5tools, items, kort, layout_edit, llm_client, model, render, settings
 from . import sheets as sheets_module
 
 bp = Blueprint("builder", __name__)
@@ -73,7 +73,8 @@ def _save_choices(character_dir: Path, data: dict) -> None:
     Brug denne i stedet for model.save() direkte, alle steder choices.yaml ændres."""
     model.save(character_dir, data)
     character_yaml.derive_and_save(character_dir, data)
-    sheets_module.ensure_exists(character_dir)
+    # sheets.yaml oprettes ikke her: uden den følger standardlayoutet karakteren (spells, våben ...), når den ændres.
+    # Filen skrives først, når layoutet gemmes eller en boks flyttes.
 
 
 def _builder_characters() -> list[str]:
@@ -300,9 +301,11 @@ def api_sheets_yaml_get():
         return jsonify({"error": str(exc)}), 400
     if not character_dir.is_dir():
         return jsonify({"error": "Ukendt karakter."}), 404
-    # Uden sheets.yaml vises standarden (skabelonen) uden at skrive filen; den oprettes først, når man gemmer eller flytter en boks.
-    path = sheets_module.sheets_path(character_dir)
-    return jsonify({"yaml": (path if path.is_file() else sheets_module.TEMPLATE_PATH).read_text(encoding="utf-8")})
+    # Uden sheets.yaml vises standardlayoutet (default_layout.py) uden at skrive filen; den oprettes først, når man gemmer eller flytter en boks.
+    # ?default=1 giver altid standardlayoutet (nulstil til standard), uden at røre filen.
+    if request.args.get("default") == "1":
+        return jsonify({"yaml": sheets_module.default_text(character_dir)})
+    return jsonify({"yaml": sheets_module.current_text(character_dir)})
 
 
 @bp.post("/api/builder/sheets_yaml")
@@ -380,6 +383,23 @@ def api_state():
         return jsonify({"error": "Ukendt karakter."}), 404
     data = model.load(character_dir)
     return jsonify(model.state(data))
+
+
+@bp.get("/api/builder/items")
+def api_items():
+    """Udstyrskatalog til udstyrsvælgeren: almindelige (ikke-magiske) ting fra karakterens tilladte kilder."""
+    name = request.args.get("name", "")
+    try:
+        character_dir = _character_dir(name)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    if not character_dir.is_dir():
+        return jsonify({"error": "Ukendt karakter."}), 404
+    if not e5tools.available():
+        return jsonify({"items": [], "kinds": items.KINDS})
+    data = model.load(character_dir)
+    sources = set((data.get("settings") or {}).get("allowed_sources") or {"XPHB"})
+    return jsonify({"items": items.catalog(sources), "kinds": items.KINDS})
 
 
 @bp.post("/api/builder/answer")
