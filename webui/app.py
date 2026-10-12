@@ -9,10 +9,15 @@ ROOT = Path(__file__).resolve().parent.parent
 WEBUI = Path(__file__).resolve().parent
 
 app = Flask(__name__)
+app.config["MAX_CONTENT_LENGTH"] = 100 * 1024 * 1024  # store kort til /simpelvtt
 
 from builder.routes import bp as builder_bp  # noqa: E402
 
 app.register_blueprint(builder_bp)
+
+from simpelvtt import bp as simpelvtt_bp  # noqa: E402
+
+app.register_blueprint(simpelvtt_bp)
 
 
 @app.get("/")

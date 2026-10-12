@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Simpelt VTT</title>
+  <link rel="icon" href="{{ url_for('static', filename='favicon-32.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='simpelvtt.css') }}">
+</head>
+<body data-mode="play">
+<header class="top">
+  <h1><a href="/" title="Til menuen">&larr;</a> Simpelt VTT</h1>
+  <div class="mode" role="group" aria-label="Tilstand">
+    <button type="button" data-m="edit">EDIT</button><button type="button" data-m="play">PLAY</button>
+  </div>
+  <label class="only-play">Kampagne <select id="campSel"></select></label>
+  <button type="button" class="only-edit" id="newCamp">+ Kampagne</button>
+  <span class="sp"></span>
+  <button type="button" id="openViewer">Åbn spillerskærm</button>
+</header>
+<main>
+  <section id="tree"></section>
+  <aside id="stage" class="box only-play">
+    <div class="muted">Preview af spillerskærmen <span id="curName"></span></div>
+    <div class="view" id="view"><img id="img" alt=""><canvas id="grid"></canvas></div>
+    <div class="ctl" id="ctl">
+      <div class="row">
+        <span>Træk/zoom:</span>
+        <label><input type="radio" name="tgt" value="img" checked> Billede</label>
+        <label><input type="radio" name="tgt" value="grid"> Grid</label>
+        <button type="button" class="sm" id="zout">&minus;</button><button type="button" class="sm" id="zin">+</button>
+        <button type="button" class="sm" id="reset">Nulstil mål</button>
+        <button type="button" class="sm danger" id="blank">Tom skærm</button>
+      </div>
+      <span>Billede zoom</span><input type="range" id="iz" min="0.1" max="8" step="0.01"><output id="izo"></output>
+      <div class="row"><label><input type="checkbox" id="gon"> Grid til</label>
+        <label>Celle (px) <input type="number" id="gsize" min="4" max="2000" step="1"></label>
+        <label>Farve <input type="color" id="gcol"></label></div>
+      <span>Gennemsigtighed</span><input type="range" id="galpha" min="0.05" max="1" step="0.05"><output id="galphao"></output>
+      <span>Grid zoom</span><input type="range" id="gz" min="0.1" max="8" step="0.01"><output id="gzo"></output>
+      <div class="row"><label>Offset X <input type="number" id="gox" step="1"></label><label>Offset Y <input type="number" id="goy" step="1"></label></div>
+    </div>
+  </aside>
+</main>
+<input type="file" id="fileIn" accept=".png,.jpg,.jpeg,.webp,.gif,image/*" multiple hidden>
+<div id="msg"></div>
+<script src="{{ url_for('static', filename='simpelvtt-render.js') }}"></script>
+<script src="{{ url_for('static', filename='simpelvtt.js') }}"></script>
+</body>
+</html>

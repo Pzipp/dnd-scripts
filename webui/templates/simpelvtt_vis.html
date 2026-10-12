@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spillerskærm</title>
+  <link rel="icon" href="{{ url_for('static', filename='favicon-32.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='simpelvtt.css') }}">
+</head>
+<body class="vis">
+<div class="view" id="view"><img id="img" alt=""><canvas id="grid"></canvas></div>
+<div id="wait">Venter på DM&hellip;</div>
+<button id="fs" type="button" title="Fuldskærm (F)">Fuldskærm</button>
+<script src="{{ url_for('static', filename='simpelvtt-render.js') }}"></script>
+<script>
+(function () {
+  const box = document.getElementById('view'), img = document.getElementById('img'), cv = document.getElementById('grid'), wait = document.getElementById('wait');
+  let rev = -1, view = null, cur = null;
+  const draw = () => view && window.vttRender(box, img, cv, view);
+  img.addEventListener('load', draw);
+  window.addEventListener('resize', draw);
+  async function poll() {
+    try {
+      const r = await fetch('/api/simpelvtt/state?rev=' + rev, { cache: 'no-store' });
+      const s = await r.json();
+      if (!s.unchanged) {
+        rev = s.rev; view = s.view; wait.style.display = s.image ? 'none' : 'grid';
+        if (s.image !== cur) { cur = s.image; if (cur) img.src = '/simpelvtt/img/' + cur.split('/').map(encodeURIComponent).join('/') + '?v=' + rev; else { img.removeAttribute('src'); } }
+        draw();
+      }
+    } catch (e) { /* netværksfejl: prøv igen */ }
+    setTimeout(poll, 700);
+  }
+  poll();
+  const fs = document.getElementById('fs');
+  const toggle = () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen().catch(() => {});
+  fs.addEventListener('click', toggle);
+  document.addEventListener('keydown', e => { if (e.key === 'f' || e.key === 'F') toggle(); });
+  let t; const show = () => { fs.classList.remove('hide'); clearTimeout(t); t = setTimeout(() => fs.classList.add('hide'), 3000); };
+  document.addEventListener('pointermove', show); show();
+})();
+</script>
+</body>
+</html>
