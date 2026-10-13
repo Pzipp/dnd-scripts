@@ -186,7 +186,7 @@ GRID_COLOR = "#1D2026"
 def default_view() -> dict:
     return {"img": {"zoom": 1, "x": 0, "y": 0, "rot": 0},
             "grid": {"on": False, "size": GRID_SIZE, "color": GRID_COLOR, "alpha": 0.4, "ox": 0, "oy": 0, "zoom": 1, "x": 0, "y": 0, "v": 2},
-            "night": False}
+            "night": 0}
 
 
 def clean_view(v) -> dict:
@@ -201,7 +201,8 @@ def clean_view(v) -> dict:
                  "color": color if ok and not (old and color.lower() == "#ffffff") else GRID_COLOR,
                  "alpha": num(g.get("alpha"), 0, 1, 0.4), "ox": 0 if old else num(g.get("ox"), -1000, 1000, 0), "oy": 0 if old else num(g.get("oy"), -1000, 1000, 0),
                  "zoom": num(g.get("zoom"), 0.05, 40, 1), "x": num(g.get("x"), -50, 50, 0), "y": num(g.get("y"), -50, 50, 0), "v": 2}
-    d["night"] = bool(v.get("night"))
+    n = v.get("night")  # 0 = dag … 100 = fuld nat; ældre gemt true/false => 100/0
+    d["night"] = (100 if n else 0) if isinstance(n, bool) or n is None else int(round(num(n, 0, 100, 0)))
     return d
 
 

@@ -43,7 +43,7 @@ body.vis { overflow:hidden; background:#000; } body.vis .view { position:fixed; 
 #fs { position:fixed; right:12px; bottom:12px; z-index:5; opacity:.55; transition:opacity .3s; } #fs.hide { opacity:0; pointer-events:none; }
 #wait { position:fixed; inset:0; display:grid; place-items:center; color:#555; font-size:20px; pointer-events:none; }
 
-.view .night { position:absolute; inset:0; pointer-events:none; background:rgb(28,44,110); mix-blend-mode:multiply; opacity:.78; }
+.view .night { position:absolute; inset:0; pointer-events:none; background:rgb(28,44,110); mix-blend-mode:multiply; opacity:.78; transition:opacity .5s ease, background-color .5s ease; }
 .view .night::after { content:""; position:absolute; inset:0; background:rgba(10,20,70,.28); }
 .camp.gm { border-style:dashed; } .camp.gm > summary { cursor:pointer; font-weight:700; font-size:15px; list-style-position:inside; }
 .camp.gm > summary .muted { font-weight:400; margin-left:8px; }

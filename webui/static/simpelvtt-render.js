@@ -9,7 +9,10 @@ window.vttRender = function (box, img, canvas, view) {
   canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
   let night = box.querySelector('.night');
   if (!night) { night = document.createElement('div'); night.className = 'night'; box.insertBefore(night, canvas); }
-  night.style.display = view.night ? 'block' : 'none';
+  const t = Math.max(0, Math.min(100, +view.night || 0)) / 100, mix = (a, b) => Math.round(a + (b - a) * t);
+  night.style.display = t > 0 ? 'block' : 'none';  // skumring (varm orange) glider over i blålig nat
+  night.style.background = `rgb(${mix(255, 28)},${mix(150, 44)},${mix(70, 110)})`;
+  night.style.opacity = (.78 * Math.pow(t, .7)).toFixed(3);
   const ctx = canvas.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
   if (!nw || !nh) { img.style.display = 'none'; return; }
   img.style.display = '';

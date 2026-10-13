@@ -156,14 +156,14 @@
   const rotBy = d => { if (!S.view || !S.cur) return; S.view.img.rot = ((Math.round(((S.view.img.rot || 0) + d) / 90) * 90) % 360 + 360) % 360; syncCtl(); save(); };
   $('rotr').onclick = () => rotBy(90);
   bind('iz', e => S.view.img.zoom = +e.value); bind('gz', e => S.view.grid.zoom = +e.value);
-  bind('night', e => S.view.night = e.checked, 'change'); bind('gon', e => S.view.grid.on = e.checked, 'change'); bind('gsize', e => S.view.grid.size = clamp(+e.value || 60, 4, 1000));
+  bind('night', e => S.view.night = +e.value || 0); bind('gon', e => S.view.grid.on = e.checked, 'change'); bind('gsize', e => S.view.grid.size = clamp(+e.value || 60, 4, 1000));
   bind('gcol', e => S.view.grid.color = e.value); bind('galpha', e => S.view.grid.alpha = +e.value);
   bind('gox', e => S.view.grid.ox = +e.value || 0); bind('goy', e => S.view.grid.oy = +e.value || 0);
   function syncCtl(skip) {
     const v = S.view; if (!v) return;
     const set = (id, val) => { if (id !== skip) $(id).value = val; };
     set('iz', v.img.zoom); set('gz', v.grid.zoom); set('gsize', v.grid.size); set('gcol', v.grid.color); set('galpha', v.grid.alpha); set('gox', v.grid.ox); set('goy', v.grid.oy);
-    $('gon').checked = v.grid.on; $('night').checked = !!v.night;
+    $('gon').checked = v.grid.on; set('night', v.night || 0); $('nighto').textContent = (v.night || 0) + '%';
     $('izo').textContent = v.img.zoom.toFixed(2) + '×'; $('gzo').textContent = v.grid.zoom.toFixed(2) + '×'; $('galphao').textContent = Math.round(v.grid.alpha * 100) + '%';
   }
 
@@ -171,7 +171,7 @@
     S.camp = store.get('vtt-camp');
     const d = await call('GET', 'state?rev=-1');
     if (d && d.image) { S.cur = d.image; S.view = d.view; syncCtl(); applyImage(); }
-    else { S.view = { img: { zoom: 1, x: 0, y: 0, rot: 0 }, grid: { on: false, size: 60, color: '#1D2026', alpha: .4, ox: 0, oy: 0, zoom: 1, x: 0, y: 0, v: 2 }, night: false }; syncCtl(); }
+    else { S.view = { img: { zoom: 1, x: 0, y: 0, rot: 0 }, grid: { on: false, size: 60, color: '#1D2026', alpha: .4, ox: 0, oy: 0, zoom: 1, x: 0, y: 0, v: 2 }, night: 0 }; syncCtl(); }
     await loadTree();
     setMode(store.get('vtt-mode') === 'edit' ? 'edit' : 'play');
   }

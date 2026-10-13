@@ -33,7 +33,7 @@ Zoom 1 betyder, at billedet passer i vinduet (for et roteret billede regnes med 
 
 **Grid og skærm:** gridets cellestørrelse (`grid.size`) og offset er i tusindedele af viewportens korteste side (vmin/10) og ganges med gridzoom. De følger altså skærmen, ikke billedets dimensioner, zoom, pan eller rotation, og preview og spillerskærm får samme antal celler uanset opløsning. Standard er 60 (ca. 17 celler på korteste side) og standardfarven er `#1D2026`. Gemte grids uden `grid.v: 2` (ældre, i billedpixel) falder tilbage til standardstørrelse, offset 0 og standardfarve (hvid blev til standard).
 
-**Nat:** afkrydsningsfeltet "Nat" (pr. kort, `view.night`, gemt i `views.json` og synkroniseret) lægger et mørkt, blåligt multiply-lag over billedet; gridet ligger over laget. Tegnes af `vttRender`, så preview og spillerskærm er ens.
+**Nat:** slideren "Nat" (pr. kort, `view.night` = 0 dag … 100 fuld nat, heltal klemt i `clean_view`; gammel `true`/`false` => 100/0; gemt i `views.json` og synkroniseret) lægger et multiply-lag over billedet, hvis farve glider fra varm orange (skumring, lave værdier) til blålig nat (høje) og med opacity efter værdien, med kort CSS-transition; gridet ligger over laget. Tegnes af `vttRender`, så preview og spillerskærm er ens.
 
 ## General Maps
 
