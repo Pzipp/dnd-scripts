@@ -28,6 +28,10 @@ CAMPAIGNS = DATA / "campaigns"
 VIEWS_FILE = DATA / "views.json"
 STATE_FILE = DATA / "state.json"
 THUMBS = DATA / ".thumbs"
+# General Maps: tilgængelig i alle kampagner. To kilder slået sammen: leveret med repoet (read-only) og brugerens egne.
+GM_NAME = "General Maps"
+GM_SHIPPED = Path(__file__).resolve().parent / "general_maps"
+GM_USER = DATA / "general-maps"
 EXT = {".png", ".jpg", ".jpeg", ".webp", ".gif"}
 MAGIC = {".png": (b"\x89PNG",), ".jpg": (b"\xff\xd8",), ".jpeg": (b"\xff\xd8",), ".webp": (b"RIFF",), ".gif": (b"GIF8",)}
 BAD_NAME = re.compile(r'[\x00-\x1f/\\:*?"<>|]')
@@ -64,22 +68,46 @@ def clean_filename(name: str) -> str:
 
 def _inside(p: Path) -> Path:
     p = p.resolve()
-    if CAMPAIGNS.resolve() not in p.parents:
+    if not any(r.resolve() in p.parents for r in (CAMPAIGNS, GM_USER, GM_SHIPPED)):
         raise Fejl("Ugyldig sti.", 400)
     return p
 
 
+def is_gm(camp) -> bool:
+    return str(camp or "").strip().lower() == GM_NAME.lower()
+
+
+def is_locked(p: Path) -> bool:
+    return GM_SHIPPED.resolve() in p.resolve().parents
+
+
 def campaign_dir(camp: str) -> Path:
-    return _inside(CAMPAIGNS / clean_name(camp))
+    name = clean_name(camp)
+    if is_gm(name):
+        raise Fejl(f"'{GM_NAME}' er reserveret og kan ikke oprettes, omdøbes eller slettes som kampagne.", 403)
+    return _inside(CAMPAIGNS / name)
 
 
-def folder(camp: str, room: str | None = None, must_exist=True) -> Path:
-    p = campaign_dir(camp)
+def folder(camp: str, room: str | None = None, must_exist=True, create=False) -> Path:
+    """Mappe til skrivning/læsning. For General Maps peger den altid på brugerens egen mappe (vol/)."""
+    if is_gm(camp):
+        base = GM_USER
+        if create:
+            base.mkdir(parents=True, exist_ok=True)
+        p = base.resolve()
+    else:
+        p = campaign_dir(camp)
     if room:
         p = _inside(p / clean_name(room))
+        if create and not p.exists() and is_gm(camp):
+            p.mkdir(parents=True, exist_ok=True)
     if must_exist and not p.is_dir():
         raise Fejl("Mappen findes ikke.", 404)
     return p
+
+
+def gm_room_shipped(room: str) -> bool:
+    return (GM_SHIPPED / clean_name(room)).is_dir()
 
 
 def image_path(ref: str) -> Path:
@@ -87,14 +115,34 @@ def image_path(ref: str) -> Path:
     parts = str(ref or "").split("/")
     if len(parts) not in (2, 3) or any(not x or x.startswith(".") for x in parts):
         raise Fejl("Ugyldigt billede.", 400)
-    p = _inside(CAMPAIGNS.joinpath(*[clean_name(x) if i < len(parts) - 1 else clean_filename(x) for i, x in enumerate(parts)]))
+    clean = [clean_name(x) if i < len(parts) - 1 else clean_filename(x) for i, x in enumerate(parts)]
+    if is_gm(clean[0]):
+        if clean[0] != GM_NAME:
+            raise Fejl("Ugyldigt billede.", 400)
+        for root in (GM_SHIPPED, GM_USER):  # leveret fil vinder ved samme navn
+            p = _inside(root.joinpath(*clean[1:]))
+            if p.is_file():
+                return p
+        raise Fejl("Billedet findes ikke.", 404)
+    p = _inside(CAMPAIGNS.joinpath(*clean))
     if not p.is_file():
         raise Fejl("Billedet findes ikke.", 404)
     return p
 
 
+def image_path_rw(ref: str) -> Path:
+    p = image_path(ref)
+    if is_locked(p):
+        raise Fejl("Billedet er leveret med appen og er låst.", 403)
+    return p
+
+
 def ref_of(p: Path) -> str:
-    return p.resolve().relative_to(CAMPAIGNS.resolve()).as_posix()
+    p = p.resolve()
+    for root in (GM_SHIPPED, GM_USER):
+        if root.resolve() in p.parents:
+            return GM_NAME + "/" + p.relative_to(root.resolve()).as_posix()
+    return p.relative_to(CAMPAIGNS.resolve()).as_posix()
 
 
 def unique(dirp: Path, filename: str) -> Path:
@@ -130,9 +178,15 @@ def num(v, lo, hi, default):
     return default if v != v else max(lo, min(hi, v))
 
 
+# Grid: cellestørrelse og offset er i tusindedele af viewportens korteste side (vmin/10), uafhængigt af billedet.
+GRID_SIZE = 60
+GRID_COLOR = "#1D2026"
+
+
 def default_view() -> dict:
     return {"img": {"zoom": 1, "x": 0, "y": 0, "rot": 0},
-            "grid": {"on": False, "size": 70, "color": "#ffffff", "alpha": 0.4, "ox": 0, "oy": 0, "zoom": 1, "x": 0, "y": 0}}
+            "grid": {"on": False, "size": GRID_SIZE, "color": GRID_COLOR, "alpha": 0.4, "ox": 0, "oy": 0, "zoom": 1, "x": 0, "y": 0, "v": 2},
+            "night": False}
 
 
 def clean_view(v) -> dict:
@@ -141,10 +195,13 @@ def clean_view(v) -> dict:
     d["img"] = {"zoom": num(i.get("zoom"), 0.05, 40, 1), "x": num(i.get("x"), -50, 50, 0), "y": num(i.get("y"), -50, 50, 0),
                 "rot": int(round(num(i.get("rot"), -1e6, 1e6, 0) / 90)) * 90 % 360}
     color = g.get("color")
-    d["grid"] = {"on": bool(g.get("on")), "size": num(g.get("size"), 4, 2000, 70),
-                 "color": color if isinstance(color, str) and re.fullmatch(r"#[0-9a-fA-F]{6}", color) else "#ffffff",
-                 "alpha": num(g.get("alpha"), 0, 1, 0.4), "ox": num(g.get("ox"), -2000, 2000, 0), "oy": num(g.get("oy"), -2000, 2000, 0),
-                 "zoom": num(g.get("zoom"), 0.05, 40, 1), "x": num(g.get("x"), -50, 50, 0), "y": num(g.get("y"), -50, 50, 0)}
+    old = g.get("v") != 2  # ældre gemt grid var i billedpixel: størrelse/offset/standardfarve falder tilbage til standard
+    ok = isinstance(color, str) and re.fullmatch(r"#[0-9a-fA-F]{6}", color)
+    d["grid"] = {"on": bool(g.get("on")), "size": GRID_SIZE if old else num(g.get("size"), 4, 1000, GRID_SIZE),
+                 "color": color if ok and not (old and color.lower() == "#ffffff") else GRID_COLOR,
+                 "alpha": num(g.get("alpha"), 0, 1, 0.4), "ox": 0 if old else num(g.get("ox"), -1000, 1000, 0), "oy": 0 if old else num(g.get("oy"), -1000, 1000, 0),
+                 "zoom": num(g.get("zoom"), 0.05, 40, 1), "x": num(g.get("x"), -50, 50, 0), "y": num(g.get("y"), -50, 50, 0), "v": 2}
+    d["night"] = bool(v.get("night"))
     return d
 
 
@@ -197,18 +254,37 @@ def viewer_page():
 # ---------- træ ----------
 
 def list_images(d: Path) -> list[str]:
+    if not d.is_dir():
+        return []
     return sorted((f.name for f in d.iterdir() if f.is_file() and f.suffix.lower() in EXT), key=str.lower)
+
+
+def _subdirs(d: Path) -> set[str]:
+    return {x.name for x in d.iterdir() if x.is_dir() and not x.name.startswith(".")} if d.is_dir() else set()
+
+
+def general_tree() -> dict:
+    """General Maps: leveret mappe (låst) og brugerens mappe slået sammen. Samme room-navn = én room."""
+    def merged(shipped: Path, user: Path) -> dict:
+        s_img = list_images(shipped)
+        u_img = [f for f in list_images(user) if f not in s_img]
+        return {"images": sorted(s_img + u_img, key=str.lower), "locked": s_img}
+    out = merged(GM_SHIPPED, GM_USER)
+    out["name"] = GM_NAME
+    out["rooms"] = [dict(name=r, shipped=(GM_SHIPPED / r).is_dir(), **merged(GM_SHIPPED / r, GM_USER / r))
+                    for r in sorted(_subdirs(GM_SHIPPED) | _subdirs(GM_USER), key=str.lower)]
+    return out
 
 
 @bp.get("/api/simpelvtt/tree")
 def tree():
     CAMPAIGNS.mkdir(parents=True, exist_ok=True)
     out = []
-    for c in sorted((x for x in CAMPAIGNS.iterdir() if x.is_dir() and not x.name.startswith(".")), key=lambda p: p.name.lower()):
+    for c in sorted((x for x in CAMPAIGNS.iterdir() if x.is_dir() and not x.name.startswith(".") and not is_gm(x.name)), key=lambda p: p.name.lower()):
         rooms = [{"name": r.name, "images": list_images(r)}
                  for r in sorted((x for x in c.iterdir() if x.is_dir() and not x.name.startswith(".")), key=lambda p: p.name.lower())]
         out.append({"name": c.name, "images": list_images(c), "rooms": rooms})
-    return jsonify({"campaigns": out})
+    return jsonify({"campaigns": out, "general": general_tree()})
 
 
 @bp.post("/api/simpelvtt/campaign")
@@ -224,9 +300,9 @@ def campaign_new():
 @bp.post("/api/simpelvtt/room")
 def room_new():
     d = request.get_json(silent=True) or {}
-    base = folder(d.get("campaign"))
+    base = folder(d.get("campaign"), create=True)
     p = _inside(base / clean_name(d.get("name")))
-    if p.exists():
+    if p.exists() or (is_gm(d.get("campaign")) and gm_room_shipped(d.get("name"))):
         raise Fejl("Findes allerede.", 409)
     p.mkdir()
     return jsonify({"ok": True})
@@ -244,22 +320,28 @@ def _rename(src: Path, dst: Path, old_ref: str, new_ref: str):
 @bp.patch("/api/simpelvtt/campaign")
 def campaign_rename():
     d = request.get_json(silent=True) or {}
-    src, new = folder(d.get("name")), clean_name(d.get("to"))
+    src, new = folder(campaign_dir(d.get("name")).name), clean_name(d.get("to"))
     return _rename(src, campaign_dir(new), src.name, new)
 
 
 @bp.patch("/api/simpelvtt/room")
 def room_rename():
     d = request.get_json(silent=True) or {}
+    gm = is_gm(d.get("campaign"))
+    if gm and gm_room_shipped(d.get("name")):
+        raise Fejl("Rummet er leveret med appen og er låst.", 403)
     src, new = folder(d.get("campaign"), d.get("name")), clean_name(d.get("to"))
-    return _rename(src, _inside(src.parent / new), f"{src.parent.name}/{src.name}", f"{src.parent.name}/{new}")
+    if gm and gm_room_shipped(new):
+        raise Fejl("Navnet er i brug.", 409)
+    cname = GM_NAME if gm else src.parent.name
+    return _rename(src, _inside(src.parent / new), f"{cname}/{src.name}", f"{cname}/{new}")
 
 
 @bp.delete("/api/simpelvtt/campaign")
 def campaign_delete():
     d = request.get_json(silent=True) or {}
     with LOCK:
-        p = folder(d.get("name"))
+        p = folder(campaign_dir(d.get("name")).name)
         shutil.rmtree(p)
         remap_refs(p.name, None)
     return jsonify({"ok": True})
@@ -268,10 +350,13 @@ def campaign_delete():
 @bp.delete("/api/simpelvtt/room")
 def room_delete():
     d = request.get_json(silent=True) or {}
+    gm = is_gm(d.get("campaign"))
+    if gm and gm_room_shipped(d.get("name")):
+        raise Fejl("Rummet er leveret med appen og er låst.", 403)
     with LOCK:
         p = folder(d.get("campaign"), d.get("name"))
         shutil.rmtree(p)
-        remap_refs(f"{p.parent.name}/{p.name}", None)
+        remap_refs(f"{GM_NAME if gm else p.parent.name}/{p.name}", None)
     return jsonify({"ok": True})
 
 
@@ -279,7 +364,7 @@ def room_delete():
 
 @bp.post("/api/simpelvtt/upload")
 def upload():
-    dest = folder(request.form.get("campaign"), request.form.get("room") or None)
+    dest = folder(request.form.get("campaign"), request.form.get("room") or None, create=True)
     saved, errors = [], []
     for f in request.files.getlist("files"):
         try:
@@ -300,8 +385,8 @@ def upload():
 def move():
     d = request.get_json(silent=True) or {}
     with LOCK:
-        src = image_path(d.get("image"))
-        dest = folder(d.get("campaign"), d.get("room") or None)
+        src = image_path_rw(d.get("image"))
+        dest = folder(d.get("campaign"), d.get("room") or None, create=True)
         if src.parent == dest:
             return jsonify({"ok": True, "image": ref_of(src)})
         target = unique(dest, src.name)
@@ -316,7 +401,7 @@ def image_rename():
     """Omdøb billedets filnavn (endelsen bevares). Visning, aktivt kort og miniaturer følger med."""
     d = request.get_json(silent=True) or {}
     with LOCK:
-        src = image_path(d.get("image"))
+        src = image_path_rw(d.get("image"))
         stem = BAD_NAME.sub("", str(d.get("to") or "")).strip()
         if Path(stem).suffix.lower() in EXT:
             stem = stem[:-len(Path(stem).suffix)]
@@ -342,7 +427,7 @@ def image_rename():
 def image_delete():
     d = request.get_json(silent=True) or {}
     with LOCK:
-        p = image_path(d.get("image"))
+        p = image_path_rw(d.get("image"))
         ref = ref_of(p)
         p.unlink()
         remap_refs(ref, None)

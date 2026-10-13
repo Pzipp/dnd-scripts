@@ -13,6 +13,7 @@ Kun to niveauer: **kampagne** (øverste mappe) og **room** (undermappe). Billede
 | `campaigns/<kampagne>/[<room>/]<fil>` | Uploadede billeder |
 | `views.json` | Gemt visning pr. kort (zoom/pan/rotation for billede, zoom/pan for grid, grid-indstillinger) |
 | `state.json` | Hvilket kort spillerskærmen viser nu, plus en tæller (`rev`) |
+| `general-maps/<room>/<fil>` | Brugerens egne General Maps-kort (se nedenfor) |
 | `.thumbs/` | Miniaturer (kræver Pillow; ellers bruges originalen) |
 
 Docker: `docker-compose.yml` bind-mounter hele repoet på `/app`, så `vol/simpelvtt/` ligger på værten og overlever genstart. Pillow står i `webui/requirements.txt` (byg imaget forfra efter opdatering).
@@ -23,12 +24,25 @@ Upload: png, jpg, webp og gif (kontrolleret på både endelse og filens første 
 
 * **EDIT** (blå): det eneste sted, hvor noget kan ændres i biblioteket: opret, omdøb og slet kampagner og rooms; upload (knapper og træk fra computeren); flyt billeder ved at trække dem til et andet room/kampagnen eller med "Flyt…"-menuen; omdøb billeder (knappen "Omdøb" på kortet); slet billeder. Filer kan også trækkes direkte fra computeren ind på et room.
 * **PLAY** (grøn): vælg kampagne i dropdown; dens rooms vises som sektioner med miniaturer. Klik på et kort for at vise det, og justér visningen (zoom, pan, grid, rotation). Upload, nyt room, flyt, slet, omdøb og træk-og-slip findes ikke i PLAY: knapperne er skjult, drop-targets og handlere er slået fra, og skift af tilstand rydder en halvfærdig filvælger. Det er kun UI; API'et er åbent.
-* Preview til højre viser, hvad spillerne ser. Træk i det for at panne, hjul/+/- for at zoome; vælg om **Billede** eller **Grid** skal flyttes. Billede og grid har hver sin zoom og pan. Skydere/felter: billedzoom, grid til/fra, celle (px), farve, gennemsigtighed, gridzoom, offset X/Y.
+* Preview til højre viser, hvad spillerne ser. Træk i det for at panne, hjul/+/- for at zoome; vælg om **Billede** eller **Grid** skal flyttes. Billede og grid har hver sin zoom og pan. Skydere/felter: billedzoom, grid til/fra, celle, farve, gennemsigtighed, gridzoom, offset X/Y.
 * **Åbn spillerskærm** åbner `/simpelvtt/vis` i en ny fane (genbruger fanen, hvis den allerede er åben). Her er knappen "Fuldskærm" (eller tasten F).
 
 **Rotation:** én knap "↻ Roter 90°" under Billede i PLAY (ét klik = 90° med uret; ingen skyder eller fri vinkel). Vinklen (`img.rot`, grader, normaliseres af API'et til 0/90/180/270) gemmes pr. kort i visningen og synkroniseres til spillerskærmen. Billedet drejes om sit eget midtpunkt; gridet roterer ikke med, men beholder sin egen zoom og offset.
 
-Zoom 1 betyder, at billedet passer i vinduet (for et roteret billede regnes med den omsluttende boks om det roterede billede, så det ikke klippes); pan er brøkdele af vinduets størrelse. Det giver samme udsnit på alle skærmstørrelser. Cellestørrelsen er i billedpixel og skaleres med billedets "passer i vinduet"-faktor og gridzoom.
+Zoom 1 betyder, at billedet passer i vinduet (for et roteret billede regnes med den omsluttende boks om det roterede billede, så det ikke klippes); pan er brøkdele af vinduets størrelse. Det giver samme udsnit på alle skærmstørrelser. Gridets cellestørrelse er knyttet til viewporten (se nedenfor).
+
+**Grid og skærm:** gridets cellestørrelse (`grid.size`) og offset er i tusindedele af viewportens korteste side (vmin/10) og ganges med gridzoom. De følger altså skærmen, ikke billedets dimensioner, zoom, pan eller rotation, og preview og spillerskærm får samme antal celler uanset opløsning. Standard er 60 (ca. 17 celler på korteste side) og standardfarven er `#1D2026`. Gemte grids uden `grid.v: 2` (ældre, i billedpixel) falder tilbage til standardstørrelse, offset 0 og standardfarve (hvid blev til standard).
+
+**Nat:** afkrydsningsfeltet "Nat" (pr. kort, `view.night`, gemt i `views.json` og synkroniseret) lægger et mørkt, blåligt multiply-lag over billedet; gridet ligger over laget. Tegnes af `vttRender`, så preview og spillerskærm er ens.
+
+## General Maps
+
+Særlig mappe, der vises som en sammenfoldet sektion (foldet som standard) i kampagneoversigten i både PLAY og EDIT, uanset valgt kampagne. Navnet `General Maps` er reserveret (kan ikke oprettes/omdøbes/slettes som kampagne). Kortene vises uden at blive kopieret. To kilder slås sammen (maks. to niveauer: room og billede):
+
+1. **Leveret** i `webui/simpelvtt/general_maps/` (sporet i git, kopieres ind i imaget af `COPY . .`; bind-mountet i dev). Read-only: låseikon, ingen slet/omdøb/flyt (API'et svarer 403). Kun billeder, gruppen har ret til at distribuere (se README dér).
+2. **Egne** i `vol/simpelvtt/general-maps/` (gitignoreret, overlever opdatering). Upload, flyt, omdøb og slet i EDIT virker her. Upload til et leveret room lægger filen i det tilsvarende room i `vol/`.
+
+Rooms med samme navn slås sammen til ét room. Ved samme filnavn vinder den leverede. Billedreferencen er `General Maps/<room>/<fil>`, så visning, zoom, rotation, nat og grid ligger stabilt i `views.json`. Stier kontrolleres mod de to rødder (ingen path traversal). API'et: `GET tree` returnerer `general` ud over `campaigns` (`locked` = leverede filnavne, `shipped` = room findes i den leverede mappe).
 
 ## Synk
 

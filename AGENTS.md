@@ -44,7 +44,7 @@ python3 dnd.py llm-opslag ...                 # opslag i 5etools til dig (script
 | Sti | Hvad |
 |---|---|
 | `dnd.py` | Indgangspunkt for den ældre kommandolinje |
-| `webui/` | Flask-webui: menu (`/`), karakterbygger (`/builder`) og simpelt VTT (`/simpelvtt`, kode i `webui/simpelvtt/`, se `docs/simpelvtt.md`). Se `webui/README.md` |
+| `webui/` | Flask-webui: menu (`/`), karakterbygger (`/builder`) og simpelt VTT (`/simpelvtt`, kode i `webui/simpelvtt/`; leverede General Maps-kort i `webui/simpelvtt/general_maps/` (sporet, read-only i UI'et) og brugerens egne i `vol/simpelvtt/general-maps/` (ikke i git); se `docs/simpelvtt.md`). Se `webui/README.md` |
 | `webui/builder/` | Byggerens kode: `model.py` (valg og state), `character_yaml.py` (udregning), `render.py` (ark), `default_layout.py` (standardlayout, når `sheets.yaml` mangler), `spellbox.py` (spell- og cantrip-lister), `kort.py`/`cards.py` (kort), `e5tools.py` (opslag og dansk overlay), `copies.py`/`versions.py` (`_copy`, `_versions`), `descriptions.py`/`effects.py`/`llm_client.py` (danske beskrivelser og effekter), `baggrund.py`, `layout_edit.py`, `routes.py` |
 | `webui/static/` | CSS/JS til webui'en, `baggrunde/` (billeder til ark og kort), `theme-*.css` (sidetemaer, endnu ikke tilsluttet) |
 | `karakterer/<navn>/` | Én mappe pr. karakter, se tabellen ovenfor. Ældre: `karakter.yaml` (`docs/karakterark-yaml.md`) |
