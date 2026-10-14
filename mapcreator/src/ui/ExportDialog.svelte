@@ -166,7 +166,7 @@
           </select>
         </label>
         {#if campaignMissing}<p class="err">Kampagnen findes ikke længere i VTT'et. Vælg en anden.</p>{/if}
-        <p class="hint">Findes filnavnet allerede, får den nye et ` (2)` efter navnet; den gamle overskrives ikke.</p>
+        <p class="hint">Findes filnavnet allerede, får den nye «(2)» efter navnet; den gamle overskrives ikke.</p>
       {/if}
       {#if treeError}<p class="err">Kunne ikke hente kampagner fra VTT'et: {treeError}</p>{/if}
       <p class="hint">{size.w} × {size.h} px · ingen grid i billedet</p>

@@ -4,7 +4,7 @@ Editor til slagkort (top-down, uden grid i selve billedet): lag med terræn, gen
 
 ## Status
 
-Færdigt: dokumentmodel, lag (tilføj, slet, flyt, skjul, lås, opacitet, højde), kamera (pan, zoom, knib), fortryd/gentag, gem og åbn, **terrænmaling** (pensel, viskelæder, fyld; 8 materialer) og **eksport som download** med navngivne udgaver. **genstande** (familier med varianter, vælger, flyt/skalér/rotér, skygger), **mure** med døre, porte og vinduer og et **scatter-værktøj** til skov og planter. Eksport til VTT og generator er næste trin.
+Færdigt: dokumentmodel, lag (tilføj, slet, flyt, skjul, lås, opacitet, højde), kamera (pan, zoom, knib), fortryd/gentag, gem og åbn, **terrænmaling** (pensel, viskelæder, fyld; 8 materialer) og **eksport som download** med navngivne udgaver. **genstande** (familier med varianter, vælger, flyt/skalér/rotér, skygger), **mure** med døre, porte og vinduer og et **scatter-værktøj** til skov og planter. Eksport (download eller direkte i VTT'et) er på plads; generator og egne genstande er næste trin.
 
 ## Terræn
 
@@ -34,7 +34,9 @@ Et mur-lag (`type: walls`) har `walls[]`: en linje af punkter med `thickness`, `
 
 ## Eksport (udgaver)
 
-Et kort har en liste af udgaver (`exports[]`): navn (bliver filnavnet), hvilke lag der udelades, format (PNG, WebP, JPEG), pixels pr. felt og kvalitet. Så kan samme kort give "Skovsti - ren" og "Skovsti - med lig". Billedet tegnes i browseren i fliser (grid og penselring er aldrig med) og hentes som fil. Grænse: højst 16384 px på den lange led og 120 mio. pixels.
+Et kort har en liste af udgaver (`exports[]`): navn (bliver filnavnet), hvilke lag der udelades, format (PNG, WebP, JPEG), pixels pr. felt og kvalitet. Så kan samme kort give "Skovsti - ren" og "Skovsti - med lig". Billedet tegnes i browseren i fliser (grid og penselring er aldrig med).
+
+**Mål pr. udgave:** *Hent som fil*, eller **send til det simple VTT**: General Maps eller en kampagne, evt. i et room (rooms hentes fra `GET /api/simpelvtt/tree`). Billedet lægges med VTT'ets eget upload (`POST /api/simpelvtt/upload`), så navnerensning, filtjek og dublet-navne (` (2)`, ingen overskrivning) er de samme som ved almindelig upload. Målet gemmes i kortet, så "Skovsti - ren" hver gang går til samme sted. Rooms skal findes i forvejen (undtagen under General Maps, hvor et room oprettes). Grænse: højst 16384 px på den lange led og 120 mio. pixels.
 
 ## Data
 

@@ -25,7 +25,7 @@ Et værktøj til at lave alle slags D&D-kort (top-down, malet stil, uden grid i 
 - [x] 3. Genstande: register med familier/varianter, vælger med Tilfældig, flyt/skalér/rotér, skygger, lagets højde.
 - [x] 4. **Mure**: stilarter (sten, mursten, træ, hæk), tegning punkt for punkt, redigering af punkter/tykkelse/længde, åbninger (åbning, dør, dobbeltdør, port, vindue) med åben/lukket og vend, fortryd, eksport.
 - [x] 5. **Scatter-værktøj**: spred familie/variant med tæthed, undgår vand, mure og andre genstande, fjern-tilstand, ét strøg = én fortryd.
-- [ ] 6. **Eksport til VTT**: dialog med kampagne/room/General Maps (`GET /api/simpelvtt/tree`), server modtager billedet og bruger simpelvtts eksisterende upload og navnerensning.
+- [x] 6. **Eksport til VTT**: dialog med kampagne/room/General Maps; udgaven sendes via simpelvtts eksisterende upload (ingen ny server-endpoint).
 - [ ] 7. **Generator**: vælg områdetema (skov, mose, grotte, ørken, by, kro, ruin, flodbred, bjergsti), generér en base som et almindeligt, redigerbart dokument (lag + elementer); eller start tomt. Layout som data adskilt fra tegning; udgange ved kanterne, så kort kan sættes sammen.
 - [ ] 8. **Egne genstande** (billedimport, se Beslutninger).
 - [ ] 9. **Polering**: flere typer græs og vand; bløde terrænkanter og strand/vådt ved vand; blødere vandbølger; flere og pænere genstande pr. familie; by- og kro-genstande (brolægning, tage, gulve, møbler, trapper, døre); eksporthastighed (Web Worker); kortstørrelse kan ændres; flytte data fra de andre systemer til `/userdata`.
