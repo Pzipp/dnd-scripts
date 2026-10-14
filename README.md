@@ -70,6 +70,8 @@ AGENTS.md               instruktioner til AI-assistenter (CLAUDE.md og GEMINI.md
 webui/                  webui: menu, karakterbygger (/builder)
   builder/              byggerens kode: valg, udregning, ark, kort, 5etools-opslag
   static/ templates/    CSS/JS/billeder (baggrunde/ er egne baggrundsbilleder) og HTML
+  mapcreator/           kortbyggerens server (gem/hent kort); se docs/mapcreator.md
+mapcreator/             kortbyggerens klient (TypeScript + Svelte), bygges med Node i Docker; se mapcreator/README.md
 karakterer/
   <navn>/               én mappe pr. karakter
     choices.yaml        byggerens rå valg (nyt system)
@@ -83,7 +85,7 @@ bibliotek/              kort, som gruppen deler, som YAML, og genererede caches 
 scripts/                generatorerne (se scripts/README.md)
   karakterark/  kort/  pdf/  data/
 data/                   danske oversættelser af 5etools-data og værktøjet til dem
-docs/                   formater, navnekonvention og todo
+docs/                   formater, navnekonvention, kortbygger (mapcreator*.md) og todo
 vol/                    runtime-data i Docker (ikke i git, bortset fra vol/homebrew/index.json)
 ```
 

@@ -4,7 +4,28 @@ Editor til slagkort (top-down, uden grid i selve billedet): lag med terræn, gen
 
 ## Status
 
-Færdigt: dokumentmodel, lag (tilføj, slet, flyt, skjul, lås, opacitet, højde), kamera (pan, zoom, knib), fortryd/gentag, gem og åbn, **terrænmaling** (pensel, viskelæder, fyld; 8 materialer) og **eksport som download** med navngivne udgaver. **genstande** (familier med varianter, vælger, flyt/skalér/rotér, skygger), **mure** med døre, porte og vinduer og et **scatter-værktøj** til skov og planter. Eksport (download eller direkte i VTT'et) er på plads; generator og egne genstande er næste trin.
+Færdigt: dokumentmodel og lag (tilføj, slet, flyt, skjul, lås, opacitet, højde), kamera (pan, zoom, knib), fortryd/gentag, gem og åbn, **terrænmaling** (pensel, viskelæder, fyld; 8 materialer), **genstande** (familier med varianter, vælger, flyt/skalér/rotér, skygger), **mure** med døre, porte og vinduer, et **scatter-værktøj** til skov og planter, og **eksport** med navngivne udgaver (download eller direkte i VTT'et). Mangler: generator (vælg et område og få en base), egne genstande (billedimport) og polering. Se [mapcreator-plan.md](mapcreator-plan.md).
+
+Flere dokumenter: [mapcreator-format.md](mapcreator-format.md) (JSON-format og API), [mapcreator-objects.md](mapcreator-objects.md) (laver og forbedre genstande) og [`mapcreator/README.md`](../mapcreator/README.md) (kode og udvikling).
+
+## Genveje
+
+| Tast | Værktøj eller handling |
+|---|---|
+| H | Hånd (flyt kortet; hjul zoomer, to fingre knibes) |
+| V | Vælg (genstande, mure, åbninger) |
+| G | Genstand (sæt ud) |
+| S | Spred (scatter) |
+| M | Mur |
+| D | Dør/åbning |
+| B / E | Pensel / viskelæder (terræn) |
+| Ctrl+Z / Ctrl+Y | Fortryd / gentag |
+| Ctrl+S | Gem |
+| Ctrl+D | Duplikér valgt genstand |
+| Delete | Slet valgt (åbning, mur eller genstand) |
+| Piltaster (Shift = stort skridt) | Flyt valgt genstand |
+| Esc | Tilbage til Vælg / fravælg / afbryd mur |
+| Shift under træk | Lås proportioner eller rund af til 15° / lås murens vinkel til 15° |
 
 ## Terræn
 
