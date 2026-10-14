@@ -1,6 +1,7 @@
 import { CELL_PX, type ExportFormat, type ExportPreset, type MapDoc } from '../model/types';
 import { renderGroundTile } from './ground';
 import { drawElementsLayer } from './sprites';
+import { drawWallsLayer } from './walls';
 import '../objects';
 
 export const FORMATS: Record<ExportFormat, { mime: string; ext: string; label: string; lossy: boolean }> = {
@@ -76,6 +77,16 @@ export async function renderExport(doc: MapDoc, preset: ExportPreset, onProgress
       ctx.scale(scale, scale);
       ctx.globalAlpha = layer.opacity;
       drawElementsLayer(ctx, layer, doc, scale);
+      ctx.restore();
+      onProgress?.(++done / total);
+      await yieldToUi();
+      continue;
+    }
+    if (layer.type === 'walls') {
+      ctx.save();
+      ctx.scale(scale, scale);
+      ctx.globalAlpha = layer.opacity;
+      drawWallsLayer(ctx, layer, doc, scale);
       ctx.restore();
       onProgress?.(++done / total);
       await yieldToUi();

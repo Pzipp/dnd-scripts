@@ -177,3 +177,17 @@ export function decodeGround(raw: { res: number; w: number; h: number; rle: stri
   if (pos !== data.length) throw new Error('Ødelagt terrænmaske.');
   return { res, w, h, data };
 }
+
+/** Materialet i et verdenspunkt: det øverste synlige grundlag med terræn dér (0 = ingenting). */
+export function materialAt(doc: { layers: { visible: boolean; ground?: GroundData }[] }, wx: number, wy: number): number {
+  for (let i = doc.layers.length - 1; i >= 0; i--) {
+    const g = doc.layers[i]!.ground;
+    if (!g || !doc.layers[i]!.visible) continue;
+    const x = Math.floor(wx / MASK_CELL_PX);
+    const y = Math.floor(wy / MASK_CELL_PX);
+    if (x < 0 || y < 0 || x >= g.w || y >= g.h) continue;
+    const m = g.data[y * g.w + x]!;
+    if (m !== 0) return m;
+  }
+  return 0;
+}

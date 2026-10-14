@@ -4,7 +4,7 @@ Editor til slagkort (top-down, uden grid i selve billedet): lag med terræn, gen
 
 ## Status
 
-Færdigt: dokumentmodel, lag (tilføj, slet, flyt, skjul, lås, opacitet, højde), kamera (pan, zoom, knib), fortryd/gentag, gem og åbn, **terrænmaling** (pensel, viskelæder, fyld; 8 materialer) og **eksport som download** med navngivne udgaver. **genstande** (familier med varianter, vælger, flyt/skalér/rotér, skygger). Mure, eksport til VTT og generator er næste trin.
+Færdigt: dokumentmodel, lag (tilføj, slet, flyt, skjul, lås, opacitet, højde), kamera (pan, zoom, knib), fortryd/gentag, gem og åbn, **terrænmaling** (pensel, viskelæder, fyld; 8 materialer) og **eksport som download** med navngivne udgaver. **genstande** (familier med varianter, vælger, flyt/skalér/rotér, skygger), **mure** med døre, porte og vinduer og et **scatter-værktøj** til skov og planter. Eksport til VTT og generator er næste trin.
 
 ## Terræn
 
@@ -19,6 +19,18 @@ Genstande ligger i genstands- og effektlag (`elements[]`): `kind`, position, st�
 **Skygger og højde.** Skyggen følger kortets `lightAngle`; dens længde er varianten's `shadow` plus (lagets højde + genstandens `z`) × 6 px. Genstande tegnes i rækkefølgen lag, derefter `z`, derefter rækkefølgen i laget. Hver genstand tegnes én gang til et lille lærred (`render/sprites.ts`) og genbruges, så mange genstande kan tegnes hurtigt.
 
 **Værktøjer.** *Vælg* (V): klik, træk for at flytte, håndtag til skalering (Shift låser/frigiver proportioner) og rotation (Shift runder til 15°), pile flytter, Delete sletter, Ctrl+D duplikerer. *Genstand* (G): sæt ud med forhåndsvisning; Esc går tilbage til Vælg. "Fastgør til halve felter" er valgfri.
+
+## Mure
+
+Et mur-lag (`type: walls`) har `walls[]`: en linje af punkter med `thickness`, `style` (sten, mursten, træ, hæk), `closed` og `openings[]`. Længde og form følger af punkterne (`model/walls.ts`); tegningen er vektor (`render/walls.ts`), så den er skarp ved enhver zoom.
+
+*Mur* (M): klik for hvert hjørne; klik på sidste punkt eller Enter afslutter, klik på første punkt lukker, Shift låser vinklen til 15°, Backspace fjerner sidste punkt, Esc afbryder. *Vælg* (V) på en mur viser punkthåndtag: træk et firkantet punkt for at ændre form og længde, en rund prik midt på et stykke for at indsætte et punkt, dobbeltklik for at fjerne et punkt, træk i selve muren for at flytte den. Tykkelse og type rettes i panelet til højre.
+
+*Dør* (D): klik på en mur for at sætte en åbning ind (åbning, dør, dobbeltdør, port eller vindue). Åbninger, dørene og portene skærer et hul i muren; vinduer sidder i den. Vælg en åbning for at åbne den, vende den eller trække den langs muren.
+
+## Scatter
+
+*Spred* (S) spreder den valgte familie eller variant over et område, mens man trækker. **Tilfældig** trækker en ny variant for hver genstand (en skov med flere slags træer). Indstillinger: penselstørrelse, tæthed (tæt = kroner overlapper), *Undgå vand* (kigger på terrænet under) og *Fjern i stedet for at spredes* (markerer genstande i cirklen med rødt og fjerner dem, når man slipper). Genstande lægges ikke oven i hinanden og ikke oven i mure; et strøg er én fortryd-handling (`model/scatter.ts`).
 
 ## Eksport (udgaver)
 

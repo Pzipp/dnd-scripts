@@ -28,11 +28,11 @@
     editor.stampFamily = f.key;
     const kinds = familyKinds(f.key);
     editor.stampKind = f.randomDefault && kinds.length > 1 ? 'random' : kinds[0]!.key;
-    editor.tool = 'stamp';
+    if (editor.tool !== 'scatter') editor.setTool('stamp');
   }
   function pick(key: string) {
     editor.stampKind = key;
-    editor.tool = 'stamp';
+    if (editor.tool !== 'scatter') editor.setTool('stamp');
   }
 </script>
 

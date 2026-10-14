@@ -2,6 +2,7 @@
   import { editor } from '../model/store.svelte';
   import { CELL_PX, LAYER_TYPE_LABEL } from '../model/types';
   import ElementInspector from './ElementInspector.svelte';
+  import WallInspector from './WallInspector.svelte';
 
   const l = $derived(editor.selectedLayer);
 </script>
@@ -29,6 +30,7 @@
 {/if}
 
 <ElementInspector />
+<WallInspector />
 
 <style>
   label { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; color: var(--muted); }

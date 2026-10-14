@@ -18,6 +18,17 @@
     const t = e.target as HTMLElement;
     if (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA') return;
     const mod = e.ctrlKey || e.metaKey;
+    if (editor.tool === 'wall' && editor.wallDraft) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        return editor.finishDraft(false);
+      }
+      if (e.key === 'Escape') return editor.cancelDraft();
+      if (e.key === 'Backspace') {
+        e.preventDefault();
+        return editor.popDraftPoint();
+      }
+    }
     if (mod && e.key.toLowerCase() === 'z') {
       e.preventDefault();
       e.shiftKey ? editor.redo() : editor.undo();
@@ -31,18 +42,20 @@
       e.preventDefault();
       editor.duplicateSelectedElement();
     } else if (!mod && (e.key === 'Delete' || e.key === 'Backspace')) {
-      editor.removeSelectedElement();
+      if (editor.selectedOpeningId) editor.removeSelectedOpening();
+      else if (editor.selectedWallId) editor.removeSelectedWall();
+      else editor.removeSelectedElement();
     } else if (!mod && e.key === 'Escape') {
-      if (editor.tool === 'stamp') editor.tool = 'select';
-      else editor.selectElement(null, null);
+      if (editor.tool !== 'hand' && editor.tool !== 'select') editor.setTool('select');
+      else editor.clearSelection();
     } else if (!mod && e.key.startsWith('Arrow') && editor.selection) {
       e.preventDefault();
       const d = e.shiftKey ? 50 : 5;
       editor.nudgeSelected(e.key === 'ArrowLeft' ? -d : e.key === 'ArrowRight' ? d : 0, e.key === 'ArrowUp' ? -d : e.key === 'ArrowDown' ? d : 0);
     } else if (!mod && !e.altKey) {
       const k = e.key.toLowerCase();
-      const map: Record<string, typeof editor.tool> = { h: 'hand', v: 'select', g: 'stamp', b: 'paint', e: 'erase' };
-      if (map[k]) editor.tool = map[k]!;
+      const map: Record<string, typeof editor.tool> = { h: 'hand', v: 'select', g: 'stamp', s: 'scatter', m: 'wall', d: 'opening', b: 'paint', e: 'erase' };
+      if (map[k]) editor.setTool(map[k]!);
     }
   }
 
@@ -79,7 +92,7 @@
     <button onclick={() => editor.fitView()}>Hele kortet</button>
     <span class="msg" class:err={editor.error}>{editor.error || editor.status}</span>
   </header>
-  <aside class="left"><ToolPanel />{#if editor.tool === 'stamp'}<ObjectPicker />{/if}<LayerPanel /></aside>
+  <aside class="left"><ToolPanel />{#if editor.tool === 'stamp' || (editor.tool === 'scatter' && !editor.scatterErase)}<ObjectPicker />{/if}<LayerPanel /></aside>
   <main><Viewport /></main>
   <aside class="right"><Inspector /></aside>
 </div>

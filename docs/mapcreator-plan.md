@@ -23,8 +23,8 @@ Et værktøj til at lave alle slags D&D-kort (top-down, malet stil, uden grid i 
 - [x] 1. Skelet: Node-trin, Vite/Svelte, blueprint, `/userdata`, dokumentmodel, kamera, fortryd/gentag, gem/åbn.
 - [x] 2. Terræn (pensel, viskelæder, fyld, 8 materialer) og eksport som download med navngivne udgaver.
 - [x] 3. Genstande: register med familier/varianter, vælger med Tilfældig, flyt/skalér/rotér, skygger, lagets højde.
-- [ ] 4. **Mure** (i gang): model, geometri og kommandoer er lavet og testet (`model/walls.ts`, `model/commands.ts`). Mangler tegning (stil: sten, mursten, træ, hæk), tegneværktøj, redigering (punkter, tykkelse, længde), åbninger/døre/porte/vinduer, eksport.
-- [ ] 5. **Scatter-værktøj**: pensel, der spreder en familie/variant (fx skov) med tæthed, uden overlap, uden at ramme vand, med mulighed for at fjerne igen.
+- [x] 4. **Mure**: stilarter (sten, mursten, træ, hæk), tegning punkt for punkt, redigering af punkter/tykkelse/længde, åbninger (åbning, dør, dobbeltdør, port, vindue) med åben/lukket og vend, fortryd, eksport.
+- [x] 5. **Scatter-værktøj**: spred familie/variant med tæthed, undgår vand, mure og andre genstande, fjern-tilstand, ét strøg = én fortryd.
 - [ ] 6. **Eksport til VTT**: dialog med kampagne/room/General Maps (`GET /api/simpelvtt/tree`), server modtager billedet og bruger simpelvtts eksisterende upload og navnerensning.
 - [ ] 7. **Generator**: vælg områdetema (skov, mose, grotte, ørken, by, kro, ruin, flodbred, bjergsti), generér en base som et almindeligt, redigerbart dokument (lag + elementer); eller start tomt. Layout som data adskilt fra tegning; udgange ved kanterne, så kort kan sættes sammen.
 - [ ] 8. **Egne genstande** (billedimport, se Beslutninger).
@@ -34,7 +34,8 @@ Et værktøj til at lave alle slags D&D-kort (top-down, malet stil, uden grid i 
 
 - Eksport af 4000 × 2750 px tager ca. 20 sekunder (terrænet regnes pr. pixel); siden fryser ikke, men det er langsomt.
 - Terrænets kanter er lidt savtakkede (grov maske), og vand er plettet.
-- Håndtagene til skalering og rotation er kun testet som enhedstests, ikke med mus i en browser.
+- Håndtagene til skalering og rotation af genstande er kun testet som enhedstests, ikke med mus i en browser.
+- Mure: ingen automatisk samling af to mure, der mødes (hjørner mellem to mure er to overlappende stregstykker); ingen rum-/gulvfyld inde i lukkede mure endnu (gulve bygges med terræn-penslen).
 - `npm audit` melder 3 sårbarheder i `vitest` (kun udviklingsværktøj).
 
 ## Sådan genoptager du
