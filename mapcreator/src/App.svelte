@@ -8,6 +8,9 @@
   import ToolPanel from './ui/ToolPanel.svelte';
   import ObjectPicker from './ui/ObjectPicker.svelte';
   import ExportDialog from './ui/ExportDialog.svelte';
+  import Gallery from './ui/Gallery.svelte';
+
+  const gallery = new URLSearchParams(location.search).has('galleri');
 
   let dialog = $state<'new' | 'open' | 'export' | null>(null);
 
@@ -50,6 +53,9 @@
 
 <svelte:window onkeydown={onKey} onbeforeunload={onBeforeUnload} />
 
+{#if gallery}
+  <Gallery />
+{:else}
 <div class="app">
   <header>
     <a class="home" href="/" title="Til forsiden">←</a>
@@ -77,6 +83,8 @@
   <main><Viewport /></main>
   <aside class="right"><Inspector /></aside>
 </div>
+
+{/if}
 
 {#if dialog === 'new'}<NewMapDialog onclose={() => (dialog = null)} />{/if}
 {#if dialog === 'open'}<OpenDialog onclose={() => (dialog = null)} />{/if}
