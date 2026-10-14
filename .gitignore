@@ -29,6 +29,7 @@ data/class/
 # Homebrew-indhold er gruppens eget og skal ikke i det delte repo (kun index.json, der registrerer filerne).
 vol/karakterer/
 vol/simpelvtt/
+vol/userdata/
 vol/homebrew/*
 !vol/homebrew/index.json
 

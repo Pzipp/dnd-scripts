@@ -8,7 +8,7 @@ Skelet: dokumentmodel, lag (tilføj, slet, flyt, skjul, lås, opacitet, højde),
 
 ## Data
 
-Alt ligger i `$USERDATA/mapcreator/` (miljøvariabel `USERDATA`, standard `/userdata`; på homelab-værten er det `/srv/userdata`, mountet som `/userdata`; ét sted at tage backup):
+Alt ligger i `$USERDATA/mapcreator/` (miljøvariabel `USERDATA`, standard `/userdata`; i dev/Docker er det `vol/userdata/` i arbejdsmappen, mountet som `/userdata`, så dataene også kan nås, når containeren ikke kører; ét sted at tage backup):
 
 | Sti | Indhold |
 |---|---|
@@ -16,7 +16,7 @@ Alt ligger i `$USERDATA/mapcreator/` (miljøvariabel `USERDATA`, standard `/user
 | `assets/` | Egne genstande (senere) |
 | `exports/` | Evt. færdige billeder (senere) |
 
-Serveren opretter aldrig selve `/userdata`, kun undermapperne. Mangler den, svarer API'et 503 (opret den på værten, se homelabs `docs/todo-sebastian.md`).
+Serveren opretter aldrig selve `/userdata`, kun undermapperne. Mangler den, svarer API'et 503 (opret `vol/userdata/` og mount den).
 
 Dokumentet (`mapcreator/src/model/types.ts`): `version`, `id`, `name`, `widthCells`, `heightCells` (1 felt = 5 ft = 50 px), `seed`, `lightAngle`, `layers[]` (nederst først). Serveren validerer kun rammerne (`validate_doc`); indholdet er klientens ansvar.
 
