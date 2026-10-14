@@ -1,4 +1,4 @@
-import type { MapDoc } from './types';
+import type { MapDoc, Rect } from './types';
 
 /** En ændring, der kan fortrydes. `merge` samler fx mange skyder-trin til én fortryd-handling. */
 export interface Command {
@@ -7,6 +7,10 @@ export interface Command {
   revert(doc: MapDoc): void;
   /** Returnér true, hvis `next` er lagt ind i denne kommando (så den ikke skal på stakken). */
   merge?(next: Command): boolean;
+  /** Lag og område (verdenspixels), der skal tegnes igen, når kommandoen er udført eller fortrudt. */
+  touches?: { layerId: string; rect: Rect };
+  /** Lag, der skal vælges, når kommandoen udføres (eller gentages). */
+  selectsLayer?: string;
 }
 
 const MERGE_WINDOW_MS = 800;
@@ -44,22 +48,22 @@ export class History {
     this.redoStack = [];
   }
 
-  undo(doc: MapDoc): boolean {
+  undo(doc: MapDoc): Command | null {
     const cmd = this.undoStack.pop();
-    if (!cmd) return false;
+    if (!cmd) return null;
     cmd.revert(doc);
     this.redoStack.push(cmd);
     this.lastAt = 0;
-    return true;
+    return cmd;
   }
 
-  redo(doc: MapDoc): boolean {
+  redo(doc: MapDoc): Command | null {
     const cmd = this.redoStack.pop();
-    if (!cmd) return false;
+    if (!cmd) return null;
     cmd.apply(doc);
     this.undoStack.push(cmd);
     this.lastAt = 0;
-    return true;
+    return cmd;
   }
 
   clear(): void {

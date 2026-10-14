@@ -5,8 +5,10 @@
   import Viewport from './ui/Viewport.svelte';
   import NewMapDialog from './ui/NewMapDialog.svelte';
   import OpenDialog from './ui/OpenDialog.svelte';
+  import ToolPanel from './ui/ToolPanel.svelte';
+  import ExportDialog from './ui/ExportDialog.svelte';
 
-  let dialog = $state<'new' | 'open' | null>(null);
+  let dialog = $state<'new' | 'open' | 'export' | null>(null);
 
   function onKey(e: KeyboardEvent) {
     const t = e.target as HTMLElement;
@@ -45,6 +47,7 @@
     <button onclick={() => (dialog = 'new')}>Nyt</button>
     <button onclick={() => (dialog = 'open')}>Åbn</button>
     <button class="primary" onclick={() => editor.save()}>Gem</button>
+    <button onclick={() => (dialog = 'export')}>Eksportér …</button>
     <span class="sep"></span>
     <button onclick={() => editor.undo()} disabled={!editor.canUndo} title="Fortryd (Ctrl+Z)">Fortryd</button>
     <button onclick={() => editor.redo()} disabled={!editor.canRedo} title="Gentag (Ctrl+Y)">Gentag</button>
@@ -53,13 +56,14 @@
     <button onclick={() => editor.fitView()}>Hele kortet</button>
     <span class="msg" class:err={editor.error}>{editor.error || editor.status}</span>
   </header>
-  <aside class="left"><LayerPanel /></aside>
+  <aside class="left"><ToolPanel /><LayerPanel /></aside>
   <main><Viewport /></main>
   <aside class="right"><Inspector /></aside>
 </div>
 
 {#if dialog === 'new'}<NewMapDialog onclose={() => (dialog = null)} />{/if}
 {#if dialog === 'open'}<OpenDialog onclose={() => (dialog = null)} />{/if}
+{#if dialog === 'export'}<ExportDialog onclose={() => (dialog = null)} />{/if}
 
 <style>
   .app {

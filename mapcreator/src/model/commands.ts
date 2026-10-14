@@ -1,4 +1,5 @@
 import type { Command } from './history';
+import type { CellChange } from './ground';
 import type { Layer, MapDoc } from './types';
 
 function indexOf(doc: MapDoc, id: string): number {
@@ -11,6 +12,7 @@ export function addLayer(layer: Layer, index?: number): Command {
   let at = 0;
   return {
     label: `Tilføj lag "${layer.name}"`,
+    selectsLayer: layer.id,
     apply(doc) {
       at = index ?? doc.layers.length;
       doc.layers.splice(at, 0, layer);
@@ -106,5 +108,21 @@ export function renameDoc(name: string): Command {
     revert(doc) {
       doc.name = before;
     },
+  };
+}
+
+/** Maler eller fylder celler i et grundlag. Selve strøget er allerede tegnet, når kommandoen køres første gang. */
+export function paintCells(layerId: string, change: CellChange): Command {
+  const write = (doc: MapDoc, values: Uint8Array) => {
+    const g = doc.layers[indexOf(doc, layerId)]!.ground;
+    if (!g) throw new Error('Laget har ingen terrænmaske.');
+    const { indices } = change;
+    for (let k = 0; k < indices.length; k++) g.data[indices[k]!] = values[k]!;
+  };
+  return {
+    label: 'Mal terræn',
+    touches: { layerId, rect: change.rect },
+    apply: (doc) => write(doc, change.after),
+    revert: (doc) => write(doc, change.before),
   };
 }

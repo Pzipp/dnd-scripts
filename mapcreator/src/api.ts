@@ -1,4 +1,4 @@
-import { parseDoc } from './model/doc';
+import { parseDoc, serializeDoc } from './model/doc';
 import type { MapDoc } from './model/types';
 
 export interface MapInfo {
@@ -24,6 +24,6 @@ export const saveMap = (doc: MapDoc) =>
   call<{ ok: true }>(`${BASE}/maps/${encodeURIComponent(doc.id)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(doc),
+    body: JSON.stringify(serializeDoc(doc)),
   });
 export const deleteMap = (id: string) => call<{ ok: true }>(`${BASE}/maps/${encodeURIComponent(id)}`, { method: 'DELETE' });

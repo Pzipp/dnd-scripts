@@ -1,9 +1,14 @@
 import * as api from '../api';
 import { createCamera, fit, type Camera } from '../render/camera';
-import { addLayer, moveLayer, removeLayer, renameDoc, updateLayer } from './commands';
-import { createDoc, createLayer, type NewDocOptions } from './doc';
+import { addLayer, moveLayer, paintCells, removeLayer, renameDoc, updateLayer } from './commands';
+import { createDoc, createLayer, createPreset, type NewDocOptions } from './doc';
+import { fillChange, Stroke } from './ground';
+import { groundCache } from '../render/groundCache';
+import { MATERIAL_GRASS } from '../render/materials';
 import { History, type Command } from './history';
-import { CELL_PX, LAYER_TYPE_LABEL, type LayerType, type MapDoc } from './types';
+import { CELL_PX, LAYER_TYPE_LABEL, type ExportPreset, type LayerType, type MapDoc, type Rect } from './types';
+
+export type Tool = 'hand' | 'paint' | 'erase';
 
 /** Editorens tilstand. Dokumentet er reaktivt ($state); alle ændringer går gennem `run`, så de kan fortrydes. */
 class Editor {
@@ -11,6 +16,12 @@ class Editor {
   camera = $state<Camera>(createCamera());
   selectedLayerId = $state<string | null>(null);
   showGrid = $state(true);
+  tool = $state<Tool>('hand');
+  material = $state(MATERIAL_GRASS);
+  /** Penselens diameter i felter. */
+  brushCells = $state(3);
+  /** Stiger, når forhåndsvisningen skal tegnes igen (flise færdig, område ugyldigt). */
+  drawRev = $state(0);
   dirty = $state(false);
   status = $state('');
   error = $state('');
@@ -38,22 +49,73 @@ class Editor {
 
   run(cmd: Command): void {
     this.history.execute(this.doc, cmd);
-    this.dirty = true;
-    this.rev++;
+    this.afterChange(cmd);
   }
   undo(): void {
-    if (this.history.undo(this.doc)) {
-      this.dirty = true;
-      this.rev++;
+    const cmd = this.history.undo(this.doc);
+    if (cmd) {
+      this.afterChange(cmd, false);
       this.keepSelection();
     }
   }
   redo(): void {
-    if (this.history.redo(this.doc)) {
-      this.dirty = true;
-      this.rev++;
-      this.keepSelection();
+    const cmd = this.history.redo(this.doc);
+    if (cmd) this.afterChange(cmd, true);
+  }
+  private afterChange(cmd: Command, applied = true): void {
+    this.dirty = true;
+    this.rev++;
+    if (cmd.touches) this.invalidate(cmd.touches.layerId, cmd.touches.rect);
+    if (applied && cmd.selectsLayer) this.selectedLayerId = cmd.selectsLayer;
+  }
+
+  /** Gentegn forhåndsvisningen af et grundlag (område i verdenspixels, null = hele laget). */
+  invalidate(layerId: string, rect: Rect | null): void {
+    groundCache.invalidate(layerId, rect, this.doc);
+    this.drawRev++;
+  }
+
+  /** Det valgte lag, hvis man kan male på det. */
+  get paintableLayer() {
+    const l = this.selectedLayer;
+    return l && l.type === 'ground' && l.ground && l.visible && !l.locked ? l : null;
+  }
+
+  newStroke(): Stroke {
+    return new Stroke();
+  }
+  commitStroke(layerId: string, stroke: Stroke): void {
+    const g = this.doc.layers.find((l) => l.id === layerId)?.ground;
+    const change = g && stroke.result(g);
+    if (change) this.run(paintCells(layerId, change));
+  }
+  fillSelected(): void {
+    const l = this.paintableLayer;
+    if (!l?.ground) return;
+    const change = fillChange(l.ground, this.tool === 'erase' ? 0 : this.material);
+    if (change) {
+      const cmd = paintCells(l.id, change);
+      cmd.label = 'Fyld lag';
+      this.run(cmd);
     }
+  }
+
+  // ---- udgaver (eksport) ----
+  addPreset(): ExportPreset {
+    const p = createPreset(`${this.doc.name} ${this.doc.exports.length + 1}`);
+    this.doc.exports.push(p);
+    this.dirty = true;
+    return p;
+  }
+  removePreset(id: string): void {
+    const i = this.doc.exports.findIndex((e) => e.id === id);
+    if (i >= 0 && this.doc.exports.length > 1) {
+      this.doc.exports.splice(i, 1);
+      this.dirty = true;
+    }
+  }
+  touchPresets(): void {
+    this.dirty = true;
   }
   private keepSelection(): void {
     if (!this.selectedLayer) this.selectedLayerId = this.doc.layers.at(-1)?.id ?? null;
@@ -62,11 +124,12 @@ class Editor {
   // ---- lag ----
   addLayer(type: LayerType): void {
     const n = this.doc.layers.filter((l) => l.type === type).length + 1;
-    const layer = createLayer(type, `${LAYER_TYPE_LABEL[type]} ${n}`);
+    const layer = createLayer(type, `${LAYER_TYPE_LABEL[type]} ${n}`, this.doc);
     // Nye lag lægges oven på det valgte lag (eller øverst).
     const sel = this.doc.layers.findIndex((l) => l.id === this.selectedLayerId);
     this.run(addLayer(layer, sel < 0 ? undefined : sel + 1));
-    this.selectedLayerId = layer.id;
+    groundCache.sync(this.doc);
+    this.drawRev++;
   }
   removeLayer(id: string): void {
     if (this.doc.layers.length <= 1) return;
@@ -90,12 +153,14 @@ class Editor {
 
   // ---- filer ----
   private load(doc: MapDoc): void {
+    groundCache.reset();
     this.doc = doc;
     this.history.clear();
     this.rev++;
     this.selectedLayerId = doc.layers.at(-1)?.id ?? null;
     this.dirty = false;
     this.fitView();
+    this.drawRev++;
   }
   newMap(opts: NewDocOptions): void {
     this.load(createDoc(opts));
@@ -112,7 +177,7 @@ class Editor {
   }
   async save(): Promise<void> {
     try {
-      await api.saveMap($state.snapshot(this.doc) as MapDoc);
+      await api.saveMap(this.doc);
       this.dirty = false;
       this.error = '';
       this.status = 'Gemt';
