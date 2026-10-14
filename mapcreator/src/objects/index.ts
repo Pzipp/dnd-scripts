@@ -3,10 +3,11 @@ import { effectKinds } from './effects';
 import { interiorKinds } from './interior';
 import { natureKinds } from './nature';
 import { extraFamilies, extraKinds } from './extra';
+import { pack2Families, pack2Kinds } from './pack2';
 import { FAMILIES, registerKinds } from './registry';
 import { remainsKinds } from './remains';
 
-FAMILIES.push(...extraFamilies);
-registerKinds([...natureKinds, ...interiorKinds, ...remainsKinds, ...architectureKinds, ...effectKinds, ...extraKinds]);
+FAMILIES.push(...extraFamilies, ...pack2Families);
+registerKinds([...natureKinds, ...interiorKinds, ...remainsKinds, ...architectureKinds, ...effectKinds, ...extraKinds, ...pack2Kinds]);
 
 export * from './registry';

@@ -6,7 +6,9 @@
   /** Udviklingsside (`/mapcreator?galleri=1`): alle genstande stort, med flere seeds. `&familie=tree` viser kun én familie. */
   const only = new URLSearchParams(location.search).get('familie');
   const SEEDS = [11, 222, 3333, 44444];
-  const SIZE = 180;
+  /** `&size=360` viser genstandene i dobbelt størrelse (og tegner dem skarpere), til nærstudie af detaljer. */
+  const SIZE = Math.min(720, Math.max(120, Number(new URLSearchParams(location.search).get('size')) || 180));
+  const SCALE = SIZE >= 360 ? 2 : 1;
 
   function draw(node: HTMLCanvasElement, arg: { key: string; seed: number; params?: Record<string, string | number | boolean> }) {
     const kind = allKinds().find((k) => k.key === arg.key);
@@ -14,13 +16,13 @@
     const params = { ...Object.fromEntries(kind.params.map((p) => [p.key, p.default])), ...(arg.params ?? {}) };
     const w = kind.w * CELL_PX;
     const h = kind.h * CELL_PX;
-    const spr = getSprite({ seed: arg.seed, w, h, params }, kind, 1);
+    const spr = getSprite({ seed: arg.seed, w, h, params }, kind, SCALE);
     const g = node.getContext('2d')!;
     node.width = SIZE;
     node.height = SIZE;
     g.fillStyle = '#7fa04a';
     g.fillRect(0, 0, SIZE, SIZE);
-    const k = Math.min(SIZE / spr.ww, SIZE / spr.hh, 1.6);
+    const k = Math.min(SIZE / spr.ww, SIZE / spr.hh, 1.6 * (SIZE / 180));
     g.save();
     g.translate(SIZE / 2, SIZE / 2);
     const dist = kind.shadow;
@@ -43,16 +45,16 @@
       {#each familyKinds(f.key) as k (k.key)}
         <h3>{k.name} <small>{k.key} · {k.w}×{k.h} felter</small></h3>
         <div class="row">
-          {#each SEEDS as s}<canvas use:draw={{ key: k.key, seed: s }}></canvas>{/each}
+          {#each SEEDS as s}<canvas style="width:{SIZE}px;height:{SIZE}px" use:draw={{ key: k.key, seed: s }}></canvas>{/each}
           {#each k.params.filter((p) => p.type === 'select') as p}
             {#if p.type === 'select'}
               {#each p.options.filter((o) => o.value !== p.default) as o}
-                <div class="v"><canvas use:draw={{ key: k.key, seed: SEEDS[0]!, params: { [p.key]: o.value } }}></canvas><small>{p.label}: {o.label}</small></div>
+                <div class="v"><canvas style="width:{SIZE}px;height:{SIZE}px" use:draw={{ key: k.key, seed: SEEDS[0]!, params: { [p.key]: o.value } }}></canvas><small>{p.label}: {o.label}</small></div>
               {/each}
             {/if}
           {/each}
           {#each k.params.filter((p) => p.type === 'toggle') as p}
-            <div class="v"><canvas use:draw={{ key: k.key, seed: SEEDS[0]!, params: { [p.key]: !p.default } }}></canvas><small>{p.label}: {p.default ? 'fra' : 'til'}</small></div>
+            <div class="v"><canvas style="width:{SIZE}px;height:{SIZE}px" use:draw={{ key: k.key, seed: SEEDS[0]!, params: { [p.key]: !p.default } }}></canvas><small>{p.label}: {p.default ? 'fra' : 'til'}</small></div>
           {/each}
         </div>
       {/each}
@@ -68,5 +70,5 @@
   small { color: var(--muted); }
   .row { display: flex; flex-wrap: wrap; gap: 8px; }
   .v { display: flex; flex-direction: column; }
-  canvas { border-radius: 6px; width: 180px; height: 180px; }
+  canvas { border-radius: 6px; }
 </style>

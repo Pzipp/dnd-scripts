@@ -90,6 +90,9 @@ export interface Layer {
   walls?: Wall[];
 }
 
+/** Hvor en udgave sendes hen: hentes som fil, eller lægges i det simple VTT (kampagne eller General Maps, evt. i et room). */
+export type ExportTarget = { kind: 'download' } | { kind: 'vtt'; campaign: string; room: string };
+
 export type ExportFormat = 'png' | 'webp' | 'jpeg';
 
 /** En navngiven udgave af kortet ("Skovsti - med lig"): hvilke lag der er med, og hvordan billedet laves. */
@@ -103,6 +106,8 @@ export interface ExportPreset {
   pxPerCell: number;
   /** 0..1, kun webp og jpeg. */
   quality: number;
+  /** Mål for udgaven (standard: hentes som fil). */
+  target?: ExportTarget;
 }
 
 export interface MapDoc {

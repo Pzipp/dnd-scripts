@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
+  import * as api from '../api';
   import { editor } from '../model/store.svelte';
   import {
     downloadBlob, exportProblem, exportSize, fileNameFor, FORMATS, PX_PER_CELL_OPTIONS, renderExport, safeFileName,
@@ -11,10 +13,44 @@
   let progress = $state(0);
   let message = $state('');
   let failed = $state(false);
-
   const preset = $derived(editor.doc.exports.find((e) => e.id === selectedId) ?? editor.doc.exports[0]!);
   const size = $derived(exportSize(editor.doc, preset));
   const problem = $derived(exportProblem(editor.doc, preset));
+  let tree = $state<api.VttTree | null>(null);
+  let treeError = $state('');
+  let sentRef = $state('');
+
+  onMount(async () => {
+    try {
+      tree = await api.getVttTree();
+    } catch (e) {
+      treeError = (e as Error).message;
+    }
+  });
+
+  /** Mål i formen: 'download', 'gm' (General Maps) eller 'c:<kampagne>'. */
+  const targetValue = $derived(preset.target?.kind === 'vtt' ? (preset.target.campaign === api.GENERAL_MAPS ? 'gm' : `c:${preset.target.campaign}`) : 'download');
+  const rooms = $derived.by(() => {
+    const t = preset.target;
+    if (!tree || t?.kind !== 'vtt') return [];
+    if (t.campaign === api.GENERAL_MAPS) return tree.general.rooms.map((r) => r.name);
+    return tree.campaigns.find((c) => c.name === t.campaign)?.rooms.map((r) => r.name) ?? [];
+  });
+  const campaignMissing = $derived(preset.target?.kind === 'vtt' && preset.target.campaign !== api.GENERAL_MAPS && !!tree && !tree.campaigns.some((c) => c.name === (preset.target as { campaign: string }).campaign));
+
+  function setTarget(v: string) {
+    if (v === 'download') preset.target = { kind: 'download' };
+    else if (v === 'gm') preset.target = { kind: 'vtt', campaign: api.GENERAL_MAPS, room: '' };
+    else preset.target = { kind: 'vtt', campaign: v.slice(2), room: '' };
+    editor.touchPresets();
+  }
+  function setRoom(room: string) {
+    if (preset.target?.kind === 'vtt') {
+      preset.target = { ...preset.target, room };
+      editor.touchPresets();
+    }
+  }
+
   const formats = Object.keys(FORMATS) as ExportFormat[];
 
   function toggleLayer(id: string, included: boolean) {
@@ -25,15 +61,24 @@
     editor.touchPresets();
   }
 
+  /** Tegner en udgave og sender den: hentes som fil eller lægges i VTT'et. */
   async function download(p: ExportPreset) {
     busy = true;
     failed = false;
     progress = 0;
+    sentRef = '';
     message = `Tegner "${p.name}" …`;
     try {
       const blob = await renderExport(editor.doc, p, (d) => (progress = d));
-      downloadBlob(blob, fileNameFor(p));
-      message = `Hentede ${fileNameFor(p)} (${(blob.size / 1e6).toFixed(1)} MB)`;
+      const mb = `${(blob.size / 1e6).toFixed(1)} MB`;
+      if (p.target?.kind === 'vtt') {
+        message = `Sender ${fileNameFor(p)} (${mb}) til VTT …`;
+        sentRef = await api.uploadToVtt(blob, fileNameFor(p), p.target.campaign, p.target.room);
+        message = `Lagt i VTT: ${sentRef} (${mb})`;
+      } else {
+        downloadBlob(blob, fileNameFor(p));
+        message = `Hentede ${fileNameFor(p)} (${mb})`;
+      }
     } catch (e) {
       failed = true;
       message = (e as Error).message;
@@ -45,6 +90,7 @@
   async function downloadAll() {
     for (const p of editor.doc.exports) {
       if (exportProblem(editor.doc, p)) continue;
+      if (p.target?.kind === 'vtt' && p.target.campaign !== api.GENERAL_MAPS && tree && !tree.campaigns.some((c) => c.name === (p.target as { campaign: string }).campaign)) continue;
       await download(p);
       if (failed) break;
     }
@@ -103,18 +149,40 @@
           <input type="range" min="0.5" max="1" step="0.01" bind:value={preset.quality} onchange={() => editor.touchPresets()} />
         </label>
       {/if}
+      <label>Send til
+        <select value={targetValue} onchange={(e) => setTarget(e.currentTarget.value)} disabled={!tree && !treeError}>
+          <option value="download">Hent som fil</option>
+          {#if tree}
+            <option value="gm">VTT: General Maps</option>
+            {#each tree.campaigns as c}<option value={`c:${c.name}`}>VTT: kampagne {c.name}</option>{/each}
+          {/if}
+        </select>
+      </label>
+      {#if preset.target?.kind === 'vtt'}
+        <label>Room
+          <select value={preset.target.room} onchange={(e) => setRoom(e.currentTarget.value)}>
+            <option value="">(ingen room, løst i {preset.target.campaign})</option>
+            {#each rooms as r}<option value={r}>{r}</option>{/each}
+          </select>
+        </label>
+        {#if campaignMissing}<p class="err">Kampagnen findes ikke længere i VTT'et. Vælg en anden.</p>{/if}
+        <p class="hint">Findes filnavnet allerede, får den nye et ` (2)` efter navnet; den gamle overskrives ikke.</p>
+      {/if}
+      {#if treeError}<p class="err">Kunne ikke hente kampagner fra VTT'et: {treeError}</p>{/if}
       <p class="hint">{size.w} × {size.h} px · ingen grid i billedet</p>
       {#if problem}<p class="err">{problem}</p>{/if}
     </div>
   </div>
 
   {#if busy}<progress max="1" value={progress}></progress>{/if}
-  {#if message}<p class:err={failed} class="hint">{message}</p>{/if}
+  {#if message}<p class:err={failed} class="hint">{message}{#if sentRef} · <a href="/simpelvtt" target="_blank" rel="noopener">Åbn VTT</a>{/if}</p>{/if}
 
   <div class="btns">
     <button onclick={onclose} disabled={busy}>Luk</button>
-    <button disabled={busy || editor.doc.exports.length < 2} onclick={downloadAll}>Hent alle udgaver</button>
-    <button class="primary" disabled={busy || !!problem || !safeFileName(preset.name)} onclick={() => download(preset)}>Hent denne</button>
+    <button disabled={busy || editor.doc.exports.length < 2} onclick={downloadAll}>Kør alle udgaver</button>
+    <button class="primary" disabled={busy || !!problem || !safeFileName(preset.name) || campaignMissing} onclick={() => download(preset)}>
+      {preset.target?.kind === 'vtt' ? 'Send til VTT' : 'Hent denne'}
+    </button>
   </div>
 </div>
 
