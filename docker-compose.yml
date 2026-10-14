@@ -50,9 +50,9 @@ services:
       # /e5tools/homebrew, så gruppens eget indhold ikke ryger ved en opdatering
       # eller oprydning af e5tools-klonen, og ikke skal ind i det delte repo.
       - ./vol/homebrew:/e5tools/homebrew
-      # Fælles datamappe (backup tages her). Opret den først med kommandoen i docs/todo-sebastian.md,
-      # ellers laver Docker en root-ejet mappe. Kortbyggeren gemmer i /userdata/mapcreator.
-      - /userdata:/userdata
+      # Fælles datamappe på værten (backup tages her), i containeren /userdata. Opret den først med kommandoen i docs/todo-sebastian.md,
+      # ellers laver Docker en root-ejet mappe. Kortbyggeren gemmer i /userdata/mapcreator (værtens /srv/userdata/mapcreator).
+      - /srv/userdata:/userdata
 
     ports:
       - "${DND_BIND_IP:-127.0.0.1}:${DND_PORT:-8082}:8080"
