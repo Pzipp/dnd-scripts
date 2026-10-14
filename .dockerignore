@@ -9,3 +9,5 @@ karakterer/*/udskrifter
 .env
 .env.*
 !.env.example
+**/node_modules
+webui/static/mapcreator

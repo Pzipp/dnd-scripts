@@ -19,6 +19,10 @@ from simpelvtt import bp as simpelvtt_bp  # noqa: E402
 
 app.register_blueprint(simpelvtt_bp)
 
+from mapcreator import bp as mapcreator_bp  # noqa: E402
+
+app.register_blueprint(mapcreator_bp)
+
 
 @app.get("/")
 def index():

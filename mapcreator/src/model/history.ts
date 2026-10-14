@@ -1,0 +1,70 @@
+import type { MapDoc } from './types';
+
+/** En ændring, der kan fortrydes. `merge` samler fx mange skyder-trin til én fortryd-handling. */
+export interface Command {
+  label: string;
+  apply(doc: MapDoc): void;
+  revert(doc: MapDoc): void;
+  /** Returnér true, hvis `next` er lagt ind i denne kommando (så den ikke skal på stakken). */
+  merge?(next: Command): boolean;
+}
+
+const MERGE_WINDOW_MS = 800;
+
+export class History {
+  private undoStack: Command[] = [];
+  private redoStack: Command[] = [];
+  private lastAt = 0;
+
+  constructor(private now: () => number = () => Date.now()) {}
+
+  get canUndo(): boolean {
+    return this.undoStack.length > 0;
+  }
+  get canRedo(): boolean {
+    return this.redoStack.length > 0;
+  }
+  get undoLabel(): string | undefined {
+    return this.undoStack.at(-1)?.label;
+  }
+  get redoLabel(): string | undefined {
+    return this.redoStack.at(-1)?.label;
+  }
+
+  execute(doc: MapDoc, cmd: Command): void {
+    cmd.apply(doc);
+    const t = this.now();
+    const top = this.undoStack.at(-1);
+    if (top?.merge && t - this.lastAt < MERGE_WINDOW_MS && top.merge(cmd)) {
+      // slået sammen med forrige
+    } else {
+      this.undoStack.push(cmd);
+    }
+    this.lastAt = t;
+    this.redoStack = [];
+  }
+
+  undo(doc: MapDoc): boolean {
+    const cmd = this.undoStack.pop();
+    if (!cmd) return false;
+    cmd.revert(doc);
+    this.redoStack.push(cmd);
+    this.lastAt = 0;
+    return true;
+  }
+
+  redo(doc: MapDoc): boolean {
+    const cmd = this.redoStack.pop();
+    if (!cmd) return false;
+    cmd.apply(doc);
+    this.undoStack.push(cmd);
+    this.lastAt = 0;
+    return true;
+  }
+
+  clear(): void {
+    this.undoStack = [];
+    this.redoStack = [];
+    this.lastAt = 0;
+  }
+}

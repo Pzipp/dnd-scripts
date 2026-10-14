@@ -1,0 +1,27 @@
+:root {
+  --bg: #1b1d22;
+  --panel: #23262d;
+  --panel-2: #2b2f38;
+  --line: #3a3f4b;
+  --fg: #e6e4dc;
+  --muted: #9a9a92;
+  --accent: #c8963e;
+  --danger: #c0564a;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body, #app { height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--fg); font: 14px/1.4 system-ui, sans-serif; }
+button, input, select { font: inherit; color: inherit; }
+button {
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: 4px; padding: 5px 10px; cursor: pointer;
+}
+button:hover:not(:disabled) { border-color: var(--accent); }
+button:disabled { opacity: .4; cursor: default; }
+button.primary { background: var(--accent); border-color: var(--accent); color: #1b1d22; font-weight: 600; }
+button.danger:hover:not(:disabled) { border-color: var(--danger); color: var(--danger); }
+input[type='text'], input[type='number'], select {
+  background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 4px 8px; min-width: 0;
+}
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 8px; }

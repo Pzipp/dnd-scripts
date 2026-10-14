@@ -34,3 +34,6 @@ vol/homebrew/*
 
 # Genereret opslagsfil til LLM-vejen (afledt af bogindhold; lav den med dnd.py llm-opslag)
 llm-karakter-opslag.md
+
+# Mapcreator: bygget klient (laves af mapcreator/build-docker.sh eller Dockerfile)
+webui/static/mapcreator/
