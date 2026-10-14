@@ -6,6 +6,7 @@ import { MATERIAL_GRASS } from '../render/materials';
 export function createLayer(type: LayerType, name: string, doc?: Pick<MapDoc, 'widthCells' | 'heightCells'>, fill = 0): Layer {
   const layer: Layer = { id: newId(), name, type, visible: true, locked: false, opacity: 1, height: 0 };
   if (type === 'ground' && doc) layer.ground = createGround(doc.widthCells, doc.heightCells, fill);
+  if (type === 'objects' || type === 'effects') layer.elements = [];
   return layer;
 }
 
@@ -62,6 +63,7 @@ export function parseDoc(raw: unknown): MapDoc {
   const doc = d as MapDoc;
   for (const l of doc.layers) {
     const g = l.ground as unknown as { rle?: string } | undefined;
+    if (l.type === 'objects' || l.type === 'effects') l.elements ??= [];
     if (l.type === 'ground') {
       l.ground = g?.rle !== undefined ? decodeGround(g as { res: number; w: number; h: number; rle: string }) : createGround(doc.widthCells, doc.heightCells);
     }

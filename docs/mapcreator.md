@@ -4,11 +4,21 @@ Editor til slagkort (top-down, uden grid i selve billedet): lag med terræn, gen
 
 ## Status
 
-Færdigt: dokumentmodel, lag (tilføj, slet, flyt, skjul, lås, opacitet, højde), kamera (pan, zoom, knib), fortryd/gentag, gem og åbn, **terrænmaling** (pensel, viskelæder, fyld; 8 materialer) og **eksport som download** med navngivne udgaver. Genstande, mure, eksport til VTT og generator er næste trin.
+Færdigt: dokumentmodel, lag (tilføj, slet, flyt, skjul, lås, opacitet, højde), kamera (pan, zoom, knib), fortryd/gentag, gem og åbn, **terrænmaling** (pensel, viskelæder, fyld; 8 materialer) og **eksport som download** med navngivne udgaver. **genstande** (familier med varianter, vælger, flyt/skalér/rotér, skygger). Mure, eksport til VTT og generator er næste trin.
 
 ## Terræn
 
 Et grundlag (`type: ground`) har en maske med 4 × 4 celler pr. felt; hver celle er et materiale-id (`render/materials.ts`, id'er må aldrig omnummereres, 0 = tomt). Masken gemmes kørselslængde-kodet og base64 i kortets JSON. Ved tegning forvrænges koordinaterne med støj, og to materialer blandes blødt over en smal kant (`render/ground.ts`). Samme tegnekode bruges i forhåndsvisningen (i fliser og lavere opløsning, `render/groundCache.ts`) og i eksporten (fuld opløsning).
+
+## Genstande
+
+Genstande ligger i genstands- og effektlag (`elements[]`): `kind`, position, størrelse (verdenspixels), rotation, `seed`, `z` og `params`. De tegnes proceduralt af små funktioner i `mapcreator/src/objects/` (ét tegnestykke pr. variant; samme `seed` giver samme udseende).
+
+**Familier og varianter.** Registret (`objects/registry.ts`) samler varianter i familier: Træer (løvtræ, eg, birk, gran, fyr, dødt træ), Sten, Planter, Borde, Tønder (stående, væltet, ødelagt) osv. I vælgeren folder et klik på en familie alle varianter ud, og **Tilfældig** trækker en ny variant ved hver udsætning (standard for natur). En udsat genstand kan senere skifte variant i egenskabspanelet. Ny variant = ét nyt `kind({...})` i den passende fil og, hvis familien er ny, en post i `FAMILIES`.
+
+**Skygger og højde.** Skyggen følger kortets `lightAngle`; dens længde er varianten's `shadow` plus (lagets højde + genstandens `z`) × 6 px. Genstande tegnes i rækkefølgen lag, derefter `z`, derefter rækkefølgen i laget. Hver genstand tegnes én gang til et lille lærred (`render/sprites.ts`) og genbruges, så mange genstande kan tegnes hurtigt.
+
+**Værktøjer.** *Vælg* (V): klik, træk for at flytte, håndtag til skalering (Shift låser/frigiver proportioner) og rotation (Shift runder til 15°), pile flytter, Delete sletter, Ctrl+D duplikerer. *Genstand* (G): sæt ud med forhåndsvisning; Esc går tilbage til Vælg. "Fastgør til halve felter" er valgfri.
 
 ## Eksport (udgaver)
 

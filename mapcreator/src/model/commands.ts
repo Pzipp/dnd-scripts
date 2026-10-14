@@ -1,6 +1,6 @@
 import type { Command } from './history';
 import type { CellChange } from './ground';
-import type { Layer, MapDoc } from './types';
+import type { Layer, MapDoc, MapElement } from './types';
 
 function indexOf(doc: MapDoc, id: string): number {
   const i = doc.layers.findIndex((l) => l.id === id);
@@ -125,4 +125,97 @@ export function paintCells(layerId: string, change: CellChange): Command {
     apply: (doc) => write(doc, change.after),
     revert: (doc) => write(doc, change.before),
   };
+}
+
+function elementsOf(doc: MapDoc, layerId: string): MapElement[] {
+  const layer = doc.layers[indexOf(doc, layerId)]!;
+  return (layer.elements ??= []);
+}
+
+export function addElements(layerId: string, added: MapElement[]): Command {
+  return {
+    label: added.length > 1 ? 'Tilføj genstande' : 'Tilføj genstand',
+    selectsElement: added.length === 1 ? added[0]!.id : undefined,
+    apply(doc) {
+      elementsOf(doc, layerId).push(...added);
+    },
+    revert(doc) {
+      const ids = new Set(added.map((e) => e.id));
+      const els = elementsOf(doc, layerId);
+      for (let i = els.length - 1; i >= 0; i--) if (ids.has(els[i]!.id)) els.splice(i, 1);
+    },
+  };
+}
+
+export function removeElements(layerId: string, ids: string[]): Command {
+  let removed: { el: MapElement; at: number }[] = [];
+  return {
+    label: 'Slet genstand',
+    apply(doc) {
+      const els = elementsOf(doc, layerId);
+      removed = [];
+      for (let i = els.length - 1; i >= 0; i--) {
+        if (ids.includes(els[i]!.id)) removed.unshift({ el: els.splice(i, 1)[0]!, at: i });
+      }
+    },
+    revert(doc) {
+      const els = elementsOf(doc, layerId);
+      for (const r of removed) els.splice(r.at, 0, r.el);
+    },
+  };
+}
+
+export type ElementPatch = Partial<Pick<MapElement, 'kind' | 'x' | 'y' | 'w' | 'h' | 'rot' | 'z' | 'params'>>;
+
+class UpdateElement implements Command {
+  label = 'Ret genstand';
+  constructor(
+    readonly layerId: string,
+    readonly id: string,
+    private after: ElementPatch,
+    private before?: ElementPatch,
+  ) {}
+
+  private find(doc: MapDoc): MapElement {
+    const el = elementsOf(doc, this.layerId).find((e) => e.id === this.id);
+    if (!el) throw new Error(`Genstand ${this.id} findes ikke.`);
+    return el;
+  }
+
+  private get keys(): string {
+    return Object.keys(this.after).sort().join(',');
+  }
+
+  apply(doc: MapDoc): void {
+    const el = this.find(doc);
+    if (!this.before) {
+      this.before = {};
+      for (const k of Object.keys(this.after) as (keyof ElementPatch)[]) {
+        (this.before as Record<string, unknown>)[k] = k === 'params' ? { ...el.params } : el[k];
+      }
+    }
+    Object.assign(el, structuredClone(this.after));
+  }
+
+  revert(doc: MapDoc): void {
+    Object.assign(this.find(doc), structuredClone(this.before));
+  }
+
+  merge(next: Command): boolean {
+    if (!(next instanceof UpdateElement) || next.id !== this.id || next.keys !== this.keys) return false;
+    this.after = { ...next.after };
+    return true;
+  }
+}
+
+/** Ret felter på en genstand (fx fra egenskabspanelet). Hurtige ændringer af samme felt samles. */
+export function updateElement(layerId: string, id: string, patch: ElementPatch): Command {
+  return new UpdateElement(layerId, id, patch);
+}
+
+/** Flyt/skalér/rotér, hvor "før" er kendt på forhånd (genstanden er allerede ændret under trækket). */
+export function transformElement(layerId: string, id: string, before: ElementPatch, after: ElementPatch): Command {
+  const c = new UpdateElement(layerId, id, after, before);
+  c.label = 'Ændr genstand';
+  return c;
 }

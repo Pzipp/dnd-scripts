@@ -1,6 +1,7 @@
 <script lang="ts">
   import { editor } from '../model/store.svelte';
   import { CELL_PX, LAYER_TYPE_LABEL } from '../model/types';
+  import ElementInspector from './ElementInspector.svelte';
 
   const l = $derived(editor.selectedLayer);
 </script>
@@ -26,6 +27,8 @@
 {:else}
   <p class="info">Intet lag valgt.</p>
 {/if}
+
+<ElementInspector />
 
 <style>
   label { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; color: var(--muted); }

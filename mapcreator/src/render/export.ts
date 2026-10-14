@@ -1,5 +1,7 @@
 import { CELL_PX, type ExportFormat, type ExportPreset, type MapDoc } from '../model/types';
 import { renderGroundTile } from './ground';
+import { drawElementsLayer } from './sprites';
+import '../objects';
 
 export const FORMATS: Record<ExportFormat, { mime: string; ext: string; label: string; lossy: boolean }> = {
   png: { mime: 'image/png', ext: 'png', label: 'PNG (tabsfri)', lossy: false },
@@ -61,7 +63,7 @@ export async function renderExport(doc: MapDoc, preset: ExportPreset, onProgress
   const layers = includedLayers(doc, preset);
   const tilesX = Math.ceil(w / TILE);
   const tilesY = Math.ceil(h / TILE);
-  const total = Math.max(1, layers.length * tilesX * tilesY);
+  const total = Math.max(1, layers.reduce((n, l) => n + (l.type === 'ground' ? tilesX * tilesY : 1), 0));
   let done = 0;
   const tmp = document.createElement('canvas');
   tmp.width = TILE;
@@ -69,6 +71,16 @@ export async function renderExport(doc: MapDoc, preset: ExportPreset, onProgress
   const tctx = tmp.getContext('2d')!;
 
   for (const layer of layers) {
+    if (layer.type === 'objects' || layer.type === 'effects') {
+      ctx.save();
+      ctx.scale(scale, scale);
+      ctx.globalAlpha = layer.opacity;
+      drawElementsLayer(ctx, layer, doc, scale);
+      ctx.restore();
+      onProgress?.(++done / total);
+      await yieldToUi();
+      continue;
+    }
     for (let ty = 0; ty < tilesY; ty++) {
       for (let tx = 0; tx < tilesX; tx++) {
         const x = tx * TILE;
@@ -83,7 +95,6 @@ export async function renderExport(doc: MapDoc, preset: ExportPreset, onProgress
           ctx.drawImage(tmp, 0, 0, tw, th, x, y, tw, th);
           ctx.globalAlpha = 1;
         }
-        // Genstande, mure og effekter tegnes her, når de findes.
         onProgress?.(++done / total);
         await yieldToUi();
       }

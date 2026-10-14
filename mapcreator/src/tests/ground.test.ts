@@ -94,8 +94,8 @@ describe('terræntegning', () => {
     const t = buf(100, 4);
     renderGroundTile(t, g, 1, 200, 200, 1); // verdenspixel 200..300 midt på kortet
     const px = (x: number) => [t.data[x * 4]!, t.data[x * 4 + 1]!, t.data[x * 4 + 2]!];
-    expect(px(2)[1]).toBeGreaterThan(px(2)[2]); // venstre: grønt dominerer
-    expect(px(97)[2]).toBeGreaterThan(px(97)[0]); // højre: blåt vand
+    expect(px(2)[1]!).toBeGreaterThan(px(2)[2]!); // venstre: grønt dominerer
+    expect(px(97)[2]!).toBeGreaterThan(px(97)[0]!); // højre: blåt vand
   });
 
   it('samme maske giver samme billede uanset flisernes opdeling', () => {

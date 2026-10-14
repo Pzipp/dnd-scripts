@@ -6,6 +6,7 @@
   import NewMapDialog from './ui/NewMapDialog.svelte';
   import OpenDialog from './ui/OpenDialog.svelte';
   import ToolPanel from './ui/ToolPanel.svelte';
+  import ObjectPicker from './ui/ObjectPicker.svelte';
   import ExportDialog from './ui/ExportDialog.svelte';
 
   let dialog = $state<'new' | 'open' | 'export' | null>(null);
@@ -23,6 +24,22 @@
     } else if (mod && e.key.toLowerCase() === 's') {
       e.preventDefault();
       editor.save();
+    } else if (mod && e.key.toLowerCase() === 'd') {
+      e.preventDefault();
+      editor.duplicateSelectedElement();
+    } else if (!mod && (e.key === 'Delete' || e.key === 'Backspace')) {
+      editor.removeSelectedElement();
+    } else if (!mod && e.key === 'Escape') {
+      if (editor.tool === 'stamp') editor.tool = 'select';
+      else editor.selectElement(null, null);
+    } else if (!mod && e.key.startsWith('Arrow') && editor.selection) {
+      e.preventDefault();
+      const d = e.shiftKey ? 50 : 5;
+      editor.nudgeSelected(e.key === 'ArrowLeft' ? -d : e.key === 'ArrowRight' ? d : 0, e.key === 'ArrowUp' ? -d : e.key === 'ArrowDown' ? d : 0);
+    } else if (!mod && !e.altKey) {
+      const k = e.key.toLowerCase();
+      const map: Record<string, typeof editor.tool> = { h: 'hand', v: 'select', g: 'stamp', b: 'paint', e: 'erase' };
+      if (map[k]) editor.tool = map[k]!;
     }
   }
 
@@ -56,7 +73,7 @@
     <button onclick={() => editor.fitView()}>Hele kortet</button>
     <span class="msg" class:err={editor.error}>{editor.error || editor.status}</span>
   </header>
-  <aside class="left"><ToolPanel /><LayerPanel /></aside>
+  <aside class="left"><ToolPanel />{#if editor.tool === 'stamp'}<ObjectPicker />{/if}<LayerPanel /></aside>
   <main><Viewport /></main>
   <aside class="right"><Inspector /></aside>
 </div>

@@ -13,6 +13,26 @@ export interface Rect {
   h: number;
 }
 
+export type ParamValue = string | number | boolean;
+
+/** En genstand på et kort (træ, kiste, lig, lyspøl …). Mål og position i verdenspixels (50 px = ét felt). */
+export interface MapElement {
+  id: string;
+  /** Nøgle i genstandsregistret (objects/registry.ts). */
+  kind: string;
+  /** Midtpunkt. */
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  /** Rotation i radianer. */
+  rot: number;
+  seed: number;
+  /** Højde over lagets højde (påvirker skyggen og rækkefølgen). */
+  z: number;
+  params: Record<string, ParamValue>;
+}
+
 export type LayerType = 'ground' | 'objects' | 'walls' | 'effects';
 
 export const LAYER_TYPE_LABEL: Record<LayerType, string> = {
@@ -34,6 +54,8 @@ export interface Layer {
   height: number;
   /** Kun grundlag: terrænmasken. */
   ground?: GroundData;
+  /** Kun genstands- og effektlag. */
+  elements?: MapElement[];
 }
 
 export type ExportFormat = 'png' | 'webp' | 'jpeg';

@@ -11,6 +11,8 @@ export interface Command {
   touches?: { layerId: string; rect: Rect };
   /** Lag, der skal vælges, når kommandoen udføres (eller gentages). */
   selectsLayer?: string;
+  /** Genstand, der skal vælges, når kommandoen udføres (eller gentages). */
+  selectsElement?: string;
 }
 
 const MERGE_WINDOW_MS = 800;

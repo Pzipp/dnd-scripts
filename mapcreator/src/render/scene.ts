@@ -1,12 +1,22 @@
 import { type Camera } from './camera';
 import { groundCache } from './groundCache';
-import { CELL_PX, type MapDoc } from '../model/types';
+import { CELL_PX, type Layer, type MapDoc, type MapElement } from '../model/types';
+import { HANDLES, handlePos } from '../model/geometry';
+import { drawElement, drawElementsLayer } from './sprites';
+import '../objects';
 
 export interface ViewOptions {
   grid: boolean;
   /** Penselring (verdenskoordinater og radius i verdenspixels), hvis et malerværktøj er valgt. */
   brush?: { x: number; y: number; r: number; ok: boolean } | null;
+  /** Valgt genstand: tegnes med ramme og håndtag. */
+  selected?: MapElement | null;
+  /** Genstand, der er ved at blive sat ud (halvgennemsigtig). */
+  ghost?: { el: MapElement; layer: Layer } | null;
 }
+
+/** Afstand (skærmpixels) fra toppen til rotationshåndtaget. */
+export const ROT_HANDLE_PX = 28;
 
 const THEME = { bg: '#1b1d22', paper: '#c9c3ad', border: '#000', grid: 'rgba(0,0,0,.22)' };
 
@@ -31,7 +41,17 @@ export function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, c
       ctx.drawImage(c, 0, 0, mw, mh);
       ctx.globalAlpha = 1;
     }
-    // Genstande, mure og effekter tegnes her, når de findes.
+    if (layer.type === 'objects' || layer.type === 'effects') {
+      ctx.globalAlpha = layer.opacity;
+      drawElementsLayer(ctx, layer, doc, cam.zoom);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  if (view.ghost) {
+    ctx.globalAlpha = 0.6;
+    drawElement(ctx, view.ghost.el, view.ghost.layer, doc, cam.zoom);
+    ctx.globalAlpha = 1;
   }
 
   if (view.grid) {
@@ -53,6 +73,8 @@ export function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, c
   ctx.lineWidth = 2 / cam.zoom;
   ctx.strokeRect(0, 0, mw, mh);
 
+  if (view.selected) drawSelection(ctx, view.selected, cam.zoom);
+
   if (view.brush) {
     const b = view.brush;
     ctx.beginPath();
@@ -62,6 +84,39 @@ export function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, c
     ctx.stroke();
     ctx.lineWidth = 1.5 / cam.zoom;
     ctx.strokeStyle = b.ok ? '#fff' : '#e05a4a';
+    ctx.stroke();
+  }
+}
+
+function drawSelection(ctx: CanvasRenderingContext2D, el: MapElement, zoom: number): void {
+  const px = 1 / zoom;
+  ctx.save();
+  ctx.translate(el.x, el.y);
+  ctx.rotate(el.rot);
+  ctx.lineWidth = 1.5 * px;
+  ctx.strokeStyle = '#e8b04a';
+  ctx.setLineDash([6 * px, 4 * px]);
+  ctx.strokeRect(-el.w / 2, -el.h / 2, el.w, el.h);
+  ctx.setLineDash([]);
+  ctx.restore();
+  const rotOffset = ROT_HANDLE_PX * px;
+  const [tx, ty] = handlePos(el, 'n', 0);
+  const [rx, ry] = handlePos(el, 'rot', rotOffset);
+  ctx.beginPath();
+  ctx.moveTo(tx, ty);
+  ctx.lineTo(rx, ry);
+  ctx.lineWidth = 1.5 * px;
+  ctx.strokeStyle = '#e8b04a';
+  ctx.stroke();
+  for (const h of [...HANDLES, 'rot' as const]) {
+    const [x, y] = handlePos(el, h, rotOffset);
+    ctx.beginPath();
+    if (h === 'rot') ctx.arc(x, y, 5.5 * px, 0, Math.PI * 2);
+    else ctx.rect(x - 4.5 * px, y - 4.5 * px, 9 * px, 9 * px);
+    ctx.fillStyle = '#1b1d22';
+    ctx.fill();
+    ctx.lineWidth = 1.5 * px;
+    ctx.strokeStyle = '#e8b04a';
     ctx.stroke();
   }
 }
