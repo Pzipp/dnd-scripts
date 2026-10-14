@@ -1,6 +1,7 @@
 <script lang="ts">
   import '../objects';
-  import { CATEGORIES, FAMILIES, familyKinds, type Family } from '../objects';
+  import { onDestroy } from 'svelte';
+  import { CATEGORIES, FAMILIES, familyKinds, onKindsChanged, type Family } from '../objects';
   import { editor } from '../model/store.svelte';
   import Thumb from './Thumb.svelte';
 
@@ -8,10 +9,17 @@
   let openKey = $state<string>(editor.stampFamily);
   let query = $state('');
   let category = $state<string>('all');
+  /** Tælles op, når egne genstande tilføjes eller fjernes, så listen tegnes igen. */
+  let rev = $state(0);
+  const off = onKindsChanged(() => rev++);
+  onDestroy(off);
+  /** Varianter i en familie; læser `rev`, så visningen følger med, når egne genstande kommer og går. */
+  const kindsOf = (_rev: number, key: string) => familyKinds(key);
 
   const q = $derived(query.trim().toLowerCase());
   const visible = $derived(
     FAMILIES.filter((f) => {
+      if (!kindsOf(rev, f.key).length) return false;
       if (category !== 'all' && f.category !== category) return false;
       if (!q) return true;
       return f.label.toLowerCase().includes(q) || familyKinds(f.key).some((k) => k.name.toLowerCase().includes(q));
@@ -41,14 +49,14 @@
 <input type="search" placeholder="Søg …" bind:value={query} aria-label="Søg i genstande" />
 <div class="cats" role="group" aria-label="Kategori">
   <button class:on={category === 'all'} onclick={() => (category = 'all')}>Alle</button>
-  {#each CATEGORIES as c}
+  {#each CATEGORIES.filter((c) => FAMILIES.some((f) => f.category === c.key && kindsOf(rev, f.key).length)) as c}
     <button class:on={category === c.key} onclick={() => (category = c.key)}>{c.label}</button>
   {/each}
 </div>
 
 <ul class="fam">
   {#each visible as f (f.key)}
-    {@const kinds = familyKinds(f.key)}
+    {@const kinds = kindsOf(rev, f.key)}
     {@const open = openKey === f.key || (!!q && kinds.some((k) => k.name.toLowerCase().includes(q)))}
     <li>
       <button class="head" class:open aria-expanded={open} onclick={() => openFamily(f)}>

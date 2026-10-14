@@ -50,6 +50,7 @@ src/
     export.ts     eksport i fuld opløsning (fliser), filnavne
     camera.ts
   objects/      genstandsregistret og alle genstande (se docs/mapcreator-objects.md)
+  assets/       egne genstande: cutout.ts (baggrund væk og udskæring, ren pixelregning), library.ts (bibliotek og registrering)
   ui/           paneler og dialoger (Svelte)
   tests/        vitest
 ```

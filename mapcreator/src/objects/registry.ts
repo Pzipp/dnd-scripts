@@ -1,6 +1,6 @@
 import type { LayerType, ParamValue } from '../model/types';
 
-export type CategoryKey = 'nature' | 'interior' | 'remains' | 'architecture' | 'effects';
+export type CategoryKey = 'nature' | 'interior' | 'remains' | 'architecture' | 'effects' | 'own';
 
 export const CATEGORIES: { key: CategoryKey; label: string }[] = [
   { key: 'nature', label: 'Natur' },
@@ -8,6 +8,7 @@ export const CATEGORIES: { key: CategoryKey; label: string }[] = [
   { key: 'remains', label: 'Levn' },
   { key: 'architecture', label: 'Arkitektur' },
   { key: 'effects', label: 'Lys og effekter' },
+  { key: 'own', label: 'Egne' },
 ];
 
 /** En familie samler varianter af samme slags ting (Træer, Borde, Tønder …). */
@@ -106,6 +107,30 @@ export function registerKinds(list: ObjectKind[]): void {
     if (!FAMILIES.some((f) => f.key === k.family)) throw new Error(`Ukendt familie ${k.family} for ${k.key}.`);
     kinds.set(k.key, k);
   }
+}
+
+const listeners = new Set<() => void>();
+/** Kaldes, når genstande tilføjes eller fjernes efter start (egne genstande). Returnerer en funktion, der afmelder. */
+export function onKindsChanged(fn: () => void): () => void {
+  listeners.add(fn);
+  return () => listeners.delete(fn);
+}
+const changed = () => listeners.forEach((fn) => fn());
+
+/** Tilføjer en familie, hvis den ikke findes (egne genstande). */
+export function registerFamily(f: Family): void {
+  if (!FAMILIES.some((x) => x.key === f.key)) FAMILIES.push(f);
+}
+
+/** Erstatter alle varianter, hvis nøgle starter med `prefix` (egne genstande genindlæses ved ændringer). */
+export function replaceKindsWithPrefix(prefix: string, list: ObjectKind[]): void {
+  for (const key of [...kinds.keys()]) if (key.startsWith(prefix)) kinds.delete(key);
+  for (const k of list) {
+    if (!k.key.startsWith(prefix)) throw new Error(`Nøglen ${k.key} starter ikke med ${prefix}.`);
+    if (!FAMILIES.some((f) => f.key === k.family)) throw new Error(`Ukendt familie ${k.family} for ${k.key}.`);
+    kinds.set(k.key, k);
+  }
+  changed();
 }
 
 export const getKind = (key: string): ObjectKind | undefined => kinds.get(key);

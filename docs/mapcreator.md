@@ -4,7 +4,7 @@ Editor til slagkort (top-down, uden grid i selve billedet): lag med terræn, gen
 
 ## Status
 
-Færdigt: dokumentmodel og lag (tilføj, slet, flyt, skjul, lås, opacitet, højde), kamera (pan, zoom, knib), fortryd/gentag, gem og åbn, **terrænmaling** (pensel, viskelæder, fyld; 8 materialer), **genstande** (familier med varianter, vælger, flyt/skalér/rotér, skygger), **mure** med døre, porte og vinduer, et **scatter-værktøj** til skov og planter, og **eksport** med navngivne udgaver (download eller direkte i VTT'et). Mangler: generator (vælg et område og få en base), egne genstande (billedimport) og polering. Se [mapcreator-plan.md](mapcreator-plan.md).
+Færdigt: dokumentmodel og lag (tilføj, slet, flyt, skjul, lås, opacitet, højde), kamera (pan, zoom, knib), fortryd/gentag, gem og åbn, **terrænmaling** (pensel, viskelæder, fyld; 8 materialer), **genstande** (familier med varianter, vælger, flyt/skalér/rotér, skygger), **mure** med døre, porte og vinduer, et **scatter-værktøj** til skov og planter, og **eksport** med navngivne udgaver (download eller direkte i VTT'et). **Egne genstande** (billedimport med automatisk fjernelse af baggrund) er også med. Mangler: generator (vælg et område og få en base) og polering. Se [mapcreator-plan.md](mapcreator-plan.md).
 
 Flere dokumenter: [mapcreator-format.md](mapcreator-format.md) (JSON-format og API), [mapcreator-objects.md](mapcreator-objects.md) (laver og forbedre genstande) og [`mapcreator/README.md`](../mapcreator/README.md) (kode og udvikling).
 
@@ -45,6 +45,20 @@ Genstande ligger i genstands- og effektlag (`elements[]`): `kind`, position, st�
 
 **Værktøjer.** *Vælg* (V): klik, træk for at flytte, håndtag til skalering (Shift låser/frigiver proportioner) og rotation (Shift runder til 15°), pile flytter, Delete sletter, Ctrl+D duplikerer. *Genstand* (G): sæt ud med forhåndsvisning; Esc går tilbage til Vælg. "Fastgør til halve felter" er valgfri.
 
+## Egne genstande (billedimport)
+
+Knappen **Egne genstande …** øverst åbner importen. Vælg (eller træk ind) et billede: enten ét billede af en genstand eller et ark med mange, fx 5 × 5 genstande fra en billedgenerator. Billedet skal vise genstandene **set oppefra** på en **ensfarvet** (hvid, magenta …) eller **ternet** baggrund, uden skygge og med luft imellem.
+
+1. Baggrunden findes ud fra billedets kant. Er den forkert, så klik på baggrunden i billedet. **Tolerance** styrer, hvor stor forskel fra baggrundsfarven der stadig er baggrund.
+2. Baggrunden fjernes kun, hvor den hænger sammen med kanten, så hvidt i en genstand (sne, knogler) bliver stående. Vil du også fjerne baggrund inde i en genstand (huller), så sæt flueben i "Fjern også baggrund inde i genstande". Kanten blødgøres, så der ikke er en lys kant rundt om genstanden.
+3. Hver genstand skæres ud for sig. Dele, der ligger tættere end **Saml dele** (pixels), regnes for én genstand (en vogn med hjul i to stykker). Hver genstand vises på et ternet felt, så du kan se, om baggrunden virkelig er væk.
+4. Vælg familie (fx Træer, Borde eller **Egne genstande**), skygge, tilfældig rotation og evt. tags. Giv hver genstand et navn og en bredde i felter (den midterste genstand får "Midterste genstand = N felter", resten følger forholdet). Fjern flueben ved dem, du ikke vil have.
+5. **Gem** lægger genstandene i vælgeren, hvor de optræder som almindelige varianter i deres familie. Den første er valgt til udsætning.
+
+Fanen **Mine genstande** viser alle importerede genstande og lader dig omdøbe, flytte til en anden familie, ændre størrelsen, slå skygge og rotation til og fra og slette. Kort, der bruger en slettet genstand, viser en rød stiplet boks.
+
+Klienten skærer billedet ud og skalerer hver genstand til højst 512 px. Serveren genkoder alt (kun PNG, WebP og JPEG; højst ca. 36 megapixel; ingen metadata) og gemmer genstanden som WebP med gennemsigtighed. En genstand, der er næsten helt hvid eller lignende baggrunden, kan få hul i sig; brug i så fald magenta som baggrund i billedet.
+
 ## Mure
 
 Et mur-lag (`type: walls`) har `walls[]`: en linje af punkter med `thickness`, `style` (sten, mursten, træ, hæk), `closed` og `openings[]`. Længde og form følger af punkterne (`model/walls.ts`); tegningen er vektor (`render/walls.ts`), så den er skarp ved enhver zoom.
@@ -70,7 +84,7 @@ Alt ligger i `$USERDATA/mapcreator/` (miljøvariabel `USERDATA`, standard `/user
 | Sti | Indhold |
 |---|---|
 | `maps/<id>.json` | Kortdokumenter |
-| `assets/` | Egne genstande (senere) |
+| `assets/library.json`, `assets/<id>.webp` | Egne genstande: biblioteket og ét billede pr. genstand |
 | `exports/` | Evt. færdige billeder (senere) |
 
 Serveren opretter aldrig selve `/userdata`, kun undermapperne. Mangler den, svarer API'et 503 (opret `vol/userdata/` og mount den).
@@ -79,7 +93,7 @@ Dokumentet (`mapcreator/src/model/types.ts`): `version`, `id`, `name`, `widthCel
 
 ## API (`/api/mapcreator/`)
 
-`GET maps` (liste), `GET|PUT|DELETE maps/<id>`. Id'er er `a-z0-9-`, 4 til 64 tegn. Ingen login: kun til internt brug.
+`GET maps` (liste), `GET|PUT|DELETE maps/<id>`; egne genstande: `GET|POST assets`, `PATCH|DELETE assets/<id>`, `GET assets/<id>.webp` (se [mapcreator-format.md](mapcreator-format.md)). Id'er er `a-z0-9-`, 4 til 64 tegn. Ingen login: kun til internt brug.
 
 ## Udvikling
 

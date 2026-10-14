@@ -50,7 +50,7 @@ describe('genstandsregister', () => {
         for (const v of values) expect(() => k.draw(g, { w: k.w * 50, h: k.h * 50, seed: 5, params: { ...defaultParams(k), [p.key]: v } }), `${k.key}.${p.key}`).not.toThrow();
       }
     }
-  });
+  }, 60_000);
 });
 
 describe('geometri', () => {

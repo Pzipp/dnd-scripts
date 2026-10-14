@@ -7,13 +7,16 @@ from __future__ import annotations
 
 import json
 import os
+import io
 import re
+import secrets
 import tempfile
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
 
-from flask import Blueprint, jsonify, render_template, request
+from flask import Blueprint, jsonify, make_response, render_template, request, send_file
+from PIL import Image, UnidentifiedImageError
 
 bp = Blueprint("mapcreator", __name__)
 
@@ -23,6 +26,12 @@ DOC_VERSION = 1  # samme som DOC_VERSION i mapcreator/src/model/types.ts
 MAX_CELLS = 300
 MAX_LAYERS = 200
 MAX_DOC_BYTES = 20 * 1024 * 1024
+MAX_UPLOAD_BYTES = 12 * 1024 * 1024
+MAX_SOURCE_PIXELS = 36_000_000  # afviser enorme billeder, før de dekodes
+MAX_ASSET_SIDE = 1024
+MAX_ASSETS = 2000
+ASSET_ID_RE = re.compile(r"^[a-f0-9]{12}$")
+SLUG_RE = re.compile(r"^[a-z0-9_]{1,40}$")
 LOCK = threading.RLock()
 
 
@@ -147,3 +156,185 @@ def delete_map(map_id: str):
         raise Fejl("Kortet findes ikke.", 404)
     p.unlink()
     return jsonify({"ok": True})
+
+
+# ---- egne genstande: billeder, der er skåret ud i klienten, og et bibliotek over dem ----
+
+def assets_dir() -> Path:
+    root = userdata()
+    if not root.is_dir():
+        raise Fejl(f"Datamappen {root} findes ikke eller er ikke mountet (se docs/todo-sebastian.md).", 503)
+    d = root / "mapcreator" / "assets"
+    try:
+        d.mkdir(parents=True, exist_ok=True)
+    except OSError as e:
+        raise Fejl(f"Kan ikke skrive i {d}: {e.strerror}", 503)
+    return d
+
+
+def _read_library() -> list[dict]:
+    p = assets_dir() / "library.json"
+    if not p.is_file():
+        return []
+    try:
+        data = json.loads(p.read_text("utf-8"))
+    except (OSError, ValueError):
+        raise Fejl("Biblioteket over egne genstande kan ikke læses (library.json er ødelagt).", 500)
+    items = data.get("items") if isinstance(data, dict) else None
+    return [i for i in items if isinstance(i, dict)] if isinstance(items, list) else []
+
+
+def _write_library(items: list[dict]) -> None:
+    p = assets_dir() / "library.json"
+    fd, tmp = tempfile.mkstemp(dir=p.parent, prefix=".tmp-", suffix=".json")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump({"version": 1, "items": items}, f, ensure_ascii=False, indent=1)
+        os.replace(tmp, p)
+    except BaseException:
+        Path(tmp).unlink(missing_ok=True)
+        raise
+
+
+def _number(v, lo: float, hi: float, what: str) -> float:
+    if isinstance(v, bool) or not isinstance(v, (int, float)) or not lo <= v <= hi:
+        raise Fejl(f"{what} skal være et tal mellem {lo} og {hi}.")
+    return round(float(v), 3)
+
+
+def _clean_meta(meta, partial: bool) -> dict:
+    """Skal-krav til en genstands data (navn, familie, mål i felter, skygge, tilfældig rotation, tags)."""
+    if not isinstance(meta, dict):
+        raise Fejl("Genstandens data skal være et JSON-objekt.")
+    out: dict = {}
+    if "name" in meta or not partial:
+        name = meta.get("name")
+        if not isinstance(name, str) or not name.strip() or len(name.strip()) > 60:
+            raise Fejl("Navnet skal være på 1 til 60 tegn.")
+        out["name"] = name.strip()
+    if "family" in meta or not partial:
+        fam = meta.get("family")
+        if not isinstance(fam, str) or not SLUG_RE.match(fam):
+            raise Fejl("Ugyldig familie.")
+        out["family"] = fam
+    for key, label in (("w", "Bredden"), ("h", "Højden")):
+        if key in meta or not partial:
+            out[key] = _number(meta.get(key), 0.25, 40, label)
+    for key in ("shadow", "randomRotation"):
+        if key in meta or not partial:
+            v = meta.get(key, False)
+            if not isinstance(v, bool):
+                raise Fejl(f"{key} skal være sand eller falsk.")
+            out[key] = v
+    if "tags" in meta or not partial:
+        tags = meta.get("tags", [])
+        if not isinstance(tags, list) or len(tags) > 30 or not all(isinstance(t, str) and SLUG_RE.match(t) for t in tags):
+            raise Fejl("Ugyldige tags.")
+        out["tags"] = sorted(set(tags))
+    return out
+
+
+def _prepare_image(raw: bytes) -> tuple[bytes, int, int]:
+    """Dekoder og genkoder uploaden (fjerner metadata og alt, der ikke er pixels), beskærer tomt og begrænser størrelsen."""
+    try:
+        im = Image.open(io.BytesIO(raw))
+        if im.format not in ("PNG", "WEBP", "JPEG"):
+            raise Fejl("Kun PNG, WebP og JPEG kan bruges.")
+        if im.width * im.height > MAX_SOURCE_PIXELS:
+            raise Fejl("Billedet er for stort (højst ca. 36 megapixel).")
+        im.load()
+    except Fejl:
+        raise
+    except (UnidentifiedImageError, OSError, ValueError, Image.DecompressionBombError):
+        raise Fejl("Filen er ikke et gyldigt billede.")
+    im = im.convert("RGBA")
+    box = im.getchannel("A").point(lambda a: 255 if a >= 8 else 0).getbbox()
+    if box is None:
+        raise Fejl("Billedet er helt gennemsigtigt.")
+    im = im.crop(box)
+    if max(im.size) > MAX_ASSET_SIDE:
+        k = MAX_ASSET_SIDE / max(im.size)
+        im = im.resize((max(1, round(im.width * k)), max(1, round(im.height * k))), Image.LANCZOS)
+    buf = io.BytesIO()
+    im.save(buf, "WEBP", quality=92, method=4)
+    return buf.getvalue(), im.width, im.height
+
+
+@bp.get("/api/mapcreator/assets")
+def list_assets():
+    return jsonify(_read_library())
+
+
+@bp.post("/api/mapcreator/assets")
+def add_asset():
+    if (request.content_length or 0) > MAX_UPLOAD_BYTES:
+        raise Fejl("Billedet er for stort (højst 12 MB).", 413)
+    f = request.files.get("file")
+    if f is None:
+        raise Fejl("Der mangler en billedfil.")
+    try:
+        meta = _clean_meta(json.loads(request.form.get("meta", "")), partial=False)
+    except ValueError:
+        raise Fejl("Genstandens data mangler eller er ikke JSON.")
+    data, pw, ph = _prepare_image(f.read(MAX_UPLOAD_BYTES + 1))
+    with LOCK:
+        d = assets_dir()
+        items = _read_library()
+        if len(items) >= MAX_ASSETS:
+            raise Fejl("Biblioteket er fuldt.", 409)
+        used = {i.get("id") for i in items}
+        asset_id = secrets.token_hex(6)
+        while asset_id in used:
+            asset_id = secrets.token_hex(6)
+        (d / f"{asset_id}.webp").write_bytes(data)
+        item = {"id": asset_id, **meta, "pxW": pw, "pxH": ph, "created": _iso(datetime.now(timezone.utc).timestamp())}
+        items.append(item)
+        try:
+            _write_library(items)
+        except BaseException:
+            (d / f"{asset_id}.webp").unlink(missing_ok=True)
+            raise
+    return jsonify(item), 201
+
+
+def _asset_id(asset_id: str) -> str:
+    if not ASSET_ID_RE.match(asset_id):
+        raise Fejl("Ugyldigt id.")
+    return asset_id
+
+
+@bp.patch("/api/mapcreator/assets/<asset_id>")
+def patch_asset(asset_id: str):
+    _asset_id(asset_id)
+    changes = _clean_meta(request.get_json(silent=True), partial=True)
+    with LOCK:
+        items = _read_library()
+        for item in items:
+            if item.get("id") == asset_id:
+                item.update(changes)
+                _write_library(items)
+                return jsonify(item)
+    raise Fejl("Genstanden findes ikke.", 404)
+
+
+@bp.delete("/api/mapcreator/assets/<asset_id>")
+def delete_asset(asset_id: str):
+    _asset_id(asset_id)
+    with LOCK:
+        items = _read_library()
+        rest = [i for i in items if i.get("id") != asset_id]
+        if len(rest) == len(items):
+            raise Fejl("Genstanden findes ikke.", 404)
+        _write_library(rest)
+        (assets_dir() / f"{asset_id}.webp").unlink(missing_ok=True)
+    return jsonify({"ok": True})
+
+
+@bp.get("/api/mapcreator/assets/<asset_id>.webp")
+def get_asset_image(asset_id: str):
+    p = assets_dir() / f"{_asset_id(asset_id)}.webp"
+    if not p.is_file():
+        raise Fejl("Billedet findes ikke.", 404)
+    resp = make_response(send_file(p, mimetype="image/webp"))
+    resp.headers["Cache-Control"] = "public, max-age=31536000, immutable"  # et billede ændres aldrig; id'et er nyt ved nyt billede
+    return resp

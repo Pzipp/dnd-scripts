@@ -9,10 +9,11 @@
   import ObjectPicker from './ui/ObjectPicker.svelte';
   import ExportDialog from './ui/ExportDialog.svelte';
   import Gallery from './ui/Gallery.svelte';
+  import ImportDialog from './ui/ImportDialog.svelte';
 
   const gallery = new URLSearchParams(location.search).has('galleri');
 
-  let dialog = $state<'new' | 'open' | 'export' | null>(null);
+  let dialog = $state<'new' | 'open' | 'export' | 'assets' | null>(null);
 
   function onKey(e: KeyboardEvent) {
     const t = e.target as HTMLElement;
@@ -84,6 +85,7 @@
     <button onclick={() => (dialog = 'open')}>Åbn</button>
     <button class="primary" onclick={() => editor.save()}>Gem</button>
     <button onclick={() => (dialog = 'export')}>Eksportér …</button>
+    <button onclick={() => (dialog = 'assets')} title="Importér dine egne billeder som genstande">Egne genstande …</button>
     <span class="sep"></span>
     <button onclick={() => editor.undo()} disabled={!editor.canUndo} title="Fortryd (Ctrl+Z)">Fortryd</button>
     <button onclick={() => editor.redo()} disabled={!editor.canRedo} title="Gentag (Ctrl+Y)">Gentag</button>
@@ -102,6 +104,7 @@
 {#if dialog === 'new'}<NewMapDialog onclose={() => (dialog = null)} />{/if}
 {#if dialog === 'open'}<OpenDialog onclose={() => (dialog = null)} />{/if}
 {#if dialog === 'export'}<ExportDialog onclose={() => (dialog = null)} />{/if}
+{#if dialog === 'assets'}<ImportDialog onclose={() => (dialog = null)} />{/if}
 
 <style>
   .app {

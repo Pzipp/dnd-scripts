@@ -28,6 +28,43 @@ export const saveMap = (doc: MapDoc) =>
   });
 export const deleteMap = (id: string) => call<{ ok: true }>(`${BASE}/maps/${encodeURIComponent(id)}`, { method: 'DELETE' });
 
+// ---- egne genstande ----
+
+export interface AssetMeta {
+  name: string;
+  family: string;
+  /** Mål i felter. */
+  w: number;
+  h: number;
+  shadow: boolean;
+  randomRotation: boolean;
+  tags: string[];
+}
+
+export interface AssetItem extends AssetMeta {
+  id: string;
+  /** Billedets størrelse i pixels. */
+  pxW: number;
+  pxH: number;
+  created: string;
+}
+
+export const assetUrl = (id: string) => `${BASE}/assets/${encodeURIComponent(id)}.webp`;
+export const listAssets = () => call<AssetItem[]>(`${BASE}/assets`);
+export const patchAsset = (id: string, changes: Partial<AssetMeta>) =>
+  call<AssetItem>(`${BASE}/assets/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(changes),
+  });
+export const deleteAsset = (id: string) => call<{ ok: true }>(`${BASE}/assets/${encodeURIComponent(id)}`, { method: 'DELETE' });
+export function uploadAsset(image: Blob, meta: AssetMeta): Promise<AssetItem> {
+  const form = new FormData();
+  form.set('file', image, 'asset.png');
+  form.set('meta', JSON.stringify(meta));
+  return call<AssetItem>(`${BASE}/assets`, { method: 'POST', body: form });
+}
+
 // ---- det simple VTT (/simpelvtt): kampagner, rooms og upload ----
 
 export interface VttTree {

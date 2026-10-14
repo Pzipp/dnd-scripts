@@ -75,6 +75,18 @@ Alt under `/api/mapcreator/`, JSON, ingen login (kun til internt brug):
 | `PUT maps/<id>` | Gem (dokumentets `id` skal passe til adressen; atomisk skrivning; højst 20 MB) |
 | `DELETE maps/<id>` | Slet |
 
+### Egne genstande
+
+| Kald | Formål |
+|---|---|
+| `GET assets` | Hele biblioteket: `[{ id, name, family, w, h, shadow, randomRotation, tags, pxW, pxH, created }]`. `w` og `h` er standardstørrelsen i felter |
+| `POST assets` | Multipart: `file` (PNG, WebP eller JPEG) og `meta` (JSON med `name`, `family`, `w`, `h`, `shadow`, `randomRotation`, `tags`). Serveren genkoder billedet (ingen metadata), beskærer tomt, begrænser til 1024 px og gemmer som WebP. Højst 12 MB og ca. 36 megapixel. Svarer 201 med genstanden |
+| `PATCH assets/<id>` | Ret `name`, `family`, `w`, `h`, `shadow`, `randomRotation`, `tags` (billedet ændres ikke) |
+| `DELETE assets/<id>` | Slet genstand og billede |
+| `GET assets/<id>.webp` | Billedet (uforanderligt, caches hårdt) |
+
+Klienten registrerer hver genstand som varianten `custom-<id>` i familien `family` (findes familien ikke, bruges `own`, "Egne genstande"). Et kort gemmer kun nøglen `custom-<id>`, så billedet ændres ved at slette og importere igen, og kortet peger kun videre, hvis genstanden findes.
+
 Fejl svarer `{ "error": "…" }` på dansk. Mangler `$USERDATA` (eller kan der ikke skrives), svarer API'et 503.
 
 Eksport til VTT bruger **simpelvtts eget upload** (`POST /api/simpelvtt/upload`, multipart med `campaign`, `room` og `files`) og kampagnelisten `GET /api/simpelvtt/tree`; se [simpelvtt.md](simpelvtt.md). Der er ingen særskilt eksport-endpoint.
