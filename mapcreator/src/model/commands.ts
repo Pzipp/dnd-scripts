@@ -1,6 +1,6 @@
 import type { Command } from './history';
 import type { CellChange } from './ground';
-import type { Layer, MapDoc, MapElement } from './types';
+import type { Layer, MapDoc, MapElement, Opening, Wall } from './types';
 
 function indexOf(doc: MapDoc, id: string): number {
   const i = doc.layers.findIndex((l) => l.id === id);
@@ -217,5 +217,163 @@ export function updateElement(layerId: string, id: string, patch: ElementPatch):
 export function transformElement(layerId: string, id: string, before: ElementPatch, after: ElementPatch): Command {
   const c = new UpdateElement(layerId, id, after, before);
   c.label = 'Ændr genstand';
+  return c;
+}
+
+// ---------------------------------------------------------------- mure
+
+type Pt = [number, number];
+const wallsOf = (doc: MapDoc, layerId: string): Wall[] => (doc.layers[indexOf(doc, layerId)]!.walls ??= []);
+function wallOf(doc: MapDoc, layerId: string, id: string): Wall {
+  const w = wallsOf(doc, layerId).find((x) => x.id === id);
+  if (!w) throw new Error(`Mur ${id} findes ikke.`);
+  return w;
+}
+const copyPts = (pts: Pt[]): Pt[] => pts.map((p) => [p[0], p[1]] as Pt);
+
+export function addWall(layerId: string, wall: Wall): Command {
+  return {
+    label: 'Tilføj mur',
+    selectsWall: wall.id,
+    apply: (doc) => void wallsOf(doc, layerId).push(wall),
+    revert(doc) {
+      const ws = wallsOf(doc, layerId);
+      ws.splice(ws.findIndex((w) => w.id === wall.id), 1);
+    },
+  };
+}
+
+export function removeWall(layerId: string, id: string): Command {
+  let removed: Wall | undefined;
+  let at = 0;
+  return {
+    label: 'Slet mur',
+    apply(doc) {
+      const ws = wallsOf(doc, layerId);
+      at = ws.findIndex((w) => w.id === id);
+      removed = ws.splice(at, 1)[0];
+    },
+    revert(doc) {
+      if (removed) wallsOf(doc, layerId).splice(at, 0, removed);
+    },
+  };
+}
+
+export type WallPatch = Partial<Pick<Wall, 'style' | 'thickness' | 'closed' | 'points'>>;
+
+class UpdateWall implements Command {
+  label = 'Ret mur';
+  constructor(
+    readonly layerId: string,
+    readonly id: string,
+    private after: WallPatch,
+    private before?: WallPatch,
+  ) {}
+  private get keys(): string {
+    return Object.keys(this.after).sort().join(',');
+  }
+  apply(doc: MapDoc): void {
+    const w = wallOf(doc, this.layerId, this.id);
+    if (!this.before) {
+      this.before = {};
+      for (const k of Object.keys(this.after) as (keyof WallPatch)[]) {
+        (this.before as Record<string, unknown>)[k] = k === 'points' ? copyPts(w.points) : w[k];
+      }
+    }
+    const a = { ...this.after };
+    if (a.points) a.points = copyPts(a.points);
+    Object.assign(w, a);
+  }
+  revert(doc: MapDoc): void {
+    const b = { ...this.before };
+    if (b.points) b.points = copyPts(b.points);
+    Object.assign(wallOf(doc, this.layerId, this.id), b);
+  }
+  merge(next: Command): boolean {
+    if (!(next instanceof UpdateWall) || next.id !== this.id || next.keys !== this.keys || this.keys.includes('points')) return false;
+    this.after = { ...next.after };
+    return true;
+  }
+}
+
+export const updateWall = (layerId: string, id: string, patch: WallPatch): Command => new UpdateWall(layerId, id, patch);
+
+/** Flyt af punkter (træk), hvor "før" er kendt på forhånd. */
+export function transformWall(layerId: string, id: string, before: Pt[], after: Pt[]): Command {
+  const c = new UpdateWall(layerId, id, { points: after }, { points: before });
+  c.label = 'Ændr mur';
+  return c;
+}
+
+export function addOpening(layerId: string, wallId: string, opening: Opening): Command {
+  return {
+    label: 'Tilføj åbning',
+    selectsOpening: { wallId, id: opening.id },
+    apply: (doc) => void wallOf(doc, layerId, wallId).openings.push(opening),
+    revert(doc) {
+      const os = wallOf(doc, layerId, wallId).openings;
+      os.splice(os.findIndex((o) => o.id === opening.id), 1);
+    },
+  };
+}
+
+export function removeOpening(layerId: string, wallId: string, id: string): Command {
+  let removed: Opening | undefined;
+  let at = 0;
+  return {
+    label: 'Slet åbning',
+    apply(doc) {
+      const os = wallOf(doc, layerId, wallId).openings;
+      at = os.findIndex((o) => o.id === id);
+      removed = os.splice(at, 1)[0];
+    },
+    revert(doc) {
+      if (removed) wallOf(doc, layerId, wallId).openings.splice(at, 0, removed);
+    },
+  };
+}
+
+export type OpeningPatch = Partial<Pick<Opening, 'kind' | 'at' | 'width' | 'open' | 'flip'>>;
+
+class UpdateOpening implements Command {
+  label = 'Ret åbning';
+  constructor(
+    readonly layerId: string,
+    readonly wallId: string,
+    readonly id: string,
+    private after: OpeningPatch,
+    private before?: OpeningPatch,
+  ) {}
+  private find(doc: MapDoc): Opening {
+    const o = wallOf(doc, this.layerId, this.wallId).openings.find((x) => x.id === this.id);
+    if (!o) throw new Error(`Åbning ${this.id} findes ikke.`);
+    return o;
+  }
+  private get keys(): string {
+    return Object.keys(this.after).sort().join(',');
+  }
+  apply(doc: MapDoc): void {
+    const o = this.find(doc);
+    if (!this.before) {
+      this.before = {};
+      for (const k of Object.keys(this.after) as (keyof OpeningPatch)[]) (this.before as Record<string, unknown>)[k] = o[k];
+    }
+    Object.assign(o, this.after);
+  }
+  revert(doc: MapDoc): void {
+    Object.assign(this.find(doc), this.before);
+  }
+  merge(next: Command): boolean {
+    if (!(next instanceof UpdateOpening) || next.id !== this.id || next.keys !== this.keys) return false;
+    this.after = { ...next.after };
+    return true;
+  }
+}
+
+export const updateOpening = (layerId: string, wallId: string, id: string, patch: OpeningPatch): Command => new UpdateOpening(layerId, wallId, id, patch);
+
+export function moveOpening(layerId: string, wallId: string, id: string, beforeAt: number, afterAt: number): Command {
+  const c = new UpdateOpening(layerId, wallId, id, { at: afterAt }, { at: beforeAt });
+  c.label = 'Flyt åbning';
   return c;
 }

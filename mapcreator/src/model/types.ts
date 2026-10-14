@@ -33,6 +33,36 @@ export interface MapElement {
   params: Record<string, ParamValue>;
 }
 
+export type WallStyle = 'stone' | 'brick' | 'wood' | 'hedge';
+export type OpeningKind = 'opening' | 'door' | 'double_door' | 'gate' | 'window';
+
+/** Noget i en mur: en åbning, en dør, en port eller et vindue. Placeret ved buelængden `at` fra murens start. */
+export interface Opening {
+  id: string;
+  kind: OpeningKind;
+  /** Midtpunktets afstand langs muren (verdenspixels). */
+  at: number;
+  /** Bredde langs muren (verdenspixels). */
+  width: number;
+  /** Åben dør/port (svinger ud til den ene side). */
+  open: boolean;
+  /** Hvilken side døren svinger til, og hvilken ende hængslerne sidder i. */
+  flip: boolean;
+}
+
+/** En mur: en linje af punkter (verdenspixels) med tykkelse. Længde og form følger af punkterne. */
+export interface Wall {
+  id: string;
+  style: WallStyle;
+  points: [number, number][];
+  /** Lukket mur (sidste punkt forbindes med første). */
+  closed: boolean;
+  /** Tykkelse i verdenspixels. */
+  thickness: number;
+  seed: number;
+  openings: Opening[];
+}
+
 export type LayerType = 'ground' | 'objects' | 'walls' | 'effects';
 
 export const LAYER_TYPE_LABEL: Record<LayerType, string> = {
@@ -56,6 +86,8 @@ export interface Layer {
   ground?: GroundData;
   /** Kun genstands- og effektlag. */
   elements?: MapElement[];
+  /** Kun mur-lag. */
+  walls?: Wall[];
 }
 
 export type ExportFormat = 'png' | 'webp' | 'jpeg';

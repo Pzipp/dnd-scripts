@@ -7,6 +7,7 @@ export function createLayer(type: LayerType, name: string, doc?: Pick<MapDoc, 'w
   const layer: Layer = { id: newId(), name, type, visible: true, locked: false, opacity: 1, height: 0 };
   if (type === 'ground' && doc) layer.ground = createGround(doc.widthCells, doc.heightCells, fill);
   if (type === 'objects' || type === 'effects') layer.elements = [];
+  if (type === 'walls') layer.walls = [];
   return layer;
 }
 
@@ -64,6 +65,7 @@ export function parseDoc(raw: unknown): MapDoc {
   for (const l of doc.layers) {
     const g = l.ground as unknown as { rle?: string } | undefined;
     if (l.type === 'objects' || l.type === 'effects') l.elements ??= [];
+    if (l.type === 'walls') l.walls ??= [];
     if (l.type === 'ground') {
       l.ground = g?.rle !== undefined ? decodeGround(g as { res: number; w: number; h: number; rle: string }) : createGround(doc.widthCells, doc.heightCells);
     }

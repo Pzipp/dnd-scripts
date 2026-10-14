@@ -13,6 +13,9 @@ export interface Command {
   selectsLayer?: string;
   /** Genstand, der skal vælges, når kommandoen udføres (eller gentages). */
   selectsElement?: string;
+  /** Mur og åbning, der skal vælges, når kommandoen udføres (eller gentages). */
+  selectsWall?: string;
+  selectsOpening?: { wallId: string; id: string };
 }
 
 const MERGE_WINDOW_MS = 800;
