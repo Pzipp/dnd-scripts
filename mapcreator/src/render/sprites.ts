@@ -1,4 +1,4 @@
-import { getKind, type ObjectKind } from '../objects';
+import { resolveKind, type ObjectKind } from '../objects';
 import type { Layer, MapDoc, MapElement } from '../model/types';
 
 /** Tegner hver genstand én gang til et lille lærred og genbruger det, så mange genstande kan tegnes hurtigt. */
@@ -61,7 +61,7 @@ export function sortedElements(layer: Layer): MapElement[] {
  * pixels pr. verdenspixel i eksporten); skyggens forskydning og sløring regnes i lærredets pixels.
  */
 export function drawElement(ctx: CanvasRenderingContext2D, el: MapElement, layer: Layer, doc: Pick<MapDoc, 'lightAngle'>, deviceScale: number): void {
-  const kind = getKind(el.kind);
+  const kind = resolveKind(el.kind);
   ctx.save();
   ctx.translate(el.x, el.y);
   ctx.rotate(el.rot);

@@ -1,7 +1,7 @@
 import { hitTest } from './geometry';
 import type { Layer, MapDoc, MapElement, Opening, Wall } from './types';
 import { hitOpening, hitWall } from './walls';
-import { categoryOf, getKind } from '../objects';
+import { categoryOf, resolveKind } from '../objects';
 import { sortedElements } from '../render/sprites';
 
 export type Picked =
@@ -27,7 +27,7 @@ export function pickAt(doc: MapDoc, wx: number, wy: number, tolerance = 0): Pick
       const els = sortedElements(layer);
       for (let j = els.length - 1; j >= 0; j--) {
         const el = els[j]!;
-        const k = getKind(el.kind);
+        const k = resolveKind(el.kind);
         const effect = !!k && categoryOf(k) === 'effects' && k.shadow === 0 && el.w * el.h > 150 * 150;
         if (pass === 0 && effect) continue;
         if (hitTest(el, wx, wy, tolerance)) return { type: 'element', layer, el };

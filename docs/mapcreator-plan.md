@@ -14,6 +14,7 @@ Et værktøj til at lave alle slags D&D-kort (top-down, malet stil, uden grid i 
 - **Data** ligger i `$USERDATA/mapcreator/` (`/userdata` i containeren = `vol/userdata/` i arbejdsmappen). Alle systemer skal på sigt flyttes dertil, så der kun er én mappe at tage backup af.
 - **Kortet er ét JSON-dokument** (`docs/mapcreator.md`). Eksport er billeder (PNG, WebP, JPEG) af dokumentet.
 - **Udgaver:** et kort har navngivne eksport-udgaver ("Skovsti - ren", "Skovsti - med lig", "City - no roof") med hver sin lagvisning, format og opløsning.
+- **Genstande forbedres på stedet** (samme `key`, ny tegning) og har tags (`objects/tags.ts`); generatoren bygger på familier og tags, ikke på enkelte genstande, så nye og bedre genstande kommer med uden rettelser.
 - **Genstande er familier med varianter** (Træer, Sten, Tønder …) og en "Tilfældig"-valgmulighed, så en skov ikke bliver ét træ gentaget.
 - **Egne genstande** (importerede billeder) skal skaleres ned i klienten (ca. 1024 px længste led, ca. 2 MB som WebP) og kontrolleres på serveren (filtype, magic bytes, mål, størrelse; evt. genkodning med Pillow).
 - Eksport til VTT: vælg kampagne og room, eller **General Maps**, eller download. Filnavn = udgavens navn.

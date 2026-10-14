@@ -74,6 +74,10 @@ export interface ObjectKind {
   bleed: number;
   /** Lag, den kan ligge på. */
   layers: LayerType[];
+  /** Ekstra tags (se `tags.ts`); familiens tags gælder altid. */
+  tags?: string[];
+  /** Hvis varianten udgår: nøglen på den, der afløser den. Gamle kort peger så videre. Slet aldrig en variant uden at sætte denne. */
+  replacedBy?: string;
   params: ParamDef[];
   draw(g: CanvasRenderingContext2D, o: DrawInput): void;
 }
@@ -105,6 +109,13 @@ export function registerKinds(list: ObjectKind[]): void {
 }
 
 export const getKind = (key: string): ObjectKind | undefined => kinds.get(key);
+
+/** Varianten for en nøgle; følger `replacedBy`, hvis varianten er udgået (højst fem led). */
+export function resolveKind(key: string): ObjectKind | undefined {
+  let k = kinds.get(key);
+  for (let i = 0; i < 5 && k?.replacedBy; i++) k = kinds.get(k.replacedBy) ?? k;
+  return k;
+}
 export const allKinds = (): ObjectKind[] => [...kinds.values()];
 export const getFamily = (key: string): Family | undefined => FAMILIES.find((f) => f.key === key);
 export const familyKinds = (family: string): ObjectKind[] => allKinds().filter((k) => k.family === family);
