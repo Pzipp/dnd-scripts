@@ -1,6 +1,6 @@
 import { kind, param, type DrawInput, type ObjectKind } from '../registry';
 import { rng } from '../util';
-import { blobBody, wobble, ellBody, leaf, shift, type RGB } from './helpers';
+import { blobBody, wobble, ellBody, shift, type RGB } from './helpers';
 
 function giantMushroom(g: CanvasRenderingContext2D, o: DrawInput): void {
   const r = rng(o.seed);
