@@ -246,10 +246,27 @@ function ravine(g: G, o: DrawInput, wind: number, width: number, branch: boolean
     // sidegren: en kortere spalte, der drejes ind fra hovedløbet
     const bw = w * 0.5;
     const b = fissure(r, bw, h * 0.7, 0.4, 0.45, 26);
-    const ang = rf(r, 0.5, 0.9) * (r() < 0.5 ? 1 : -1);
     const at = f.up[Math.floor(f.up.length * rf(r, 0.35, 0.6))]!;
+    // grenen drejer væk fra den kant, hovedløbet ligger nærmest, så der er plads i boksen
+    const ang = rf(r, 0.5, 0.9) * (at[1] > 0 ? -1 : 1);
     const rot = (p: P): P => [at[0] + (p[0] + bw / 2) * Math.cos(ang) - p[1] * Math.sin(ang), at[1] + (p[0] + bw / 2) * Math.sin(ang) + p[1] * Math.cos(ang)];
-    shapes.push({ up: b.up.map(rot), lo: b.lo.map(rot) });
+    const up = b.up.map(rot);
+    const lo = b.lo.map(rot);
+    // skalér grenen ind mod forgreningspunktet, til hele grenen (med kantens bredde) ligger i boksen
+    const mx = w / 2 - thick * 2.6;
+    const my = h / 2 - thick * 2.6;
+    let k = 1;
+    for (const p of [...up, ...lo]) {
+      const dx = p[0] - at[0];
+      const dy = p[1] - at[1];
+      if (dx > 0 && p[0] > mx) k = Math.min(k, (mx - at[0]) / dx);
+      if (dx < 0 && p[0] < -mx) k = Math.min(k, (-mx - at[0]) / dx);
+      if (dy > 0 && p[1] > my) k = Math.min(k, (my - at[1]) / dy);
+      if (dy < 0 && p[1] < -my) k = Math.min(k, (-my - at[1]) / dy);
+    }
+    k = clamp(k, 0.3, 1);
+    const sc = (p: P): P => [at[0] + (p[0] - at[0]) * k, at[1] + (p[1] - at[1]) * k];
+    shapes.push({ up: up.map(sc), lo: lo.map(sc) });
   }
   // brede kanter tegnes først (under), så sammenstød mellem grene hænger sammen
   const all = shapes.map(shapeOf);

@@ -69,105 +69,133 @@ const line = (g: G, pts: [number, number][], dx: number, dy: number, col: string
   g.stroke();
 };
 
-const ell = (cx: number, cy: number, rx: number, ry: number, rot = 0): void => {
-  // ellipse som delsti (moveTo før, så den ikke forbindes med forrige)
-  g_.moveTo(cx + rx * Math.cos(rot), cy + rx * Math.sin(rot));
-  g_.ellipse(cx, cy, Math.max(0.1, rx), Math.max(0.1, ry), rot, 0, Math.PI * 2);
-};
-let g_: G;
-const withG = (g: G, fn: () => void): void => {
-  g_ = g;
-  fn();
+const ell = (g: G, cx: number, cy: number, rx: number, ry: number, rot = 0): void => {
+  // ellipse som delsti (moveTo først, så den ikke forbindes med forrige)
+  g.moveTo(cx + rx * Math.cos(rot), cy + rx * Math.sin(rot));
+  g.ellipse(cx, cy, Math.max(0.1, rx), Math.max(0.1, ry), rot, 0, Math.PI * 2);
 };
 
 type PrintKind = 'boot' | 'bare' | 'cat' | 'wolf' | 'bear' | 'horse' | 'ox' | 'claw';
 
-function printShape(k: PrintKind, s: number, mirror: number): () => void {
+function printShape(g: G, k: PrintKind, s: number, mirror: number): () => void {
   const m = mirror;
   switch (k) {
     case 'boot':
       return () => {
-        ell(-0.38 * s, 0, 0.14 * s, 0.14 * s);
-        g_.moveTo(-0.16 * s, -0.13 * s);
-        g_.bezierCurveTo(0, -0.12 * s, 0.05 * s, -0.22 * s, 0.28 * s, -0.22 * s);
-        g_.quadraticCurveTo(0.58 * s, -0.2 * s, 0.58 * s, 0);
-        g_.quadraticCurveTo(0.58 * s, 0.2 * s, 0.28 * s, 0.22 * s);
-        g_.bezierCurveTo(0.05 * s, 0.22 * s, 0, 0.12 * s, -0.16 * s, 0.13 * s);
-        g_.closePath();
+        // hæl (firkantet, afrundet) og tå-del med smal taljeforbindelse, set fra siden af gåretningen (x = fremad)
+        g.moveTo(-0.5 * s, -0.12 * s);
+        g.quadraticCurveTo(-0.5 * s, -0.19 * s, -0.4 * s, -0.19 * s);
+        g.lineTo(-0.2 * s, -0.17 * s);
+        g.quadraticCurveTo(-0.08 * s, -0.15 * s, -0.04 * s, -0.17 * s);
+        g.bezierCurveTo(0.1 * s, -0.27 * s, 0.38 * s, -0.3 * s, 0.52 * s, -0.16 * s);
+        g.quadraticCurveTo(0.62 * s, -0.02 * s, 0.5 * s, 0.14 * s);
+        g.bezierCurveTo(0.36 * s, 0.28 * s, 0.1 * s, 0.26 * s, -0.04 * s, 0.17 * s);
+        g.quadraticCurveTo(-0.08 * s, 0.15 * s, -0.2 * s, 0.17 * s);
+        g.lineTo(-0.4 * s, 0.19 * s);
+        g.quadraticCurveTo(-0.5 * s, 0.19 * s, -0.5 * s, 0.12 * s);
+        g.closePath();
       };
     case 'bare':
       return () => {
-        ell(-0.28 * s, 0, 0.18 * s, 0.13 * s);
-        ell(0.05 * s, 0, 0.3 * s, 0.14 * s);
-        ell(0.2 * s, m * 0.02 * s, 0.2 * s, 0.2 * s);
-        for (let i = 0; i < 5; i++) ell((0.46 - Math.abs(i - 2) * 0.03) * s + (m > 0 ? 0 : 0), (i - 2) * 0.09 * s, 0.05 * s * (1 - i * 0.05), 0.05 * s * (1 - i * 0.05));
+        ell(g, -0.28 * s, 0, 0.18 * s, 0.13 * s);
+        ell(g, 0.05 * s, 0, 0.3 * s, 0.14 * s);
+        ell(g, 0.2 * s, m * 0.02 * s, 0.2 * s, 0.2 * s);
+        for (let i = 0; i < 5; i++) ell(g, (0.46 - Math.abs(i - 2) * 0.03) * s + (m > 0 ? 0 : 0), (i - 2) * 0.09 * s, 0.05 * s * (1 - i * 0.05), 0.05 * s * (1 - i * 0.05));
       };
     case 'cat':
       return () => {
-        ell(-0.1 * s, 0, 0.22 * s, 0.18 * s);
+        ell(g, -0.1 * s, 0, 0.22 * s, 0.18 * s);
         for (let i = 0; i < 4; i++) {
           const a = lerp(-0.9, 0.9, i / 3);
-          ell(0.2 * s + Math.cos(a) * 0.08 * s, Math.sin(a) * 0.32 * s, 0.09 * s, 0.1 * s);
+          ell(g, 0.2 * s + Math.cos(a) * 0.08 * s, Math.sin(a) * 0.32 * s, 0.09 * s, 0.1 * s);
         }
       };
     case 'wolf':
       return () => {
-        ell(-0.12 * s, 0, 0.24 * s, 0.2 * s);
+        ell(g, -0.12 * s, 0, 0.24 * s, 0.2 * s);
         for (let i = 0; i < 4; i++) {
           const a = lerp(-1, 1, i / 3);
-          ell(0.2 * s + Math.cos(a) * 0.1 * s, Math.sin(a) * 0.36 * s, 0.1 * s, 0.075 * s);
+          ell(g, 0.2 * s + Math.cos(a) * 0.1 * s, Math.sin(a) * 0.36 * s, 0.1 * s, 0.075 * s);
           // klo
-          g_.moveTo(0.3 * s + Math.cos(a) * 0.1 * s, Math.sin(a) * 0.36 * s - 0.01 * s);
-          g_.lineTo(0.42 * s + Math.cos(a) * 0.1 * s, Math.sin(a) * 0.4 * s);
-          g_.lineTo(0.3 * s + Math.cos(a) * 0.1 * s, Math.sin(a) * 0.36 * s + 0.02 * s);
+          g.moveTo(0.3 * s + Math.cos(a) * 0.1 * s, Math.sin(a) * 0.36 * s - 0.01 * s);
+          g.lineTo(0.42 * s + Math.cos(a) * 0.1 * s, Math.sin(a) * 0.4 * s);
+          g.lineTo(0.3 * s + Math.cos(a) * 0.1 * s, Math.sin(a) * 0.36 * s + 0.02 * s);
         }
       };
     case 'bear':
       return () => {
-        ell(-0.1 * s, 0, 0.42 * s, 0.3 * s);
+        ell(g, -0.1 * s, 0, 0.42 * s, 0.3 * s);
         for (let i = 0; i < 5; i++) {
           const a = lerp(-1.05, 1.05, i / 4);
-          ell(0.36 * s + Math.cos(a) * 0.07 * s, Math.sin(a) * 0.4 * s, 0.075 * s, 0.075 * s);
-          g_.moveTo(0.44 * s, Math.sin(a) * 0.4 * s - 0.015 * s);
-          g_.lineTo(0.62 * s + Math.cos(a) * 0.06 * s, Math.sin(a) * 0.46 * s);
-          g_.lineTo(0.44 * s, Math.sin(a) * 0.4 * s + 0.015 * s);
+          ell(g, 0.36 * s + Math.cos(a) * 0.07 * s, Math.sin(a) * 0.4 * s, 0.075 * s, 0.075 * s);
+          g.moveTo(0.44 * s, Math.sin(a) * 0.4 * s - 0.015 * s);
+          g.lineTo(0.62 * s + Math.cos(a) * 0.06 * s, Math.sin(a) * 0.46 * s);
+          g.lineTo(0.44 * s, Math.sin(a) * 0.4 * s + 0.015 * s);
         }
       };
     case 'horse':
       return () => {
-        g_.arc(0, 0, 0.5 * s, Math.PI - 0.6, -(Math.PI - 0.6), true);
-        g_.arc(0, 0, 0.28 * s, -(Math.PI - 0.6), Math.PI - 0.6, false);
-        g_.closePath();
+        g.arc(0, 0, 0.5 * s, Math.PI - 0.6, -(Math.PI - 0.6), true);
+        g.arc(0, 0, 0.28 * s, -(Math.PI - 0.6), Math.PI - 0.6, false);
+        g.closePath();
       };
     case 'ox':
       return () => {
-        ell(0, -0.2 * s, 0.36 * s, 0.17 * s, 0.12);
-        ell(0, 0.2 * s, 0.36 * s, 0.17 * s, -0.12);
+        ell(g, 0, -0.2 * s, 0.36 * s, 0.17 * s, 0.12);
+        ell(g, 0, 0.2 * s, 0.36 * s, 0.17 * s, -0.12);
       };
     case 'claw':
       return () => {
-        ell(-0.2 * s, 0, 0.3 * s, 0.34 * s);
+        ell(g, -0.2 * s, 0, 0.3 * s, 0.34 * s);
         for (let i = 0; i < 3; i++) {
           const y = (i - 1) * 0.28 * s;
-          ell(0.26 * s, y, 0.17 * s, 0.1 * s);
-          g_.moveTo(0.38 * s, y - 0.045 * s);
-          g_.lineTo(0.78 * s, y + (i - 1) * 0.06 * s);
-          g_.lineTo(0.38 * s, y + 0.045 * s);
+          ell(g, 0.26 * s, y, 0.17 * s, 0.1 * s);
+          g.moveTo(0.38 * s, y - 0.045 * s);
+          g.lineTo(0.78 * s, y + (i - 1) * 0.06 * s);
+          g.lineTo(0.38 * s, y + 0.045 * s);
         }
       };
   }
 }
 
 const PRINT: Record<PrintKind, { size: number; stride: number; side: number; paired?: boolean }> = {
-  boot: { size: 26, stride: 2.9, side: 0.45 },
-  bare: { size: 26, stride: 2.9, side: 0.4 },
-  cat: { size: 17, stride: 2.8, side: 0.5 },
-  wolf: { size: 22, stride: 2.9, side: 0.6 },
-  bear: { size: 38, stride: 2.5, side: 0.65 },
+  boot: { size: 42, stride: 2.1, side: 0.45 },
+  bare: { size: 38, stride: 2.2, side: 0.4 },
+  cat: { size: 22, stride: 2.8, side: 0.5 },
+  wolf: { size: 27, stride: 2.9, side: 0.6 },
+  bear: { size: 44, stride: 2.5, side: 0.65 },
   horse: { size: 27, stride: 2.9, side: 0.7, paired: true },
   ox: { size: 30, stride: 2.8, side: 0.7, paired: true },
   claw: { size: 44, stride: 2.4, side: 0.85 },
 };
+
+/** Sålens mønster i et støvlespor: tværgående rifler i tåpartiet, hælens kant og en glat bue (svangen). */
+function bootTread(g: G, gr: Ground, s: number, shape: () => void, alpha: number): void {
+  g.save();
+  g.beginPath();
+  shape();
+  g.clip();
+  // rifler i tå-delen og hælen: lyse kamme forskudt nederst til højre
+  for (const [x0, x1, n] of [[0.02, 0.58, 6], [-0.5, -0.2, 3]] as const) {
+    for (let i = 0; i < n; i++) {
+      const x = s * lerp(x0 + 0.04, x1 - 0.04, (i + 0.5) / n);
+      g.beginPath();
+      g.moveTo(x, -0.3 * s);
+      g.lineTo(x + 0.02 * s, 0.3 * s);
+      g.strokeStyle = `rgba(${gr.rim},${gr.rimA * 0.9 * alpha})`;
+      g.lineWidth = Math.max(0.8, s * 0.045);
+      g.stroke();
+    }
+  }
+  // hælkant og tåkant
+  g.strokeStyle = `rgba(${gr.dark},${0.45 * alpha})`;
+  g.lineWidth = Math.max(0.7, s * 0.03);
+  g.beginPath();
+  g.moveTo(-0.17 * s, -0.2 * s);
+  g.lineTo(-0.17 * s, 0.2 * s);
+  g.stroke();
+  g.restore();
+}
 
 /** En række spor langs x: skiftevis venstre og højre, let uregelmæssig. */
 function printRow(g: G, o: DrawInput, k: PrintKind, scale = 1): void {
@@ -189,9 +217,9 @@ function printRow(g: G, o: DrawInput, k: PrintKind, scale = 1): void {
       g.save();
       g.translate(x + (p ? -s * 0.35 : 0), y + (p ? side * s * 0.1 : 0));
       g.rotate(rot);
-      withG(g, () => undefined);
-      g_ = g;
-      imprint(g, gr, s, printShape(k, s, side), fade * (p ? 0.8 : 1));
+      const shape = printShape(g, k, s, side);
+      imprint(g, gr, s, shape, fade * (p ? 0.8 : 1));
+      if (k === 'boot') bootTread(g, gr, s, shape, fade);
       g.restore();
     }
   }
@@ -305,8 +333,8 @@ function bloodTrail(g: G, o: DrawInput): void {
   // udtværet bånd
   for (let i = 0; i < 60; i++) {
     const t = i / 60;
-    const a = [(t - 0.5) * w * 0.98, cy(t)];
-    const b = [((i + 1) / 60 - 0.5) * w * 0.98, cy((i + 1) / 60)];
+    const a = [(t - 0.5) * w * 0.98, cy(t)] as [number, number];
+    const b = [((i + 1) / 60 - 0.5) * w * 0.98, cy((i + 1) / 60)] as [number, number];
     const env = smoothstep(0, 0.15, t) * (1 - smoothstep(0.85, 1, t)) * (0.4 + 0.6 * Math.abs(Math.sin(t * 17 + ph)));
     g.beginPath();
     g.moveTo(a[0], a[1]);
@@ -356,8 +384,8 @@ function burntTrail(g: G, o: DrawInput): void {
   for (let i = 0; i < 60; i++) {
     const t = i / 60;
     const env = smoothstep(0, 0.12, t) * (1 - smoothstep(0.88, 1, t)) * (0.5 + 0.5 * Math.abs(Math.sin(t * 13 + ph)));
-    const a = [(t - 0.5) * w * 0.98, cy(t)];
-    const b = [((i + 1) / 60 - 0.5) * w * 0.98, cy((i + 1) / 60)];
+    const a = [(t - 0.5) * w * 0.98, cy(t)] as [number, number];
+    const b = [((i + 1) / 60 - 0.5) * w * 0.98, cy((i + 1) / 60)] as [number, number];
     for (const [wd, al] of [[h * 0.5, 0.2], [h * 0.3, 0.38], [h * 0.14, 0.55]] as const) {
       g.beginPath();
       g.moveTo(a[0], a[1]);

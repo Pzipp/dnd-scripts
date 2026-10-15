@@ -510,39 +510,93 @@ function squareTower(g: G, o: DrawInput, roof: boolean, ruin: boolean): void {
     }
     return;
   }
-  // pyramidetag
+  // pyramidetag: høj spids, fire flader med tydeligt lys (nord og vest) og skygge (syd og øst), grater og skifferrækker
   const cx = 0;
   const cy = y0 + S / 2;
-  const apex: [number, number] = [cx, cy - S * 0.4];
-  const eave = S * 0.54;
-  const corners: [number, number][] = [[cx - eave, cy - eave], [cx + eave, cy - eave], [cx + eave, cy + eave], [cx - eave, cy + eave]];
+  const apex: [number, number] = [cx - S * 0.03, cy - S * 0.66];
+  const eave = S * 0.56;
+  const corners: [number, number][] = [[cx - eave, cy - eave * 0.86], [cx + eave, cy - eave * 0.86], [cx + eave, cy + eave], [cx - eave, cy + eave]];
+  const tone = [0.85, -0.3, -0.45, 0.5];
+  // taget kaster en mørk kant ned på murtoppen
+  g.fillStyle = 'rgba(8,4,2,.38)';
+  g.fillRect(cx - eave, cy + eave - 1, eave * 2, 3 + S * 0.04);
   for (let i = 0; i < 4; i++) {
     const a = corners[i]!;
     const b = corners[(i + 1) % 4]!;
-    const l = [1, -0.5, -1, 0.7][i]!; // top (let lys), højre (skygge), bund (skygge), venstre (lys)
+    const l = tone[i]!;
     g.beginPath();
     g.moveTo(apex[0], apex[1]);
     g.lineTo(a[0], a[1]);
     g.lineTo(b[0], b[1]);
     g.closePath();
-    g.fillStyle = rgb(mixc(roofCol, l > 0 ? [255, 244, 220] : [10, 6, 16], Math.abs(l) * (l > 0 ? 0.3 : 0.42)));
+    const mx = (a[0] + b[0]) / 2;
+    const my = (a[1] + b[1]) / 2;
+    const fg = g.createLinearGradient(apex[0], apex[1], mx, my);
+    const base = mixc(roofCol, l > 0 ? [255, 244, 220] : [10, 6, 16], Math.abs(l) * (l > 0 ? 0.4 : 0.6));
+    fg.addColorStop(0, rgb(mixc(base, [255, 246, 226], 0.12)));
+    fg.addColorStop(1, rgb(mixc(base, [10, 6, 12], 0.22)));
+    g.fillStyle = fg;
     g.fill();
-    g.strokeStyle = OUT;
-    g.lineWidth = 1.4;
-    g.stroke();
     g.save();
     g.clip();
-    for (let k = 1; k <= 6; k++) {
-      const t = k / 7;
+    // skifferrækker (flere mod tagfoden) med forskudte fuger
+    const rows = 9;
+    for (let k = 1; k <= rows; k++) {
+      const t = Math.pow(k / (rows + 1), 0.9);
+      const ax = lerp(apex[0], a[0], t);
+      const ay = lerp(apex[1], a[1], t);
+      const bx = lerp(apex[0], b[0], t);
+      const by = lerp(apex[1], b[1], t);
       g.beginPath();
-      g.moveTo(lerp(apex[0], a[0], t), lerp(apex[1], a[1], t));
-      g.lineTo(lerp(apex[0], b[0], t), lerp(apex[1], b[1], t));
-      g.strokeStyle = 'rgba(14,8,10,.28)';
+      g.moveTo(ax, ay);
+      g.lineTo(bx, by);
+      g.strokeStyle = 'rgba(14,8,10,.32)';
       g.lineWidth = 1;
       g.stroke();
+      g.beginPath();
+      g.moveTo(ax, ay + 1.2);
+      g.lineTo(bx, by + 1.2);
+      g.strokeStyle = 'rgba(255,240,215,.1)';
+      g.stroke();
+      const cnt = Math.max(2, Math.round(k * 1.6));
+      for (let q = 0; q < cnt; q++) {
+        const u = (q + (k % 2 ? 0.25 : 0.75)) / cnt;
+        const px = lerp(ax, bx, u);
+        const py = lerp(ay, by, u);
+        const nt = Math.pow((k + 1) / (rows + 1), 0.9);
+        const qx = px + (lerp(apex[0], mx, nt) - lerp(apex[0], mx, t)) * 0.6;
+        const qy = py + (lerp(apex[1], my, nt) - lerp(apex[1], my, t)) * 0.6;
+        g.beginPath();
+        g.moveTo(px, py);
+        g.lineTo(qx, qy);
+        g.strokeStyle = 'rgba(14,8,10,.2)';
+        g.stroke();
+      }
     }
     g.restore();
+    g.strokeStyle = OUT;
+    g.lineWidth = 1.5;
+    g.lineJoin = 'round';
+    g.stroke();
   }
+  // grater: lyse langs de oplyste kanter, mørke langs de skyggede
+  for (let i = 0; i < 4; i++) {
+    const a = corners[i]!;
+    g.beginPath();
+    g.moveTo(apex[0], apex[1]);
+    g.lineTo(a[0], a[1]);
+    g.strokeStyle = i === 0 || i === 3 ? 'rgba(255,240,215,.34)' : 'rgba(8,4,12,.4)';
+    g.lineWidth = 1.8;
+    g.stroke();
+  }
+  // knop i spidsen
+  g.beginPath();
+  g.arc(apex[0], apex[1], S * 0.035, 0, 7);
+  g.fillStyle = rgb(mixc(roofCol, [255, 236, 160], 0.65));
+  g.fill();
+  g.strokeStyle = OUT;
+  g.lineWidth = 1;
+  g.stroke();
   flag(g, r, apex[0], apex[1], S * 0.4, mixc(roofCol, [220, 190, 80], 0.5));
 }
 

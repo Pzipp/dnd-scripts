@@ -34,6 +34,36 @@ function scatterRocks(g: G, r: () => number, p: Palette, n: number, cx: number, 
   }
 }
 
+/** Kantet klippeblok med lys flade mod øverst til venstre og mørk side mod nederst til højre. */
+function outcrop(g: G, r: () => number, p: Palette, x: number, y: number, s: number): void {
+  const n = 6;
+  const pts: P[] = [];
+  const rot = r() * 6;
+  for (let i = 0; i < n; i++) {
+    const a = rot + (i / n) * 6.283;
+    const k = 0.7 + r() * 0.5;
+    pts.push([x + Math.cos(a) * s * k, y + Math.sin(a) * s * k * 0.75]);
+  }
+  const path = (): void => {
+    g.beginPath();
+    pts.forEach((q, i) => (i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1])));
+    g.closePath();
+  };
+  polyBody(g, pts, shift(p.mid, (r() - 0.5) * 24), { lw: Math.max(0.9, s * 0.07), light: 38, dark: 44, ao: s * 0.2 });
+  // skråkant (facet): mørk trekant nederst til højre
+  clipped(g, path, () => {
+    g.beginPath();
+    g.moveTo(x - s * 0.1, y + s * 0.05);
+    g.lineTo(x + s * 1.2, y - s * 0.4);
+    g.lineTo(x + s * 1.2, y + s * 1.2);
+    g.lineTo(x - s * 0.5, y + s * 1.2);
+    g.closePath();
+    g.fillStyle = 'rgba(10,6,4,.3)';
+    g.fill();
+    crack(g, r, x - s * 0.3, y - s * 0.3, s * 0.8, 0.6 + r(), 0.8, false);
+  });
+}
+
 /** Tabelbjerg: flad top, lodret klippeside i lag og en skråning af grus nederst. */
 function mesa(g: G, o: DrawInput, p: Palette, grassTop: boolean): void {
   const r = rng(o.seed);
@@ -152,7 +182,29 @@ function knoll(g: G, o: DrawInput, p: Palette, grassy: boolean): void {
   g.strokeStyle = 'rgba(22,12,8,.82)';
   g.lineWidth = 1.8;
   g.stroke();
-  scatterRocks(g, r, p, 9, 0, 0, w * 0.34, h * 0.32, w * 0.06);
+  // højdekam: lys flade mod nordvest, mørk mod sydøst (volumen)
+  clipped(g, body, () => {
+    const lg = g.createRadialGradient(-w * 0.2, -h * 0.24, w * 0.02, -w * 0.06, -h * 0.06, w * 0.5);
+    lg.addColorStop(0, 'rgba(255,246,220,.42)');
+    lg.addColorStop(0.5, 'rgba(255,246,220,.08)');
+    lg.addColorStop(1, 'rgba(255,246,220,0)');
+    g.fillStyle = lg;
+    g.fillRect(-w / 2, -h / 2, w, h);
+    const dg = g.createRadialGradient(w * 0.22, h * 0.26, w * 0.05, w * 0.1, h * 0.12, w * 0.55);
+    dg.addColorStop(0, 'rgba(8,4,0,.5)');
+    dg.addColorStop(0.55, 'rgba(8,4,0,.12)');
+    dg.addColorStop(1, 'rgba(8,4,0,0)');
+    g.fillStyle = dg;
+    g.fillRect(-w / 2, -h / 2, w, h);
+  });
+  // klippeudspring: kantede flader, lys øverst til venstre og mørk nederst til højre
+  const outs = 3 + Math.floor(r() * 3);
+  for (let i = 0; i < outs; i++) {
+    const a = r() * 6.283;
+    const d = 0.1 + r() * 0.26;
+    outcrop(g, r, p, Math.cos(a) * w * d, Math.sin(a) * h * d * 0.9, w * rf(r, 0.07, 0.13));
+  }
+  scatterRocks(g, r, p, 9, 0, 0, w * 0.34, h * 0.32, w * 0.05);
   if (grassy) {
     for (let i = 0; i < 40; i++) {
       const a = r() * 6.28;
@@ -169,106 +221,193 @@ function knoll(g: G, o: DrawInput, p: Palette, grassy: boolean): void {
   }
 }
 
-/** Stenbue: to stensøjler og et spænd med et hul, man kan se igennem. */
+/** Stenbue: naturlig bue med tykkelse. Forside (flade i lag og revner), overside bagved (lys, med mos) og en mørk indersidekant omkring hullet. */
 function arch(g: G, o: DrawInput, p: Palette): void {
   const r = rng(o.seed);
   const { w, h } = o;
   const x0 = -w * 0.48;
   const x1 = w * 0.48;
-  const yTop = -h * 0.12;
+  const yTop = -h * 0.05;
   const yBot = h * 0.44;
-  const depth = h * 0.32;
-  // forside med jagede kanter
-  const topEdge = jag(r, [x0, yTop], [x1, yTop + rf(r, -0.03, 0.03) * h], 0.09, 4);
-  const botEdge = [...jag(r, [x1 + w * 0.02, yBot], [x1, yBot], 0.1, 1), ...jag(r, [x1, yBot], [x0, yBot], 0.03, 3), [x0 - w * 0.02, yBot] as P];
-  const hx = rf(r, -0.04, 0.04) * w;
-  const hr = w * rf(r, 0.17, 0.22);
-  const hy = yBot + 2;
-  const hTop = yTop + (yBot - yTop) * rf(r, 0.32, 0.42);
+  const depth = h * 0.3;
+  const skew = rf(r, -0.12, 0.12);
+  // ydre omrids: kuppel med ujævn top og stejle sider
+  const outer: P[] = [[x0 - w * 0.015, yBot]];
+  const N = 26;
+  const domeH = h * rf(r, 0.2, 0.26);
+  for (let i = 0; i <= N; i++) {
+    const u = (i / N) * 2 - 1;
+    const dome = Math.pow(Math.abs(u), 2.4) * domeH;
+    const x = u * w * 0.48 + (i === 0 || i === N ? 0 : rf(r, -0.01, 0.01) * w);
+    const y = yTop + dome + (r() - 0.5) * h * 0.035 + u * skew * h * 0.1;
+    outer.push([x, y + (i === 0 || i === N ? h * 0.1 : 0)]);
+  }
+  const side = (a: P, b: P): P[] => jag(r, a, b, 0.07, 3).slice(1, -1);
+  const left = side([x0 - w * 0.015, yBot], outer[1]!);
+  const right = side(outer[outer.length - 1]!, [x1 + w * 0.015, yBot]);
+  const front0: P[] = [[x0 - w * 0.015, yBot], ...left, ...outer.slice(1), ...right, [x1 + w * 0.015, yBot]];
+  // hullet: ujævn ellipse med lidt skæv top
+  const hx = rf(r, -0.05, 0.05) * w;
+  const hr = w * rf(r, 0.24, 0.29);
+  const hTop = yTop + h * rf(r, 0.1, 0.15);
+  const legH = (yBot - hTop) * 0.34;
+  const hole: P[] = [[hx - hr * 1.05, yBot + 3]];
+  const M = 22;
+  for (let i = 0; i <= M; i++) {
+    const a = Math.PI + (i / M) * Math.PI;
+    const k = 1 + (r() - 0.5) * 0.09;
+    hole.push([hx + Math.cos(a) * hr * k, yBot - legH + Math.sin(a) * (yBot - legH - hTop) * k + (Math.cos(a) > 0 ? skew * h * 0.03 : 0)]);
+  }
+  hole.push([hx + hr * 1.05, yBot + 3]);
   const front = (): void => {
     g.beginPath();
-    topEdge.forEach((q, i) => (i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1])));
-    botEdge.forEach((q) => g.lineTo(q[0], q[1]));
+    front0.forEach((q, i) => (i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1])));
     g.closePath();
-    // hullet (buet) skæres ud med evenodd
-    g.moveTo(hx - hr, hy);
-    g.lineTo(hx - hr, hTop + hr);
-    g.arc(hx, hTop + hr, hr, Math.PI, 0);
-    g.lineTo(hx + hr, hy);
+    hole.forEach((q, i) => (i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1])));
     g.closePath();
   };
-  // overside: lys plade bag og over forsiden
-  const upper: P[] = [...topEdge, ...jag(r, [x1 - w * 0.06, yTop - depth], [x0 + w * 0.06, yTop - depth * rf(r, 0.9, 1.1)], 0.1, 4)];
-  const bodyTop = (): void => {
+  // åben sti (uden bunden), så jordkanten ikke streges
+  const holePath = (): void => {
     g.beginPath();
-    upper.forEach((q, i) => (i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1])));
+    hole.forEach((q, i) => (i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1])));
+  };
+  const frontOuter = (): void => {
+    g.beginPath();
+    front0.forEach((q, i) => (i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1])));
     g.closePath();
   };
-  // inderside af buen: mørk bagvæg set gennem hullet er jorden (gennemsigtig), så kun en mørk kant tegnes
+  // overside: forsidens kuppel skubbet bagud (op), hullet holdes fri
+  const dx = -w * 0.02;
+  // toppen: kuppelens øvre kant (fra skulder til skulder) og samme kant skubbet bagud
+  const shoulders = outer.slice(1);
+  const slab = (): void => {
+    g.beginPath();
+    shoulders.forEach((q, i) => (i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1])));
+    for (let i = shoulders.length - 1; i >= 0; i--) g.lineTo(shoulders[i]![0] + dx, shoulders[i]![1] - depth);
+    g.closePath();
+  };
   g.save();
-  bodyTop();
-  const tg = g.createLinearGradient(x0, yTop - depth, x1, yTop);
-  tg.addColorStop(0, rgb(mixc(p.hi, [255, 250, 232], 0.1)));
-  tg.addColorStop(1, rgb(mixc(p.mid, p.hi, 0.4)));
+  g.beginPath();
+  g.rect(-w, -h, w * 2, h * 2);
+  hole.forEach((q, i) => (i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1])));
+  g.closePath();
+  g.clip('evenodd');
+  // forbindelsen mellem for- og overside: ekstruderet trinvis, så siden bag (nordlige kant) bliver en flade
+  const steps = 10;
+  for (let i = steps; i >= 0; i--) {
+    g.save();
+    g.translate(dx * (i / steps) * 0.6, -depth * (i / steps));
+    frontOuter();
+    g.fillStyle = rgb(mixc(p.mid, p.lo, 0.2 + (1 - i / steps) * 0.1));
+    g.fill();
+    g.restore();
+  }
+  slab();
+  const tg = g.createLinearGradient(x0, yTop - depth * 1.3, x1, yTop);
+  tg.addColorStop(0, rgb(mixc(p.hi, [255, 250, 232], 0.2)));
+  tg.addColorStop(0.55, rgb(mixc(p.mid, p.hi, 0.5)));
+  tg.addColorStop(1, rgb(mixc(p.mid, p.lo, 0.1)));
   g.fillStyle = tg;
   g.fill();
-  clipped(g, bodyTop, () => {
-    mottle(g, r, [x0, yTop - depth, x1, yTop], p.mid, 24, w * 0.03, 22, 0.16);
-    for (let i = 0; i < 8; i++) crack(g, r, lerp(x0, x1, r()), yTop - depth * r(), w * 0.08, r() * 6.28, 0.8, false);
+  clipped(g, slab, () => {
+    mottle(g, r, [x0, yTop - depth * 1.4, x1, yTop + domeH], p.mid, 40, w * 0.035, 26, 0.22);
+    for (let i = 0; i < 9; i++) crack(g, r, lerp(x0, x1, r()), yTop - depth * r() * 1.2, w * 0.07, r() * 6.28, 0.8, false);
+    // mos og græs på toppen
+    for (let i = 0; i < 26; i++) {
+      const x = lerp(x0 + w * 0.05, x1 - w * 0.05, r());
+      const y = yTop - depth * rf(r, 0.3, 1.2);
+      g.fillStyle = rgb(mixc([74, 112, 46], [140, 164, 84], r()), 0.5 + r() * 0.3);
+      g.beginPath();
+      g.ellipse(x, y, w * rf(r, 0.008, 0.02), w * rf(r, 0.005, 0.012), r() * 3, 0, 7);
+      g.fill();
+    }
   });
+  slab();
+  g.strokeStyle = 'rgba(22,12,8,.85)';
+  g.lineWidth = 2;
+  g.lineJoin = 'round';
+  g.stroke();
   g.restore();
+  // forsiden
   g.save();
   front();
-  const fg = g.createLinearGradient(x0, 0, x1, 0);
-  fg.addColorStop(0, rgb(mixc(p.mid, p.hi, 0.35)));
+  const fg = g.createLinearGradient(x0, yTop, x1, yBot);
+  fg.addColorStop(0, rgb(mixc(p.mid, p.hi, 0.42)));
   fg.addColorStop(0.5, rgb(p.mid));
-  fg.addColorStop(1, rgb(mixc(p.lo, p.mid, 0.25)));
+  fg.addColorStop(1, rgb(mixc(p.lo, p.mid, 0.3)));
   g.fillStyle = fg;
   g.fill('evenodd');
   g.clip('evenodd');
-  for (let i = 0; i < 9; i++) {
-    const yy = lerp(yTop, yBot, (i + r() * 0.6) / 9);
-    g.fillStyle = `rgba(${r() < 0.5 ? '20,12,8' : '255,240,210'},${0.05 + r() * 0.09})`;
-    g.fillRect(x0, yy, x1 - x0, 1 + r() * 4);
-  }
-  for (let i = 0; i < 22; i++) {
-    const x = lerp(x0, x1, r());
-    const y = lerp(yTop, yBot, r());
+  // lagdeling i vandrette, let bølgede bånd
+  for (let i = 0; i < 10; i++) {
+    const yy = lerp(yTop, yBot, (i + r() * 0.6) / 10);
     g.beginPath();
-    g.moveTo(x, y);
-    g.lineTo(x + (r() - 0.5) * 5, y + h * rf(r, 0.04, 0.12));
-    g.strokeStyle = `rgba(14,8,6,${0.12 + r() * 0.16})`;
-    g.lineWidth = 0.8 + r() * 1.6;
+    g.moveTo(x0, yy);
+    g.bezierCurveTo(x0 + w * 0.3, yy + rf(r, -4, 4), x1 - w * 0.3, yy + rf(r, -4, 4), x1, yy + rf(r, -3, 3));
+    g.strokeStyle = `rgba(${r() < 0.55 ? '20,12,8' : '255,240,210'},${0.07 + r() * 0.1})`;
+    g.lineWidth = 1 + r() * 3.2;
     g.stroke();
   }
-  // ambient occlusion langs hullet og bunden
+  mottle(g, r, [x0, yTop, x1, yBot], p.mid, 46, w * 0.03, 22, 0.2);
+  for (let i = 0; i < 24; i++) {
+    const x = lerp(x0, x1, r());
+    const y = lerp(yTop, yBot, r());
+    crack(g, r, x, y, h * rf(r, 0.05, 0.13), Math.PI / 2 + (r() - 0.5) * 1.2, 0.9, false);
+  }
+  // lys på venstre ben, mørkt på højre
+  const sh = g.createLinearGradient(x0, 0, x1, 0);
+  sh.addColorStop(0, 'rgba(255,240,210,.2)');
+  sh.addColorStop(0.35, 'rgba(255,240,210,0)');
+  sh.addColorStop(0.7, 'rgba(10,6,14,.05)');
+  sh.addColorStop(1, 'rgba(10,6,14,.45)');
+  g.fillStyle = sh;
+  g.fillRect(x0, yTop - 4, x1 - x0, yBot - yTop + 8);
+  // mørk bund (ambient occlusion mod jorden) og kantlys øverst
   const ao = g.createLinearGradient(0, yTop, 0, yBot);
-  ao.addColorStop(0, 'rgba(255,240,210,.12)');
-  ao.addColorStop(1, 'rgba(14,8,6,.3)');
+  ao.addColorStop(0, 'rgba(255,240,210,.16)');
+  ao.addColorStop(0.55, 'rgba(0,0,0,0)');
+  ao.addColorStop(1, 'rgba(14,8,6,.38)');
   g.fillStyle = ao;
-  g.fillRect(x0, yTop, x1 - x0, yBot - yTop);
+  g.fillRect(x0, yTop - 4, x1 - x0, yBot - yTop + 8);
+  // indersiden af buen: mørk indre skygge langs hullet (tykkelsen)
+  holePath();
+  g.strokeStyle = 'rgba(10,5,2,.5)';
+  g.lineWidth = w * 0.05;
+  g.translate(-w * 0.005, w * 0.012);
+  g.stroke();
+  g.translate(w * 0.005, -w * 0.012);
+  holePath();
+  g.strokeStyle = 'rgba(10,5,2,.4)';
+  g.lineWidth = w * 0.02;
+  g.stroke();
   g.restore();
-  // konturer
-  g.lineJoin = 'round';
-  g.strokeStyle = 'rgba(22,12,8,.85)';
+  // lys kantlinje langs forsidens top (kuppelen)
+  g.save();
+  frontOuter();
+  g.clip();
+  g.translate(0, 2.4);
+  frontOuter();
+  g.strokeStyle = 'rgba(255,246,224,.45)';
   g.lineWidth = 2;
+  g.stroke();
+  g.restore();
+  g.lineJoin = 'round';
+  g.strokeStyle = 'rgba(22,12,8,.88)';
+  g.lineWidth = 2.1;
   front();
   g.stroke();
-  bodyTop();
+  holePath();
   g.stroke();
-  // lys kant øverst på forsiden
+  // lys kant på hullets venstre kant (indersidens lysende flade)
   g.beginPath();
-  topEdge.forEach((q, i) => (i ? g.lineTo(q[0], q[1] + 2) : g.moveTo(q[0], q[1] + 2)));
-  g.strokeStyle = 'rgba(255,246,224,.4)';
-  g.lineWidth = 1.6;
+  for (let i = 3; i < 12; i++) {
+    if (i === 3) g.moveTo(hole[i]![0] + 2.4, hole[i]![1] + 2.4);
+    else g.lineTo(hole[i]![0] + 2.4, hole[i]![1] + 2.4);
+  }
+  g.strokeStyle = 'rgba(255,240,210,.32)';
+  g.lineWidth = 1.8;
   g.stroke();
-  // mørk indvendig kant i hullet (højre side), lys i venstre
-  g.beginPath();
-  g.arc(hx, hTop + hr, hr - 2, Math.PI * 1.05, Math.PI * 1.55);
-  g.strokeStyle = 'rgba(255,240,210,.3)';
-  g.lineWidth = 2;
-  g.stroke();
-  scatterRocks(g, r, p, 12, 0, yBot + h * 0.02, w * 0.5, h * 0.05, w * 0.024);
+  scatterRocks(g, r, p, 14, 0, yBot + h * 0.015, w * 0.5, h * 0.05, w * 0.024);
 }
 
 /** Vulkan: kegle med krater, lavastrømme og striber af aske. */
