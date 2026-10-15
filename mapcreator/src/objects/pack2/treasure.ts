@@ -1,6 +1,6 @@
 import { kind, type DrawInput, type ObjectKind } from '../registry';
 import { rng } from '../util';
-import { body, rectPath, rectBody, ellBody, woodGrain, rivet, shift, type RGB } from './helpers';
+import { rectBody, ellBody, woodGrain, rivet, shift, type RGB } from './helpers';
 
 function goldChest(g: CanvasRenderingContext2D, o: DrawInput): void {
   const r = rng(o.seed);
