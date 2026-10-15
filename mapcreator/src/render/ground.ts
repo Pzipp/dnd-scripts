@@ -12,7 +12,7 @@ export interface PixelBuffer {
 }
 
 /** Versionen af terrænets tegning. Hæves, hver gang `renderGroundTile` giver et andet billede, så gemte fliser (se groundCache.ts) kasseres. */
-export const GROUND_RENDER_VERSION = 1;
+export const GROUND_RENDER_VERSION = 2;
 
 /** Afstanden (verdenspixels) mellem punkterne i vægtgitteret. Gitteret ligger fast i verdenen, så fliser passer sammen. */
 const STEP = CELL_PX / 8;
@@ -223,9 +223,9 @@ export function renderGroundTile(buf: PixelBuffer, ground: GroundData, seed: num
   const pathStoneId = pt ? pt.ids.find(isStoneMaterial) ?? 0 : 0;
   const nearPath = pathStoneId ? buildNear(pathMask!, mw, mh, cell, x0, y0, wx1, wy1, stoneReach(pt!.ids.filter(isStoneMaterial))) : null;
   /** Er punktet en sten i en sti af sten-materialet `id`? (Så står farven i `shadeOut`.) */
-  const stoneOverPath = (id: number, wx: number, wy: number): boolean => {
+  const stoneOverPath = (id: number, wx: number, wy: number, wP: number): boolean => {
     stoneAt(id, wx, wy, seed);
-    if (!isStoneHere(id, pathMask!, PATH_RADIUS, true)) return false;
+    if (STONE_STYLES[id]!.clip ? wP <= 0.5 : !isStoneHere(id, pathMask!, PATH_RADIUS, true)) return false;
     stoneColor(shadeOut, id, wx, wy, seed);
     return true;
   };
@@ -233,12 +233,14 @@ export function renderGroundTile(buf: PixelBuffer, ground: GroundData, seed: num
   const stoneIds = findStoneIds(mask, mw, mh, cell, x0, y0, wx1, wy1, stoneReach(Object.keys(STONE_STYLES).map(Number)));
   const nearBase = stoneIds.length ? buildNear(mask, mw, mh, cell, x0, y0, wx1, wy1, stoneReach(stoneIds)) : null;
   /** Pixlen i et område med sten: hel sten eller fuge, hvis stenen hører til `idS`, ellers `idO`s eget terræn. */
-  const stonePixel = (idS: number, idO: number, wx: number, wy: number): void => {
+  const stonePixel = (idS: number, idO: number, wx: number, wy: number, wS: number): void => {
     for (let i = -1; i < stoneIds.length; i++) {
       const c = i < 0 ? idS : stoneIds[i]!;
       if (i >= 0 && c === idS) continue;
       stoneAt(c, wx, wy, seed);
-      if (idO < 0 || isStoneHere(c, mask, RADIUS, false)) {
+      // planker og fliser skæres til ved kanten af det malede område; andre sten afgøres ved stenens midte
+      const here = STONE_STYLES[c]!.clip ? c === idS && wS > 0.5 : isStoneHere(c, mask, RADIUS, false);
+      if (idO < 0 || here) {
         stoneColor(shadeOut, c, wx, wy, seed);
         return;
       }
@@ -292,7 +294,7 @@ export function renderGroundTile(buf: PixelBuffer, ground: GroundData, seed: num
           if (nearBase && isNear(nearBase, wx, wy, cell)) {
             // en sten kan række ud over der, hvor terrænet er sten: afgøres af stenens midte
             const idS = isStoneMaterial(idTop) ? idTop : stoneIds[0]!;
-            stonePixel(idS, idS === idTop ? -1 : idTop, wx, wy);
+            stonePixel(idS, idS === idTop ? -1 : idTop, wx, wy, idS === idTop ? 1 : 0);
           } else shade(idTop, wx, wy, seed, Math.min(1, Math.max(0, (wTop - 0.5) * 2)));
           r = shadeOut[0]!; g = shadeOut[1]!; b = shadeOut[2]!; a = shadeOut[3]!;
         } else {
@@ -305,7 +307,7 @@ export function renderGroundTile(buf: PixelBuffer, ground: GroundData, seed: num
           if (stoneMix) {
             // sten (brosten, fliser) mod andet: hele sten, som terrænet ved stenens midte afgør
             const idS = isStoneMaterial(idTop) ? idTop : idSec;
-            stonePixel(idS, idS === idTop ? idSec : idTop, wx, wy);
+            stonePixel(idS, idS === idTop ? idSec : idTop, wx, wy, idS === idTop ? wTop : wSec);
             r = shadeOut[0]!; g = shadeOut[1]!; b = shadeOut[2]!; a = shadeOut[3]!;
           } else {
           const ragged = cliff ? 3.2 : crisp === 0 ? 1 : crisp === 1 ? 0.6 : 0.4;
@@ -387,7 +389,7 @@ export function renderGroundTile(buf: PixelBuffer, ground: GroundData, seed: num
         const fx = gxf - ix;
         const fy = gyf - iy;
         const base = iy * pt!.nx + ix;
-        if (nearPath && isNear(nearPath, wx, wy, cell) && stoneOverPath(pathStoneId, wx, wy)) {
+        if (nearPath && isNear(nearPath, wx, wy, cell) && stoneOverPath(pathStoneId, wx, wy, weightAt(pt!, pt!.ids.indexOf(pathStoneId), base, pt!.nx, fx, fy))) {
           // fugerne er gennemsigtige: terrænet under stien skinner igennem
           const sa = shadeOut[3]!;
           out[p] = shadeOut[0]! * sa + r * (1 - sa);
