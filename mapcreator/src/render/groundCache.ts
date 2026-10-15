@@ -1,5 +1,5 @@
 import type { MapDoc, Rect } from '../model/types';
-import { CELL_PX } from '../model/types';
+import { CELL_PX, hasGround } from '../model/types';
 import type { GroundData } from '../model/ground';
 import { GROUND_RENDER_VERSION, renderGroundTile } from './ground';
 
@@ -23,7 +23,7 @@ export interface BakedLayer {
 }
 
 /** Fingeraftrykket af alt, en flises billede afhænger af: maskecellerne omkring den, seed, skala og tegnekodens version. */
-export function tileSignature(ground: GroundData, seed: number, scale: number, tx: number, ty: number): string {
+export function tileSignature(ground: GroundData, seed: number, scale: number, tx: number, ty: number, floor = false): string {
   const cell = CELL_PX / ground.res;
   const x0 = (tx * TILE) / scale - SIG_PAD;
   const y0 = (ty * TILE) / scale - SIG_PAD;
@@ -40,6 +40,7 @@ export function tileSignature(ground: GroundData, seed: number, scale: number, t
     b = Math.imul(b ^ v, 2246822519) + (b >>> 15);
   };
   mix(Math.round(scale * 1e6));
+  mix(floor ? 1 : 0);
   mix(tx);
   mix(ty);
   mix(cx0 * 7 + cy0);
@@ -98,7 +99,7 @@ export class GroundCache {
     }
     const alive = new Set<string>();
     for (const l of doc.layers) {
-      if (l.type !== 'ground' || !l.ground) continue;
+      if (!hasGround(l.type) || !l.ground) continue;
       alive.add(l.id);
       if (!this.entries.has(l.id)) {
         const canvas = document.createElement('canvas');
@@ -147,7 +148,9 @@ export class GroundCache {
       const t = this.queue.shift()!;
       this.queued.delete(`${t.layerId}:${t.tx}:${t.ty}`);
       const entry = this.entries.get(t.layerId);
-      const ground = doc.layers.find((l) => l.id === t.layerId)?.ground;
+      const layer = doc.layers.find((l) => l.id === t.layerId);
+      const ground = layer?.ground;
+      const floor = layer?.type === 'floor';
       if (!entry || !ground) continue;
       const x = t.tx * TILE;
       const y = t.ty * TILE;
@@ -156,8 +159,8 @@ export class GroundCache {
       if (w <= 0 || h <= 0) continue;
       const ctx = entry.canvas.getContext('2d')!;
       const img = ctx.createImageData(w, h);
-      const sig = tileSignature(ground, seed, this.scale, t.tx, t.ty);
-      renderGroundTile(img, ground, seed, x / this.scale, y / this.scale, this.scale);
+      const sig = tileSignature(ground, seed, this.scale, t.tx, t.ty, floor);
+      renderGroundTile(img, ground, seed, x / this.scale, y / this.scale, this.scale, floor);
       ctx.putImageData(img, x, y);
       this.drawn.set(`${t.layerId}:${t.tx}:${t.ty}`, sig);
     }
@@ -175,14 +178,14 @@ export class GroundCache {
     for (const l of doc.layers) {
       const m = baked[l.id];
       const entry = this.entries.get(l.id);
-      if (l.type !== 'ground' || !l.ground || !m || !entry) continue;
+      if (!hasGround(l.type) || !l.ground || !m || !entry) continue;
       if (m.version !== GROUND_RENDER_VERSION || m.tile !== TILE || Math.abs(m.scale - this.scale) > 1e-9) continue;
       const ground = l.ground;
       for (const [key, sig] of Object.entries(m.sigs)) {
         const [tx, ty] = key.split('_').map(Number) as [number, number];
         const qk = `${l.id}:${tx}:${ty}`;
         if (!this.queued.has(qk)) continue;
-        if (tileSignature(ground, seed, this.scale, tx, ty) !== sig) continue;
+        if (tileSignature(ground, seed, this.scale, tx, ty, l.type === 'floor') !== sig) continue;
         // flisen tages ud af køen, til billedet er hentet; fejler det, regnes flisen alligevel
         this.queued.delete(qk);
         this.queue = this.queue.filter((q) => !(q.layerId === l.id && q.tx === tx && q.ty === ty));
@@ -215,7 +218,7 @@ export class GroundCache {
     const out: { layerId: string; manifest: BakedLayer; tiles: Map<string, Blob> }[] = [];
     for (const l of doc.layers) {
       const entry = this.entries.get(l.id);
-      if (l.type !== 'ground' || !l.ground || !entry) continue;
+      if (!hasGround(l.type) || !l.ground || !entry) continue;
       const sigs: Record<string, string> = {};
       const tiles = new Map<string, Blob>();
       let changed = false;

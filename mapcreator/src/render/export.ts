@@ -1,4 +1,4 @@
-import { CELL_PX, type ExportFormat, type ExportPreset, type MapDoc } from '../model/types';
+import { CELL_PX, hasGround, type ExportFormat, type ExportPreset, type MapDoc } from '../model/types';
 import { renderGroundTile } from './ground';
 import { drawElementsLayer } from './sprites';
 import { drawWallsLayer } from './walls';
@@ -64,7 +64,7 @@ export async function renderExport(doc: MapDoc, preset: ExportPreset, onProgress
   const layers = includedLayers(doc, preset);
   const tilesX = Math.ceil(w / TILE);
   const tilesY = Math.ceil(h / TILE);
-  const total = Math.max(1, layers.reduce((n, l) => n + (l.type === 'ground' ? tilesX * tilesY : 1), 0));
+  const total = Math.max(1, layers.reduce((n, l) => n + (hasGround(l.type) ? tilesX * tilesY : 1), 0));
   let done = 0;
   const tmp = document.createElement('canvas');
   tmp.width = TILE;
@@ -98,9 +98,9 @@ export async function renderExport(doc: MapDoc, preset: ExportPreset, onProgress
         const y = ty * TILE;
         const tw = Math.min(TILE, w - x);
         const th = Math.min(TILE, h - y);
-        if (layer.type === 'ground' && layer.ground) {
+        if (hasGround(layer.type) && layer.ground) {
           const img = tctx.createImageData(tw, th);
-          renderGroundTile(img, layer.ground, doc.seed, x / scale, y / scale, scale);
+          renderGroundTile(img, layer.ground, doc.seed, x / scale, y / scale, scale, layer.type === 'floor');
           tctx.putImageData(img, 0, 0);
           ctx.globalAlpha = layer.opacity;
           ctx.drawImage(tmp, 0, 0, tw, th, x, y, tw, th);

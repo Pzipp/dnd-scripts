@@ -305,3 +305,27 @@ describe('flisernes fingeraftryk (gemte fliser)', () => {
     expect(tileSignature(g2, 3, 0.5, 4, 4)).not.toBe(base);
   });
 });
+
+describe('gulvlag', () => {
+  it('på et gulv skæres planker til ved kanten; på grund er de hele og kan række ud over det malede', () => {
+    const g = createGround(8, 8, 0);
+    for (let y = 0; y < g.h; y++) for (let x = 0; x < g.w; x++) if (x >= 8 && x < 24 && y >= 8 && y < 24) g.data[y * g.w + x] = 17;
+    const outside = (floor: boolean) => {
+      const t = buf(120, 120);
+      renderGroundTile(t, g, 4, 60, 60, 1, floor); // verdenspixels 60..180; det malede område er 100..300
+      let n = 0;
+      for (let i = 0; i < 120 * 120; i++) {
+        const x = 60 + (i % 120), y = 60 + Math.floor(i / 120);
+        if ((x < 96 || y < 96) && t.data[i * 4 + 3]! > 128) n++;
+      }
+      return n;
+    };
+    expect(outside(true)).toBe(0);
+    expect(outside(false)).toBeGreaterThan(0);
+  });
+
+  it('fingeraftrykket afhænger af lagtypen', () => {
+    const g = createGround(8, 8, 17);
+    expect(tileSignature(g, 1, 0.5, 0, 0, true)).not.toBe(tileSignature(g, 1, 0.5, 0, 0, false));
+  });
+});

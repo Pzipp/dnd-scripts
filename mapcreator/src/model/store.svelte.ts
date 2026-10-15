@@ -16,7 +16,7 @@ import { MATERIAL_GRASS } from '../render/materials';
 import { History, type Command } from './history';
 import { newId, newSeed } from './ids';
 import { defaultParams, familyKinds, getKind, type ObjectKind } from '../objects';
-import { CELL_PX, LAYER_TYPE_LABEL, type ExportPreset, type Layer, type LayerType, type MapDoc, type MapElement, type Opening, type OpeningKind, type Rect, type Wall, type WallStyle } from './types';
+import { CELL_PX, hasGround, LAYER_TYPE_LABEL, type ExportPreset, type Layer, type LayerType, type MapDoc, type MapElement, type Opening, type OpeningKind, type Rect, type Wall, type WallStyle } from './types';
 
 export type Tool = 'hand' | 'select' | 'stamp' | 'scatter' | 'wall' | 'opening' | 'paint' | 'erase';
 
@@ -453,7 +453,7 @@ class Editor {
   /** Det valgte lag, hvis man kan male på det. */
   get paintableLayer() {
     const l = this.selectedLayer;
-    return l && l.type === 'ground' && l.ground && l.visible && !l.locked ? l : null;
+    return l && hasGround(l.type) && l.ground && l.visible && !l.locked ? l : null;
   }
 
   newStroke(): Stroke {

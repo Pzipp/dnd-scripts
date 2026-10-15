@@ -1,12 +1,12 @@
 import { createGround, decodeGround, encodeGround, type EncodedGround } from './ground';
 import { newId, newSeed } from './ids';
-import { DOC_VERSION, MAX_CELLS, type ExportPreset, type Layer, type LayerType, type MapDoc } from './types';
+import { DOC_VERSION, hasGround, MAX_CELLS, type ExportPreset, type Layer, type LayerType, type MapDoc } from './types';
 import { MATERIAL_GRASS } from '../render/materials';
 import { resolveKind } from '../objects';
 
 export function createLayer(type: LayerType, name: string, doc?: Pick<MapDoc, 'widthCells' | 'heightCells'>, fill = 0): Layer {
   const layer: Layer = { id: newId(), name, type, visible: true, locked: false, opacity: 1, height: 0 };
-  if (type === 'ground' && doc) layer.ground = createGround(doc.widthCells, doc.heightCells, fill);
+  if (hasGround(type) && doc) layer.ground = createGround(doc.widthCells, doc.heightCells, fill);
   if (type === 'objects' || type === 'effects') layer.elements = [];
   if (type === 'walls') layer.walls = [];
   return layer;
@@ -71,7 +71,7 @@ export function parseDoc(raw: unknown): MapDoc {
       for (const el of l.elements) el.kind = resolveKind(el.kind)?.key ?? el.kind;
     }
     if (l.type === 'walls') l.walls ??= [];
-    if (l.type === 'ground') {
+    if (hasGround(l.type)) {
       l.ground = g?.rle !== undefined ? decodeGround(g as EncodedGround) : createGround(doc.widthCells, doc.heightCells);
     }
   }

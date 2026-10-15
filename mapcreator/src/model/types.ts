@@ -63,10 +63,14 @@ export interface Wall {
   openings: Opening[];
 }
 
-export type LayerType = 'ground' | 'objects' | 'walls' | 'effects';
+export type LayerType = 'ground' | 'floor' | 'objects' | 'walls' | 'effects';
+
+/** Lag med en terrænmaske: Grund og Gulv. På Gulv skæres planker, brosten og fliser til ved kanten af det malede. */
+export const hasGround = (type: LayerType): boolean => type === 'ground' || type === 'floor';
 
 export const LAYER_TYPE_LABEL: Record<LayerType, string> = {
   ground: 'Grund',
+  floor: 'Gulv',
   objects: 'Genstande',
   walls: 'Mure',
   effects: 'Effekter',
@@ -82,7 +86,7 @@ export interface Layer {
   opacity: number;
   /** Lagets højde: styrer tegnerækkefølge og skyggelængde. */
   height: number;
-  /** Kun grundlag: terrænmasken. */
+  /** Kun grund- og gulvlag: terrænmasken. */
   ground?: GroundData;
   /** Kun genstands- og effektlag. */
   elements?: MapElement[];

@@ -1,6 +1,6 @@
 import { type Camera } from './camera';
 import { groundCache } from './groundCache';
-import { CELL_PX, type Layer, type MapDoc, type MapElement, type Opening, type Wall, type WallStyle } from '../model/types';
+import { CELL_PX, hasGround, type Layer, type MapDoc, type MapElement, type Opening, type Wall, type WallStyle } from '../model/types';
 import { midpoints, pathOf, pointAt, type Pt } from '../model/walls';
 import { drawOpening, drawWallsLayer, wallStyle } from './walls';
 import { HANDLES, handlePos } from '../model/geometry';
@@ -45,7 +45,7 @@ export function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, c
 
   for (const layer of doc.layers) {
     if (!layer.visible) continue;
-    if (layer.type === 'ground') {
+    if (hasGround(layer.type)) {
       const c = groundCache.canvas(layer.id);
       if (!c) continue;
       ctx.globalAlpha = layer.opacity;

@@ -12,7 +12,7 @@ export interface PixelBuffer {
 }
 
 /** Versionen af terrænets tegning. Hæves, hver gang `renderGroundTile` giver et andet billede, så gemte fliser (se groundCache.ts) kasseres. */
-export const GROUND_RENDER_VERSION = 2;
+export const GROUND_RENDER_VERSION = 3;
 
 /** Afstanden (verdenspixels) mellem punkterne i vægtgitteret. Gitteret ligger fast i verdenen, så fliser passer sammen. */
 const STEP = CELL_PX / 8;
@@ -208,7 +208,7 @@ const WATER_FOAM: [number, number, number] = [236, 246, 248];
  * så den bliver organisk (hårde materialer som brosten og fliser får en skarpere kant). Stier ligger oven på og blandes
  * med det terræn, de ligger på.
  */
-export function renderGroundTile(buf: PixelBuffer, ground: GroundData, seed: number, x0: number, y0: number, scale: number): void {
+export function renderGroundTile(buf: PixelBuffer, ground: GroundData, seed: number, x0: number, y0: number, scale: number, floor = false): void {
   const { w: mw, h: mh, data: mask } = ground;
   const out = buf.data;
   const wx1 = x0 + buf.width / scale;
@@ -225,7 +225,7 @@ export function renderGroundTile(buf: PixelBuffer, ground: GroundData, seed: num
   /** Er punktet en sten i en sti af sten-materialet `id`? (Så står farven i `shadeOut`.) */
   const stoneOverPath = (id: number, wx: number, wy: number, wP: number): boolean => {
     stoneAt(id, wx, wy, seed);
-    if (STONE_STYLES[id]!.clip ? wP <= 0.5 : !isStoneHere(id, pathMask!, PATH_RADIUS, true)) return false;
+    if (floor ? wP <= 0.5 : !isStoneHere(id, pathMask!, PATH_RADIUS, true)) return false;
     stoneColor(shadeOut, id, wx, wy, seed);
     return true;
   };
@@ -238,8 +238,8 @@ export function renderGroundTile(buf: PixelBuffer, ground: GroundData, seed: num
       const c = i < 0 ? idS : stoneIds[i]!;
       if (i >= 0 && c === idS) continue;
       stoneAt(c, wx, wy, seed);
-      // planker og fliser skæres til ved kanten af det malede område; andre sten afgøres ved stenens midte
-      const here = STONE_STYLES[c]!.clip ? c === idS && wS > 0.5 : isStoneHere(c, mask, RADIUS, false);
+      // på et gulv skæres sten og planker til ved kanten af det malede område; ellers er de hele og afgøres ved stenens midte
+      const here = floor ? c === idS && wS > 0.5 : isStoneHere(c, mask, RADIUS, false);
       if (idO < 0 || here) {
         stoneColor(shadeOut, c, wx, wy, seed);
         return;

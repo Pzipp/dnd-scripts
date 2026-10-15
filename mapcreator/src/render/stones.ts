@@ -22,14 +22,12 @@ export interface StoneStyle {
   tint: [number, number, number];
   /** Træplanker i stedet for sten: farve og åretegning. */
   wood?: boolean;
-  /** Skæres til ved kanten af det malede område (planker og fliser ved en mur) i stedet for at være hele sten, der stikker ud. */
-  clip?: boolean;
 }
 
 export const STONE_STYLES: Record<number, StoneStyle> = {
   14: { rowH: 15, wMin: 0.9, wMax: 1.55, gap: 1.8, round: 0.4, lo: 104, spread: 56, tint: [10, 3, -10] },
-  17: { rowH: 14, wMin: 5, wMax: 9, gap: 1.4, round: 0.08, lo: 0, spread: 0, tint: [0, 0, 0], wood: true, clip: true },
-  16: { rowH: 36, wMin: 1.0, wMax: 2.0, gap: 2.6, round: 0.13, lo: 116, spread: 46, tint: [-2, 0, 6], clip: true },
+  17: { rowH: 14, wMin: 5, wMax: 9, gap: 1.4, round: 0.08, lo: 0, spread: 0, tint: [0, 0, 0], wood: true },
+  16: { rowH: 36, wMin: 1.0, wMax: 2.0, gap: 2.6, round: 0.13, lo: 116, spread: 46, tint: [-2, 0, 6] },
 };
 
 export const isStoneMaterial = (id: number): boolean => id in STONE_STYLES;

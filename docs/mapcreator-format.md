@@ -19,11 +19,12 @@ Et kort er **én JSON-fil**: `$USERDATA/mapcreator/maps/<id>.json`. Alt andet (b
 
 ### Lag
 
-Fælles felter: `id`, `name`, `type` (`ground | objects | walls | effects`), `visible`, `locked`, `opacity` (0..1), `height` (lagets højde: skyggelængde). Rækkefølgen i listen er tegnerækkefølgen (nederst først).
+Fælles felter: `id`, `name`, `type` (`ground | floor | objects | walls | effects`), `visible`, `locked`, `opacity` (0..1), `height` (lagets højde: skyggelængde). Rækkefølgen i listen er tegnerækkefølgen (nederst først).
 
 | Lagtype | Ekstra felt | Indhold |
 |---|---|---|
 | `ground` | `ground` | `{ res, w, h, rle }`: terrænmaske, 4 × 4 celler pr. felt. `rle` er kørselslængdekodet (værdi-byte + varint-længde) og base64. Celleværdien er et materiale-id (`render/materials.ts`, aldrig omnummereret, 0 = tomt) |
+| `floor` | `ground` | Som `ground`, men planker, brosten og fliser skæres til ved kanten af det malede (gulv i huse og rum). Ældre klienter, der ikke kender typen, viser ikke laget |
 | `objects`, `effects` | `elements` | Liste af genstande (se nedenfor) |
 | `walls` | `walls` | Liste af mure (se nedenfor) |
 

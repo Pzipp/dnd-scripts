@@ -1,11 +1,12 @@
 import { createDoc, createLayer } from '../model/doc';
-import { GROUND_RES, type GroundData } from '../model/ground';
+import { createGround, GROUND_RES, type GroundData } from '../model/ground';
 import { newId } from '../model/ids';
 import { radiusOf } from '../model/scatter';
 import { CELL_PX, type Layer, type MapDoc, type MapElement, type Opening, type OpeningKind, type Wall } from '../model/types';
 import { allKinds, defaultParams, type ObjectKind } from '../objects/registry';
 import { tagsOf } from '../objects/tags';
 import { fbm } from '../render/noise';
+import { isStoneMaterial } from '../render/stones';
 import { MATERIALS, MATERIAL_WATER } from '../render/materials';
 import { defaultThickness } from '../render/walls';
 import { rng } from '../objects/util';
@@ -82,6 +83,8 @@ class Generator {
   private trees: MapElement[] = [];
   private effects: MapElement[] = [];
   private walls: Wall[] = [];
+  /** Gulvlaget, når nogen bygninger eller rum har fået sten- eller plankegulv. */
+  private f: GroundData | null = null;
   private occ = new Occupancy();
   private treeOcc = new Occupancy();
   private pools = new Map<string, ObjectKind[]>();
@@ -157,6 +160,18 @@ class Generator {
     const x1 = Math.min(this.mw, Math.ceil(r.x1 * GROUND_RES));
     const y0 = Math.max(0, Math.floor(r.y0 * GROUND_RES));
     const y1 = Math.min(this.mh, Math.ceil(r.y1 * GROUND_RES));
+    if (isStoneMaterial(mat)) {
+      // brosten, fliser og planker lægges på et Gulv-lag (skåret til ved kanten) oven på jord eller sten
+      const under = mat === matId('planks') ? matId('earth') : matId('stone');
+      const f = (this.f ??= createGround(this.W, this.H, 0));
+      for (let y = y0; y < y1; y++) {
+        for (let x = x0; x < x1; x++) {
+          f.data[y * this.mw + x] = mat;
+          this.g.data[y * this.mw + x] = under;
+        }
+      }
+      return;
+    }
     for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) this.g.data[y * this.mw + x] = mat;
   }
 
@@ -681,6 +696,11 @@ class Generator {
     if (t.buildings) this.buildings(t.buildings);
     for (const rule of t.rules) this.scatter(rule);
     const layers: Layer[] = [this.doc.layers[0]!];
+    if (this.f) {
+      const fl = createLayer('floor', 'Gulv');
+      fl.ground = this.f;
+      layers.push(fl);
+    }
     const add = (type: 'walls' | 'objects' | 'effects', name: string, height: number, fill: (l: Layer) => void, count: number) => {
       if (!count && name !== 'Genstande') return;
       const l = createLayer(type, name);
