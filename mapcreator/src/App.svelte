@@ -3,6 +3,7 @@
   import LayerPanel from './ui/LayerPanel.svelte';
   import Inspector from './ui/Inspector.svelte';
   import Viewport from './ui/Viewport.svelte';
+  import ResizeDialog from './ui/ResizeDialog.svelte';
   import NewMapDialog from './ui/NewMapDialog.svelte';
   import OpenDialog from './ui/OpenDialog.svelte';
   import ToolPanel from './ui/ToolPanel.svelte';
@@ -13,7 +14,7 @@
 
   const gallery = new URLSearchParams(location.search).has('galleri');
 
-  let dialog = $state<'new' | 'open' | 'export' | 'assets' | null>(null);
+  let dialog = $state<'new' | 'open' | 'export' | 'assets' | 'resize' | null>(null);
 
   function onKey(e: KeyboardEvent) {
     const t = e.target as HTMLElement;
@@ -84,6 +85,7 @@
     <button onclick={() => (dialog = 'new')}>Nyt</button>
     <button onclick={() => (dialog = 'open')}>Åbn</button>
     <button class="primary" onclick={() => editor.save()}>Gem</button>
+    <button onclick={() => (dialog = 'resize')} title="Gør kortet større eller mindre">Størrelse …</button>
     <button onclick={() => (dialog = 'export')}>Eksportér …</button>
     <button onclick={() => (dialog = 'assets')} title="Importér dine egne billeder som genstande">Egne genstande …</button>
     <span class="sep"></span>
@@ -103,6 +105,7 @@
 
 {#if dialog === 'new'}<NewMapDialog onclose={() => (dialog = null)} />{/if}
 {#if dialog === 'open'}<OpenDialog onclose={() => (dialog = null)} />{/if}
+{#if dialog === 'resize'}<ResizeDialog onclose={() => (dialog = null)} />{/if}
 {#if dialog === 'export'}<ExportDialog onclose={() => (dialog = null)} />{/if}
 {#if dialog === 'assets'}<ImportDialog onclose={() => (dialog = null)} />{/if}
 

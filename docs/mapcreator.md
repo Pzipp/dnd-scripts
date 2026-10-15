@@ -4,7 +4,7 @@ Editor til slagkort (top-down, uden grid i selve billedet): lag med terræn, gen
 
 ## Status
 
-Færdigt: dokumentmodel og lag (tilføj, slet, flyt, skjul, lås, opacitet, højde), kamera (pan, zoom, knib), fortryd/gentag, gem og åbn, **terrænmaling** (pensel, viskelæder, fyld; 8 materialer), **genstande** (familier med varianter, vælger, flyt/skalér/rotér, skygger), **mure** med døre, porte og vinduer, et **scatter-værktøj** til skov og planter, og **eksport** med navngivne udgaver (download eller direkte i VTT'et). **Egne genstande** (billedimport med automatisk fjernelse af baggrund) er også med. Mangler: generator (vælg et område og få en base) og polering. Se [mapcreator-plan.md](mapcreator-plan.md).
+Færdigt: dokumentmodel og lag (tilføj, slet, flyt, skjul, lås, opacitet, højde), kamera (pan, zoom, knib), fortryd/gentag, gem og åbn, **terrænmaling** (pensel, viskelæder, fyld; 8 materialer), **genstande** (familier med varianter, vælger, flyt/skalér/rotér, skygger), **mure** med døre, porte og vinduer, et **scatter-værktøj** til skov og planter, og **eksport** med navngivne udgaver (download eller direkte i VTT'et). **Egne genstande** (billedimport med automatisk fjernelse af baggrund) er også med. En **generator** laver en base ud fra et områdetema, og kortets **størrelse** kan ændres bagefter. Mangler: polering. Se [mapcreator-plan.md](mapcreator-plan.md).
 
 Flere dokumenter: [mapcreator-format.md](mapcreator-format.md) (JSON-format og API), [mapcreator-objects.md](mapcreator-objects.md) (laver og forbedre genstande) og [`mapcreator/README.md`](../mapcreator/README.md) (kode og udvikling).
 
@@ -31,7 +31,7 @@ Flere dokumenter: [mapcreator-format.md](mapcreator-format.md) (JSON-format og A
 
 Et grundlag (`type: ground`) har en maske med 4 × 4 celler pr. felt; hver celle er et materiale-id (`render/materials.ts`, id'er må aldrig omnummereres, 0 = tomt). Masken gemmes kørselslængde-kodet og base64 i kortets JSON.
 
-**Materialer.** Natur: tre slags græs (mark, skov, tørt), jord, mudder, sne. Sand og sten: fire slags sand (almindeligt, strand, rødt, mørkt), ørken, sten. Vand. Veje og gulve: brosten, grus, fliser, trægulv. Hvert materiale er en lille funktion af position (`shade` i `materials.ts`); nye materialer tilføjes bagerst med nyt id.
+**Materialer.** Natur: tre slags græs (mark, skov, tørt), jord, mudder, sne. Sand og sten: fire slags sand (almindeligt, strand, rødt, mørkt), ørken, sten, mørkt fjeld (grottevæg). Vand. Veje og gulve: brosten, grus, fliser, trægulv. Hvert materiale er en lille funktion af position (`shade` i `materials.ts`); nye materialer tilføjes bagerst med nyt id.
 
 **Overgange.** Maskens celler glattes til vægte pr. materiale i et fast gitter (`render/ground.ts`), og to materialer blandes blødt over en overgang på ca. 40 px. Overgangens kant forskydes med støj, så den bliver organisk. Hårde materialer (brosten, fliser, trægulv) har en skarpere kant. Mellem vand og land er der en lys skumkant og våd jord. Fliserne passer sammen, fordi gitteret ligger fast i verdenen.
 
@@ -52,6 +52,16 @@ Genstande ligger i genstands- og effektlag (`elements[]`): `kind`, position, st�
 **Skygger og højde.** Skyggen følger kortets `lightAngle`; dens længde er varianten's `shadow` plus (lagets højde + genstandens `z`) × 6 px. Genstande tegnes i rækkefølgen lag, derefter `z`, derefter rækkefølgen i laget. Hver genstand tegnes én gang til et lille lærred (`render/sprites.ts`) og genbruges, så mange genstande kan tegnes hurtigt.
 
 **Værktøjer.** *Vælg* (V): klik, træk for at flytte, håndtag til skalering (Shift låser/frigiver proportioner) og rotation (Shift runder til 15°), pile flytter, Delete sletter, Ctrl+D duplikerer. *Genstand* (G): sæt ud med forhåndsvisning; Esc går tilbage til Vælg. "Fastgør til halve felter" er valgfri.
+
+## Nyt kort og generator
+
+**Nyt** åbner en dialog: vælg *Tomt kort* eller et tema (Skov, Mose, Ørken, Snelandskab, Grotte, Flodbred, Bjergsti, Landsby, Kro, Ruin, Dungeon), en størrelse (Rum, Lille, Mellem, Stort, By, Region, eller egne mål) og evt. et frø. **Ny variant** giver et nyt frø; samme tema, størrelse og frø giver altid samme kort. Resultatet er et helt almindeligt kort (lag med terræn, mure, genstande, træer og effekter), som kan redigeres frit; veje og floder løber fra kant til kant, så kort kan sættes sammen.
+
+Temaerne er data i `mapcreator/src/generator/themes.ts` (terrænpletter, vand, veje, bygninger, dungeon/grotte, regler for genstande efter familie og tags); motoren står i `generate.ts`. Genstande vælges ud fra familier og tags, så nye genstande kommer med af sig selv. Se `generator/spec.ts` for alle felter.
+
+## Kortstørrelse
+
+**Størrelse …** øverst ændrer et eksisterende kort (felter i bredde og højde, de samme standardstørrelser som ved Nyt). Vælg, hvor det nuværende kort placeres (9 felter): resten udvides eller beskæres derfra. Terrænet udvides med det, der ligger ved kanten; genstande og mure flyttes med, og genstande, hvis midte havner uden for kortet, fjernes. Det kan fortrydes.
 
 ## Egne genstande (billedimport)
 

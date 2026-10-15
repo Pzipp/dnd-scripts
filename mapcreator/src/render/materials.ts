@@ -34,6 +34,7 @@ export const MATERIALS: Material[] = [
   { id: 14, key: 'cobble', name: 'Brosten', swatch: '#8d867a', group: 'Veje og gulve', crisp: true, pathable: true },
   { id: 15, key: 'gravel', name: 'Grus', swatch: '#a39a88', group: 'Veje og gulve', pathable: true },
   { id: 16, key: 'flagstone', name: 'Fliser', swatch: '#9a9ca0', group: 'Veje og gulve', crisp: true, pathable: true },
+  { id: 18, key: 'rock_dark', name: 'Fjeld, mørkt', swatch: '#3b3835', group: 'Sand og sten' },
   { id: 17, key: 'planks', name: 'Trægulv', swatch: '#8a5f38', group: 'Veje og gulve', crisp: true, pathable: true },
 ];
 
@@ -180,6 +181,17 @@ export function shade(id: number, x: number, y: number, seed: number, margin: nu
       const spec = smoothstep(0.72, 0.84, valueNoise(x / 2.2, y / 2.2, seed + 133));
       const k = grain * 14 - spec * 30;
       tint(o, k, k, k * 0.9);
+      return;
+    }
+    case 18: {
+      // massivt, mørkt fjeld (grottevægge, dungeon): kantede blokke med lyse kanter og mørk støj
+      cellular(x / 34, y / 34, seed + 181, 0.9);
+      const v = ((cellOut.h & 255) / 255) * 0.5;
+      const ridge = 1 - smoothstep(0.02, 0.14, cellOut.f2 - cellOut.f1);
+      const f = fbm(x / 90, y / 90, seed + 183, 3);
+      mix3(o, 38, 35, 33, 66, 62, 58, smoothstep(0.25, 0.75, f) * 0.7 + v * 0.3);
+      const k = grain * 14 - ridge * 14 - (cellOut.dx + cellOut.dy) * 10;
+      tint(o, k, k, k * 0.95);
       return;
     }
     case 14: {

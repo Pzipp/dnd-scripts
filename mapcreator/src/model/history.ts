@@ -9,6 +9,8 @@ export interface Command {
   merge?(next: Command): boolean;
   /** Lag og område (verdenspixels), der skal tegnes igen, når kommandoen er udført eller fortrudt. */
   touches?: { layerId: string; rect: Rect };
+  /** Kortets mål eller lag er skiftet ud: al forhåndsvisning skal bygges forfra. */
+  relayout?: boolean;
   /** Lag, der skal vælges, når kommandoen udføres (eller gentages). */
   selectsLayer?: string;
   /** Genstand, der skal vælges, når kommandoen udføres (eller gentages). */

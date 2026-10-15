@@ -5,6 +5,8 @@ import {
   transformElement, transformWall, updateElement, updateLayer, updateOpening, updateWall, type ElementPatch, type OpeningPatch, type WallPatch,
 } from './commands';
 import { createDoc, createLayer, createPreset, type NewDocOptions } from './doc';
+import { generateMap, type GenOptions } from '../generator';
+import { resizeMap, type Anchor } from './resize';
 import { fillChange, materialAt, Stroke } from './ground';
 import { ScatterStroke, elementsInCircle } from './scatter';
 import { hitWall, nearestOnPath, pathLength, pathOf, type Pt } from './walls';
@@ -97,6 +99,16 @@ class Editor {
   private afterChange(cmd: Command, applied = true): void {
     this.dirty = true;
     this.rev++;
+    if (cmd.relayout) {
+      groundCache.reset();
+      groundCache.sync(this.doc);
+      this.keepSelection();
+      this.selectedElementId = null;
+      this.selectedWallId = null;
+      this.selectedOpeningId = null;
+      this.fitView();
+      this.drawRev++;
+    }
     if (cmd.touches) this.invalidate(cmd.touches.layerId, cmd.touches.rect);
     if (applied && cmd.selectsLayer) this.selectedLayerId = cmd.selectsLayer;
     if (applied && cmd.selectsElement) this.selectElement(null, cmd.selectsElement);
@@ -528,6 +540,14 @@ class Editor {
     this.dirty = false;
     this.fitView();
     this.drawRev++;
+  }
+  resizeMap(widthCells: number, heightCells: number, anchor: Anchor): void {
+    this.run(resizeMap(widthCells, heightCells, anchor));
+  }
+  /** Nyt kort lavet af en generator (tema + seed); bagefter et almindeligt kort, der kan redigeres frit. */
+  generateMap(opts: GenOptions): void {
+    this.load(generateMap(opts));
+    this.dirty = true;
   }
   newMap(opts: NewDocOptions): void {
     this.load(createDoc(opts));

@@ -42,6 +42,7 @@ src/
     walls.ts      murgeometri (buelængde, stykker, huller)
     scatter.ts    scatter-algoritmen (afstand, vand, mure)
     pick.ts       hvad ligger under musen
+    resize.ts     ændr kortstørrelse (terræn, genstande og mure følger med; kan fortrydes)
   render/       tegning (Canvas 2D), bruges af både forhåndsvisning og eksport
     scene.ts      forhåndsvisningen (lag, grid, håndtag, ghosts)
     ground.ts, materials.ts, noise.ts, groundCache.ts   terræn
@@ -49,7 +50,9 @@ src/
     walls.ts      mure og åbninger
     export.ts     eksport i fuld opløsning (fliser), filnavne
     camera.ts
-  objects/      genstandsregistret og alle genstande (se docs/mapcreator-objects.md)
+  objects/      genstandsregistret og alle genstande (se docs/mapcreator-objects.md); designer/ = malede billeder
+tools/          export-own-objects.py: egne genstande ind i bygget
+  generator/    områdetemaer som data (themes.ts, spec.ts) og motoren (generate.ts): laver et almindeligt kort ud fra tema, størrelse og frø
   assets/       egne genstande: cutout.ts (baggrund væk og udskæring, ren pixelregning), library.ts (bibliotek og registrering)
   ui/           paneler og dialoger (Svelte)
   tests/        vitest

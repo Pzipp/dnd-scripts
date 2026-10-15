@@ -1,6 +1,30 @@
 # Genstande i kortbyggeren: sådan laver og forbedrer man dem
 
-Alle genstande tegnes proceduralt (Canvas 2D) af små funktioner. Der er ingen billedfiler. Registret ligger i `mapcreator/src/objects/`.
+Der er to slags genstande, og begge er almindelige varianter i samme register (`mapcreator/src/objects/`), med familie, tags og skygge:
+
+1. **Tegnede i kode** (Canvas 2D, små funktioner): næsten alle. Se resten af dokumentet.
+2. **Malede billeder** (WebP med gennemsigtig baggrund) i `src/objects/designer/`: genstande lavet med en billedgenerator (Microsoft Designer) og friklippet med importværktøjet. Se [Malede genstande](#malede-genstande-billeder) nedenfor.
+
+## Sådan ser en god genstand ud (gælder begge slags)
+
+- **Set lige oppefra** (top-down), malet stil som resten af kortet, **ingen grid, ingen tekst, ingen kant af baggrund**.
+- **Lys fra øverst til venstre**; mørk, varm kontur. **Ingen indbagt skygge**: skyggen kommer fra det fælles system (`shadow` på varianten, `0` på flade ting som tæpper og blod). En genstand med egen skygge får dobbelt skygge og kan ikke drejes.
+- **Størrelse i felter** (1 felt = 5 ft): kiste 1 × 0,7, tønde 0,8, bord 2 × 1, seng 1 × 2, busk 1,5-2,5, træ 3-6, stor eg 6-8, vogn 2 × 4, telt 3-4, brønd 2, bålplads 1,5.
+- **Fylder sin boks** (højst ca. 5 % tomt rundt); rund eller afrundet form til ting, der skal kunne drejes frit (`randomRotation`).
+- **Variation**: en familie skal have mindst 3-5 varianter, så en skov ikke bliver ét træ gentaget. Naturlige ting drejes tilfældigt og får `sizeJitter`.
+- **Hører til en familie** (`FAMILIES`) og har **tags** (`tags.ts`), så generatoren finder den. Mangler der en familie, så lav en (se nedenfor) i stedet for at proppe genstanden i en forkert.
+
+## Malede genstande (billeder)
+
+Et billedark fra Designer (5 × 5 genstande, set oppefra, ensfarvet baggrund) kan blive til færdige genstande uden kode:
+
+1. **Lav arket.** Én *tematisk* ark pr. billede (fx kun træer, eller kun taverne-ting). Prompt, der virker: *"Top-down game asset sheet for a fantasy tabletop battle map, 25 separate objects in a 5x5 grid: <liste>. Painted illustration style, viewed straight from above, soft top-left lighting, NO cast shadows, NO ground, NO text, each object isolated with wide empty space around it, plain pure white background (#FFFFFF)."* Brug **hvid** eller magenta (`#FF00FF`) som baggrund, **ikke** "transparent" (Designer tegner det ternede mønster som rigtige pixels) og ikke grøn til planter eller hvid til lyse genstande. Tjek Microsofts vilkår for billederne.
+2. **Importér og klip ud** i kortbyggeren: knappen *Egne genstande …*. Værktøjet fjerner baggrunden, finder genstandene, og man vælger familie, skygge, rotation, tags, navn og bredde i felter (se afsnittet *Egne genstande* i [mapcreator.md](mapcreator.md)). Genstandene ligger så i brugerens bibliotek (`vol/userdata/`, ikke i git).
+3. **Tag dem med i bygget:** `python3 mapcreator/tools/export-own-objects.py` (se `--help`) kopierer billederne til `mapcreator/src/objects/designer/<nøgle>.webp` og tilføjer dem til `items.json` (nøgle = navnet med små bogstaver og `_`; ændres aldrig). Genstanden får nøglen `designer_<nøgle>`.
+4. **Tilføj tags** hvis familiens ikke er nok: `tags` kan sættes pr. genstand i `items.json` (felter: `key`, `name`, `family`, `w`, `h`, `shadow`, `randomRotation`, evt. `tags`).
+5. Kør `mapcreator/build-docker.sh check`, `test`, `build`, se genstandene i galleriet (`/mapcreator?galleri=1&familie=<familie>`), og commit `designer/`.
+
+Skal et billede erstattes, så læg en ny fil med samme nøgle (filen overskrives). Slet aldrig en nøgle, kort kan bruge den: sæt i stedet `replacedBy` (se *Forbedre og udgå*). Billederne må højst være ca. 1024 px i længste led (importen sørger for det); hold dem små (ca. 30-60 KB hver).
 
 ## Mapper
 
