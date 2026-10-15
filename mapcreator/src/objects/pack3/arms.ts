@@ -1,4 +1,4 @@
-import { blobPath, body, ellBody, OUT, polyBody, polyPath, radial, rgb, shift, tube, lin, rivet, mottle, type G, type RGB, type Rnd } from '../pack2/helpers';
+import { mix, blobPath, body, ellBody, OUT, polyBody, polyPath, radial, rgb, shift, tube, lin, rivet, mottle, type G, type RGB, type Rnd } from '../pack2/helpers';
 
 /** Våben og rustning til tegning (set ovenfra eller forfra). Alle tegnes med skaftets/fæstets start i (x, y) og peger langs vinklen `ang`. */
 
@@ -181,7 +181,7 @@ export function roundShield(g: G, r: Rnd, cx: number, cy: number, rad: number, c
       g.fillStyle = rgb(col);
       g.fill();
     }
-    g.fillStyle = rgb(shift(col, 90), 0.55);
+    g.fillStyle = rgb(mix(col, [240, 228, 196], 0.8), 0.55);
     for (let i = 1; i < 4; i += 2) {
       g.beginPath();
       g.moveTo(cx, cy);
@@ -191,7 +191,7 @@ export function roundShield(g: G, r: Rnd, cx: number, cy: number, rad: number, c
   } else if (pat === 1) {
     g.fillStyle = rgb(col);
     g.fillRect(cx - rad, cy - rad, rad * 2, rad * 2);
-    g.fillStyle = rgb(shift(col, 100), 0.85);
+    g.fillStyle = rgb(mix(col, [240, 228, 196], 0.8), 0.85);
     g.fillRect(cx - rad * 0.14, cy - rad, rad * 0.28, rad * 2);
     g.fillRect(cx - rad, cy - rad * 0.14, rad * 2, rad * 0.28);
   } else if (pat === 2) {
@@ -199,7 +199,7 @@ export function roundShield(g: G, r: Rnd, cx: number, cy: number, rad: number, c
       g.beginPath();
       g.moveTo(cx, cy);
       g.arc(cx, cy, rad, (i * Math.PI) / 3, ((i + 1) * Math.PI) / 3);
-      g.fillStyle = i % 2 ? rgb(shift(col, 90), 0.9) : rgb(col);
+      g.fillStyle = i % 2 ? rgb(mix(col, [240, 228, 196], 0.8), 0.9) : rgb(col);
       g.fill();
     }
   } else {
@@ -212,7 +212,7 @@ export function roundShield(g: G, r: Rnd, cx: number, cy: number, rad: number, c
     g.lineTo(cx + rad, cy + rad * 0.15);
     g.lineTo(cx, cy + rad * 0.75);
     g.lineTo(cx - rad, cy + rad * 0.15);
-    g.fillStyle = rgb(shift(col, 100), 0.8);
+    g.fillStyle = rgb(mix(col, [240, 228, 196], 0.8), 0.8);
     g.fill();
   }
   // slid
@@ -268,7 +268,7 @@ export function heaterShield(g: G, r: Rnd, cx: number, cy: number, wd: number, h
   g.fillStyle = rgb(col);
   g.fillRect(cx - wd, cy - ht, wd * 2, ht * 2);
   const ch = o.charge ?? 0;
-  g.fillStyle = rgb(shift(col, 100), 0.85);
+  g.fillStyle = rgb(mix(col, [240, 228, 196], 0.8), 0.85);
   if (ch === 0) {
     g.fillRect(cx - wd * 0.22, cy - ht, wd * 0.44, ht * 2);
   } else if (ch === 1) {
