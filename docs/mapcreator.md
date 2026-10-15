@@ -29,7 +29,15 @@ Flere dokumenter: [mapcreator-format.md](mapcreator-format.md) (JSON-format og A
 
 ## Terræn
 
-Et grundlag (`type: ground`) har en maske med 4 × 4 celler pr. felt; hver celle er et materiale-id (`render/materials.ts`, id'er må aldrig omnummereres, 0 = tomt). Masken gemmes kørselslængde-kodet og base64 i kortets JSON. Ved tegning forvrænges koordinaterne med støj, og to materialer blandes blødt over en smal kant (`render/ground.ts`). Samme tegnekode bruges i forhåndsvisningen (i fliser og lavere opløsning, `render/groundCache.ts`) og i eksporten (fuld opløsning).
+Et grundlag (`type: ground`) har en maske med 4 × 4 celler pr. felt; hver celle er et materiale-id (`render/materials.ts`, id'er må aldrig omnummereres, 0 = tomt). Masken gemmes kørselslængde-kodet og base64 i kortets JSON.
+
+**Materialer.** Natur: tre slags græs (mark, skov, tørt), jord, mudder, sne. Sand og sten: fire slags sand (almindeligt, strand, rødt, mørkt), ørken, sten. Vand. Veje og gulve: brosten, grus, fliser, trægulv. Hvert materiale er en lille funktion af position (`shade` i `materials.ts`); nye materialer tilføjes bagerst med nyt id.
+
+**Overgange.** Maskens celler glattes til vægte pr. materiale i et fast gitter (`render/ground.ts`), og to materialer blandes blødt over en overgang på ca. 40 px. Overgangens kant forskydes med støj, så den bliver organisk. Hårde materialer (brosten, fliser, trægulv) har en skarpere kant. Mellem vand og land er der en lys skumkant og våd jord. Fliserne passer sammen, fordi gitteret ligger fast i verdenen.
+
+**Sti oven på.** Pensel-værktøjet kan male enten **Terræn** eller **Sti oven på**. En sti ligger i en separat maske (`path`) oven på terrænet, så terrænet under ikke ændres og stien kan fjernes igen med viskelæderen. Stien blandes med det, den ligger på: ved kanten skinner terrænet igennem (græs vokser ind i en jordsti, sand dusker en grussti), og i midten tager den lidt farve fra underlaget. Stier kan være jord, mudder, sne, sand, ørken, sten, brosten, grus, fliser eller trægulv. Brosten kan altså males som en hel by-gade eller et torv uden at sætte tusind genstande ud.
+
+Samme tegnekode bruges i forhåndsvisningen (i fliser og lavere opløsning, `render/groundCache.ts`) og i eksporten (fuld opløsning).
 
 ## Genstande
 

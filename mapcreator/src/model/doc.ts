@@ -1,4 +1,4 @@
-import { createGround, decodeGround, encodeGround } from './ground';
+import { createGround, decodeGround, encodeGround, type EncodedGround } from './ground';
 import { newId, newSeed } from './ids';
 import { DOC_VERSION, MAX_CELLS, type ExportPreset, type Layer, type LayerType, type MapDoc } from './types';
 import { MATERIAL_GRASS } from '../render/materials';
@@ -72,7 +72,7 @@ export function parseDoc(raw: unknown): MapDoc {
     }
     if (l.type === 'walls') l.walls ??= [];
     if (l.type === 'ground') {
-      l.ground = g?.rle !== undefined ? decodeGround(g as { res: number; w: number; h: number; rle: string }) : createGround(doc.widthCells, doc.heightCells);
+      l.ground = g?.rle !== undefined ? decodeGround(g as EncodedGround) : createGround(doc.widthCells, doc.heightCells);
     }
   }
   if (!Array.isArray(doc.exports)) doc.exports = [createPreset(doc.name)];

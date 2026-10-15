@@ -3,6 +3,8 @@ import { CELL_PX } from '../model/types';
 import { renderGroundTile } from './ground';
 
 const TILE = 256;
+/** Hvor langt (verdenspixels) en terrænændring kan påvirke tegningen uden for sig selv. */
+const BLEND_PAD = 36;
 
 interface Entry {
   canvas: HTMLCanvasElement;
@@ -63,7 +65,8 @@ export class GroundCache {
     if (!entry) return;
     const cw = entry.canvas.width;
     const ch = entry.canvas.height;
-    const r = rect ?? { x: 0, y: 0, w: cw / this.scale, h: ch / this.scale };
+    // overgangene mellem materialer rækker lidt uden for de malede celler
+    const r = rect ? { x: rect.x - BLEND_PAD, y: rect.y - BLEND_PAD, w: rect.w + 2 * BLEND_PAD, h: rect.h + 2 * BLEND_PAD } : { x: 0, y: 0, w: cw / this.scale, h: ch / this.scale };
     const tx0 = Math.max(0, Math.floor((r.x * this.scale - 1) / TILE));
     const ty0 = Math.max(0, Math.floor((r.y * this.scale - 1) / TILE));
     const tx1 = Math.min(Math.ceil(cw / TILE) - 1, Math.floor(((r.x + r.w) * this.scale + 1) / TILE));

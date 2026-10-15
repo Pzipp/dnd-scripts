@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { MATERIALS } from '../render/materials';
+  import { MATERIAL_GROUPS, MATERIALS } from '../render/materials';
   import { OPENING_KINDS, WALL_STYLES } from '../render/walls';
   import { editor, type Tool } from '../model/store.svelte';
 
@@ -13,6 +13,11 @@
     { id: 'paint', label: 'Pensel', hint: 'Mal terræn på et grundlag' },
     { id: 'erase', label: 'Viskelæder', hint: 'Fjern terræn (gør laget gennemsigtigt)' },
   ];
+  /** Stier kan kun være af de materialer, der er markeret som `pathable`. */
+  function setPathMode() {
+    editor.paintMode = 'path';
+    if (!MATERIALS.find((m) => m.id === editor.material)?.pathable) editor.material = 2;
+  }
   const painting = $derived(editor.tool === 'paint' || editor.tool === 'erase');
 </script>
 
@@ -86,20 +91,32 @@
   {#if !editor.paintableLayer}
     <p class="warn">Vælg et synligt, ulåst <b>Grund</b>-lag for at male.</p>
   {/if}
+  <div class="modes" role="radiogroup" aria-label="Hvad skal males">
+    <button role="radio" aria-checked={editor.paintMode === 'base'} class:on={editor.paintMode === 'base'} onclick={() => (editor.paintMode = 'base')} title="Mal selve terrænet">Terræn</button>
+    <button role="radio" aria-checked={editor.paintMode === 'path'} class:on={editor.paintMode === 'path'} onclick={() => setPathMode()} title="Mal en sti oven på terrænet; den blander sig med det, den ligger på">Sti oven på</button>
+  </div>
   {#if editor.tool === 'paint'}
-    <div class="mats" role="radiogroup" aria-label="Materiale">
-      {#each MATERIALS as m}
-        <button role="radio" aria-checked={editor.material === m.id} class:on={editor.material === m.id} title={m.name} onclick={() => (editor.material = m.id)}>
-          <span class="sw" style="background:{m.swatch}"></span>{m.name}
-        </button>
-      {/each}
-    </div>
+    {#each MATERIAL_GROUPS as group}
+      {@const list = MATERIALS.filter((m) => m.group === group && (editor.paintMode === 'base' || m.pathable))}
+      {#if list.length}
+        <h3>{group}</h3>
+        <div class="mats" role="radiogroup" aria-label={group}>
+          {#each list as m}
+            <button role="radio" aria-checked={editor.material === m.id} class:on={editor.material === m.id} title={m.name} onclick={() => (editor.material = m.id)}>
+              <span class="sw" style="background:{m.swatch}"></span>{m.name}
+            </button>
+          {/each}
+        </div>
+      {/if}
+    {/each}
+  {:else if editor.paintMode === 'path'}
+    <p class="hint">Visker fjerner stier. Terrænet under står, som det var.</p>
   {/if}
   <label>Penselstørrelse: {editor.brushCells} felter
     <input type="range" min="0.5" max="16" step="0.5" bind:value={editor.brushCells} />
   </label>
   <button disabled={!editor.paintableLayer} onclick={() => editor.fillSelected()}>
-    {editor.tool === 'erase' ? 'Ryd hele laget' : 'Fyld hele laget'}
+    {editor.tool === 'erase' ? (editor.paintMode === 'path' ? 'Fjern alle stier' : 'Ryd hele laget') : editor.paintMode === 'path' ? 'Dæk hele laget med sti' : 'Fyld hele laget'}
   </button>
 {/if}
 
@@ -107,7 +124,9 @@
   .tools { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-bottom: 10px; }
   .tools button { padding: 5px 4px; }
   button.on { border-color: var(--accent); background: #3a3426; }
-  .mats { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 10px; }
+  .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 8px; }
+  h3 { font-size: 11px; color: var(--muted); margin: 6px 0 4px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+  .mats { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 6px; }
   .mats button { display: flex; align-items: center; gap: 6px; text-align: left; padding: 4px 6px; }
   .sw { width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(0,0,0,.5); flex: none; }
   label.chk { flex-direction: row; align-items: center; gap: 6px; }

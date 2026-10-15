@@ -1,5 +1,5 @@
 import type { Command } from './history';
-import type { CellChange } from './ground';
+import { writeChange, type CellChange } from './ground';
 import type { Layer, MapDoc, MapElement, Opening, Wall } from './types';
 
 function indexOf(doc: MapDoc, id: string): number {
@@ -116,11 +116,10 @@ export function paintCells(layerId: string, change: CellChange): Command {
   const write = (doc: MapDoc, values: Uint8Array) => {
     const g = doc.layers[indexOf(doc, layerId)]!.ground;
     if (!g) throw new Error('Laget har ingen terrænmaske.');
-    const { indices } = change;
-    for (let k = 0; k < indices.length; k++) g.data[indices[k]!] = values[k]!;
+    writeChange(g, change, values);
   };
   return {
-    label: 'Mal terræn',
+    label: change.target === 'path' ? 'Mal sti' : 'Mal terræn',
     touches: { layerId, rect: change.rect },
     apply: (doc) => write(doc, change.after),
     revert: (doc) => write(doc, change.before),

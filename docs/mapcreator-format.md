@@ -27,6 +27,8 @@ Fælles felter: `id`, `name`, `type` (`ground | objects | walls | effects`), `vi
 | `objects`, `effects` | `elements` | Liste af genstande (se nedenfor) |
 | `walls` | `walls` | Liste af mure (se nedenfor) |
 
+Et grundlag har `ground: { res, w, h, rle, path? }`: `rle` er terrænmaskens materiale-id'er og `path` (kun hvis der er stier) stierne oven på, begge kørselslængde-kodet. Et kort uden `path` åbnes som før.
+
 ### Genstande (`elements[]`)
 
 ```jsonc

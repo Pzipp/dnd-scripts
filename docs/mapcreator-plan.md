@@ -29,7 +29,7 @@ Et værktøj til at lave alle slags D&D-kort (top-down, malet stil, uden grid i 
 - [x] 6. **Eksport til VTT**: dialog med kampagne/room/General Maps; udgaven sendes via simpelvtts eksisterende upload (ingen ny server-endpoint).
 - [ ] 7. **Generator**: vælg områdetema (skov, mose, grotte, ørken, by, kro, ruin, flodbred, bjergsti), generér en base som et almindeligt, redigerbart dokument (lag + elementer); eller start tomt. Layout som data adskilt fra tegning; udgange ved kanterne, så kort kan sættes sammen.
 - [x] 8. **Egne genstande**: billedimport med automatisk baggrundsfjernelse (hvid, ensfarvet, ternet, gennemsigtig) og udskæring af ark i enkeltgenstande; bibliotek med omdøb, familie, størrelse og sletning; serveren genkoder alt med Pillow. Mangler: skæring med fast rutenet, rotation/spejling af genstanden før gem, og at erstatte billedet i en eksisterende genstand.
-- [ ] 9. **Polering**: flere typer græs og vand; bløde terrænkanter og strand/vådt ved vand; blødere vandbølger; flere og pænere genstande pr. familie; by- og kro-genstande (brolægning, tage, gulve, møbler, trapper, døre); eksporthastighed (Web Worker); kortstørrelse kan ændres; flytte data fra de andre systemer til `/userdata`.
+- [ ] 9. **Polering**: flere typer vand og blødere vandbølger (lavet: 3 slags græs, 4 slags sand, brosten, grus, fliser, trægulv, bløde overgange, skumkant ved vand og sti oven på terrænet); flere og pænere genstande pr. familie; by- og kro-genstande (brolægning, tage, gulve, møbler, trapper, døre); eksporthastighed (Web Worker); kortstørrelse kan ændres; flytte data fra de andre systemer til `/userdata`.
 
 ## Kendte svagheder
 

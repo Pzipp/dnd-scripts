@@ -48,6 +48,8 @@ class Editor {
   scatterErase = $state(false);
   snap = $state(false);
   material = $state(MATERIAL_GRASS);
+  /** Maler penslen selve terrænet eller en sti oven på det? */
+  paintMode = $state<'base' | 'path'>('base');
   /** Penselens diameter i felter. */
   brushCells = $state(3);
   /** Stiger, når forhåndsvisningen skal tegnes igen (flise færdig, område ugyldigt). */
@@ -443,7 +445,7 @@ class Editor {
   }
 
   newStroke(): Stroke {
-    return new Stroke();
+    return new Stroke(this.paintMode);
   }
   commitStroke(layerId: string, stroke: Stroke): void {
     const g = this.doc.layers.find((l) => l.id === layerId)?.ground;
@@ -453,7 +455,7 @@ class Editor {
   fillSelected(): void {
     const l = this.paintableLayer;
     if (!l?.ground) return;
-    const change = fillChange(l.ground, this.tool === 'erase' ? 0 : this.material);
+    const change = fillChange(l.ground, this.tool === 'erase' ? 0 : this.material, this.paintMode);
     if (change) {
       const cmd = paintCells(l.id, change);
       cmd.label = 'Fyld lag';
