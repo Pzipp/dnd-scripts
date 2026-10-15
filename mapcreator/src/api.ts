@@ -87,3 +87,23 @@ export async function uploadToVtt(blob: Blob, filename: string, campaign: string
   if (!r.ok || !body.saved?.length) throw new Error(body.errors?.join(' ') || body.error || `Upload mislykkedes (${r.status})`);
   return body.saved[0]!;
 }
+
+// ---- færdigtegnede terrænfliser ----
+
+export interface BakeManifest {
+  version: number;
+  scale: number;
+  tile: number;
+  /** "tx_ty" -> fingeraftryk. */
+  sigs: Record<string, string>;
+}
+
+export const loadBakeManifests = (mapId: string) => call<Record<string, BakeManifest>>(`${BASE}/maps/${encodeURIComponent(mapId)}/bake`);
+export const bakeTileUrl = (mapId: string, layerId: string, key: string, sig: string) =>
+  `${BASE}/maps/${encodeURIComponent(mapId)}/bake/${encodeURIComponent(layerId)}/${key}.webp?s=${sig}`;
+export const saveBake = (mapId: string, layerId: string, manifest: BakeManifest, tiles: Map<string, Blob>) => {
+  const form = new FormData();
+  form.append('manifest', JSON.stringify(manifest));
+  for (const [key, blob] of tiles) form.append(`t_${key}`, blob, `${key}.webp`);
+  return call<{ ok: true }>(`${BASE}/maps/${encodeURIComponent(mapId)}/bake/${encodeURIComponent(layerId)}`, { method: 'POST', body: form });
+};

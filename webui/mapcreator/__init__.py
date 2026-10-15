@@ -10,6 +10,7 @@ import os
 import io
 import re
 import secrets
+import shutil
 import tempfile
 import threading
 from datetime import datetime, timezone
@@ -30,6 +31,12 @@ MAX_UPLOAD_BYTES = 12 * 1024 * 1024
 MAX_SOURCE_PIXELS = 36_000_000  # afviser enorme billeder, før de dekodes
 MAX_ASSET_SIDE = 1024
 MAX_ASSETS = 2000
+LAYER_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
+TILE_RE = re.compile(r"^\d{1,3}_\d{1,3}$")
+SIG_RE = re.compile(r"^[a-f0-9]{16}$")
+MAX_BAKE_BYTES = 96 * 1024 * 1024
+MAX_BAKE_TILE = 4 * 1024 * 1024
+MAX_BAKE_TILES = 4000
 ASSET_ID_RE = re.compile(r"^[a-f0-9]{12}$")
 SLUG_RE = re.compile(r"^[a-z0-9_]{1,40}$")
 LOCK = threading.RLock()
@@ -146,6 +153,7 @@ def put_map(map_id: str):
         except BaseException:
             Path(tmp).unlink(missing_ok=True)
             raise
+    _prune_bake(map_id, {l["id"] for l in doc["layers"]})
     return jsonify({"ok": True, "modified": _iso(p.stat().st_mtime)})
 
 
@@ -155,7 +163,108 @@ def delete_map(map_id: str):
     if not p.is_file():
         raise Fejl("Kortet findes ikke.", 404)
     p.unlink()
+    shutil.rmtree(bake_dir(map_id), ignore_errors=True)
     return jsonify({"ok": True})
+
+
+# ---- færdigtegnede terrænfliser ("bake") ----
+# Klienten tegner terrænet i fliser (se render/groundCache.ts) og gemmer dem her som webp, når kortet gemmes. Hver flise har et
+# fingeraftryk af de maskeceller, den er regnet ud fra; ved åbning hentes kun fliser, hvis fingeraftryk stadig passer, resten
+# regnes forfra. Filerne er en cache: de kan slettes uden tab (kortet gemmes i selve dokumentet).
+
+
+def bake_dir(map_id: str) -> Path:
+    if not ID_RE.match(map_id):
+        raise Fejl("Ugyldigt kort-id.")
+    return userdata() / "mapcreator" / "bake" / map_id
+
+
+def _prune_bake(map_id: str, layer_ids: set[str]) -> None:
+    d = bake_dir(map_id)
+    if not d.is_dir():
+        return
+    for sub in d.iterdir():
+        if sub.is_dir() and sub.name not in layer_ids:
+            shutil.rmtree(sub, ignore_errors=True)
+
+
+def _layer_bake_dir(map_id: str, layer_id: str) -> Path:
+    if not LAYER_RE.match(layer_id):
+        raise Fejl("Ugyldigt lag-id.")
+    return bake_dir(map_id) / layer_id
+
+
+@bp.get("/api/mapcreator/maps/<map_id>/bake")
+def get_bake(map_id: str):
+    out = {}
+    d = bake_dir(map_id)
+    if d.is_dir():
+        for sub in d.iterdir():
+            f = sub / "manifest.json"
+            if sub.is_dir() and f.is_file():
+                try:
+                    out[sub.name] = json.loads(f.read_text("utf-8"))
+                except (OSError, ValueError):
+                    continue
+    return jsonify(out)
+
+
+@bp.get("/api/mapcreator/maps/<map_id>/bake/<layer_id>/<tile>.webp")
+def get_bake_tile(map_id: str, layer_id: str, tile: str):
+    if not TILE_RE.match(tile):
+        raise Fejl("Ugyldig flise.")
+    f = _layer_bake_dir(map_id, layer_id) / f"{tile}.webp"
+    if not f.is_file():
+        raise Fejl("Flisen findes ikke.", 404)
+    head = f.read_bytes()[:12]
+    mime = "image/webp" if head[:4] == b"RIFF" and head[8:12] == b"WEBP" else "image/png"
+    resp = make_response(send_file(f, mimetype=mime))
+    resp.headers["Cache-Control"] = "private, max-age=31536000, immutable" if request.args.get("s") else "no-cache"
+    return resp
+
+
+@bp.post("/api/mapcreator/maps/<map_id>/bake/<layer_id>")
+def post_bake(map_id: str, layer_id: str):
+    """Multipart: `manifest` (JSON: version, scale, tile, sigs {"tx_ty": sig}) og filer `t_<tx>_<ty>` for de fliser, der er nye eller ændrede."""
+    if (request.content_length or 0) > MAX_BAKE_BYTES:
+        raise Fejl("Fliserne er for store.", 413)
+    if not map_path(map_id).is_file():
+        raise Fejl("Kortet er ikke gemt endnu.", 404)
+    try:
+        m = json.loads(request.form.get("manifest", ""))
+    except ValueError:
+        raise Fejl("Manifestet er ikke gyldigt JSON.")
+    sigs = m.get("sigs") if isinstance(m, dict) else None
+    if not isinstance(sigs, dict) or len(sigs) > MAX_BAKE_TILES:
+        raise Fejl("Manifestet mangler fliser.")
+    if not all(TILE_RE.match(str(k)) and isinstance(v, str) and SIG_RE.match(v) for k, v in sigs.items()):
+        raise Fejl("Ugyldigt fingeraftryk eller fliselnavn.")
+    version, scale, tile = m.get("version"), m.get("scale"), m.get("tile")
+    if not isinstance(version, int) or not isinstance(tile, int) or not isinstance(scale, (int, float)) or isinstance(scale, bool):
+        raise Fejl("Manifestet har ugyldige felter.")
+    d = _layer_bake_dir(map_id, layer_id)
+    with LOCK:
+        d.mkdir(parents=True, exist_ok=True)
+        for name, fs in request.files.items():
+            if not name.startswith("t_") or not TILE_RE.match(name[2:]) or name[2:] not in sigs:
+                raise Fejl("Ugyldig flise i uploaden.")
+            raw = fs.read(MAX_BAKE_TILE + 1)
+            if len(raw) > MAX_BAKE_TILE or len(raw) < 12:
+                raise Fejl("Fliserne har en ugyldig størrelse.")
+            fd, tmp = tempfile.mkstemp(dir=d, prefix=".tmp-")
+            with os.fdopen(fd, "wb") as f:
+                f.write(raw)
+            os.replace(tmp, d / f"{name[2:]}.webp")
+        # kun fliser, der står i manifestet og findes på disken, regnes med
+        keep = {k: v for k, v in sigs.items() if (d / f"{k}.webp").is_file()}
+        for f in d.glob("*.webp"):
+            if f.stem not in keep:
+                f.unlink(missing_ok=True)
+        fd, tmp = tempfile.mkstemp(dir=d, prefix=".tmp-", suffix=".json")
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump({"version": version, "scale": scale, "tile": tile, "sigs": keep}, f, separators=(",", ":"))
+        os.replace(tmp, d / "manifest.json")
+    return jsonify({"ok": True, "tiles": len(keep)})
 
 
 # ---- egne genstande: billeder, der er skåret ud i klienten, og et bibliotek over dem ----

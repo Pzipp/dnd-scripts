@@ -31,6 +31,7 @@
       if (!ctx || w === 0) return;
       groundCache.sync(editor.doc);
       const more = groundCache.step(editor.doc, 10);
+      if (!more) editor.bakeWhenIdle();
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       // Kameraet ganges med dpr, så tegningen er skarp på høj-opløsningsskærme.
       const cam = { zoom: editor.camera.zoom * dpr, panX: editor.camera.panX * dpr, panY: editor.camera.panY * dpr };

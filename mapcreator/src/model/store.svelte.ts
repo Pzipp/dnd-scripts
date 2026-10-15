@@ -547,30 +547,82 @@ class Editor {
   /** Nyt kort lavet af en generator (tema + seed); bagefter et almindeligt kort, der kan redigeres frit. */
   generateMap(opts: GenOptions): void {
     this.load(generateMap(opts));
+    this.onServer = false;
     this.dirty = true;
   }
   newMap(opts: NewDocOptions): void {
     this.load(createDoc(opts));
+    this.onServer = false;
     this.dirty = true;
   }
   async open(id: string): Promise<void> {
+    groundCache.paused = true; // hold tegningen, til de gemte fliser er hentet
     try {
-      this.load(await api.loadMap(id));
+      const doc = await api.loadMap(id);
+      this.load(doc);
+      this.onServer = true;
       this.error = '';
       this.status = `Åbnede "${this.doc.name}"`;
+      try {
+        const baked = await api.loadBakeManifests(id);
+        await groundCache.applyBake(doc, baked, async (layerId, key, sig) => {
+          const r = await fetch(api.bakeTileUrl(id, layerId, key, sig));
+          if (!r.ok) throw new Error(`flise ${key}: ${r.status}`);
+          return r.blob();
+        });
+      } catch {
+        /* gemte fliser er kun en genvej: uden dem regnes terrænet som sædvanligt */
+      }
     } catch (e) {
       this.error = (e as Error).message;
+    } finally {
+      groundCache.paused = false;
+      this.drawRev++;
     }
   }
   async save(): Promise<void> {
     try {
       await api.saveMap(this.doc);
       this.dirty = false;
+      this.onServer = true;
       this.error = '';
       this.status = 'Gemt';
     } catch (e) {
       this.error = (e as Error).message;
+      return;
     }
+    void this.saveBake();
+  }
+
+  /** Findes det åbne kort på serveren (åbnet eller gemt)? Først da kan de tegnede fliser gemmes. */
+  private onServer = false;
+  private bakeBusy = false;
+  private bakeTimer: ReturnType<typeof setTimeout> | null = null;
+
+  /** Gem de færdigtegnede terrænfliser hos serveren, så kortet åbner hurtigt næste gang (også på en telefon). Fejl ignoreres. */
+  async saveBake(): Promise<void> {
+    if (this.bakeBusy || !this.onServer) return;
+    this.bakeBusy = true;
+    try {
+      const id = this.doc.id;
+      for (const p of await groundCache.bakePayload(this.doc)) {
+        await api.saveBake(id, p.layerId, p.manifest, p.tiles);
+        groundCache.markStored(p.layerId, p.manifest);
+      }
+    } catch {
+      /* cachen er valgfri */
+    } finally {
+      this.bakeBusy = false;
+    }
+  }
+
+  /** Kaldes, når terrænet er tegnet færdigt: gem fliserne lidt efter, hvis kortet er gemt og uændret. */
+  bakeWhenIdle(): void {
+    if (this.bakeTimer || this.dirty || !this.onServer || !groundCache.unstored) return;
+    this.bakeTimer = setTimeout(() => {
+      this.bakeTimer = null;
+      if (!this.dirty && !groundCache.pending) void this.saveBake();
+    }, 1500);
   }
 }
 

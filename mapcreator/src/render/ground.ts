@@ -2,7 +2,7 @@ import type { GroundData } from '../model/ground';
 import { CELL_PX } from '../model/types';
 import { isVoid, materialById, MATERIAL_WATER, rimShade, shade, shadeOut } from './materials';
 import { fbm, smoothstep, valueNoise } from './noise';
-import { isStoneMaterial, stone, stoneAt, stoneColor } from './stones';
+import { isStoneMaterial, STONE_STYLES, stone, stoneAt, stoneColor } from './stones';
 
 /** Det, vi skriver pixels i (ImageData passer; i tests bruges et simpelt objekt). */
 export interface PixelBuffer {
@@ -10,6 +10,9 @@ export interface PixelBuffer {
   height: number;
   data: Uint8ClampedArray;
 }
+
+/** Versionen af terrænets tegning. Hæves, hver gang `renderGroundTile` giver et andet billede, så gemte fliser (se groundCache.ts) kasseres. */
+export const GROUND_RENDER_VERSION = 1;
 
 /** Afstanden (verdenspixels) mellem punkterne i vægtgitteret. Gitteret ligger fast i verdenen, så fliser passer sammen. */
 const STEP = CELL_PX / 8;
@@ -124,6 +127,79 @@ function shareAt(mask: Uint8Array, mw: number, mh: number, cell: number, px: num
   return total > 0 ? acc / total : 0;
 }
 
+/** Hvor langt fra en stencelle en sten kan række ind i en pixel: stenens halve bredde plus afgørelsesradius (verdenspixels). */
+function stoneReach(ids: number[]): number {
+  let r = 0;
+  for (const id of ids) {
+    const st = STONE_STYLES[id];
+    if (st) r = Math.max(r, (st.rowH * st.wMax) / 2 + st.gap + RADIUS);
+  }
+  return r;
+}
+
+/** Kort over maskeceller, der er tæt nok på en sten-celle til, at sten kan påvirke tegningen (resten springer stenlogikken over). */
+interface Near {
+  cx0: number;
+  cy0: number;
+  nx: number;
+  ny: number;
+  data: Uint8Array;
+}
+
+function buildNear(mask: Uint8Array, mw: number, mh: number, cell: number, wx0: number, wy0: number, wx1: number, wy1: number, reach: number): Near {
+  const e = Math.ceil(reach / cell) + 1;
+  const cx0 = Math.floor(wx0 / cell) - e;
+  const cy0 = Math.floor(wy0 / cell) - e;
+  const nx = Math.floor(wx1 / cell) + e + 1 - cx0;
+  const ny = Math.floor(wy1 / cell) + e + 1 - cy0;
+  // lodret og vandret glidende sum over stencellerne (præfikssummer)
+  const flag = new Uint8Array(nx * ny);
+  for (let j = 0; j < ny; j++) {
+    const my = Math.min(mh - 1, Math.max(0, cy0 + j));
+    for (let i = 0; i < nx; i++) {
+      const mx = Math.min(mw - 1, Math.max(0, cx0 + i));
+      if (isStoneMaterial(mask[my * mw + mx]!)) flag[j * nx + i] = 1;
+    }
+  }
+  const tmp = new Int32Array(nx * ny);
+  for (let j = 0; j < ny; j++) {
+    let acc = 0;
+    const pre = new Int32Array(nx + 1);
+    for (let i = 0; i < nx; i++) { acc += flag[j * nx + i]!; pre[i + 1] = acc; }
+    for (let i = 0; i < nx; i++) tmp[j * nx + i] = pre[Math.min(nx, i + e + 1)]! - pre[Math.max(0, i - e)]!;
+  }
+  const data = new Uint8Array(nx * ny);
+  for (let i = 0; i < nx; i++) {
+    const pre = new Int32Array(ny + 1);
+    let acc = 0;
+    for (let j = 0; j < ny; j++) { acc += tmp[j * nx + i]!; pre[j + 1] = acc; }
+    for (let j = 0; j < ny; j++) data[j * nx + i] = pre[Math.min(ny, j + e + 1)]! - pre[Math.max(0, j - e)]! > 0 ? 1 : 0;
+  }
+  return { cx0, cy0, nx, ny, data };
+}
+
+/** De sten-materialer, der findes i maskecellerne inden for rektanglet udvidet med `reach`. */
+function findStoneIds(mask: Uint8Array, mw: number, mh: number, cell: number, wx0: number, wy0: number, wx1: number, wy1: number, reach: number): number[] {
+  const cx0 = Math.max(0, Math.floor((wx0 - reach) / cell));
+  const cy0 = Math.max(0, Math.floor((wy0 - reach) / cell));
+  const cx1 = Math.min(mw - 1, Math.floor((wx1 + reach) / cell));
+  const cy1 = Math.min(mh - 1, Math.floor((wy1 + reach) / cell));
+  const found: number[] = [];
+  for (let y = cy0; y <= cy1; y++) {
+    for (let x = cx0; x <= cx1; x++) {
+      const id = mask[y * mw + x]!;
+      if (isStoneMaterial(id) && !found.includes(id)) found.push(id);
+    }
+  }
+  return found;
+}
+
+const isNear = (n: Near, wx: number, wy: number, cell: number): boolean => {
+  const i = Math.floor(wx / cell) - n.cx0;
+  const j = Math.floor(wy / cell) - n.cy0;
+  return i >= 0 && j >= 0 && i < n.nx && j < n.ny && n.data[j * n.nx + i] === 1;
+};
+
 const WATER_FOAM: [number, number, number] = [236, 246, 248];
 
 /**
@@ -145,6 +221,7 @@ export function renderGroundTile(buf: PixelBuffer, ground: GroundData, seed: num
   const havePaths = !!pt && pt.ids.some((id) => id !== 0);
   const nIds = wt.ids.length;
   const pathStoneId = pt ? pt.ids.find(isStoneMaterial) ?? 0 : 0;
+  const nearPath = pathStoneId ? buildNear(pathMask!, mw, mh, cell, x0, y0, wx1, wy1, stoneReach(pt!.ids.filter(isStoneMaterial))) : null;
   /** Er punktet en sten i en sti af sten-materialet `id`? (Så står farven i `shadeOut`.) */
   const stoneOverPath = (id: number, wx: number, wy: number): boolean => {
     stoneAt(id, wx, wy, seed);
@@ -152,7 +229,9 @@ export function renderGroundTile(buf: PixelBuffer, ground: GroundData, seed: num
     stoneColor(shadeOut, id, wx, wy, seed);
     return true;
   };
-  const stoneIds = wt.ids.filter(isStoneMaterial);
+  // sten-materialer i området og så langt ud, som en sten kan række ind i det (også dem, terrænvægtene ikke ser)
+  const stoneIds = findStoneIds(mask, mw, mh, cell, x0, y0, wx1, wy1, stoneReach(Object.keys(STONE_STYLES).map(Number)));
+  const nearBase = stoneIds.length ? buildNear(mask, mw, mh, cell, x0, y0, wx1, wy1, stoneReach(stoneIds)) : null;
   /** Pixlen i et område med sten: hel sten eller fuge, hvis stenen hører til `idS`, ellers `idO`s eget terræn. */
   const stonePixel = (idS: number, idO: number, wx: number, wy: number): void => {
     for (let i = -1; i < stoneIds.length; i++) {
@@ -167,14 +246,16 @@ export function renderGroundTile(buf: PixelBuffer, ground: GroundData, seed: num
     shade(idO, wx, wy, seed, 1);
   };
   // Sten (brosten, fliser) afgøres pr. sten ud fra terrænet ved stenens midte, og huskes, så hver sten kun regnes én gang.
-  const decided = new Map<number, boolean>();
+  const decided: Map<number, boolean>[] = [];
   const isStoneHere = (id: number, mask: Uint8Array, radius: number, isPath: boolean): boolean => {
-    const key = (((stone.row + 32768) * 65536 + (stone.col + 32768)) * 64 + id) * 2 + (isPath ? 1 : 0);
-    let v = decided.get(key);
+    const slot = id * 2 + (isPath ? 1 : 0);
+    const m = (decided[slot] ??= new Map());
+    const key = (stone.row + 4096) * 8192 + (stone.col + 4096);
+    let v = m.get(key);
     if (v === undefined) {
       const share = shareAt(mask, mw, mh, cell, stone.cx, stone.cy, radius, id);
       v = share > 0.5 + (stone.b - 0.5) * 0.34;
-      decided.set(key, v);
+      m.set(key, v);
     }
     return v;
   };
@@ -185,7 +266,7 @@ export function renderGroundTile(buf: PixelBuffer, ground: GroundData, seed: num
       const wy = y0 + (py + 0.5) / scale;
       let r: number, g: number, b: number, a: number;
 
-      if (nIds === 1) {
+      if (nIds === 1 && (stoneIds.length === 0 || (stoneIds.length === 1 && stoneIds[0] === wt.ids[0]))) {
         shade(wt.ids[0]!, wx, wy, seed, 1);
         r = shadeOut[0]!; g = shadeOut[1]!; b = shadeOut[2]!; a = shadeOut[3]!;
       } else {
@@ -208,7 +289,7 @@ export function renderGroundTile(buf: PixelBuffer, ground: GroundData, seed: num
         }
         const idTop = wt.ids[top]!;
         if (sec < 0 || wSec < 0.015) {
-          if (stoneIds.length) {
+          if (nearBase && isNear(nearBase, wx, wy, cell)) {
             // en sten kan række ud over der, hvor terrænet er sten: afgøres af stenens midte
             const idS = isStoneMaterial(idTop) ? idTop : stoneIds[0]!;
             stonePixel(idS, idS === idTop ? -1 : idTop, wx, wy);
@@ -306,7 +387,7 @@ export function renderGroundTile(buf: PixelBuffer, ground: GroundData, seed: num
         const fx = gxf - ix;
         const fy = gyf - iy;
         const base = iy * pt!.nx + ix;
-        if (pathStoneId && stoneOverPath(pathStoneId, wx, wy)) {
+        if (nearPath && isNear(nearPath, wx, wy, cell) && stoneOverPath(pathStoneId, wx, wy)) {
           // fugerne er gennemsigtige: terrænet under stien skinner igennem
           const sa = shadeOut[3]!;
           out[p] = shadeOut[0]! * sa + r * (1 - sa);

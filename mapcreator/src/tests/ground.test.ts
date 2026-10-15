@@ -5,6 +5,7 @@ import { createGround, decodeGround, encodeGround, fillChange, Stroke } from '..
 import { History } from '../model/history';
 import { renderGroundTile, type PixelBuffer } from '../render/ground';
 import { isStoneMaterial, STONE_STYLES, stone, stoneAt } from '../render/stones';
+import { tileSignature } from '../render/groundCache';
 import { MATERIALS } from '../render/materials';
 import { exportProblem, exportSize, safeFileName } from '../render/export';
 
@@ -281,5 +282,26 @@ describe('sten i rækker', () => {
     const t = buf(40, 40);
     renderGroundTile(t, g, 4, 300, 300, 1); // langt fra pletten
     for (let i = 0; i < 40 * 40; i++) expect(t.data[i * 4 + 3]).toBe(0);
+  });
+});
+
+describe('flisernes fingeraftryk (gemte fliser)', () => {
+  it('ændrer sig kun, når noget inden for flisens rækkevidde ændres', () => {
+    const g = createGround(90, 65, 1);
+    const base = tileSignature(g, 3, 0.5, 4, 4);
+    expect(tileSignature(g, 3, 0.5, 4, 4)).toBe(base);
+    expect(tileSignature(g, 4, 0.5, 4, 4)).not.toBe(base); // andet seed
+    expect(tileSignature(g, 3, 0.4, 4, 4)).not.toBe(base); // anden skala
+    // en celle langt væk (flise 4,4 dækker verdenspixels 2048..2560) rører ikke
+    g.data[(20) * g.w + 300] = 14;
+    expect(tileSignature(g, 3, 0.5, 4, 4)).toBe(base);
+    // en celle midt i flisen gør
+    g.data[185 * g.w + 185] = 14;
+    expect(tileSignature(g, 3, 0.5, 4, 4)).not.toBe(base);
+    // også en sti
+    const g2 = createGround(90, 65, 1);
+    g2.path = new Uint8Array(g2.w * g2.h);
+    g2.path[185 * g2.w + 185] = 15;
+    expect(tileSignature(g2, 3, 0.5, 4, 4)).not.toBe(base);
   });
 });
