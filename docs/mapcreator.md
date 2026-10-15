@@ -59,6 +59,10 @@ Genstande ligger i genstands- og effektlag (`elements[]`): `kind`, position, st�
 
 Temaerne er data i `mapcreator/src/generator/themes.ts` (terrænpletter, vand, veje, bygninger, dungeon/grotte, regler for genstande efter familie og tags); motoren står i `generate.ts`. Genstande vælges ud fra familier og tags, så nye genstande kommer med af sig selv. Se `generator/spec.ts` for alle felter.
 
+## Tomrum og grottevægge
+
+Under *Tomrum* i terrænpaletten findes tre sorte materialer (brun, lilla og is-kant). Mal dem, hvor der ikke skal være kort: mod andet terræn får de automatisk en kantet klippekant med skygge på gulvsiden, og resten er sort. Det er det samme som at male "væg på den ene side og sort på den anden". Mure-værktøjet har desuden tre grottevægge (*Grottevæg, brun / mørk / is*) af overlappende sten til frie vægge og afgrænsninger. Grotte-temaet i generatoren bruger tomrum som fjeld.
+
 ## Kortstørrelse
 
 **Størrelse …** øverst ændrer et eksisterende kort (felter i bredde og højde, de samme standardstørrelser som ved Nyt). Vælg, hvor det nuværende kort placeres (9 felter): resten udvides eller beskæres derfra. Terrænet udvides med det, der ligger ved kanten; genstande og mure flyttes med, og genstande, hvis midte havner uden for kortet, fjernes. Det kan fortrydes.

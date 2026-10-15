@@ -96,6 +96,12 @@ export function drawPine(g: G, o: DrawInput): void {
     const my = Math.sin(a) * L * 0.55;
     tufts.push({ x: mx + Math.cos(a + 1.5) * R * 0.06, y: my + Math.sin(a + 1.5) * R * 0.06, s: R * (0.17 + r() * 0.06) });
   }
+  // en samlet, mørk krone under kvastene, så fyren læses som ét træ og ikke som løse stjerner
+  for (const [k, c, a] of [[0.5, pal[0]!, 0.3], [0.36, pal[1]!, 0.4]] as [number, RGB, number][]) {
+    smooth(g, blob(R * k, R * k, 0.2, 12, r));
+    g.fillStyle = rgb(c, a);
+    g.fill();
+  }
   paintBranches(g, segs, [96, 70, 48], { outline: Math.max(1, R * 0.018) });
   tufts.sort((p, q) => Math.hypot(q.x, q.y) - Math.hypot(p.x, p.y));
   for (const t of tufts) needleTuft(g, r, t.x, t.y, t.s, pal, R, snow);
@@ -382,17 +388,18 @@ function drawWillow(g: G, o: DrawInput): void {
   const r = rng(o.seed);
   const R = dim(o);
   const rp: RGB[] = [[28, 58, 40], [62, 104, 62], [108, 148, 84], [160, 190, 114], [206, 226, 158]];
-  canopy(g, o, { ramps: [rp], lobes: 16, lobeSize: 0.3, leaf: 'leaf', leafLen: 0.05, leafDensity: 0.8, rough: 0.14, scale: 0.86, rim: false });
+  canopy(g, o, { ramps: [rp], lobes: 14, lobeSize: 0.34, leaf: 'leaf', leafLen: 0.05, leafDensity: 0.9, rough: 0.08, scale: 0.8, rim: false });
   // hængende grene: lange, buede tråde med små blade
   const cols: RGB[] = [rp[0]!, rp[1]!, rp[2]!, rp[3]!, rp[4]!];
   const buckets = cols.map(() => [] as number[]);
   const lv = new Leaves(cols);
-  const N = 90;
+  const N = 46;
+  const swirl = r() < 0.5 ? -1 : 1;
   for (let i = 0; i < N; i++) {
     const a = r() * 6.28;
-    const r0 = R * (0.18 + r() * 0.5);
-    const r1 = R * (0.8 + r() * 0.22);
-    const bend = (r() < 0.5 ? -1 : 1) * (0.25 + r() * 0.5);
+    const r0 = R * (0.3 + r() * 0.4);
+    const r1 = R * (0.9 + r() * 0.14);
+    const bend = swirl * (0.18 + r() * 0.22);
     const x0 = Math.cos(a) * r0;
     const y0 = Math.sin(a) * r0;
     const x1 = Math.cos(a + bend) * r1;
@@ -401,8 +408,8 @@ function drawWillow(g: G, o: DrawInput): void {
     const my = Math.sin(a - bend * 0.15) * (r0 + r1) * 0.6;
     const lit = clamp01(litAt(x1, y1, R) * 0.8 + (r() - 0.5) * 0.3 + 0.1);
     buckets[Math.min(4, Math.floor(lit * 5))]!.push(x0, y0, mx, my, x1, y1);
-    for (let k = 0; k < 4; k++) {
-      const t = 0.4 + (k / 4) * 0.6;
+    for (let k = 0; k < 3; k++) {
+      const t = 0.45 + (k / 3) * 0.55;
       const px = (1 - t) * (1 - t) * x0 + 2 * t * (1 - t) * mx + t * t * x1;
       const py = (1 - t) * (1 - t) * y0 + 2 * t * (1 - t) * my + t * t * y1;
       lv.add(Math.min(4, Math.floor(lit * 5)) + (r() < 0.2 ? 1 : 0), px, py, a + bend + (r() - 0.5), R * 0.06, R * 0.016);
@@ -418,7 +425,7 @@ function drawWillow(g: G, o: DrawInput): void {
       g.quadraticCurveTo(a[i + 2]!, a[i + 3]!, a[i + 4]!, a[i + 5]!);
     }
     g.strokeStyle = rgb(c, 0.85);
-    g.lineWidth = Math.max(1.1, R * 0.024);
+    g.lineWidth = Math.max(1.4, R * 0.04);
     g.stroke();
   });
   lv.flush(g, 'leaf', 0.95);

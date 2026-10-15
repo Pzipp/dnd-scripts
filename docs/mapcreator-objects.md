@@ -34,6 +34,8 @@ Skal et billede erstattes, så læg en ny fil med samme nøgle (filen overskrive
 | `tags.ts` | Tags-ordforrådet og tabellerne over familiernes og varianternes tags |
 | `util.ts` | Fælles tegnehjælp: `rng`, `blob`, `smooth`, `roundRect`, `planks`, `softDot`, farver |
 | `nature.ts`, `interior.ts`, `remains.ts`, `architecture.ts`, `effects.ts` | De oprindelige basisgenstande |
+| `dungeon/` | Dungeon- og grottedetaljer: gitre og døre (`gate`), nedfald (`rockfall`), udhuggede trapper, skakter, hul og broer (`carved`), vægdetaljer (`wallmount`: fakkel, lanterne, krystaller, lænker, spindelvæv, håndtag, rødder). Vægdetaljer tegnes med væggen i toppen af boksen: drej dem, så væggen vender rigtigt |
+| `designer/` | Malede billeder (se nedenfor) |
 | `basics/` | Nye og flere basisgenstande (træer, buske, sten, bunddække …) |
 | `extra/` | Pakke 1 (by, indretning, dungeon, lejr, natur) |
 | `pack2/` | Pakke 2 |
