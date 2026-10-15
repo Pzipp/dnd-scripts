@@ -159,7 +159,7 @@ export function renderGroundTile(buf: PixelBuffer, ground: GroundData, seed: num
       const c = i < 0 ? idS : stoneIds[i]!;
       if (i >= 0 && c === idS) continue;
       stoneAt(c, wx, wy, seed);
-      if (idO === 0 || isStoneHere(c, mask, RADIUS, false)) {
+      if (idO < 0 || isStoneHere(c, mask, RADIUS, false)) {
         stoneColor(shadeOut, c, wx, wy, seed);
         return;
       }
@@ -211,7 +211,7 @@ export function renderGroundTile(buf: PixelBuffer, ground: GroundData, seed: num
           if (stoneIds.length) {
             // en sten kan række ud over der, hvor terrænet er sten: afgøres af stenens midte
             const idS = isStoneMaterial(idTop) ? idTop : stoneIds[0]!;
-            stonePixel(idS, idS === idTop ? 0 : idTop, wx, wy);
+            stonePixel(idS, idS === idTop ? -1 : idTop, wx, wy);
           } else shade(idTop, wx, wy, seed, Math.min(1, Math.max(0, (wTop - 0.5) * 2)));
           r = shadeOut[0]!; g = shadeOut[1]!; b = shadeOut[2]!; a = shadeOut[3]!;
         } else {
@@ -307,7 +307,12 @@ export function renderGroundTile(buf: PixelBuffer, ground: GroundData, seed: num
         const fy = gyf - iy;
         const base = iy * pt!.nx + ix;
         if (pathStoneId && stoneOverPath(pathStoneId, wx, wy)) {
-          out[p] = shadeOut[0]!; out[p + 1] = shadeOut[1]!; out[p + 2] = shadeOut[2]!; out[p + 3] = a * 255;
+          // fugerne er gennemsigtige: terrænet under stien skinner igennem
+          const sa = shadeOut[3]!;
+          out[p] = shadeOut[0]! * sa + r * (1 - sa);
+          out[p + 1] = shadeOut[1]! * sa + g * (1 - sa);
+          out[p + 2] = shadeOut[2]! * sa + b * (1 - sa);
+          out[p + 3] = (a + (1 - a) * sa) * 255;
           continue;
         }
         let best = -1, wBest = 0, cover = 0;

@@ -4,7 +4,7 @@ import { createDoc } from '../model/doc';
 import { createGround, decodeGround, encodeGround, fillChange, Stroke } from '../model/ground';
 import { History } from '../model/history';
 import { renderGroundTile, type PixelBuffer } from '../render/ground';
-import { STONE_STYLES, stone, stoneAt } from '../render/stones';
+import { isStoneMaterial, STONE_STYLES, stone, stoneAt } from '../render/stones';
 import { MATERIALS } from '../render/materials';
 import { exportProblem, exportSize, safeFileName } from '../render/export';
 
@@ -139,6 +139,7 @@ describe('bløde overgange', () => {
       renderGroundTile(t, g, 9, 50, 50, 1);
       for (let i = 0; i < t.data.length; i += 4) {
         expect(Number.isFinite(t.data[i]! + t.data[i + 1]! + t.data[i + 2]!), m.key).toBe(true);
+        if (isStoneMaterial(m.id)) continue; // fugerne mellem sten og planker er gennemsigtige
         expect(t.data[i + 3], m.key).toBe(255);
       }
     }
@@ -250,5 +251,35 @@ describe('sten i rækker', () => {
     const t = buf(60, 60);
     renderGroundTile(t, g, 4, 150, 150, 1); // midt i pletten
     for (let i = 0; i < 60 * 60; i++) expect(t.data[i * 4 + 1]!).toBeLessThanOrEqual(t.data[i * 4]! + 12); // ingen grønlig pixel
+  });
+
+  it('fugerne mellem brosten og planker er gennemsigtige, og en sti af brosten lader terrænet under skinne igennem', () => {
+    for (const id of [14, 17]) {
+      const g = createGround(6, 6, id);
+      const t = buf(100, 100);
+      renderGroundTile(t, g, 4, 60, 60, 1);
+      const alphas = Array.from({ length: 100 * 100 }, (_, i) => t.data[i * 4 + 3]!);
+      expect(Math.min(...alphas), `materiale ${id}`).toBeLessThan(120);
+      expect(Math.max(...alphas)).toBe(255);
+    }
+    const g = createGround(8, 8, 15); // grus
+    g.path = new Uint8Array(g.w * g.h);
+    g.path.fill(14, 0, g.path.length);
+    const t = buf(100, 100);
+    renderGroundTile(t, g, 4, 100, 100, 1);
+    expect(Math.min(...Array.from({ length: 100 * 100 }, (_, i) => t.data[i * 4 + 3]!))).toBe(255); // grus ligger under hele vejen
+    const plain = buf(100, 100);
+    renderGroundTile(plain, createGround(8, 8, 15), 4, 100, 100, 1);
+    let same = 0;
+    for (let i = 0; i < 100 * 100; i++) if (t.data[i * 4] === plain.data[i * 4] && t.data[i * 4 + 1] === plain.data[i * 4 + 1]) same++;
+    expect(same).toBeGreaterThan(100); // fuger, hvor gruset ses
+  });
+
+  it('en brostensplet på et tomt lag lader resten være tomt', () => {
+    const g = createGround(8, 8, 0);
+    for (let y = 0; y < g.h; y++) for (let x = 0; x < g.w; x++) if (x < 8 && y < 8) g.data[y * g.w + x] = 14;
+    const t = buf(40, 40);
+    renderGroundTile(t, g, 4, 300, 300, 1); // langt fra pletten
+    for (let i = 0; i < 40 * 40; i++) expect(t.data[i * 4 + 3]).toBe(0);
   });
 });

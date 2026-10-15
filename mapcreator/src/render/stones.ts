@@ -76,17 +76,12 @@ export function stoneColor(out: Float64Array, id: number, x: number, y: number, 
   const qy = Math.abs(ly) - (hh - rad);
   const d = Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - rad;
   const grain = valueNoise(x / 2.4, y / 2.4, seed + 311) - 0.5;
-  // fuge: mørk jord, mørkere helt inde mellem stenene
-  const mort = (st.wood ? 28 : 48) + grain * 12;
+  // fuge: gennemsigtig, kun en blød skygge (ned og til højre kraftigst), så terrænet nedenunder skinner igennem
   const cover = smoothstep(0.55, -0.55, d);
-  let r = mort + (st.wood ? 8 : 6);
-  let g = mort + (st.wood ? 2 : 1);
-  let b = mort + (st.wood ? -6 : -4);
-  if (d > 0) {
-    // skygge ned og til højre fra stenen
-    const sh = smoothstep(2.6, 0, d) * (lx > 0 || ly > 0 ? 0.3 : 0.1);
-    r *= 1 - sh; g *= 1 - sh; b *= 1 - sh;
-  }
+  const shadow = d > 0 ? smoothstep(2.8, 0, d) * (lx > 0 || ly > 0 ? 0.62 : 0.42) : 0;
+  let r = 22;
+  let g = 17;
+  let b = 12;
   if (cover > 0) {
     if (st.wood) {
       // planke: årer langs længden, lysere i midten, mørkere ved kanterne
@@ -100,8 +95,7 @@ export function stoneColor(out: Float64Array, id: number, x: number, y: number, 
       r += (pr - r) * cover;
       g += (pg - g) * cover;
       b += (pb - b) * cover;
-      out[0] = r; out[1] = g; out[2] = b; out[3] = 1;
-      return;
+      return finish(out, r, g, b, cover, shadow);
     }
     const mott = (fbm(x / 9, y / 9, seed + 313, 2) - 0.5) * 22;
     const base = st.lo + stone.a * st.spread + mott + grain * 12;
@@ -119,10 +113,16 @@ export function stoneColor(out: Float64Array, id: number, x: number, y: number, 
     g += (sg - g) * cover;
     b += (sb - b) * cover;
   }
+  finish(out, r, g, b, cover, shadow);
+}
+
+/** Sten over fugeskygge: dækning og skygge bliver til alfa, og farven blandes efter vægten. */
+function finish(out: Float64Array, r: number, g: number, b: number, cover: number, shadow: number): void {
+  const a = cover + (1 - cover) * shadow;
   out[0] = r;
   out[1] = g;
   out[2] = b;
-  out[3] = 1;
+  out[3] = a;
 }
 
 /** Terrænfarven for et helt område af sten-materiale `id` i punktet (x, y). */
