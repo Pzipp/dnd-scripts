@@ -15,6 +15,12 @@ import { treasureKinds } from './treasure';
 import { alchemyKinds } from './alchemy';
 import { giantMushroomKinds } from './giant_mushroom';
 import { bookshelfKinds } from './bookshelves';
+import { smithyKinds } from './smithy';
+import { fletcherKinds } from './fletcher';
+import { leatherworkKinds } from './leatherwork';
+import { cartographyKinds } from './cartography';
+import { booksellerKinds } from './bookseller';
+import { alchemistShopKinds } from './alchemist_shop';
 
 /** Ekstra genstande (pakke 2). Hver fil i mappen eksporterer en liste; samles her. Nye familier lægges i `pack2Families`. */
 export const pack2Families: Family[] = [
@@ -31,7 +37,13 @@ export const pack2Families: Family[] = [
   { key: 'wilds', label: 'Vildmark', category: 'nature', randomDefault: false },
   { key: 'cave', label: 'Grotte', category: 'nature', randomDefault: false },
   { key: 'bookshelf', label: 'Bogreoler', category: 'interior', randomDefault: false },
+  { key: 'smithy', label: 'Smedje', category: 'interior', randomDefault: false },
+  { key: 'fletcher', label: 'Pilemager', category: 'interior', randomDefault: false },
+  { key: 'leatherwork', label: 'Læderarbejde', category: 'interior', randomDefault: false },
+  { key: 'cartographer', label: 'Kartograf', category: 'interior', randomDefault: false },
+  { key: 'bookseller', label: 'Boghandler', category: 'interior', randomDefault: false },
+  { key: 'alchemist', label: 'Alkymist', category: 'interior', randomDefault: false },
   { key: 'harbor', label: 'Skib og havn', category: 'interior', randomDefault: false },
 ];
 
-export const pack2Kinds: ObjectKind[] = [...graveyardKinds, ...harborKinds, ...desertKinds, ...arcticKinds, ...swampKinds, ...farmKinds, ...cityKinds, ...prisonKinds, ...tavernKinds, ...wildsKinds, ...caveKinds, ...arcaneKinds, ...workshopKinds, ...treasureKinds, ...alchemyKinds, ...giantMushroomKinds, ...bookshelfKinds];
+export const pack2Kinds: ObjectKind[] = [...graveyardKinds, ...harborKinds, ...desertKinds, ...arcticKinds, ...swampKinds, ...farmKinds, ...cityKinds, ...prisonKinds, ...tavernKinds, ...wildsKinds, ...caveKinds, ...arcaneKinds, ...workshopKinds, ...treasureKinds, ...alchemyKinds, ...giantMushroomKinds, ...bookshelfKinds, ...smithyKinds, ...fletcherKinds, ...leatherworkKinds, ...cartographyKinds, ...booksellerKinds, ...alchemistShopKinds];
