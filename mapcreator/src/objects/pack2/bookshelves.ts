@@ -1,6 +1,6 @@
 import { kind, type DrawInput, type ObjectKind } from '../registry';
 import { rng } from '../util';
-import { rectBody, rectPath, body, woodGrain, ellBody, shift, type RGB } from './helpers';
+import { rectBody, woodGrain, shift, type RGB } from './helpers';
 
 function bookshelf(g: CanvasRenderingContext2D, o: DrawInput, style: number): void {
   const r = rng(o.seed);
