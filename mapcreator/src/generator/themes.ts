@@ -1,6 +1,6 @@
 import type { Furnish, Theme } from './spec';
 
-const torches: Furnish = { keys: ['torch'], count: [2, 5], where: 'wall' };
+const torches: Furnish = { keys: ['wall_torch'], count: [2, 5], where: 'wall' };
 
 export const THEMES: Theme[] = [
   {
@@ -74,8 +74,8 @@ export const THEMES: Theme[] = [
     ],
   },
   {
-    key: 'cave', name: 'Grotte', hint: 'Snoede hulegange med drypsten, svampe og vandpytter.', size: [70, 50], base: 'rock_dark',
-    cave: { floor: 'stone', rock: 'rock_dark', open: 0.5 },
+    key: 'cave', name: 'Grotte', hint: 'Snoede hulegange med drypsten, svampe og vandpytter.', size: [70, 50], base: 'void_brown',
+    cave: { floor: 'stone', rock: 'void_brown', open: 0.5 },
     patches: [
       { material: 'earth', scale: 7, amount: 0.2, on: ['stone'] },
       { material: 'water', scale: 6, amount: 0.07, on: ['stone', 'earth'] },
@@ -87,6 +87,7 @@ export const THEMES: Theme[] = [
       { families: ['mushroom'], density: 0.8, on: ['stone', 'earth', 'mud'], clump: { scale: 6, amount: 0.3 } },
       { families: ['bones'], density: 0.3, on: ['stone', 'earth'] },
       { families: ['rubble'], density: 0.5, on: ['stone', 'earth'] },
+      { families: ['rockfall'], density: 0.12, on: ['stone', 'earth'] },
       { families: ['fog'], density: 0.08, layer: 'effects', on: ['stone', 'earth', 'water'] },
     ],
   },
@@ -167,7 +168,7 @@ export const THEMES: Theme[] = [
         { families: ['hearth'], count: [1, 2], where: 'wall' },
         { families: ['tavern'], count: [3, 6], where: 'wall' },
         { families: ['rug'], count: [1, 2], where: 'center' },
-        { keys: ['torch'], count: [3, 6], where: 'wall' },
+        { keys: ['wall_torch'], count: [3, 6], where: 'wall' },
         { families: ['stairs'], count: [1, 1], where: 'wall' },
       ],
     },

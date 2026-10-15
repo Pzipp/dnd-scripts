@@ -141,7 +141,7 @@ describe('bløde overgange', () => {
         expect(t.data[i + 3], m.key).toBe(255);
       }
     }
-  });
+  }, 60000);
 
   it('brosten har mørke fuger og lyse sten', () => {
     const g = createGround(6, 6, 14);

@@ -94,6 +94,11 @@ export const FAMILY_TAGS: Record<string, Tag[]> = {
   tavern: ['tavern', 'indoor', 'house'],
   wilds: ['outdoor', 'forest', 'swamp', 'desert'],
   cave: ['cave', 'dungeon', 'mountain'],
+  // dungeon
+  gate: ['dungeon', 'ruin', 'city', 'military', 'crypt'],
+  rockfall: ['cave', 'dungeon', 'ruin', 'mountain'],
+  carved: ['cave', 'dungeon', 'mountain', 'crypt'],
+  wallmount: ['dungeon', 'cave', 'crypt', 'indoor'],
 };
 
 /** Ekstra tags til enkelte varianter (oven i familiens). */

@@ -1,6 +1,6 @@
 import type { GroundData } from '../model/ground';
 import { CELL_PX } from '../model/types';
-import { materialById, MATERIAL_WATER, shade, shadeOut } from './materials';
+import { isVoid, materialById, MATERIAL_WATER, rimShade, shade, shadeOut } from './materials';
 import { fbm, smoothstep, valueNoise } from './noise';
 
 /** Det, vi skriver pixels i (ImageData passer; i tests bruges et simpelt objekt). */
@@ -156,8 +156,9 @@ export function renderGroundTile(buf: PixelBuffer, ground: GroundData, seed: num
           const mT = materialById(idTop);
           const mS = materialById(idSec);
           const crisp = (mT?.crisp ? 1 : 0) + (mS?.crisp ? 1 : 0);
-          const ragged = crisp === 0 ? 1 : crisp === 1 ? 0.6 : 0.4;
-          const soft = crisp === 0 ? 0.22 : crisp === 1 ? 0.13 : 0.07;
+          const cliff = idTop !== 0 && idSec !== 0 && isVoid(idTop) !== isVoid(idSec);
+          const ragged = cliff ? 3.2 : crisp === 0 ? 1 : crisp === 1 ? 0.6 : 0.4;
+          const soft = cliff ? 0.8 : crisp === 0 ? 0.22 : crisp === 1 ? 0.13 : 0.07;
           // Overgangen regnes med fast rækkefølge (det laveste id først), så støjen forskyder kanten ens fra begge sider
           // og der ikke opstår dobbeltkanter, hvor "øverste" materiale skifter.
           const vTop = (wTop - wSec) / (wTop + wSec);
@@ -165,6 +166,31 @@ export function renderGroundTile(buf: PixelBuffer, ground: GroundData, seed: num
           const v = (topFirst ? vTop : -vTop) + 2 * ((fbm(wx / 46, wy / 46, seed + 101, 2) - 0.5) * 0.36 + (valueNoise(wx / 11, wy / 11, seed + 103) - 0.5) * 0.14) * ragged;
           const tFirst = smoothstep(-2 * soft, 2 * soft, v);
           const t = topFirst ? tFirst : 1 - tFirst;
+          if (cliff) {
+            // klippekant: land, en skygge, en klippeflade og så sort tomrum
+            const voidTop = isVoid(idTop);
+            const tv = voidTop ? t : 1 - t;
+            const jag = (valueNoise(wx / 7, wy / 7, seed + 121) - 0.5) * 0.16;
+            const u = tv + jag;
+            const landId = voidTop ? idSec : idTop;
+            const voidId = voidTop ? idTop : idSec;
+            shade(landId, wx, wy, seed, 1);
+            const dark = 1 - 0.5 * smoothstep(0.0, 0.2, u);
+            const lr = shadeOut[0]! * dark, lg = shadeOut[1]! * dark, lb = shadeOut[2]! * dark;
+            rimShade(voidId, wx, wy, seed);
+            const toRim = smoothstep(0.17, 0.21, u);
+            const toBlack = smoothstep(0.7, 0.84, u);
+            const hi = 1 + 0.3 * Math.max(0, 1 - Math.abs(u - 0.2) / 0.025);
+            let cr = (lr + (shadeOut[0]! * hi - lr) * toRim);
+            let cg = (lg + (shadeOut[1]! * hi - lg) * toRim);
+            let cb = (lb + (shadeOut[2]! * hi - lb) * toRim);
+            const k = 1 - toBlack;
+            cr *= k; cg *= k; cb *= k;
+            r = cr + 8 * toBlack; g = cg + 7 * toBlack; b = cb + 9 * toBlack; a = 1;
+            if (havePaths) { /* sti lægges ikke ud i tomrummet, men må gerne ligge på land */ }
+            out[p] = r; out[p + 1] = g; out[p + 2] = b; out[p + 3] = 255;
+            continue;
+          }
           const waterTop = idTop === MATERIAL_WATER;
           const waterSec = idSec === MATERIAL_WATER;
           const shore = waterTop !== waterSec;

@@ -50,3 +50,20 @@ describe('generator', () => {
     expect(() => generateMap({ theme: 'x', widthCells: 10, heightCells: 10, seed: 1 })).toThrow();
   });
 });
+
+describe('mure og tomrum', () => {
+  it('alle murtyper kan tegnes', async () => {
+    const { drawWallsLayer, WALL_STYLES } = await import('../render/walls');
+    const { createLayer } = await import('../model/doc');
+    const gradient = { addColorStop() {} };
+    const g = new Proxy({} as Record<string, unknown>, {
+      get: (t, k: string) => (k in t ? t[k] : k.startsWith('create') ? () => gradient : () => undefined),
+      set: (t, k: string, v) => ((t[k] = v), true),
+    }) as unknown as CanvasRenderingContext2D;
+    for (const st of WALL_STYLES) {
+      const layer = createLayer('walls', 'W');
+      layer.walls = [{ id: 'a', style: st.key, points: [[0, 0], [300, 0], [300, 200]], closed: false, thickness: st.thickness * CELL_PX, seed: 3, openings: [] }];
+      expect(() => drawWallsLayer(g, layer, { lightAngle: 225 }, 1), st.key).not.toThrow();
+    }
+  });
+});

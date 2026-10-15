@@ -33,7 +33,7 @@ export interface MapElement {
   params: Record<string, ParamValue>;
 }
 
-export type WallStyle = 'stone' | 'brick' | 'wood' | 'hedge';
+export type WallStyle = 'stone' | 'brick' | 'wood' | 'hedge' | 'cave' | 'cave_dark' | 'cave_ice';
 export type OpeningKind = 'opening' | 'door' | 'double_door' | 'gate' | 'window';
 
 /** Noget i en mur: en åbning, en dør, en port eller et vindue. Placeret ved buelængden `at` fra murens start. */

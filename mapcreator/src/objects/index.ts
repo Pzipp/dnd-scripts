@@ -4,13 +4,14 @@ import { interiorKinds } from './interior';
 import { natureKinds } from './nature';
 import { extraFamilies, extraKinds } from './extra';
 import { basicsFamilies, basicsKinds } from './basics';
+import { dungeonFamilies, dungeonKinds } from './dungeon';
 import { designerKinds } from './designer';
 import { pack2Families, pack2Kinds } from './pack2';
 import { FAMILIES, registerKinds } from './registry';
 import { remainsKinds } from './remains';
 
-FAMILIES.push(...extraFamilies, ...pack2Families, ...basicsFamilies);
-registerKinds([...natureKinds, ...interiorKinds, ...remainsKinds, ...architectureKinds, ...effectKinds, ...extraKinds, ...pack2Kinds, ...basicsKinds, ...designerKinds]);
+FAMILIES.push(...extraFamilies, ...pack2Families, ...basicsFamilies, ...dungeonFamilies);
+registerKinds([...natureKinds, ...interiorKinds, ...remainsKinds, ...architectureKinds, ...effectKinds, ...extraKinds, ...pack2Kinds, ...basicsKinds, ...dungeonKinds, ...designerKinds]);
 
 export * from './registry';
 export * from './tags';

@@ -15,7 +15,7 @@ export interface Material {
   pathable?: boolean;
 }
 
-export const MATERIAL_GROUPS = ['Natur', 'Sand og sten', 'Vand', 'Veje og gulve'];
+export const MATERIAL_GROUPS = ['Natur', 'Sand og sten', 'Vand', 'Veje og gulve', 'Tomrum'];
 
 export const MATERIALS: Material[] = [
   { id: 1, key: 'grass', name: 'Græs, mark', swatch: '#6fa043', group: 'Natur' },
@@ -35,6 +35,9 @@ export const MATERIALS: Material[] = [
   { id: 15, key: 'gravel', name: 'Grus', swatch: '#a39a88', group: 'Veje og gulve', pathable: true },
   { id: 16, key: 'flagstone', name: 'Fliser', swatch: '#9a9ca0', group: 'Veje og gulve', crisp: true, pathable: true },
   { id: 18, key: 'rock_dark', name: 'Fjeld, mørkt', swatch: '#3b3835', group: 'Sand og sten' },
+  { id: 19, key: 'void_brown', name: 'Tomrum, brun klippekant', swatch: '#14100d', group: 'Tomrum' },
+  { id: 20, key: 'void_purple', name: 'Tomrum, lilla klippekant', swatch: '#150f17', group: 'Tomrum' },
+  { id: 21, key: 'void_ice', name: 'Tomrum, iskant', swatch: '#0d1217', group: 'Tomrum' },
   { id: 17, key: 'planks', name: 'Trægulv', swatch: '#8a5f38', group: 'Veje og gulve', crisp: true, pathable: true },
 ];
 
@@ -42,6 +45,30 @@ const BY_ID = new Map(MATERIALS.map((m) => [m.id, m]));
 export const materialById = (id: number): Material | undefined => BY_ID.get(id);
 
 export const MATERIAL_GRASS = 1;
+/** Tomrum: sort, hvor der ikke er kort. Mod andet terræn får det en klippekant (se `renderGroundTile`). */
+export const isVoid = (id: number): boolean => id >= 19 && id <= 21;
+
+/** Klippekantens farver pr. tomrumsmateriale: [lys, mørk]. */
+const RIM: Record<number, [[number, number, number], [number, number, number]]> = {
+  19: [[132, 108, 84], [64, 50, 40]],
+  20: [[110, 80, 108], [46, 34, 52]],
+  21: [[206, 226, 238], [104, 136, 160]],
+};
+
+/** Klippeflade til kanten af tomrummet: kantede blokke med lyse kanter, skrevet til `shadeOut`. */
+export function rimShade(id: number, x: number, y: number, seed: number): void {
+  const [lo, hi] = RIM[id] ?? RIM[19]!;
+  cellular(x / 15, y / 15, seed + 211, 0.9);
+  const v = ((cellOut.h & 255) / 255) * 0.55;
+  const ridge = 1 - smoothstep(0.02, 0.16, cellOut.f2 - cellOut.f1);
+  const f = fbm(x / 60, y / 60, seed + 213, 3);
+  const t = Math.min(1, Math.max(0, smoothstep(0.2, 0.8, f) * 0.5 + v + (cellOut.dx + cellOut.dy) * -0.18));
+  const o = shadeOut;
+  o[3] = 1;
+  mix3(o, hi[0], hi[1], hi[2], lo[0], lo[1], lo[2], t);
+  const k = -ridge * 26;
+  tint(o, k, k, k);
+}
 export const MATERIAL_WATER = 6;
 
 function tint(out: Float64Array, r: number, g: number, b: number): void {
@@ -181,6 +208,15 @@ export function shade(id: number, x: number, y: number, seed: number, margin: nu
       const spec = smoothstep(0.72, 0.84, valueNoise(x / 2.2, y / 2.2, seed + 133));
       const k = grain * 14 - spec * 30;
       tint(o, k, k, k * 0.9);
+      return;
+    }
+    case 19:
+    case 20:
+    case 21: {
+      const k = valueNoise(x / 40, y / 40, seed + 191) * 9;
+      o[0] = 8 + k;
+      o[1] = 7 + k * 0.9;
+      o[2] = 9 + k;
       return;
     }
     case 18: {

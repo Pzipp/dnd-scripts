@@ -19,6 +19,9 @@ export const WALL_STYLES: WallStyleDef[] = [
   { key: 'stone', label: 'Stenmur', thickness: 0.4, fill: [150, 148, 140], outline: [40, 38, 36], joint: [84, 82, 78], shadow: 16 },
   { key: 'brick', label: 'Murstensmur', thickness: 0.4, fill: [170, 96, 72], outline: [52, 28, 22], joint: [100, 52, 40], shadow: 16 },
   { key: 'wood', label: 'Trævæg', thickness: 0.3, fill: [140, 100, 62], outline: [42, 26, 14], joint: [80, 54, 30], shadow: 12 },
+  { key: 'cave', label: 'Grottevæg, brun', thickness: 1, fill: [104, 84, 66], outline: [28, 20, 14], joint: [60, 46, 36], shadow: 14 },
+  { key: 'cave_dark', label: 'Grottevæg, mørk', thickness: 1, fill: [70, 58, 74], outline: [18, 12, 22], joint: [40, 32, 44], shadow: 14 },
+  { key: 'cave_ice', label: 'Grottevæg, is', thickness: 1, fill: [150, 180, 200], outline: [40, 62, 84], joint: [100, 130, 154], shadow: 12 },
   { key: 'hedge', label: 'Hæk', thickness: 0.7, fill: [54, 106, 44], outline: [28, 62, 28], joint: [30, 70, 30], shadow: 10 },
 ];
 export const wallStyle = (k: WallStyle): WallStyleDef => WALL_STYLES.find((s) => s.key === k) ?? WALL_STYLES[0]!;
@@ -70,7 +73,7 @@ function drawBody(g: CanvasRenderingContext2D, wall: Wall, layer: Layer, doc: Pi
   g.shadowBlur = dist * 0.5 * deviceScale;
   g.shadowOffsetX = -Math.cos(a) * dist * deviceScale;
   g.shadowOffsetY = -Math.sin(a) * dist * deviceScale;
-  g.lineJoin = wall.style === 'hedge' ? 'round' : 'miter';
+  g.lineJoin = wall.style === 'hedge' || wall.style.startsWith('cave') ? 'round' : 'miter';
   g.miterLimit = 3;
   g.lineCap = 'butt';
   g.strokeStyle = rgb(def.outline);
@@ -82,7 +85,7 @@ function drawBody(g: CanvasRenderingContext2D, wall: Wall, layer: Layer, doc: Pi
   g.restore();
 
   // 2) selve muren
-  g.lineJoin = wall.style === 'hedge' ? 'round' : 'miter';
+  g.lineJoin = wall.style === 'hedge' || wall.style.startsWith('cave') ? 'round' : 'miter';
   g.miterLimit = 3;
   g.lineCap = 'butt';
   g.strokeStyle = rgb(def.fill);
@@ -147,6 +150,44 @@ function drawBody(g: CanvasRenderingContext2D, wall: Wall, layer: Layer, doc: Pi
         g.moveTo(x - tx * len * 0.5 - ty * t * 0.48, y - ty * len * 0.5 + tx * t * 0.48);
         g.lineTo(x - tx * len * 0.5 + ty * t * 0.48, y - ty * len * 0.5 - tx * t * 0.48);
         g.stroke();
+      });
+    } else if (wall.style === 'cave' || wall.style === 'cave_dark' || wall.style === 'cave_ice') {
+      // klippevæg: overlappende, kantede sten med lyse kanter mod lyset
+      const ice = wall.style === 'cave_ice';
+      along(piece, Math.max(8, t * 0.34), R, (x, y, tx, ty) => {
+        for (let k = 0; k < 3; k++) {
+          const off = (R() - 0.5) * t * 0.62;
+          const cx = x - ty * off + (R() - 0.5) * t * 0.2;
+          const cy = y + tx * off + (R() - 0.5) * t * 0.2;
+          const rr = t * (0.2 + R() * 0.22);
+          const n = 6 + Math.floor(R() * 3);
+          const rot = R() * 6.28;
+          const pts: Pt[] = [];
+          for (let i = 0; i < n; i++) {
+            const a = rot + (i / n) * Math.PI * 2;
+            const d = rr * (0.7 + R() * 0.5);
+            pts.push([cx + Math.cos(a) * d, cy + Math.sin(a) * d * 0.85]);
+          }
+          const tone = (R() - 0.5) * 34;
+          const grad = g.createLinearGradient(cx - rr, cy - rr, cx + rr, cy + rr);
+          grad.addColorStop(0, rgb(shift(def.fill, tone + 30)));
+          grad.addColorStop(0.55, rgb(shift(def.fill, tone)));
+          grad.addColorStop(1, rgb(shift(def.fill, tone - 34)));
+          g.fillStyle = grad;
+          strokePath(g, pts, true);
+          g.fill();
+          g.strokeStyle = rgb(def.outline, 0.8);
+          g.lineWidth = Math.max(1, t * 0.035);
+          g.stroke();
+          if (ice) {
+            g.strokeStyle = 'rgba(255,255,255,.5)';
+            g.lineWidth = Math.max(0.8, t * 0.025);
+            g.beginPath();
+            g.moveTo(pts[0]![0], pts[0]![1]);
+            g.lineTo(pts[1]![0], pts[1]![1]);
+            g.stroke();
+          }
+        }
       });
     } else {
       // hæk: klumper af blade
