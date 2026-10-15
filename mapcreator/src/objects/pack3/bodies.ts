@@ -426,18 +426,18 @@ function skull(g: G, x: number, y: number, rad: number, rot: number): void {
 }
 
 function ribcage(g: G, r: Rnd, cx: number, cy: number, s: number): void {
-  for (let i = 0; i < 6; i++) {
-    const y = cy - s * 0.18 + i * s * 0.07;
-    const wd = s * (0.2 - Math.abs(i - 1.5) * 0.012);
+  for (let i = 0; i < 4; i++) {
+    const y = cy - s * 0.14 + i * s * 0.105;
+    const wd = s * (0.2 - Math.abs(i - 1.5) * 0.02);
     for (const sg of [-1, 1]) {
       g.beginPath();
       g.moveTo(cx + sg * s * 0.02, y);
-      g.bezierCurveTo(cx + sg * wd * 0.9, y - s * 0.05, cx + sg * wd * 1.05, y + s * 0.07, cx + sg * s * 0.04, y + s * 0.11);
+      g.bezierCurveTo(cx + sg * wd * 0.9, y - s * 0.04, cx + sg * wd * 1.05, y + s * 0.05, cx + sg * s * 0.035, y + s * 0.085);
       g.strokeStyle = 'rgba(40,28,12,.85)';
-      g.lineWidth = s * 0.03 + 1.3;
+      g.lineWidth = s * 0.034 + 1.6;
       g.stroke();
       g.strokeStyle = rgb(BONE);
-      g.lineWidth = s * 0.03;
+      g.lineWidth = s * 0.034;
       g.stroke();
     }
   }
@@ -531,22 +531,28 @@ function corpsePile(g: G, o: DrawInput): void {
 
 /** Dyrelig: fælles tegnemetode for firbenede dyr (vandret, hoved mod venstre). */
 function quadruped(g: G, r: Rnd, W: number, H: number, c: { fur: RGB; belly?: RGB; spots?: RGB; mane?: RGB; legW: number; neck: number; snout: number; ear: number; tail: number; hoof?: boolean; horns?: boolean }, blood: number): void {
-  if (blood > 0) bloodPool(g, r, W * 0.04, H * 0.1, W * 0.18 * blood + 6, H * 0.16 * blood + 6);
-  const bodyL = W * 0.34;
-  const bodyH = H * 0.31;
-  const bx = W * 0.1;
-  // ben: strakt ud
-  const legX = [bx - bodyL * 0.72, bx - bodyL * 0.4, bx + bodyL * 0.45, bx + bodyL * 0.72];
+  // dyret ligger på siden: kroppen løftes lidt, og benene strækkes stift ud mod bugsiden (nederst), skråt frem og tilbage
+  g.save();
+  g.translate(0, -H * 0.1);
+  if (blood > 0) bloodPool(g, r, W * 0.04, H * 0.2, W * 0.2 * blood + 8, H * 0.16 * blood + 8);
+  const bodyL = W * 0.33;
+  const bodyH = H * 0.3;
+  const bx = W * 0.08;
+  const legX = [bx - bodyL * 0.66, bx - bodyL * 0.36, bx + bodyL * 0.42, bx + bodyL * 0.7];
   legX.forEach((x, i) => {
     const front = i < 2;
-    const out = H * (0.28 + r() * 0.1);
+    const dir = front ? -1 : 1;
+    const out = H * (0.34 + r() * 0.1);
+    const kneeX = x + dir * out * (0.15 + r() * 0.2) * (i % 2 ? 1.2 : 0.7);
+    const footX = Math.max(-W * 0.49, Math.min(W * 0.49, kneeX + (r() < 0.6 ? dir : -dir) * out * (0.1 + r() * 0.3)));
+    const hipY = bodyH * 0.4;
     tube(g, () => {
       g.beginPath();
-      g.moveTo(x, bodyH * 0.35);
-      g.lineTo(x + (front ? -1 : 1) * (r() - 0.3) * 12, bodyH * 0.35 + out * 0.6);
-      g.lineTo(x + (r() - 0.5) * 8, bodyH * 0.35 + out);
+      g.moveTo(x, hipY);
+      g.lineTo(kneeX, hipY + out * 0.55);
+      g.lineTo(footX, hipY + out);
     }, c.legW, shift(c.fur, -16), { outline: 1.6 });
-    ellBody(g, x, bodyH * 0.35 + out + 1, c.legW * 0.75, c.legW * 0.6, c.hoof ? [50, 40, 34] : shift(c.fur, -30), { lw: 1 });
+    ellBody(g, footX, hipY + out + 1, c.legW * 0.78, c.legW * 0.62, c.hoof ? [50, 40, 34] : shift(c.fur, -30), { lw: 1 });
   });
   // hale
   tube(g, () => {
@@ -632,6 +638,7 @@ function quadruped(g: G, r: Rnd, W: number, H: number, c: { fur: RGB; belly?: RG
   g.moveTo(hx - hr * 0.3, hy - hr * 0.45);
   g.lineTo(hx - hr * 0.05, hy - hr * 0.38);
   g.stroke();
+  g.restore();
 }
 
 function wolf(g: G, o: DrawInput): void {
