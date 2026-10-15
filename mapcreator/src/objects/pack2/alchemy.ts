@@ -1,6 +1,6 @@
 import { kind, param, type DrawInput, type ObjectKind } from '../registry';
 import { rng } from '../util';
-import { rectBody, ellBody, body, rectPath, woodGrain, orb, rivet, shift, type RGB } from './helpers';
+import { rectBody, ellBody, woodGrain, rivet, shift, type RGB } from './helpers';
 
 function alchemistTable(g: CanvasRenderingContext2D, o: DrawInput): void {
   const r = rng(o.seed);
