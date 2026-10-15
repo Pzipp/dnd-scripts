@@ -2,14 +2,20 @@ import { kind, type DrawInput, type ObjectKind } from '../registry';
 import { rng } from '../util';
 import { rectBody, ellBody, polyBody, woodGrain, rivet, shift, type RGB } from './helpers';
 
-function anvil(g: CanvasRenderingContext2D, o: DrawInput): void {
-  const r = rng(o.seed), {w,h}=o, s=Math.min(w,h);
-  const metal: RGB=[91+r()*10,96+r()*9,101+r()*8];
-  polyBody(g,[[-w*.42,-h*.1],[-w*.28,-h*.2],[-w*.13,-h*.35],[w*.2,-h*.35],[w*.33,-h*.18],[w*.43,-h*.12],[w*.4,h*.02],[w*.19,h*.07],[w*.12,h*.23],[-w*.16,h*.23],[-w*.23,h*.08],[-w*.42,h*.02]],metal,{lw:2,light:30,dark:36,ao:2,rim:1.3});
-  polyBody(g,[[-w*.12,-h*.3],[w*.18,-h*.3],[w*.28,-h*.17],[w*.18,-h*.08],[-w*.24,-h*.08],[-w*.31,-h*.13]],shift(metal,18),{lw:1,light:25,dark:25});
-  rectBody(g,-w*.15,h*.18,w*.3,h*.16,s*.025,[83,57,36],{lw:1.4,light:22,dark:28});
-  woodGrain(g,r,[-w*.14,h*.19,w*.14,h*.33],[83,57,36],{lines:4,knots:1});
-  ellBody(g,-w*.22,-h*.18,s*.025,s*.018,[222,218,202],{lw:.6,light:35,dark:18});
+function anvil(g:CanvasRenderingContext2D,o:DrawInput):void{
+ const r=rng(o.seed),{w,h}=o,s=Math.min(w,h);
+ const metal:RGB=[91+r()*8,98+r()*8,105+r()*8];
+ // Traditional anvil footprint from directly above: horn to the left, broad flat face, narrow waist.
+ polyBody(g,[[-w*.46,-h*.17],[-w*.28,-h*.27],[-w*.08,-h*.24],[w*.23,-h*.23],[w*.37,-h*.13],[w*.44,-h*.05],[w*.38,h*.02],[w*.22,h*.05],[-w*.12,h*.06],[-w*.3,h*.19],[-w*.45,h*.24],[-w*.41,h*.1],[-w*.27,h*.01],[-w*.39,-h*.04]],metal,{lw:2,light:32,dark:36,ao:1.4,rim:1.2});
+ polyBody(g,[[-w*.2,-h*.2],[w*.22,-h*.19],[w*.32,-h*.1],[w*.25,-h*.025],[-w*.19,-h*.015],[-w*.27,-h*.08]],shift(metal,22),{lw:1.1,light:32,dark:25,ao:.4,rim:1});
+ g.strokeStyle='rgba(239,232,211,.65)';g.lineWidth=Math.max(.7,s*.018);g.beginPath();g.moveTo(-w*.16,-h*.16);g.lineTo(w*.19,-h*.15);g.stroke();
+ ellBody(g,w*.18,-h*.07,s*.025,s*.018,[39,40,41],{lw:.7,light:8,dark:12,ao:0,rim:0});
+ ellBody(g,-w*.08,-h*.07,s*.018,s*.014,[44,45,46],{lw:.6,light:8,dark:12,ao:0,rim:0});
+ // The wooden stump is a separate, visible top-down round base.
+ ellBody(g,-w*.02,h*.2,w*.22,h*.16,[105,70,42],{lw:1.4,light:24,dark:32,ao:1,rim:.7});
+ ellBody(g,-w*.05,h*.17,w*.16,h*.105,[132,91,54],{lw:.7,light:22,dark:25,ao:.5,rim:.4});
+ for(let i=0;i<5;i++){const yy=h*(.12+i*.035);g.strokeStyle='rgba(53,31,17,.55)';g.lineWidth=.7;g.beginPath();g.moveTo(-w*.17,yy);g.quadraticCurveTo(-w*.03,yy+h*.015,w*.12,yy-h*.005);g.stroke();}
+ ellBody(g,-w*.36,h*.25,s*.025,s*.025,[76,77,77],{lw:.6,light:12,dark:16,ao:0,rim:0});
 }
 function smithBench(g: CanvasRenderingContext2D,o:DrawInput):void{
  const r=rng(o.seed),{w,h}=o; const wood:RGB=[112+r()*18,67+r()*12,35+r()*8];
