@@ -3,6 +3,7 @@ import { shopKinds } from './shops';
 import { craftKinds } from './crafts';
 import { tortureKinds } from './torture';
 import { weaponKinds } from './weapons';
+import { bodyKinds } from './bodies';
 
 /** Ekstra genstande (pack3): bygningsindretning. Hver fil i mappen eksporterer en liste af varianter; samles her. Nye familier lægges i `pack3Families`. */
 export const pack3Families: Family[] = [
@@ -10,6 +11,7 @@ export const pack3Families: Family[] = [
   { key: 'craft', label: 'Værksteder og håndværk', category: 'interior', randomDefault: false },
   { key: 'torture', label: 'Tortur og henrettelse', category: 'interior', randomDefault: false },
   { key: 'armory', label: 'Våben og rustning', category: 'interior', randomDefault: false },
+  { key: 'bodies', label: 'Lig og dyrelig', category: 'remains', randomDefault: false },
 ];
 
-export const pack3Kinds: ObjectKind[] = [...shopKinds, ...craftKinds, ...tortureKinds, ...weaponKinds];
+export const pack3Kinds: ObjectKind[] = [...shopKinds, ...craftKinds, ...tortureKinds, ...weaponKinds, ...bodyKinds];
