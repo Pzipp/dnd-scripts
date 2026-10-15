@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createDoc, createLayer, parseDoc, serializeDoc } from '../model/doc';
 import { allKinds, FAMILIES, FAMILY_TAGS, getKind, isTag, KIND_TAGS, kind, registerKinds, resolveKind, TAGS, tagsOf } from '../objects';
-import { pack2Kinds } from '../objects/pack2';
 
-const pack2 = new Set(pack2Kinds.map((k) => k.key));
 const draw = () => {};
 
 describe('tags', () => {
@@ -17,8 +15,8 @@ describe('tags', () => {
     for (const t of Object.values(FAMILY_TAGS).flat()) expect(t in TAGS).toBe(true);
   });
 
-  it('hver variant (uden pakke 2) har mindst ét tag, så en generator kan finde den', () => {
-    const missing = allKinds().filter((k) => !pack2.has(k.key) && tagsOf(k).length === 0).map((k) => k.key);
+  it('hver variant har mindst ét tag, så en generator kan finde den', () => {
+    const missing = allKinds().filter((k) => tagsOf(k).length === 0).map((k) => k.key);
     expect(missing).toEqual([]);
   });
 

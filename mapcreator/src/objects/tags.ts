@@ -80,6 +80,20 @@ export const FAMILY_TAGS: Record<string, Tag[]> = {
   magic: ['magic', 'dungeon', 'temple'],
   trap: ['dungeon'],
   statue: ['city', 'ruin', 'temple', 'rich', 'crypt', 'graveyard'],
+  // pakke 2
+  graveyard: ['graveyard', 'crypt', 'outdoor', 'temple'],
+  harbor: ['harbor', 'water', 'city', 'outdoor'],
+  desert: ['desert', 'outdoor'],
+  arctic: ['arctic', 'outdoor', 'mountain'],
+  swamp: ['swamp', 'outdoor', 'water'],
+  farm: ['farm', 'village', 'outdoor'],
+  arcane: ['magic', 'dungeon', 'temple'],
+  workshop: ['magic', 'indoor', 'house', 'rich'],
+  city: ['city', 'village', 'outdoor'],
+  prison: ['dungeon', 'military', 'indoor'],
+  tavern: ['tavern', 'indoor', 'house'],
+  wilds: ['outdoor', 'forest', 'swamp', 'desert'],
+  cave: ['cave', 'dungeon', 'mountain'],
 };
 
 /** Ekstra tags til enkelte varianter (oven i familiens). */
