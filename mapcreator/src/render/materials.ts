@@ -1,3 +1,4 @@
+import { stoneShade } from './stones';
 import { cellOut, cellular, fbm, hash32, smoothstep, valueNoise } from './noise';
 
 /** Terrænmaterialer. Id'erne gemmes i kortene og må aldrig omnummereres. 0 = tomt. */
@@ -230,25 +231,12 @@ export function shade(id: number, x: number, y: number, seed: number, margin: nu
       tint(o, k, k, k * 0.95);
       return;
     }
-    case 14: {
-      // brosten: afrundede sten med mørke fuger og lys fra øverst til venstre
-      cellular(x / 17, y / 17, seed + 141, 0.8);
-      const h = cellOut.h;
-      const v = (h & 255) / 255;
-      const w = ((h >>> 8) & 255) / 255;
-      const edge = smoothstep(0.015, 0.17, cellOut.f2 - cellOut.f1);
-      const round = 1 - smoothstep(0.18, 0.62, cellOut.f1) * 0.32;
-      const light = -(cellOut.dx + cellOut.dy) * 38;
-      const base = 112 + v * 52;
-      mix3(o, 52, 47, 42, base + w * 14, base - 4 + w * 6, base - 16 - w * 8, edge);
-      const k = (light + grain * 16) * edge;
-      tint(o, k, k, k);
-      const rf = 1 - (1 - round) * edge;
-      o[0] = o[0]! * rf;
-      o[1] = o[1]! * rf;
-      o[2] = o[2]! * rf;
+    case 14:
+    case 16:
+    case 17:
+      // brosten, fliser og trægulv: hele sten i forskudte rækker (se stones.ts)
+      stoneShade(o, id, x, y, seed);
       return;
-    }
     case 15: {
       // grus: små sten i beige og grå
       const f = fbm(x / 60, y / 60, seed + 151, 2);
@@ -257,39 +245,6 @@ export function shade(id: number, x: number, y: number, seed: number, margin: nu
       const b = (valueNoise(x / 1.7, y / 1.7, seed + 155) - 0.5) * 38;
       const dark = smoothstep(0.7, 0.86, valueNoise(x / 2.4, y / 2.4, seed + 157)) * 44;
       tint(o, a + b - dark, a + b - dark, (a + b) * 0.9 - dark);
-      return;
-    }
-    case 16: {
-      // fliser: store uregelmæssige sten med tynde fuger
-      cellular(x / 42, y / 42, seed + 161, 0.55);
-      const h = cellOut.h;
-      const v = (h & 255) / 255;
-      const edge = smoothstep(0.012, 0.075, cellOut.f2 - cellOut.f1);
-      const light = -(cellOut.dx + cellOut.dy) * 22;
-      const base = 118 + v * 46;
-      mix3(o, 58, 56, 54, base, base + 2, base + 6, edge);
-      const crack = smoothstep(0.5, 0.56, Math.abs(fbm(x / 22, y / 22, seed + 163, 2) - 0.5) + 0.5);
-      const k = (light + grain * 14 - (1 - crack) * 18) * edge;
-      tint(o, k, k, k);
-      return;
-    }
-    case 17: {
-      // trægulv: planker i rækker med forskudte samlinger
-      const row = Math.floor(y / 14);
-      const ly = y - row * 14;
-      const off = (hash32(row, 3, seed + 171) & 1023) / 1023 * 120;
-      const seg = Math.floor((x + off) / 110);
-      const h = hash32(row, seg, seed + 173);
-      const v = (h & 255) / 255;
-      const lx = (x + off) - seg * 110;
-      const groove = Math.min(smoothstep(0, 1.6, ly), smoothstep(0, 1.6, 14 - ly), smoothstep(0, 1.8, lx), smoothstep(0, 1.8, 110 - lx));
-      const gr = Math.sin((x + v * 90) / 7 + valueNoise(x / 30, y / 2, seed + 175) * 7) * 0.5 + 0.5;
-      mix3(o, 108, 74, 44, 164, 118, 70, v);
-      const k = (gr - 0.5) * 16 + grain * 8 + (7 - Math.abs(ly - 7)) * 0.8;
-      tint(o, k, k * 0.8, k * 0.55);
-      o[0] = 44 + (o[0]! - 44) * groove;
-      o[1] = 30 + (o[1]! - 30) * groove;
-      o[2] = 18 + (o[2]! - 18) * groove;
       return;
     }
     default:

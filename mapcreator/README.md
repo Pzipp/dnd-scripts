@@ -45,7 +45,7 @@ src/
     resize.ts     ændr kortstørrelse (terræn, genstande og mure følger med; kan fortrydes)
   render/       tegning (Canvas 2D), bruges af både forhåndsvisning og eksport
     scene.ts      forhåndsvisningen (lag, grid, håndtag, ghosts)
-    ground.ts, materials.ts, noise.ts, groundCache.ts   terræn
+    ground.ts, materials.ts, stones.ts, noise.ts, groundCache.ts   terræn
     sprites.ts    genstande (sprite-cache, skygge)
     walls.ts      mure og åbninger
     export.ts     eksport i fuld opløsning (fliser), filnavne

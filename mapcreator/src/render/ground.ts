@@ -2,6 +2,7 @@ import type { GroundData } from '../model/ground';
 import { CELL_PX } from '../model/types';
 import { isVoid, materialById, MATERIAL_WATER, rimShade, shade, shadeOut } from './materials';
 import { fbm, smoothstep, valueNoise } from './noise';
+import { isStoneMaterial, stone, stoneAt, stoneColor } from './stones';
 
 /** Det, vi skriver pixels i (ImageData passer; i tests bruges et simpelt objekt). */
 export interface PixelBuffer {
@@ -99,6 +100,30 @@ function weightAt(wt: Weights, s: number, base: number, nx: number, fx: number, 
   return top * (1 - fy) + bot * fy;
 }
 
+/** Som `buildWeights`, men kun for ét punkt og ét materiale: andelen af omgivelserne (inden for `radius`) med materialet `id`. */
+function shareAt(mask: Uint8Array, mw: number, mh: number, cell: number, px: number, py: number, radius: number, id: number): number {
+  const r2 = radius * radius;
+  const span = Math.ceil(radius / cell) + 1;
+  const cxc = Math.floor(px / cell);
+  const cyc = Math.floor(py / cell);
+  let acc = 0;
+  let total = 0;
+  for (let cy = cyc - span; cy <= cyc + span; cy++) {
+    const dy = (cy + 0.5) * cell - py;
+    const my = Math.min(mh - 1, Math.max(0, cy));
+    for (let cx = cxc - span; cx <= cxc + span; cx++) {
+      const dx = (cx + 0.5) * cell - px;
+      const d2 = dx * dx + dy * dy;
+      if (d2 >= r2) continue;
+      const k = 1 - d2 / r2;
+      const wgt = k * k;
+      total += wgt;
+      if (mask[my * mw + Math.min(mw - 1, Math.max(0, cx))] === id) acc += wgt;
+    }
+  }
+  return total > 0 ? acc / total : 0;
+}
+
 const WATER_FOAM: [number, number, number] = [236, 246, 248];
 
 /**
@@ -119,6 +144,40 @@ export function renderGroundTile(buf: PixelBuffer, ground: GroundData, seed: num
   // et område uden en eneste sti (kun id 0) springes over
   const havePaths = !!pt && pt.ids.some((id) => id !== 0);
   const nIds = wt.ids.length;
+  const pathStoneId = pt ? pt.ids.find(isStoneMaterial) ?? 0 : 0;
+  /** Er punktet en sten i en sti af sten-materialet `id`? (Så står farven i `shadeOut`.) */
+  const stoneOverPath = (id: number, wx: number, wy: number): boolean => {
+    stoneAt(id, wx, wy, seed);
+    if (!isStoneHere(id, pathMask!, PATH_RADIUS, true)) return false;
+    stoneColor(shadeOut, id, wx, wy, seed);
+    return true;
+  };
+  const stoneIds = wt.ids.filter(isStoneMaterial);
+  /** Pixlen i et område med sten: hel sten eller fuge, hvis stenen hører til `idS`, ellers `idO`s eget terræn. */
+  const stonePixel = (idS: number, idO: number, wx: number, wy: number): void => {
+    for (let i = -1; i < stoneIds.length; i++) {
+      const c = i < 0 ? idS : stoneIds[i]!;
+      if (i >= 0 && c === idS) continue;
+      stoneAt(c, wx, wy, seed);
+      if (idO === 0 || isStoneHere(c, mask, RADIUS, false)) {
+        stoneColor(shadeOut, c, wx, wy, seed);
+        return;
+      }
+    }
+    shade(idO, wx, wy, seed, 1);
+  };
+  // Sten (brosten, fliser) afgøres pr. sten ud fra terrænet ved stenens midte, og huskes, så hver sten kun regnes én gang.
+  const decided = new Map<number, boolean>();
+  const isStoneHere = (id: number, mask: Uint8Array, radius: number, isPath: boolean): boolean => {
+    const key = (((stone.row + 32768) * 65536 + (stone.col + 32768)) * 64 + id) * 2 + (isPath ? 1 : 0);
+    let v = decided.get(key);
+    if (v === undefined) {
+      const share = shareAt(mask, mw, mh, cell, stone.cx, stone.cy, radius, id);
+      v = share > 0.5 + (stone.b - 0.5) * 0.34;
+      decided.set(key, v);
+    }
+    return v;
+  };
   let p = 0;
   for (let py = 0; py < buf.height; py++) {
     for (let px = 0; px < buf.width; px++, p += 4) {
@@ -149,7 +208,11 @@ export function renderGroundTile(buf: PixelBuffer, ground: GroundData, seed: num
         }
         const idTop = wt.ids[top]!;
         if (sec < 0 || wSec < 0.015) {
-          shade(idTop, wx, wy, seed, Math.min(1, Math.max(0, (wTop - 0.5) * 2)));
+          if (stoneIds.length) {
+            // en sten kan række ud over der, hvor terrænet er sten: afgøres af stenens midte
+            const idS = isStoneMaterial(idTop) ? idTop : stoneIds[0]!;
+            stonePixel(idS, idS === idTop ? 0 : idTop, wx, wy);
+          } else shade(idTop, wx, wy, seed, Math.min(1, Math.max(0, (wTop - 0.5) * 2)));
           r = shadeOut[0]!; g = shadeOut[1]!; b = shadeOut[2]!; a = shadeOut[3]!;
         } else {
           const idSec = wt.ids[sec]!;
@@ -157,6 +220,13 @@ export function renderGroundTile(buf: PixelBuffer, ground: GroundData, seed: num
           const mS = materialById(idSec);
           const crisp = (mT?.crisp ? 1 : 0) + (mS?.crisp ? 1 : 0);
           const cliff = idTop !== 0 && idSec !== 0 && isVoid(idTop) !== isVoid(idSec);
+          const stoneMix = !cliff && (isStoneMaterial(idTop) || isStoneMaterial(idSec));
+          if (stoneMix) {
+            // sten (brosten, fliser) mod andet: hele sten, som terrænet ved stenens midte afgør
+            const idS = isStoneMaterial(idTop) ? idTop : idSec;
+            stonePixel(idS, idS === idTop ? idSec : idTop, wx, wy);
+            r = shadeOut[0]!; g = shadeOut[1]!; b = shadeOut[2]!; a = shadeOut[3]!;
+          } else {
           const ragged = cliff ? 3.2 : crisp === 0 ? 1 : crisp === 1 ? 0.6 : 0.4;
           const soft = cliff ? 0.8 : crisp === 0 ? 0.22 : crisp === 1 ? 0.13 : 0.07;
           // Overgangen regnes med fast rækkefølge (det laveste id først), så støjen forskyder kanten ens fra begge sider
@@ -224,6 +294,7 @@ export function renderGroundTile(buf: PixelBuffer, ground: GroundData, seed: num
           } else {
             r = g = b = 0;
           }
+          }
         }
       }
 
@@ -235,6 +306,10 @@ export function renderGroundTile(buf: PixelBuffer, ground: GroundData, seed: num
         const fx = gxf - ix;
         const fy = gyf - iy;
         const base = iy * pt!.nx + ix;
+        if (pathStoneId && stoneOverPath(pathStoneId, wx, wy)) {
+          out[p] = shadeOut[0]!; out[p + 1] = shadeOut[1]!; out[p + 2] = shadeOut[2]!; out[p + 3] = a * 255;
+          continue;
+        }
         let best = -1, wBest = 0, cover = 0;
         for (let s = 0; s < pt!.ids.length; s++) {
           if (pt!.ids[s] === 0) continue;
@@ -244,6 +319,11 @@ export function renderGroundTile(buf: PixelBuffer, ground: GroundData, seed: num
         }
         if (best >= 0 && cover > 0.02) {
           const idP = pt!.ids[best]!;
+          if (isStoneMaterial(idP)) {
+            // stenstier tegnes kun som sten (ovenfor); ingen blød blanding
+            out[p] = r; out[p + 1] = g; out[p + 2] = b; out[p + 3] = a * 255;
+            continue;
+          }
           const mP = materialById(idP);
           const crisp = mP?.crisp ? 1 : 0;
           const n = ((fbm(wx / 38, wy / 38, seed + 111, 2) - 0.5) * 0.5 + (valueNoise(wx / 9, wy / 9, seed + 113) - 0.5) * 0.22) * (crisp ? 0.55 : 1);

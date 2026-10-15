@@ -4,6 +4,7 @@ import { createDoc } from '../model/doc';
 import { createGround, decodeGround, encodeGround, fillChange, Stroke } from '../model/ground';
 import { History } from '../model/history';
 import { renderGroundTile, type PixelBuffer } from '../render/ground';
+import { STONE_STYLES, stone, stoneAt } from '../render/stones';
 import { MATERIALS } from '../render/materials';
 import { exportProblem, exportSize, safeFileName } from '../render/export';
 
@@ -225,5 +226,29 @@ describe('eksport', () => {
     expect(exportSize(doc, { pxPerCell: 50 })).toEqual({ w: 4000, h: 2750 });
     expect(exportProblem(doc, { pxPerCell: 50 })).toBeNull();
     expect(exportProblem({ widthCells: 300, heightCells: 300 }, { pxPerCell: 100 })).toMatch(/px/);
+  });
+});
+
+describe('sten i rækker', () => {
+  it('hvert punkt ligger i sin egen sten, og stenen er den samme for hele stenen', () => {
+    for (const id of Object.keys(STONE_STYLES).map(Number)) {
+      for (let i = 0; i < 400; i++) {
+        const x = (i * 37.3) % 700 - 100;
+        const y = (i * 53.1) % 500 - 100;
+        stoneAt(id, x, y, 9);
+        expect(Math.abs(x - stone.cx)).toBeLessThanOrEqual(stone.hw + STONE_STYLES[id]!.gap + 1);
+        const cx = stone.cx, cy = stone.cy;
+        stoneAt(id, cx, cy, 9);
+        expect([stone.cx, stone.cy]).toEqual([cx, cy]);
+      }
+    }
+  });
+
+  it('en brostensplet består af hele sten: ingen pixel uden for en stens eller fugens farver blandes med græs midt i pletten', () => {
+    const g = createGround(8, 8, 1);
+    for (let y = 0; y < g.h; y++) for (let x = 0; x < g.w; x++) if (x >= 6 && x < 18 && y >= 6 && y < 18) g.data[y * g.w + x] = 14;
+    const t = buf(60, 60);
+    renderGroundTile(t, g, 4, 150, 150, 1); // midt i pletten
+    for (let i = 0; i < 60 * 60; i++) expect(t.data[i * 4 + 1]!).toBeLessThanOrEqual(t.data[i * 4]! + 12); // ingen grønlig pixel
   });
 });
