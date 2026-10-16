@@ -33,7 +33,7 @@ def index():
 @app.get("/5etools/<path:path>")
 def e5tools_site(path: str):
     """5etools' egen hjemmeside (statiske filer fra /e5tools), så man kan se officielt indhold og homebrew
-    (/e5tools/homebrew = vol/homebrew) i 5etools selv. Ingen login: kun til lokal brug, se webui/README.md."""
+    (/e5tools/homebrew = vol/userdata/homebrew) i 5etools selv. Ingen login: kun til lokal brug, se webui/README.md."""
     from builder import e5tools
     root = e5tools.E5TOOLS_DATA.parent
     if not root.is_dir():

@@ -86,7 +86,7 @@ scripts/                generatorerne (se scripts/README.md)
   karakterark/  kort/  pdf/  data/
 data/                   danske oversættelser af 5etools-data og værktøjet til dem
 docs/                   formater, navnekonvention, kortbygger (mapcreator*.md) og todo
-vol/                    runtime-data i Docker (ikke i git, bortset fra vol/homebrew/index.json)
+vol/                    runtime-data i Docker (ikke i git); vol/userdata/ = brugerdata (mapcreator, simpelvtt, homebrew)
 ```
 
 ## Lav en ny karakter

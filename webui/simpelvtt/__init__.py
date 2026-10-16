@@ -1,6 +1,6 @@
 """Simpelt VTT (/simpelvtt): kampagner > rooms > kort, DM-skærm og spillerskærm (/simpelvtt/vis).
 
-Runtime-data ligger under vol/simpelvtt/ (gitignoreret). Ingen login: kun til internt brug.
+Runtime-data ligger under $USERDATA/simpelvtt/ (standard /userdata; i dev vol/userdata/simpelvtt/). Ingen login: kun til internt brug.
 """
 from __future__ import annotations
 
@@ -22,8 +22,7 @@ except ImportError:  # pragma: no cover
 
 bp = Blueprint("simpelvtt", __name__)
 
-ROOT = Path(__file__).resolve().parent.parent.parent
-DATA = Path(os.environ.get("SIMPELVTT_DATA", ROOT / "vol" / "simpelvtt"))
+DATA = Path(os.environ.get("SIMPELVTT_DATA") or Path(os.environ.get("USERDATA", "/userdata")) / "simpelvtt")
 CAMPAIGNS = DATA / "campaigns"
 VIEWS_FILE = DATA / "views.json"
 STATE_FILE = DATA / "state.json"
@@ -89,7 +88,7 @@ def campaign_dir(camp: str) -> Path:
 
 
 def folder(camp: str, room: str | None = None, must_exist=True, create=False) -> Path:
-    """Mappe til skrivning/læsning. For General Maps peger den altid på brugerens egen mappe (vol/)."""
+    """Mappe til skrivning/læsning. For General Maps peger den altid på brugerens egen mappe (userdata)."""
     if is_gm(camp):
         base = GM_USER
         if create:

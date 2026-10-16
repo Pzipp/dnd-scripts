@@ -46,13 +46,12 @@ services:
       - .:/app
       # 5etools-data (JSON-regelbøger), read-only - se /srv/dnd5etools
       - /srv/dnd5etools:/e5tools:ro
-      # Homebrew lægges her (gitignoreret vol/, redigerbar) og mountes OVEN PÅ
-      # /e5tools/homebrew, så gruppens eget indhold ikke ryger ved en opdatering
-      # eller oprydning af e5tools-klonen, og ikke skal ind i det delte repo.
-      - ./vol/homebrew:/e5tools/homebrew
       # Fælles datamappe (backup tages her): vol/userdata i arbejdsmappen, /userdata i containeren.
-      # Kortbyggeren gemmer i /userdata/mapcreator.
+      # Kortbyggeren gemmer i /userdata/mapcreator, Simpelvtt i /userdata/simpelvtt.
       - ./vol/userdata:/userdata
+      # Homebrew ligger i userdata og mountes OVEN PÅ /e5tools/homebrew, så gruppens eget
+      # indhold ikke ryger ved en opdatering eller oprydning af e5tools-klonen, og ikke skal ind i det delte repo.
+      - ./vol/userdata/homebrew:/e5tools/homebrew
 
     ports:
       - "${DND_BIND_IP:-127.0.0.1}:${DND_PORT:-8082}:8080"

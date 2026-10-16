@@ -6,7 +6,7 @@ Et lille virtuelt bord i webui'en: kort og billeder organiseret i kampagner og r
 
 ## Struktur og data
 
-Kun to niveauer: **kampagne** (øverste mappe) og **room** (undermappe). Billeder ligger i rooms eller løst direkte i kampagnen. Alt ligger under det gitignorerede `vol/simpelvtt/` (kan flyttes med miljøvariablen `SIMPELVTT_DATA`):
+Kun to niveauer: **kampagne** (øverste mappe) og **room** (undermappe). Billeder ligger i rooms eller løst direkte i kampagnen. Alt ligger under det gitignorerede `vol/userdata/simpelvtt/` (`$USERDATA/simpelvtt`; kan flyttes med miljøvariablen `SIMPELVTT_DATA`):
 
 | Sti | Indhold |
 |---|---|
@@ -16,9 +16,9 @@ Kun to niveauer: **kampagne** (øverste mappe) og **room** (undermappe). Billede
 | `general-maps/<room>/<fil>` | Brugerens egne General Maps-kort (se nedenfor) |
 | `.thumbs/` | Miniaturer (kræver Pillow; ellers bruges originalen) |
 
-Docker: `docker-compose.yml` bind-mounter hele repoet på `/app`, så `vol/simpelvtt/` ligger på værten og overlever genstart. Pillow står i `webui/requirements.txt` (byg imaget forfra efter opdatering).
+Docker: `docker-compose.yml` mounter `vol/userdata/` som `/userdata`, så `vol/userdata/simpelvtt/` ligger på værten og overlever genstart. Pillow står i `webui/requirements.txt` (byg imaget forfra efter opdatering).
 
-Upload: png, jpg, webp og gif (kontrolleret på både endelse og filens første bytes), op til 100 MB pr. request (`MAX_CONTENT_LENGTH` i `app.py`). Mappenavne må ikke indeholde `/ \ : * ? " < > |` eller starte med punktum; filnavne renses og får ` (2)` osv. ved dubletter. Alle stier løses og kontrolleres mod `vol/simpelvtt/campaigns/` (ingen path traversal).
+Upload: png, jpg, webp og gif (kontrolleret på både endelse og filens første bytes), op til 100 MB pr. request (`MAX_CONTENT_LENGTH` i `app.py`). Mappenavne må ikke indeholde `/ \ : * ? " < > |` eller starte med punktum; filnavne renses og får ` (2)` osv. ved dubletter. Alle stier løses og kontrolleres mod `vol/userdata/simpelvtt/campaigns/` (ingen path traversal).
 
 ## Brug
 
@@ -40,7 +40,7 @@ Zoom 1 betyder, at billedet passer i vinduet (for et roteret billede regnes med 
 Særlig mappe, der vises som en sammenfoldet sektion (foldet som standard) i kampagneoversigten i både PLAY og EDIT, uanset valgt kampagne. Navnet `General Maps` er reserveret (kan ikke oprettes/omdøbes/slettes som kampagne). Kortene vises uden at blive kopieret. To kilder slås sammen (maks. to niveauer: room og billede):
 
 1. **Leveret** i `webui/simpelvtt/general_maps/` (sporet i git, kopieres ind i imaget af `COPY . .`; bind-mountet i dev). Read-only: låseikon, ingen slet/omdøb/flyt (API'et svarer 403). Kun billeder, gruppen har ret til at distribuere (se README dér).
-2. **Egne** i `vol/simpelvtt/general-maps/` (gitignoreret, overlever opdatering). Upload, flyt, omdøb og slet i EDIT virker her. Upload til et leveret room lægger filen i det tilsvarende room i `vol/`.
+2. **Egne** i `vol/userdata/simpelvtt/general-maps/` (gitignoreret, overlever opdatering). Upload, flyt, omdøb og slet i EDIT virker her. Upload til et leveret room lægger filen i det tilsvarende room i `vol/`.
 
 Rooms med samme navn slås sammen til ét room. Ved samme filnavn vinder den leverede. Billedreferencen er `General Maps/<room>/<fil>`, så visning, zoom, rotation, nat og grid ligger stabilt i `views.json`. Stier kontrolleres mod de to rødder (ingen path traversal). API'et: `GET tree` returnerer `general` ud over `campaigns` (`locked` = leverede filnavne, `shipped` = room findes i den leverede mappe).
 

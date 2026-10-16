@@ -26,12 +26,10 @@ data/spells/
 data/class/
 
 # vol/ er runtime-data. karakterer/ er den gældende kopi; vol/karakterer var en forældet kopi.
-# Homebrew-indhold er gruppens eget og skal ikke i det delte repo (kun index.json, der registrerer filerne).
+# Homebrew og alt andet brugerindhold ligger i vol/userdata/ (ikke i det delte repo).
 vol/karakterer/
 vol/simpelvtt/
 vol/userdata/
-vol/homebrew/*
-!vol/homebrew/index.json
 
 # Genereret opslagsfil til LLM-vejen (afledt af bogindhold; lav den med dnd.py llm-opslag)
 llm-karakter-opslag.md

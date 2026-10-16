@@ -44,7 +44,7 @@ python3 dnd.py llm-opslag ...                 # opslag i 5etools til dig (script
 | Sti | Hvad |
 |---|---|
 | `dnd.py` | Indgangspunkt for den ældre kommandolinje |
-| `webui/` | Flask-webui: menu (`/`), karakterbygger (`/builder`) og simpelt VTT (`/simpelvtt`, kode i `webui/simpelvtt/`; leverede General Maps-kort i `webui/simpelvtt/general_maps/` (sporet, read-only i UI'et) og brugerens egne i `vol/simpelvtt/general-maps/` (ikke i git); se `docs/simpelvtt.md`). Se `webui/README.md` |
+| `webui/` | Flask-webui: menu (`/`), karakterbygger (`/builder`) og simpelt VTT (`/simpelvtt`, kode i `webui/simpelvtt/`; leverede General Maps-kort i `webui/simpelvtt/general_maps/` (sporet, read-only i UI'et) og brugerens egne i `vol/userdata/simpelvtt/general-maps/` (ikke i git); se `docs/simpelvtt.md`). Se `webui/README.md` |
 | `mapcreator/`, `webui/mapcreator/` | Kortbygger (`/mapcreator`): klienten i TypeScript + Svelte bygges med Node (`mapcreator/build-docker.sh`) til `webui/static/mapcreator/` (gitignoreret); Flask-blueprint gemmer kort i `$USERDATA/mapcreator/` (standard `/userdata`). Se `docs/mapcreator.md` |
 | `webui/builder/` | Byggerens kode: `model.py` (valg og state), `character_yaml.py` (udregning), `render.py` (ark), `default_layout.py` (standardlayout, når `sheets.yaml` mangler), `spellbox.py` (spell- og cantrip-lister), `kort.py`/`cards.py` (kort), `e5tools.py` (opslag og dansk overlay), `copies.py`/`versions.py` (`_copy`, `_versions`), `descriptions.py`/`effects.py`/`llm_client.py` (danske beskrivelser og effekter), `baggrund.py`, `layout_edit.py`, `routes.py` |
 | `webui/static/` | CSS/JS til webui'en, `baggrunde/` (billeder til ark og kort), `theme-*.css` (sidetemaer, endnu ikke tilsluttet) |
@@ -58,7 +58,7 @@ python3 dnd.py llm-opslag ...                 # opslag i 5etools til dig (script
 | `data/*-da.json`, `data/spells/`, `data/class/` | Danske oversættelser af 5etools-data, lagt ovenpå af `e5tools.py`. **Ikke i git** (bortset fra `feats-da.json`). Se `data/books/oversaettelse/CLAUDE.md` |
 | `data/books/` | Kilder og arbejdsfiler til oversættelse. Værktøjet i `data/books/oversaettelse/` er i git, resten ikke |
 | `data/feats-XPHB-da.yaml` | Alle XPHB-feats med danske felter. Lav/opdatér med `scripts/data/feats_xphb.py`. Format: `docs/feats-xphb-da.md` |
-| `vol/` | Runtime-data, ikke i git (`vol/homebrew/*`, `vol/karakterer/` og `vol/simpelvtt/`); kun `vol/homebrew/index.json` er sporet |
+| `vol/` | Runtime-data, ikke i git. `vol/userdata/` (mountet som `/userdata`) er brugerdata og det eneste sted at tage backup: `mapcreator/`, `simpelvtt/`, `homebrew/` |
 | `docs/` | Formater, navnekonvention, todo |
 
 ## Sådan laver du en ny karakter med `character.yaml` (LLM-vejen, uden bygger)
@@ -113,7 +113,7 @@ Hovedvejen er webui'en: opret en karakter på `/builder`, vælg art, klasse, bag
 * **Redigér ikke** filer i `udskrifter/` i hånden. Generér dem igen.
 * **Slet eller overskriv ikke** en anden spillers karakter uden at spørge. Hver spiller ejer sin mappe i `karakterer/`.
 * Commit **ikke** genererede filer: hele `udskrifter/` (HTML og PDF) og `__pycache__` er i `.gitignore`. Der er ingen færdige PDF'er i repoet; de laves i webui'en eller med `python3 dnd.py ... --pdf`.
-* Commit ikke bogtekster og oversættelser af dem (`data/books/*.json`, `data/*-da.json`, `data/spells/`, `data/class/`; ophavsretligt materiale), `.env`, `vol/karakterer/`, `vol/simpelvtt/`, eller indhold i `vol/homebrew/` (undtagen `index.json`). Se `.gitignore`.
+* Commit ikke bogtekster og oversættelser af dem (`data/books/*.json`, `data/*-da.json`, `data/spells/`, `data/class/`; ophavsretligt materiale), `.env`, `vol/`. Se `.gitignore`.
 * Foretræk at lave ændringer på en **gren** og lade en pull request gennemgå dem. Skriv ikke direkte til `main`, medmindre ejeren siger det.
 * Ret ikke i `scripts/` for at løse et dataproblem i en enkelt karakter. Brug `egne:` eller karakterens egen fil.
 * Læg ikke adgangskoder, nøgler, domænenavne eller personlige oplysninger i repoet. Repoet er offentligt. Lokal konfiguration (port, LLM-endpoint og -nøgle) står i `.env`, som ikke er i git.
