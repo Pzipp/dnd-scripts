@@ -1,6 +1,6 @@
 import { grassDetail, grassOut } from './grassTexture';
 import { stoneShade } from './stones';
-import { sampleTexture } from './imageTextures';
+import { sampleTexture, textureAverage } from './imageTextures';
 import { cellOut, cellular, fbm, hash32, smoothstep, valueNoise } from './noise';
 
 /** Terrænmaterialer. Id'erne gemmes i kortene og må aldrig omnummereres. 0 = tomt. */
@@ -44,6 +44,11 @@ export const MATERIALS: Material[] = [
   { id: 17, key: 'planks', name: 'Trægulv', swatch: '#8a5f38', group: 'Veje og gulve', crisp: true, pathable: true },
   { id: 22, key: 'planks_oak', name: 'Plankegulv, eg', swatch: '#8b5a2f', group: 'Veje og gulve', pathable: true },
   { id: 23, key: 'planks_broken', name: 'Plankegulv, ødelagt', swatch: '#5a5047', group: 'Veje og gulve', pathable: true },
+  { id: 24, key: 'planks_grey', name: 'Plankegulv, grå', swatch: '#47413e', group: 'Veje og gulve', pathable: true },
+  { id: 25, key: 'water_calm', name: 'Vand, stille (billede)', swatch: '#33b7d3', group: 'Vand' },
+  { id: 26, key: 'grass_forest_img', name: 'Græs, skov (billede)', swatch: '#353b1e', group: 'Natur' },
+  { id: 27, key: 'grass_dry_img', name: 'Græs, tørt (billede)', swatch: '#987545', group: 'Natur' },
+  { id: 28, key: 'grass_meadow_img', name: 'Græs, mark (billede)', swatch: '#609530', group: 'Natur' },
 ];
 
 const BY_ID = new Map(MATERIALS.map((m) => [m.id, m]));
@@ -284,11 +289,17 @@ export function shade(id: number, x: number, y: number, seed: number, margin: nu
     }
     case 22:
     case 23:
+    case 24:
+    case 25:
+    case 26:
+    case 27:
+    case 28:
       // malet plankegulv (billede, se imageTextures.ts); brun, til billedet er læst ind
       if (!sampleTexture(id, x, y, o)) {
-        o[0] = id === 22 ? 139 : 90;
-        o[1] = id === 22 ? 90 : 80;
-        o[2] = id === 22 ? 47 : 71;
+        const [r, g, b] = textureAverage(id);
+        o[0] = r;
+        o[1] = g;
+        o[2] = b;
       }
       return;
     case 14:

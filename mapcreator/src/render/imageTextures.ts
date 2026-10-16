@@ -1,5 +1,10 @@
 import planksOak from '../assets/planks_oak.jpg';
 import planksBroken from '../assets/planks_broken.jpg';
+import planksGrey from '../assets/planks_grey.jpg';
+import waterCalm from '../assets/water_calm.jpg';
+import grassForest from '../assets/grass_forest_img.jpg';
+import grassDry from '../assets/grass_dry_img.jpg';
+import grassMeadow from '../assets/grass_meadow_img.jpg';
 
 /**
  * Materialer, der er et gentagende billede (maling i stedet for udregnet mønster). Billedet læses ind én gang; `sampleTexture`
@@ -11,10 +16,18 @@ interface Tex {
   data: Uint8ClampedArray;
 }
 
-/** Billedet og hvor stort det vises: verdenspixels pr. billedpixel (billedet formindskes ved indlæsningen). */
-const SOURCES: Record<number, { url: string; scale: number }> = {
-  22: { url: planksOak, scale: 0.25 },
-  23: { url: planksBroken, scale: 0.36 },
+/**
+ * Billedet, hvor stort det vises (verdenspixels pr. billedpixel; billedet formindskes ved indlæsningen) og en gennemsnitsfarve,
+ * der bruges, til billedet er læst ind. Billederne dækker 8 × 8 m (ca. 5,3 felter), så 768 px vises med 0,34.
+ */
+const SOURCES: Record<number, { url: string; scale: number; avg: [number, number, number] }> = {
+  22: { url: planksOak, scale: 0.25, avg: [139, 90, 47] },
+  23: { url: planksBroken, scale: 0.36, avg: [90, 80, 71] },
+  24: { url: planksGrey, scale: 0.34, avg: [71, 65, 62] },
+  25: { url: waterCalm, scale: 0.34, avg: [51, 183, 211] },
+  26: { url: grassForest, scale: 0.34, avg: [53, 59, 30] },
+  27: { url: grassDry, scale: 0.34, avg: [152, 117, 69] },
+  28: { url: grassMeadow, scale: 0.34, avg: [96, 149, 48] },
 };
 const loaded = new Map<number, Tex>();
 
@@ -36,6 +49,9 @@ export const texturesReady: Promise<void> =
   typeof document === 'undefined' || typeof Image === 'undefined'
     ? Promise.resolve()
     : Promise.all(Object.entries(SOURCES).map(([id, v]) => loadOne(+id, v.url, v.scale).catch(() => undefined))).then(() => undefined);
+
+/** Gennemsnitsfarven, til billedet er læst ind. */
+export const textureAverage = (id: number): [number, number, number] => SOURCES[id]?.avg ?? [128, 128, 128];
 
 export const isImageMaterial = (id: number): boolean => id in SOURCES;
 
