@@ -8,6 +8,10 @@
   import NewMapDialog from './ui/NewMapDialog.svelte';
   import OpenDialog from './ui/OpenDialog.svelte';
   import ToolBar from './ui/ToolBar.svelte';
+  import Icon from './ui/Icon.svelte';
+  import ElementInspector from './ui/ElementInspector.svelte';
+  import WallInspector from './ui/WallInspector.svelte';
+  import { CELL_PX } from './model/types';
   import ToolPanel from './ui/ToolPanel.svelte';
   import ObjectPicker from './ui/ObjectPicker.svelte';
   import ExportDialog from './ui/ExportDialog.svelte';
@@ -16,6 +20,10 @@
 
   let layersFolded = $state(false);
   let objectsFolded = $state(false);
+  let leftFolded = $state(false);
+  // Værktøjskolonnen er foldet ind, når der intet er at vise (fx Hånd, eller Vælg uden en markering).
+  const leftHasContent = $derived(editor.tool !== 'hand' && !(editor.tool === 'select' && !editor.selection && !editor.selectionWall));
+  const leftCollapsed = $derived(!leftHasContent || leftFolded);
 
   const gallery = new URLSearchParams(location.search).has('galleri');
 
@@ -80,7 +88,7 @@
 {#if gallery}
   <Gallery />
 {:else}
-<div class="app" style:--right-w={objectsFolded ? "30px" : "240px"} style:--layers-w={layersFolded ? "44px" : "190px"}>
+<div class="app" style:--left-w={leftCollapsed ? "30px" : "220px"} style:--right-w={objectsFolded ? "30px" : "240px"} style:--layers-w={layersFolded ? "44px" : "190px"}>
   <header>
     <a class="home" href="/" title="Til forsiden">←</a>
     <input
@@ -111,8 +119,17 @@
     <span class="msg" class:err={editor.error}>{editor.error || editor.status}</span>
   </header>
   <aside class="tools"><ToolBar /></aside>
-  <aside class="left"><ToolPanel />{#if editor.tool === 'stamp' || (editor.tool === 'scatter' && !editor.scatterErase)}<ObjectPicker />{/if}</aside>
-  <main><Viewport /></main>
+  <aside class="left" class:folded={leftCollapsed}>
+    <button class="fold" disabled={!leftHasContent} title={leftCollapsed ? 'Fold værktøjets indstillinger ud' : 'Fold værktøjets indstillinger ind'} aria-label="Fold værktøjets indstillinger" onclick={() => (leftFolded = !leftFolded)}>
+      <Icon name={leftCollapsed ? 'right' : 'left'} size={14} />
+    </button>
+    {#if !leftCollapsed}
+      <ToolPanel />
+      {#if editor.tool === 'select' || editor.tool === 'opening'}<ElementInspector /><WallInspector />{/if}
+      {#if editor.tool === 'stamp' || (editor.tool === 'scatter' && !editor.scatterErase)}<ObjectPicker />{/if}
+    {/if}
+  </aside>
+  <main><Viewport /><div class="foot">{editor.doc.widthCells} × {editor.doc.heightCells} felter · {editor.doc.widthCells * CELL_PX} × {editor.doc.heightCells * CELL_PX} px</div></main>
   <aside class="right" class:folded={objectsFolded}><Inspector collapsed={objectsFolded} ontoggle={() => (objectsFolded = !objectsFolded)} /></aside>
   <aside class="layers" class:folded={layersFolded}><LayerPanel collapsed={layersFolded} ontoggle={() => (layersFolded = !layersFolded)} /></aside>
 </div>
@@ -128,7 +145,7 @@
 <style>
   .app {
     display: grid; height: 100%;
-    grid-template: 'top top top top top' auto 'tools left main right layers' 1fr / 48px 220px 1fr var(--right-w, 240px) var(--layers-w, 190px);
+    grid-template: 'top top top top top' auto 'tools left main right layers' 1fr / 48px var(--left-w, 220px) 1fr var(--right-w, 240px) var(--layers-w, 190px);
   }
   header {
     grid-area: top; display: flex; align-items: center; gap: 8px; padding: 6px 10px;
@@ -146,6 +163,9 @@
   .layers { grid-area: layers; border-left: 1px solid var(--line); }
   .layers.folded { padding: 6px 4px; }
   .right.folded { padding: 6px 4px; }
+  .fold { padding: 3px 5px; float: right; }
+  .left.folded { padding: 6px 4px; }
+  .foot { position: absolute; left: 8px; bottom: 4px; font-size: 8px; color: var(--muted); opacity: .6; pointer-events: none; }
   .left { grid-area: left; border-right: 1px solid var(--line); }
   .right { grid-area: right; border-left: 1px solid var(--line); }
   main { grid-area: main; min-width: 0; min-height: 0; position: relative; }

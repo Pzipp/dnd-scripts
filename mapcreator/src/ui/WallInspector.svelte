@@ -72,5 +72,5 @@
   label { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; color: var(--muted); }
   label.chk { flex-direction: row; align-items: center; gap: 6px; }
   .row { display: flex; gap: 6px; margin-bottom: 10px; }
-  .hint { color: var(--muted); font-size: 12px; margin: 0 0 10px; }
+  .hint { color: var(--muted); font-size: 9px; margin: 0 0 10px; }
 </style>

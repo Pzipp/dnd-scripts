@@ -84,8 +84,8 @@
 <style>
   label { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; color: var(--muted); }
   label.chk { flex-direction: row; align-items: center; gap: 6px; }
-  .two { display: flex; gap: 8px; } .two label { flex: 1; }
+  .two { display: flex; gap: 8px; } .two label { flex: 1; min-width: 0; } .two input { width: 100%; }
   .row { display: flex; gap: 6px; margin-bottom: 10px; }
   .name { margin: 0 0 10px; color: var(--muted); }
-  .hint { color: var(--muted); font-size: 12px; margin: 0; }
+  .hint { color: var(--muted); font-size: 9px; margin: 0; }
 </style>

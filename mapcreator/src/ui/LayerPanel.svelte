@@ -8,6 +8,7 @@
   const types = Object.keys(LAYER_TYPE_LABEL) as LayerType[];
   let newType = $state<LayerType>('objects');
   // Øverste lag vises øverst i listen.
+  const l0 = $derived(editor.selectedLayer);
   const rows = $derived([...editor.doc.layers].reverse());
 </script>
 
@@ -61,6 +62,18 @@
       disabled={!editor.selectedLayer || editor.doc.layers.length <= 1}
       onclick={() => editor.selectedLayerId && editor.removeLayer(editor.selectedLayerId)}>Slet lag</button>
   </div>
+  {#if l0}
+    <h2>Valgt lag</h2>
+    <label>Navn
+      <input type="text" value={l0.name} onchange={(e) => editor.patchLayer(l0.id, { name: e.currentTarget.value.trim() || l0.name })} />
+    </label>
+    <label>Opacitet: {Math.round(l0.opacity * 100)} %
+      <input type="range" min="0" max="1" step="0.01" value={l0.opacity} oninput={(e) => editor.patchLayer(l0.id, { opacity: +e.currentTarget.value })} />
+    </label>
+    <label>Højde
+      <input type="number" min="0" max="100" step="1" value={l0.height} onchange={(e) => editor.patchLayer(l0.id, { height: Math.max(0, +e.currentTarget.value || 0) })} />
+    </label>
+  {/if}
 {/if}
 
 <style>
@@ -80,6 +93,7 @@
   .tog { width: 24px; flex: none; display: grid; place-items: center; }
   .name { flex: 1; display: flex; align-items: center; gap: 6px; text-align: left; min-width: 0; }
   ul.collapsed .name { justify-content: center; }
+  label { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; color: var(--muted); }
   .txt { display: flex; flex-direction: column; min-width: 0; }
   .txt span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .txt small { color: var(--muted); }
