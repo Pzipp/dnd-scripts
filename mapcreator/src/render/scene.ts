@@ -20,7 +20,7 @@ export interface ViewOptions {
   /** Genstande, der markeres med rød ramme (fx dem, et scatter-strøg i fjern-tilstand fjerner). */
   markers?: MapElement[];
   /** Mur, der tegnes lige nu: punkter hidtil, og hvor musen er. */
-  draft?: { points: Pt[]; cursor: Pt | null; style: WallStyle; thickness: number } | null;
+  draft?: { points: Pt[]; cursor: Pt | null; style: WallStyle; thickness: number; closed?: boolean; fill?: boolean } | null;
   /** Valgt mur (punkthåndtag) og evt. valgt åbning. */
   wallSel?: { wall: Wall; layer: Layer; opening: Opening | null } | null;
   /** Åbning, der er ved at blive sat ind (følger musen langs en mur). */
@@ -60,7 +60,7 @@ export function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, c
     }
     if (layer.type === 'walls') {
       ctx.globalAlpha = layer.opacity;
-      drawWallsLayer(ctx, layer, doc, cam.zoom);
+      drawWallsLayer(ctx, layer, doc, cam.zoom, profile());
       ctx.globalAlpha = 1;
     }
   }
@@ -166,16 +166,25 @@ function drawDraft(ctx: CanvasRenderingContext2D, d: NonNullable<ViewOptions['dr
   ctx.globalAlpha = 0.75;
   ctx.lineJoin = 'miter';
   ctx.lineCap = 'butt';
+  if (d.fill && d.closed && pts.length > 2) {
+    ctx.beginPath();
+    pts.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])));
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(232,176,74,.28)';
+    ctx.fill();
+  }
   ctx.strokeStyle = `rgb(${def.outline.join(',')})`;
   ctx.lineWidth = d.thickness + 4;
   ctx.beginPath();
   pts.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])));
+  if (d.closed) ctx.closePath();
   ctx.stroke();
   ctx.strokeStyle = `rgb(${def.fill.join(',')})`;
   ctx.lineWidth = d.thickness;
   ctx.stroke();
   ctx.restore();
   const px = 1 / zoom;
+  if (d.closed) return; // en form under tegning viser kun kanten
   for (const [i, p] of d.points.entries()) {
     ctx.beginPath();
     ctx.arc(p[0], p[1], (i === 0 ? 6 : 4.5) * px, 0, Math.PI * 2);

@@ -21,7 +21,7 @@
     const t = e.target as HTMLElement;
     if (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA') return;
     const mod = e.ctrlKey || e.metaKey;
-    if (editor.tool === 'wall' && editor.wallDraft) {
+    if (editor.tool === 'line' && editor.wallDraft) {
       if (e.key === 'Enter') {
         e.preventDefault();
         return editor.finishDraft(false);
@@ -57,7 +57,7 @@
       editor.nudgeSelected(e.key === 'ArrowLeft' ? -d : e.key === 'ArrowRight' ? d : 0, e.key === 'ArrowUp' ? -d : e.key === 'ArrowDown' ? d : 0);
     } else if (!mod && !e.altKey) {
       const k = e.key.toLowerCase();
-      const map: Record<string, typeof editor.tool> = { h: 'hand', v: 'select', g: 'stamp', s: 'scatter', m: 'wall', d: 'opening', b: 'paint', e: 'erase' };
+      const map: Record<string, typeof editor.tool> = { h: 'hand', v: 'select', g: 'stamp', s: 'scatter', l: 'line', f: 'shape', m: 'line', d: 'opening', b: 'paint', e: 'erase' };
       if (map[k]) editor.setTool(map[k]!);
     }
   }

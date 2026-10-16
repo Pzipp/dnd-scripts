@@ -10,7 +10,8 @@ import { resizeMap, type Anchor } from './resize';
 import { fillChange, materialAt, Stroke } from './ground';
 import { ScatterStroke, elementsInCircle } from './scatter';
 import { hitWall, nearestOnPath, pathLength, pathOf, type Pt } from './walls';
-import { defaultThickness, OPENING_KINDS } from '../render/walls';
+import { defaultThickness, OPENING_KINDS, wallStyle } from '../render/walls';
+import { chaikin, simplify } from './shapes';
 import { groundCache } from '../render/groundCache';
 import { initialQuality, saveQuality, setQualityMode, type Quality } from '../render/quality';
 import { MATERIAL_GRASS } from '../render/materials';
@@ -19,7 +20,7 @@ import { newId, newSeed } from './ids';
 import { defaultParams, familyKinds, getKind, type ObjectKind } from '../objects';
 import { CELL_PX, hasGround, LAYER_TYPE_LABEL, type ExportPreset, type Layer, type LayerType, type MapDoc, type MapElement, type Opening, type OpeningKind, type Rect, type Wall, type WallStyle } from './types';
 
-export type Tool = 'hand' | 'select' | 'stamp' | 'scatter' | 'wall' | 'opening' | 'paint' | 'erase';
+export type Tool = 'hand' | 'select' | 'stamp' | 'scatter' | 'line' | 'shape' | 'opening' | 'paint' | 'erase';
 
 /** Fastgørelse til halve felter (25 px). */
 export const SNAP_PX = CELL_PX / 2;
@@ -43,6 +44,23 @@ class Editor {
   /** Tykkelse for nye mure, i felter. */
   wallThicknessCells = $state(0.4);
   wallDraft = $state<Pt[] | null>(null);
+  // linjeværktøjet: punkt for punkt eller frihånd
+  lineMode = $state<'points' | 'free'>('points');
+  lineFlip = $state(false);
+  /** Frihåndslinjer udjævnes til bløde kurver, når de slippes. */
+  lineSmooth = $state(true);
+  /** Frihåndslinjen under tegning (vises som kladde). */
+  freeDraft = $state<Pt[] | null>(null);
+  // formværktøjet
+  shapeKind = $state<'rect' | 'ellipse' | 'free'>('rect');
+  /** Kantens type, eller 'none' for kun udfyldning. */
+  shapeStyle = $state<WallStyle | 'none'>('stone');
+  shapeThicknessCells = $state(0.4);
+  /** Udfyldningens terrænmateriale (trægulv som standard). */
+  shapeMaterial = $state(17);
+  shapeFlip = $state(false);
+  /** Formen under tegning (lukket polygon, vises som kladde). */
+  shapeDraft = $state<Pt[] | null>(null);
   openingKind = $state<OpeningKind>('door');
   // scatter
   scatterCells = $state(6);
@@ -180,7 +198,11 @@ class Editor {
   setTool(tool: Tool): void {
     this.tool = tool;
     if (tool !== 'select' && tool !== 'opening') this.clearSelection();
-    if (tool !== 'wall') this.wallDraft = null;
+    if (tool !== 'line') {
+      this.wallDraft = null;
+      this.freeDraft = null;
+    }
+    if (tool !== 'shape') this.shapeDraft = null;
   }
 
   clearSelection(): void {
@@ -212,20 +234,69 @@ class Editor {
     this.wallDraft = null;
   }
   finishDraft(closed = false): void {
-    const layer = this.placeableWallLayer;
     const pts = (this.wallDraft ?? []).filter((p, i, a) => i === 0 || Math.hypot(p[0] - a[i - 1]![0], p[1] - a[i - 1]![1]) > 2);
     this.wallDraft = null;
-    if (!layer || pts.length < 2) return;
+    this.addLine(pts, closed && pts.length > 2);
+  }
+
+  /** Opret en linje af punkterne på det valgte lag (stil, tykkelse og vending fra værktøjet). */
+  addLine(points: Pt[], closed: boolean): void {
+    const layer = this.placeableWallLayer;
+    if (!layer || points.length < 2) {
+      if (!layer) this.error = 'Vælg et synligt, ulåst Linjer og former-lag (eller opret et) at tegne på.';
+      return;
+    }
     const wall: Wall = {
       id: newId(),
       style: this.wallStyle,
-      points: pts.map((p) => [p[0], p[1]] as Pt),
-      closed: closed && pts.length > 2,
+      points: points.map((p) => [p[0], p[1]] as Pt),
+      closed,
       thickness: this.wallThicknessCells * CELL_PX,
       seed: newSeed(),
       openings: [],
+      shape: 'line',
     };
+    if (this.lineFlip) wall.flip = true;
     this.run(addWall(layer.id, wall));
+    this.selectedWallId = wall.id;
+    this.selectedLayerId = layer.id;
+  }
+
+  /** En frihåndslinje er færdig: forenkles til få punkter (og udjævnes), så den kan redigeres bagefter. */
+  finishFree(raw: Pt[], zoom: number): void {
+    this.freeDraft = null;
+    if (raw.length < 2) return;
+    let pts = simplify(raw, Math.max(1.5, 3 / zoom));
+    if (this.lineSmooth && pts.length > 2) pts = simplify(chaikin(pts, 2), 1.2 / zoom);
+    if (pts.length > 400) pts = pts.filter((_, i) => i % 2 === 0);
+    this.addLine(pts, false);
+  }
+
+  /** En form er færdig: firkant og cirkel gives som punkter, frihånd forenkles. Altid lukket. */
+  finishShape(pts: Pt[]): void {
+    const layer = this.placeableWallLayer;
+    this.shapeDraft = null;
+    if (!layer) {
+      this.error = 'Vælg et synligt, ulåst Linjer og former-lag (eller opret et) at tegne på.';
+      return;
+    }
+    if (pts.length < 3) return;
+    const wall: Wall = {
+      id: newId(),
+      style: this.shapeStyle === 'none' ? 'stone' : this.shapeStyle,
+      points: pts.map((p) => [p[0], p[1]] as Pt),
+      closed: true,
+      thickness: this.shapeThicknessCells * CELL_PX,
+      seed: newSeed(),
+      openings: [],
+      fill: { material: this.shapeMaterial },
+      shape: this.shapeKind,
+    };
+    if (this.shapeStyle === 'none') wall.stroke = false;
+    if (this.shapeFlip) wall.flip = true;
+    this.run(addWall(layer.id, wall));
+    this.selectedWallId = wall.id;
+    this.selectedLayerId = layer.id;
   }
 
   patchWall(patch: WallPatch): void {
@@ -259,6 +330,7 @@ class Editor {
     for (const layer of this.doc.layers) {
       if (layer.type !== 'walls' || !layer.visible || layer.locked) continue;
       for (const wall of layer.walls ?? []) {
+        if (!wallStyle(wall.style).solid) continue; // døre og vinduer sidder kun i rigtige mure
         const n = nearestOnPath(pathOf(wall), wx, wy);
         if (n && n.dist <= wall.thickness / 2 + tolerance && (!best || n.dist < best.d)) best = { layer, wall, s: n.s, d: n.dist };
       }
@@ -430,6 +502,20 @@ class Editor {
     for (const k of Object.keys(before) as ('x' | 'y' | 'w' | 'h' | 'rot')[]) after[k] = el[k] as never;
     if (Object.keys(before).every((k) => (before as Record<string, unknown>)[k] === (after as Record<string, unknown>)[k])) return;
     this.run(transformElement(layerId, id, before, after));
+  }
+
+  /** Slet en genstand eller mur/form i et vilkårligt lag (objektlisten). */
+  removeObject(layerId: string, kind: 'element' | 'wall', id: string): void {
+    if (kind === 'element') {
+      this.run(removeElements(layerId, [id]));
+      if (this.selectedElementId === id) this.selectedElementId = null;
+    } else {
+      this.run(removeWall(layerId, id));
+      if (this.selectedWallId === id) {
+        this.selectedWallId = null;
+        this.selectedOpeningId = null;
+      }
+    }
   }
 
   removeSelectedElement(): void {

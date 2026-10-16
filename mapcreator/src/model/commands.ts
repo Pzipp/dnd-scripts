@@ -258,7 +258,7 @@ export function removeWall(layerId: string, id: string): Command {
   };
 }
 
-export type WallPatch = Partial<Pick<Wall, 'style' | 'thickness' | 'closed' | 'points'>>;
+export type WallPatch = Partial<Pick<Wall, 'style' | 'thickness' | 'closed' | 'points' | 'flip' | 'stroke' | 'fill'>>;
 
 class UpdateWall implements Command {
   label = 'Ret mur';

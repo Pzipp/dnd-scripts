@@ -3,9 +3,12 @@
   import { CELL_PX, LAYER_TYPE_LABEL } from '../model/types';
   import ElementInspector from './ElementInspector.svelte';
   import WallInspector from './WallInspector.svelte';
+  import ObjectList from './ObjectList.svelte';
 
   const l = $derived(editor.selectedLayer);
 </script>
+
+<ObjectList />
 
 <h2>Kort</h2>
 <p class="info">

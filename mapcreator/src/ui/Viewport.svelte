@@ -8,6 +8,7 @@
   import { screenToWorld, worldToScreen } from '../render/camera';
   import { HANDLES, handlePos, resizeBy, rotationTo, type HandleId } from '../model/geometry';
   import { pickAt } from '../model/pick';
+  import { bounds, ellipsePoints, rectPoints, simplify } from '../model/shapes';
   import { constrainAngle, midpoints, nearestOnPath, pathLength, pathOf, type Pt } from '../model/walls';
   import { getKind } from '../objects';
   import { ROT_HANDLE_PX } from '../render/scene';
@@ -64,7 +65,9 @@
         ghosts,
         ghostAlpha: editor.tool === 'scatter' ? 0.95 : 0.6,
         markers: editor.tool === 'scatter' ? editor.scatterRemoving : [],
-        draft: draftPts && editor.tool === 'wall' ? { points: draftPts, cursor: hover ? draftCursor() : null, style: editor.wallStyle, thickness: editor.wallThicknessCells * 50 } : null,
+        draft: draftPts && editor.tool === 'line' ? { points: draftPts, cursor: hover ? draftCursor() : null, style: editor.wallStyle, thickness: editor.wallThicknessCells * 50 }
+          : editor.freeDraft && editor.tool === 'line' ? { points: editor.freeDraft, cursor: null, style: editor.wallStyle, thickness: editor.wallThicknessCells * 50 }
+          : editor.shapeDraft && editor.tool === 'shape' ? { points: editor.shapeDraft, cursor: null, style: editor.shapeStyle === 'none' ? 'stone' : editor.shapeStyle, thickness: editor.shapeStyle === 'none' ? 2 : editor.shapeThicknessCells * 50, closed: true, fill: true } : null,
         wallSel: wallTool && editor.selectionWall ? editor.selectionWall : null,
         openingGhost,
       });
@@ -170,6 +173,12 @@
     | { kind: 'openingMove'; layerId: string; wallId: string; id: string; beforeAt: number };
   let drag: Drag | null = null;
   let scattering = false;
+  /** Hvor et formtræk begyndte (firkantens hjørne eller cirklens midte). */
+  let shapeAnchor: Pt | null = null;
+  const squareTo = (a: Pt, b: Pt): Pt => {
+    const s = Math.max(Math.abs(b[0] - a[0]), Math.abs(b[1] - a[1]));
+    return [a[0] + Math.sign(b[0] - a[0] || 1) * s, a[1] + Math.sign(b[1] - a[1] || 1) * s];
+  };
   let scatterLast: [number, number] | null = null;
   let lastVertexClick: { wallId: string; index: number; time: number } | null = null;
   const copyPts = (pts: Pt[]): Pt[] => pts.map((p) => [p[0], p[1]] as Pt);
@@ -307,7 +316,26 @@
       startSelect(p);
       return;
     }
-    if (primary && editor.tool === 'wall') {
+    if (primary && editor.tool === 'shape') {
+      if (!editor.placeableWallLayer) {
+        editor.error = 'Vælg et synligt, ulåst Linjer og former-lag (eller opret et) at tegne på.';
+        return;
+      }
+      const [wx, wy] = screenToWorld(editor.camera, p.x, p.y);
+      shapeAnchor = [snapV(wx), snapV(wy)];
+      editor.shapeDraft = editor.shapeKind === 'free' ? [shapeAnchor] : null;
+      return;
+    }
+    if (primary && editor.tool === 'line' && editor.lineMode === 'free') {
+      if (!editor.placeableWallLayer) {
+        editor.error = 'Vælg et synligt, ulåst Linjer og former-lag (eller opret et) at tegne på.';
+        return;
+      }
+      const [wx, wy] = screenToWorld(editor.camera, p.x, p.y);
+      editor.freeDraft = [[wx, wy]];
+      return;
+    }
+    if (primary && editor.tool === 'line') {
       const [wx, wy] = screenToWorld(editor.camera, p.x, p.y);
       const d = editor.wallDraft;
       if (d?.length) {
@@ -369,6 +397,26 @@
       const dist = Math.hypot(a.x - b.x, a.y - b.y);
       if (lastPinch > 0) zoomAt(editor.camera, (a.x + b.x) / 2, (a.y + b.y) / 2, dist / lastPinch);
       lastPinch = dist;
+    } else if (pointers.size === 1 && editor.freeDraft && editor.tool === 'line') {
+      const [wx, wy] = screenToWorld(editor.camera, p.x, p.y);
+      const last = editor.freeDraft.at(-1)!;
+      if (Math.hypot(wx - last[0], wy - last[1]) * editor.camera.zoom >= 3) editor.freeDraft = [...editor.freeDraft, [wx, wy]];
+      schedule();
+    } else if (pointers.size === 1 && shapeAnchor && editor.tool === 'shape') {
+      const [wx, wy] = screenToWorld(editor.camera, p.x, p.y);
+      const cur: Pt = [snapV(wx), snapV(wy)];
+      if (editor.shapeKind === 'free') {
+        const last = editor.shapeDraft!.at(-1)!;
+        if (Math.hypot(wx - last[0], wy - last[1]) * editor.camera.zoom >= 3) editor.shapeDraft = [...editor.shapeDraft!, [wx, wy]];
+      } else if (editor.shapeKind === 'rect') {
+        editor.shapeDraft = rectPoints(shapeAnchor, e.shiftKey ? squareTo(shapeAnchor, cur) : cur);
+      } else {
+        // cirkel/ellipse: træk fra midten; Shift giver en cirkel
+        const rx = Math.abs(cur[0] - shapeAnchor[0]);
+        const ry = e.shiftKey ? rx : Math.abs(cur[1] - shapeAnchor[1]);
+        editor.shapeDraft = ellipsePoints(shapeAnchor[0], shapeAnchor[1], Math.max(1, rx), Math.max(1, ry));
+      }
+      schedule();
     } else if (pointers.size === 1 && scattering && scatterLast) {
       const [wx, wy] = screenToWorld(editor.camera, p.x, p.y);
       editor.scatterLine(scatterLast[0], scatterLast[1], wx, wy);
@@ -388,6 +436,21 @@
   function onUp(e: PointerEvent) {
     pointers.delete(e.pointerId);
     lastPinch = 0;
+    if (pointers.size === 0 && editor.freeDraft && editor.tool === 'line') {
+      editor.finishFree(editor.freeDraft, editor.camera.zoom);
+      schedule();
+    }
+    if (pointers.size === 0 && shapeAnchor && editor.tool === 'shape') {
+      const d = editor.shapeDraft;
+      shapeAnchor = null;
+      if (d) {
+        const b = bounds(d);
+        if ((b.x1 - b.x0) * editor.camera.zoom >= 6 && (b.y1 - b.y0) * editor.camera.zoom >= 6) {
+          editor.finishShape(editor.shapeKind === 'free' ? simplify(d, Math.max(1.5, 3 / editor.camera.zoom)) : d);
+        } else editor.shapeDraft = null;
+      }
+      schedule();
+    }
     if (scattering && pointers.size === 0) {
       editor.commitScatter();
       scattering = false;

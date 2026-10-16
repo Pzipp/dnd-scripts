@@ -26,7 +26,7 @@ Fælles felter: `id`, `name`, `type` (`ground | floor | objects | walls | effect
 | `ground` | `ground` | `{ res, w, h, rle }`: terrænmaske, 4 × 4 celler pr. felt. `rle` er kørselslængdekodet (værdi-byte + varint-længde) og base64. Celleværdien er et materiale-id (`render/materials.ts`, aldrig omnummereret, 0 = tomt) |
 | `floor` | `ground` | Som `ground`, men planker, brosten og fliser skæres til ved kanten af det malede (gulv i huse og rum). Ældre klienter, der ikke kender typen, viser ikke laget |
 | `objects`, `effects` | `elements` | Liste af genstande (se nedenfor) |
-| `walls` | `walls` | Liste af mure (se nedenfor) |
+| `walls` | `walls` | Liste af linjer og former (se nedenfor) |
 
 Et grundlag har `ground: { res, w, h, rle, path? }`: `rle` er terrænmaskens materiale-id'er og `path` (kun hvis der er stier) stierne oven på, begge kørselslængde-kodet. Et kort uden `path` åbnes som før.
 
@@ -42,12 +42,17 @@ Et grundlag har `ground: { res, w, h, rle, path? }`: `rle` er terrænmaskens mat
 
 `kind` er en nøgle i genstandsregistret. Nøgler og parametre ændres aldrig (se [mapcreator-objects.md](mapcreator-objects.md)); en udgået nøgle erstattes ved indlæsning af den, der afløser den (`replacedBy`). En ukendt nøgle vises som en rød stiplet boks og slettes ikke.
 
-### Mure (`walls[]`)
+### Linjer og former (`walls[]`)
 
 ```jsonc
-{ "id": "…", "style": "stone",        // stone | brick | wood | hedge
+{ "id": "…", "style": "stone",        // stone | brick | wood | hedge | cave | cave_dark | cave_ice (rigtige mure, kan have åbninger)
+                                       // path_dirt | path_gravel | path_cobble | bridge_wood | bridge_stone | bridge_rope | cliff | ravine | fence
   "points": [[100,100],[500,100],[500,400]],   // verdenspixels; længde og form følger af punkterne
   "closed": false, "thickness": 20, "seed": 77,
+  "flip": false,                      // valgfri: vend siden (klippekant, kløft, bro)
+  "fill": { "material": 17 },         // valgfri: udfyldning (terrænmateriale-id) i en lukket linje = en form
+  "stroke": true,                     // valgfri: false = ingen kant, kun udfyldning
+  "shape": "line",                    // valgfri: line | rect | ellipse | free (hvad den blev tegnet som)
   "openings": [ { "id": "…", "kind": "door",   // opening | door | double_door | gate | window
                   "at": 150,        // afstand langs muren til åbningens midte
                   "width": 50, "open": false, "flip": false } ] }

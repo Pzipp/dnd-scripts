@@ -4,7 +4,7 @@ Editor til slagkort (top-down, uden grid i selve billedet): lag med terræn, gen
 
 ## Status
 
-Færdigt: dokumentmodel og lag (tilføj, slet, flyt, skjul, lås, opacitet, højde), kamera (pan, zoom, knib), fortryd/gentag, gem og åbn, **terrænmaling** (pensel, viskelæder, fyld; 8 materialer), **genstande** (familier med varianter, vælger, flyt/skalér/rotér, skygger), **mure** med døre, porte og vinduer, et **scatter-værktøj** til skov og planter, og **eksport** med navngivne udgaver (download eller direkte i VTT'et). **Egne genstande** (billedimport med automatisk fjernelse af baggrund) er også med. En **generator** laver en base ud fra et områdetema, og kortets **størrelse** kan ændres bagefter. Mangler: polering. Se [mapcreator-plan.md](mapcreator-plan.md).
+Færdigt: dokumentmodel og lag (tilføj, slet, flyt, skjul, lås, opacitet, højde), kamera (pan, zoom, knib), fortryd/gentag, gem og åbn, **terrænmaling** (pensel, viskelæder, fyld; 8 materialer), **genstande** (familier med varianter, vælger, flyt/skalér/rotér, skygger), **linjer og former** (mure, stier, broer, kløfter, bygninger) med døre, porte og vinduer, en **objektliste**, et **scatter-værktøj** til skov og planter, og **eksport** med navngivne udgaver (download eller direkte i VTT'et). **Egne genstande** (billedimport med automatisk fjernelse af baggrund) er også med. En **generator** laver en base ud fra et områdetema, og kortets **størrelse** kan ændres bagefter. Mangler: polering. Se [mapcreator-plan.md](mapcreator-plan.md).
 
 Flere dokumenter: [mapcreator-format.md](mapcreator-format.md) (JSON-format og API), [mapcreator-objects.md](mapcreator-objects.md) (laver og forbedre genstande) og [`mapcreator/README.md`](../mapcreator/README.md) (kode og udvikling).
 
@@ -16,7 +16,8 @@ Flere dokumenter: [mapcreator-format.md](mapcreator-format.md) (JSON-format og A
 | V | Vælg (genstande, mure, åbninger) |
 | G | Genstand (sæt ud) |
 | S | Spred (scatter) |
-| M | Mur |
+| L | Linje (også M) |
+| F | Form |
 | D | Dør/åbning |
 | B / E | Pensel / viskelæder (terræn) |
 | Ctrl+Z / Ctrl+Y | Fortryd / gentag |
@@ -69,7 +70,7 @@ Temaerne er data i `mapcreator/src/generator/themes.ts` (terrænpletter, vand, v
 
 ## Tomrum og grottevægge
 
-Under *Tomrum* i terrænpaletten findes tre sorte materialer (brun, lilla og is-kant). Mal dem, hvor der ikke skal være kort: mod andet terræn får de automatisk en kantet klippekant med skygge på gulvsiden, og resten er sort. Det er det samme som at male "væg på den ene side og sort på den anden". Mure-værktøjet har desuden tre grottevægge (*Grottevæg, brun / mørk / is*) af overlappende sten til frie vægge og afgrænsninger. Grotte-temaet i generatoren bruger tomrum som fjeld.
+Under *Tomrum* i terrænpaletten findes tre sorte materialer (brun, lilla og is-kant). Mal dem, hvor der ikke skal være kort: mod andet terræn får de automatisk en kantet klippekant med skygge på gulvsiden, og resten er sort. Det er det samme som at male "væg på den ene side og sort på den anden". Linje-værktøjet har desuden tre grottevægge (*Grottevæg, brun / mørk / is*) af overlappende sten til frie vægge og afgrænsninger. Grotte-temaet i generatoren bruger tomrum som fjeld.
 
 ## Kortstørrelse
 
@@ -89,11 +90,17 @@ Fanen **Mine genstande** viser alle importerede genstande og lader dig omdøbe, 
 
 Klienten skærer billedet ud og skalerer hver genstand til højst 512 px. Serveren genkoder alt (kun PNG, WebP og JPEG; højst ca. 36 megapixel; ingen metadata) og gemmer genstanden som WebP med gennemsigtighed. En genstand, der er næsten helt hvid eller lignende baggrunden, kan få hul i sig; brug i så fald magenta som baggrund i billedet.
 
-## Mure
+## Linjer og former
 
-Et mur-lag (`type: walls`) har `walls[]`: en linje af punkter med `thickness`, `style` (sten, mursten, træ, hæk), `closed` og `openings[]`. Længde og form følger af punkterne (`model/walls.ts`); tegningen er vektor (`render/walls.ts`), så den er skarp ved enhver zoom.
+Et lag af typen *Linjer og former* (`type: walls`, ældre navn *Mure*) har `walls[]`: en linje af punkter med `thickness`, `style`, `closed` og `openings[]`. Længde og form følger af punkterne (`model/walls.ts`); tegningen er vektor (`render/walls.ts`, `render/lines.ts`), så den er skarp ved enhver zoom. Både linjer og former er den samme slags objekt: en form er en lukket linje med `fill` (et terrænmateriale) og `shape` (`rect | ellipse | free`).
 
-*Mur* (M): klik for hvert hjørne; klik på sidste punkt eller Enter afslutter, klik på første punkt lukker, Shift låser vinklen til 15°, Backspace fjerner sidste punkt, Esc afbryder. *Vælg* (V) på en mur viser punkthåndtag: træk et firkantet punkt for at ændre form og længde, en rund prik midt på et stykke for at indsætte et punkt, dobbeltklik for at fjerne et punkt, træk i selve muren for at flytte den. Tykkelse og type rettes i panelet til højre.
+*Linje* (L, M) tegner mure, stier, broer, kløfter og hegn. Vælg **Punkter** (klik for hvert punkt; klik på sidste punkt eller Enter afslutter, klik på første punkt lukker, Shift låser vinklen til 15°, Backspace fjerner sidste punkt, Esc afbryder) eller **Frihånd** (træk; linjen forenkles til få punkter og udjævnes, så den kan redigeres bagefter). Typer: *Mure* (sten, mursten, træ), *Grotte* (tre grottevægge), *Hæk og hegn*, *Stier* (jord, grus, brosten), *Broer* (træ, sten, reb) og *Kløft og klippe* (klippekant med dybde til den ene side, og en kløft med dybde på begge sider). Kun rigtige mure kan have døre og vinduer. **Vend** vender den side, en klippekant, kløft eller bro har sin yderside på.
+
+*Form* (F) tegner **Firkant** (træk fra hjørne til hjørne, Shift = kvadrat), **Cirkel** (træk fra midten, Shift = cirkel) og **Frihånd** (lukkes af sig selv). En form har en **kant** (en hvilken som helst linjetype, eller ingen) og en **udfyldning** (et hvilket som helst terrænmateriale: trægulv, brosten, fliser, græs, vand …), så en bygning er en firkant med stenmur og plankegulv. Udfyldningen tegnes som terræn i formens omrids (`render/shapeFill.ts`) og skæres præcis ved kanten, og kanten kan have døre, hvis den er en mur.
+
+*Vælg* (V) viser punkthåndtag på en linje eller form: træk et firkantet punkt for at ændre formen, en rund prik midt på et stykke for at indsætte et punkt, dobbeltklik for at fjerne et punkt, træk i selve linjen eller formen for at flytte den. Kant, tykkelse, udfyldning og vending rettes i panelet til højre (`ui/WallInspector.svelte`).
+
+**Objektlisten** øverst i panelet til højre (`ui/ObjectList.svelte`) viser alle genstande, linjer og former på tværs af lag (øverste først), med søgning. Klik for at vælge (og skifte til Vælg-værktøjet), × sletter. Terrænlag står som en række uden slet-knap.
 
 *Dør* (D): klik på en mur for at sætte en åbning ind (åbning, dør, dobbeltdør, port eller vindue). Åbninger, dørene og portene skærer et hul i muren; vinduer sidder i den. Vælg en åbning for at åbne den, vende den eller trække den langs muren.
 

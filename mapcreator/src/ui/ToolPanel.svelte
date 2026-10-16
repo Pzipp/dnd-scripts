@@ -8,7 +8,8 @@
     { id: 'select', label: 'Vælg', hint: 'Vælg, flyt, skalér og rotér genstande (V)' },
     { id: 'stamp', label: 'Genstand', hint: 'Sæt genstande ud (G)' },
     { id: 'scatter', label: 'Spred', hint: 'Mal en skov, spred sten eller planter (S)' },
-    { id: 'wall', label: 'Mur', hint: 'Tegn mure punkt for punkt (M)' },
+    { id: 'line', label: 'Linje', hint: 'Tegn mure, stier, broer, kløfter og hegn: punkt for punkt eller frihånd (L)' },
+    { id: 'shape', label: 'Form', hint: 'Tegn firkanter, cirkler og frie former med kant og udfyldning, fx bygninger (F)' },
     { id: 'opening', label: 'Dør', hint: 'Sæt døre, porte og vinduer i en mur (D)' },
     { id: 'paint', label: 'Pensel', hint: 'Mal terræn på et grundlag' },
     { id: 'erase', label: 'Viskelæder', hint: 'Fjern terræn (gør laget gennemsigtigt)' },
@@ -18,6 +19,7 @@
     editor.paintMode = 'path';
     if (!MATERIALS.find((m) => m.id === editor.material)?.pathable) editor.material = 2;
   }
+  const wallGroups = [...new Set(WALL_STYLES.map((s) => s.group))];
   const painting = $derived(editor.tool === 'paint' || editor.tool === 'erase');
 </script>
 
@@ -52,29 +54,88 @@
   <label class="chk"><input type="checkbox" bind:checked={editor.scatterErase} /> Fjern i stedet for at spredes</label>
 {/if}
 
-{#if editor.tool === 'wall'}
+{#if editor.tool === 'line'}
   {#if !editor.placeableWallLayer}
-    <p class="warn">Vælg et synligt, ulåst <b>Mure</b>-lag (eller opret et).</p>
+    <p class="warn">Vælg et synligt, ulåst <b>Linjer og former</b>-lag (eller opret et).</p>
   {/if}
-  <div class="mats" role="radiogroup" aria-label="Murtype">
-    {#each WALL_STYLES as st}
-      <button role="radio" aria-checked={editor.wallStyle === st.key} class:on={editor.wallStyle === st.key} onclick={() => editor.setWallStyle(st.key)}>
-        <span class="sw" style="background:rgb({st.fill.join(',')})"></span>{st.label}
-      </button>
-    {/each}
+  <div class="modes" role="radiogroup" aria-label="Sådan tegnes linjen">
+    <button role="radio" aria-checked={editor.lineMode === 'points'} class:on={editor.lineMode === 'points'} onclick={() => (editor.lineMode = 'points')} title="Klik for hvert punkt">Punkter</button>
+    <button role="radio" aria-checked={editor.lineMode === 'free'} class:on={editor.lineMode === 'free'} onclick={() => (editor.lineMode = 'free')} title="Træk med musen eller fingeren">Frihånd</button>
   </div>
+  {#each wallGroups as group}
+    <h3>{group}</h3>
+    <div class="mats" role="radiogroup" aria-label={group}>
+      {#each WALL_STYLES.filter((s) => s.group === group) as st}
+        <button role="radio" aria-checked={editor.wallStyle === st.key} class:on={editor.wallStyle === st.key} onclick={() => editor.setWallStyle(st.key)}>
+          <span class="sw" style="background:rgb({st.fill.join(',')})"></span>{st.label}
+        </button>
+      {/each}
+    </div>
+  {/each}
   <label>Tykkelse: {editor.wallThicknessCells} felter
-    <input type="range" min="0.1" max="2" step="0.05" bind:value={editor.wallThicknessCells} />
+    <input type="range" min="0.1" max="4" step="0.05" bind:value={editor.wallThicknessCells} />
   </label>
-  <label class="chk"><input type="checkbox" bind:checked={editor.snap} /> Fastgør til halve felter</label>
-  <p class="hint">Klik for hvert hjørne. Klik på sidste punkt (eller tryk Enter) for at afslutte; klik på første punkt for at lukke. Shift låser vinklen til 15°. Backspace fjerner sidste punkt, Esc afbryder.</p>
+  <label class="chk"><input type="checkbox" bind:checked={editor.lineFlip} /> Vend (anden side)</label>
+  {#if editor.lineMode === 'free'}
+    <label class="chk"><input type="checkbox" bind:checked={editor.lineSmooth} /> Udjævn frihåndslinjen</label>
+  {:else}
+    <label class="chk"><input type="checkbox" bind:checked={editor.snap} /> Fastgør til halve felter</label>
+  {/if}
+  <p class="hint">
+    {#if editor.lineMode === 'free'}
+      Træk for at tegne. Linjen forenkles til få punkter, som du kan flytte bagefter med Vælg.
+    {:else}
+      Klik for hvert punkt. Klik på sidste punkt (eller tryk Enter) for at afslutte; klik på første punkt for at lukke. Shift låser vinklen til 15°. Backspace fjerner sidste punkt, Esc afbryder.
+    {/if}
+    Døre og vinduer kan kun sættes i mure.
+  </p>
   {#if editor.wallDraft}
     <div class="row">
       <button class="primary" onclick={() => editor.finishDraft(false)}>Færdig</button>
-      <button onclick={() => editor.finishDraft(true)} disabled={(editor.wallDraft?.length ?? 0) < 3}>Luk mur</button>
+      <button onclick={() => editor.finishDraft(true)} disabled={(editor.wallDraft?.length ?? 0) < 3}>Luk linje</button>
       <button onclick={() => editor.cancelDraft()}>Annullér</button>
     </div>
   {/if}
+{/if}
+
+{#if editor.tool === 'shape'}
+  {#if !editor.placeableWallLayer}
+    <p class="warn">Vælg et synligt, ulåst <b>Linjer og former</b>-lag (eller opret et).</p>
+  {/if}
+  <div class="kinds" role="radiogroup" aria-label="Formens type">
+    <button role="radio" aria-checked={editor.shapeKind === 'rect'} class:on={editor.shapeKind === 'rect'} onclick={() => (editor.shapeKind = 'rect')} title="Træk fra hjørne til hjørne (Shift = kvadrat)">Firkant</button>
+    <button role="radio" aria-checked={editor.shapeKind === 'ellipse'} class:on={editor.shapeKind === 'ellipse'} onclick={() => (editor.shapeKind = 'ellipse')} title="Træk fra midten (Shift = cirkel)">Cirkel</button>
+    <button role="radio" aria-checked={editor.shapeKind === 'free'} class:on={editor.shapeKind === 'free'} onclick={() => (editor.shapeKind = 'free')} title="Tegn frit; formen lukkes af sig selv">Frihånd</button>
+  </div>
+  <h3>Kant</h3>
+  <label>Type
+    <select bind:value={editor.shapeStyle}>
+      <option value="none">Ingen kant</option>
+      {#each wallGroups as group}
+        <optgroup label={group}>
+          {#each WALL_STYLES.filter((s) => s.group === group) as st}<option value={st.key}>{st.label}</option>{/each}
+        </optgroup>
+      {/each}
+    </select>
+  </label>
+  {#if editor.shapeStyle !== 'none'}
+    <label>Kantens tykkelse: {editor.shapeThicknessCells} felter
+      <input type="range" min="0.1" max="3" step="0.05" bind:value={editor.shapeThicknessCells} />
+    </label>
+  {/if}
+  <h3>Udfyldning</h3>
+  <label>Materiale
+    <select bind:value={editor.shapeMaterial}>
+      {#each MATERIAL_GROUPS as group}
+        <optgroup label={group}>
+          {#each MATERIALS.filter((m) => m.group === group) as m}<option value={m.id}>{m.name}</option>{/each}
+        </optgroup>
+      {/each}
+    </select>
+  </label>
+  <label class="chk"><input type="checkbox" bind:checked={editor.shapeFlip} /> Vend (inderside og yderside)</label>
+  <label class="chk"><input type="checkbox" bind:checked={editor.snap} /> Fastgør til halve felter</label>
+  <p class="hint">Træk på kortet. Bagefter kan du flytte formens punkter med Vælg-værktøjet, ændre kant og udfyldning, og sætte døre i kanten, hvis den er en mur.</p>
 {/if}
 
 {#if editor.tool === 'opening'}
@@ -125,6 +186,7 @@
   .tools button { padding: 5px 4px; }
   button.on { border-color: var(--accent); background: #3a3426; }
   .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 8px; }
+  .kinds { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-bottom: 8px; }
   h3 { font-size: 11px; color: var(--muted); margin: 6px 0 4px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
   .mats { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 6px; }
   .mats button { display: flex; align-items: center; gap: 6px; text-align: left; padding: 4px 6px; }

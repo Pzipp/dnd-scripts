@@ -2,6 +2,9 @@ import { gapRanges, pathLength, pathOf, pointAt, solidPieces, subPath, type Pt }
 import type { Layer, MapDoc, Opening, OpeningKind, Wall, WallStyle } from '../model/types';
 import { CELL_PX } from '../model/types';
 import { rng, rgb, shift, type RGB } from '../objects/util';
+import { drawLine } from './lines';
+import { FULL_PROFILE, type QualityProfile } from './quality';
+import { drawShapeFill } from './shapeFill';
 
 export interface WallStyleDef {
   key: WallStyle;
@@ -13,16 +16,29 @@ export interface WallStyleDef {
   joint: RGB;
   /** Skyggens afstand i verdenspixels ved højde 0. */
   shadow: number;
+  /** Overskrift i vælgeren. */
+  group: string;
+  /** Rigtig mur (kan have døre og vinduer). Andre linjer (stier, broer, kløfter, hegn) tegnes af `lines.ts`. */
+  solid: boolean;
 }
 
 export const WALL_STYLES: WallStyleDef[] = [
-  { key: 'stone', label: 'Stenmur', thickness: 0.4, fill: [150, 148, 140], outline: [40, 38, 36], joint: [84, 82, 78], shadow: 16 },
-  { key: 'brick', label: 'Murstensmur', thickness: 0.4, fill: [170, 96, 72], outline: [52, 28, 22], joint: [100, 52, 40], shadow: 16 },
-  { key: 'wood', label: 'Trævæg', thickness: 0.3, fill: [140, 100, 62], outline: [42, 26, 14], joint: [80, 54, 30], shadow: 12 },
-  { key: 'cave', label: 'Grottevæg, brun', thickness: 1, fill: [104, 84, 66], outline: [28, 20, 14], joint: [60, 46, 36], shadow: 14 },
-  { key: 'cave_dark', label: 'Grottevæg, mørk', thickness: 1, fill: [70, 58, 74], outline: [18, 12, 22], joint: [40, 32, 44], shadow: 14 },
-  { key: 'cave_ice', label: 'Grottevæg, is', thickness: 1, fill: [150, 180, 200], outline: [40, 62, 84], joint: [100, 130, 154], shadow: 12 },
-  { key: 'hedge', label: 'Hæk', thickness: 0.7, fill: [54, 106, 44], outline: [28, 62, 28], joint: [30, 70, 30], shadow: 10 },
+  { key: 'stone', label: 'Stenmur', thickness: 0.4, fill: [150, 148, 140], outline: [40, 38, 36], joint: [84, 82, 78], shadow: 16, group: 'Mure', solid: true },
+  { key: 'brick', label: 'Murstensmur', thickness: 0.4, fill: [170, 96, 72], outline: [52, 28, 22], joint: [100, 52, 40], shadow: 16, group: 'Mure', solid: true },
+  { key: 'wood', label: 'Trævæg', thickness: 0.3, fill: [140, 100, 62], outline: [42, 26, 14], joint: [80, 54, 30], shadow: 12, group: 'Mure', solid: true },
+  { key: 'cave', label: 'Grottevæg, brun', thickness: 1, fill: [104, 84, 66], outline: [28, 20, 14], joint: [60, 46, 36], shadow: 14, group: 'Grotte', solid: true },
+  { key: 'cave_dark', label: 'Grottevæg, mørk', thickness: 1, fill: [70, 58, 74], outline: [18, 12, 22], joint: [40, 32, 44], shadow: 14, group: 'Grotte', solid: true },
+  { key: 'cave_ice', label: 'Grottevæg, is', thickness: 1, fill: [150, 180, 200], outline: [40, 62, 84], joint: [100, 130, 154], shadow: 12, group: 'Grotte', solid: true },
+  { key: 'hedge', label: 'Hæk', thickness: 0.7, fill: [54, 106, 44], outline: [28, 62, 28], joint: [30, 70, 30], shadow: 10, group: 'Hæk og hegn', solid: true },
+  { key: 'path_dirt', label: 'Jordsti', thickness: 1.2, fill: [152, 118, 78], outline: [96, 70, 44], joint: [120, 92, 60], shadow: 0, group: 'Stier', solid: false },
+  { key: 'path_gravel', label: 'Grussti', thickness: 1.2, fill: [168, 160, 144], outline: [110, 104, 92], joint: [130, 124, 110], shadow: 0, group: 'Stier', solid: false },
+  { key: 'path_cobble', label: 'Brostenssti', thickness: 1.2, fill: [132, 128, 122], outline: [40, 36, 32], joint: [60, 56, 50], shadow: 3, group: 'Stier', solid: false },
+  { key: 'bridge_wood', label: 'Træbro', thickness: 1.5, fill: [150, 108, 66], outline: [42, 26, 14], joint: [80, 54, 30], shadow: 12, group: 'Broer', solid: false },
+  { key: 'bridge_stone', label: 'Stenbro', thickness: 1.6, fill: [150, 148, 140], outline: [40, 38, 36], joint: [84, 82, 78], shadow: 14, group: 'Broer', solid: false },
+  { key: 'bridge_rope', label: 'Rebbro', thickness: 1.2, fill: [136, 104, 70], outline: [40, 26, 14], joint: [90, 64, 38], shadow: 10, group: 'Broer', solid: false },
+  { key: 'cliff', label: 'Klippekant', thickness: 1.5, fill: [120, 104, 88], outline: [30, 24, 18], joint: [70, 58, 48], shadow: 0, group: 'Kløft og klippe', solid: false },
+  { key: 'ravine', label: 'Kløft', thickness: 2, fill: [120, 104, 88], outline: [30, 24, 18], joint: [70, 58, 48], shadow: 0, group: 'Kløft og klippe', solid: false },
+  { key: 'fence', label: 'Hegn', thickness: 0.35, fill: [140, 100, 62], outline: [42, 26, 14], joint: [80, 54, 30], shadow: 6, group: 'Hæk og hegn', solid: false },
 ];
 export const wallStyle = (k: WallStyle): WallStyleDef => WALL_STYLES.find((s) => s.key === k) ?? WALL_STYLES[0]!;
 
@@ -56,6 +72,10 @@ function along(piece: Pt[], step: number, jitter: (() => number) | null, visit: 
 
 function drawBody(g: CanvasRenderingContext2D, wall: Wall, layer: Layer, doc: Pick<MapDoc, 'lightAngle'>, deviceScale: number): void {
   const def = wallStyle(wall.style);
+  if (!def.solid) {
+    drawLine(g, wall, layer, doc, deviceScale);
+    return;
+  }
   const t = wall.thickness;
   const path = pathOf(wall);
   if (path.length < 2) return;
@@ -366,9 +386,11 @@ export function drawOpening(g: CanvasRenderingContext2D, wall: Wall, o: Opening,
   g.restore();
 }
 
-export function drawWallsLayer(g: CanvasRenderingContext2D, layer: Layer, doc: Pick<MapDoc, 'lightAngle'>, deviceScale: number): void {
+export function drawWallsLayer(g: CanvasRenderingContext2D, layer: Layer, doc: Pick<MapDoc, 'lightAngle'>, deviceScale: number, q: QualityProfile = FULL_PROFILE): void {
+  // først alle udfyldninger (former), så kanterne og murene oven på
+  for (const wall of layer.walls ?? []) if (wall.fill) drawShapeFill(g, wall, Math.min(q.ground, deviceScale));
   for (const wall of layer.walls ?? []) {
-    drawBody(g, wall, layer, doc, deviceScale);
+    if (wall.stroke !== false) drawBody(g, wall, layer, doc, deviceScale);
     for (const o of wall.openings) drawOpening(g, wall, o, layer, doc, deviceScale);
   }
 }

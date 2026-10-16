@@ -40,6 +40,7 @@ src/
     ground.ts     terrænmaske, penselstrøg, kørselslængdekodning
     geometry.ts   transformation, hit-test, skalering, rotation af genstande
     walls.ts      murgeometri (buelængde, stykker, huller)
+    shapes.ts     frihåndsforenkling, udjævning, firkant/ellipse, punkt i polygon
     scatter.ts    scatter-algoritmen (afstand, vand, mure)
     pick.ts       hvad ligger under musen
     resize.ts     ændr kortstørrelse (terræn, genstande og mure følger med; kan fortrydes)

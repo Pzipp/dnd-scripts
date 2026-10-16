@@ -1,4 +1,5 @@
 import type { Opening, OpeningKind, Wall } from './types';
+import { pointInPolygon } from './shapes';
 
 export type Pt = [number, number];
 
@@ -115,6 +116,8 @@ export const gapRanges = (wall: Wall): [number, number][] =>
 
 /** Er (x, y) tæt nok på murens krop (inden for halv tykkelse + tolerance)? */
 export function hitWall(wall: Wall, x: number, y: number, tolerance = 0): boolean {
+  if (wall.fill && wall.closed && pointInPolygon(wall.points as Pt[], x, y)) return true;
+  if (wall.stroke === false) return false;
   const n = nearestOnPath(pathOf(wall), x, y);
   return !!n && n.dist <= wall.thickness / 2 + tolerance;
 }

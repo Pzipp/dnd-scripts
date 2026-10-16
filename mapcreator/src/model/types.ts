@@ -33,7 +33,10 @@ export interface MapElement {
   params: Record<string, ParamValue>;
 }
 
-export type WallStyle = 'stone' | 'brick' | 'wood' | 'hedge' | 'cave' | 'cave_dark' | 'cave_ice';
+export type WallStyle =
+  | 'stone' | 'brick' | 'wood' | 'hedge' | 'cave' | 'cave_dark' | 'cave_ice'
+  // linjer uden åbninger: stier, broer, kløfter og hegn (se render/lines.ts)
+  | 'path_dirt' | 'path_gravel' | 'path_cobble' | 'bridge_wood' | 'bridge_stone' | 'bridge_rope' | 'cliff' | 'ravine' | 'fence';
 export type OpeningKind = 'opening' | 'door' | 'double_door' | 'gate' | 'window';
 
 /** Noget i en mur: en åbning, en dør, en port eller et vindue. Placeret ved buelængden `at` fra murens start. */
@@ -61,6 +64,14 @@ export interface Wall {
   thickness: number;
   seed: number;
   openings: Opening[];
+  /** Udfyldning (kun former): terrænmateriale inde i linjen. En lukket linje med `fill` er en form. */
+  fill?: { material: number };
+  /** Vend linjen: stilarter med forskellig inder- og yderside (klippekant, kløft, bro) vender den anden vej. */
+  flip?: boolean;
+  /** `false` = ingen kant, kun udfyldning (former). Standard: kant. */
+  stroke?: boolean;
+  /** Hvad den blev tegnet som (til navne og værktøjer); selve formen er altid punkterne. */
+  shape?: 'line' | 'rect' | 'ellipse' | 'free';
 }
 
 export type LayerType = 'ground' | 'floor' | 'objects' | 'walls' | 'effects';
@@ -72,7 +83,7 @@ export const LAYER_TYPE_LABEL: Record<LayerType, string> = {
   ground: 'Grund',
   floor: 'Gulv',
   objects: 'Genstande',
-  walls: 'Mure',
+  walls: 'Linjer og former',
   effects: 'Effekter',
 };
 
