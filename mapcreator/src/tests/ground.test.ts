@@ -6,6 +6,8 @@ import { History } from '../model/history';
 import { renderGroundTile, type PixelBuffer } from '../render/ground';
 import { isStoneMaterial, STONE_STYLES, stone, stoneAt } from '../render/stones';
 import { tileSignature } from '../render/groundCache';
+import { FULL_PROFILE, PROFILES } from '../render/quality';
+import { spriteScale } from '../render/sprites';
 import { MATERIALS } from '../render/materials';
 import { exportProblem, exportSize, safeFileName } from '../render/export';
 
@@ -327,5 +329,24 @@ describe('gulvlag', () => {
   it('fingeraftrykket afhænger af lagtypen', () => {
     const g = createGround(8, 8, 17);
     expect(tileSignature(g, 1, 0.5, 0, 0, true)).not.toBe(tileSignature(g, 1, 0.5, 0, 0, false));
+  });
+});
+
+describe('forhåndsvisningens kvalitet', () => {
+  it('Lav er lettere end Medium, og Medium er lettere end Høj; eksporten er fuld', () => {
+    const { low, medium, high } = PROFILES;
+    expect(low.ground).toBeLessThan(medium.ground);
+    expect(medium.ground).toBeLessThan(high.ground);
+    expect(low.dpr).toBeLessThanOrEqual(medium.dpr);
+    expect(low.sprite).toBeLessThan(high.sprite);
+    expect(low.shadow).toBeLessThan(high.shadow);
+    expect(FULL_PROFILE.ground).toBeGreaterThanOrEqual(high.ground);
+    expect(FULL_PROFILE.shadow).toBe(1);
+  });
+
+  it('genstandenes opløsning begrænses af kvaliteten', () => {
+    expect(spriteScale(2, PROFILES.low.sprite)).toBe(0.5);
+    expect(spriteScale(2, PROFILES.medium.sprite)).toBe(1);
+    expect(spriteScale(2)).toBe(2);
   });
 });

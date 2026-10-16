@@ -4,6 +4,7 @@ import { CELL_PX, hasGround, type Layer, type MapDoc, type MapElement, type Open
 import { midpoints, pathOf, pointAt, type Pt } from '../model/walls';
 import { drawOpening, drawWallsLayer, wallStyle } from './walls';
 import { HANDLES, handlePos } from '../model/geometry';
+import { profile } from './quality';
 import { drawElement, drawElementsLayer } from './sprites';
 import '../objects';
 
@@ -54,7 +55,7 @@ export function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, c
     }
     if (layer.type === 'objects' || layer.type === 'effects') {
       ctx.globalAlpha = layer.opacity;
-      drawElementsLayer(ctx, layer, doc, cam.zoom);
+      drawElementsLayer(ctx, layer, doc, cam.zoom, profile());
       ctx.globalAlpha = 1;
     }
     if (layer.type === 'walls') {
@@ -66,7 +67,7 @@ export function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, c
 
   if (view.ghosts?.length) {
     ctx.globalAlpha = view.ghostAlpha ?? 0.6;
-    for (const gh of view.ghosts) drawElement(ctx, gh.el, gh.layer, doc, cam.zoom);
+    for (const gh of view.ghosts) drawElement(ctx, gh.el, gh.layer, doc, cam.zoom, profile());
     ctx.globalAlpha = 1;
   }
   if (view.markers?.length) {

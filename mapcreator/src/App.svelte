@@ -1,5 +1,6 @@
 <script lang="ts">
   import { editor } from './model/store.svelte';
+  import { QUALITIES, QUALITY_LABEL, type Quality } from './render/quality';
   import LayerPanel from './ui/LayerPanel.svelte';
   import Inspector from './ui/Inspector.svelte';
   import Viewport from './ui/Viewport.svelte';
@@ -93,6 +94,11 @@
     <button onclick={() => editor.redo()} disabled={!editor.canRedo} title="Gentag (Ctrl+Y)">Gentag</button>
     <span class="sep"></span>
     <label class="chk"><input type="checkbox" bind:checked={editor.showGrid} /> Grid (kun visning)</label>
+    <label class="chk" title="Kvaliteten af forhåndsvisningen. Lav er hurtigst, Høj er pænest. Eksporten er altid i fuld kvalitet.">Kvalitet
+      <select value={editor.quality} onchange={(e) => editor.setQuality((e.currentTarget as HTMLSelectElement).value as Quality)}>
+        {#each QUALITIES as q}<option value={q}>{QUALITY_LABEL[q]}</option>{/each}
+      </select>
+    </label>
     <button onclick={() => editor.fitView()}>Hele kortet</button>
     <span class="msg" class:err={editor.error}>{editor.error || editor.status}</span>
   </header>

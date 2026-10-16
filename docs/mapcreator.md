@@ -43,7 +43,9 @@ Et grundlag (`type: ground`) har en maske med 4 × 4 celler pr. felt; hver celle
 
 Samme tegnekode bruges i forhåndsvisningen (i fliser og lavere opløsning, `render/groundCache.ts`) og i eksporten (fuld opløsning).
 
-**Gemte terrænfliser.** Terrænet er dyrt at regne (især på en telefon), så de færdigtegnede fliser gemmes som webp hos serveren, når kortet gemmes (`$USERDATA/mapcreator/bake/<kort>/<lag>/`). Hver flise har et fingeraftryk af de maskeceller, den er regnet ud fra (`tileSignature` i `groundCache.ts`: masken og stien omkring flisen, seed, skala og `GROUND_RENDER_VERSION`). Ved åbning hentes de fliser, hvis fingeraftryk stadig passer, og resten regnes forfra; et penselstrøg ændrer kun fingeraftrykket for de fliser, det rører, så kun de regnes og gemmes igen (ved næste Gem, eller automatisk lidt efter, at tegningen er færdig). Cachen kan slettes uden tab. Ændres `renderGroundTile` så billedet bliver et andet, skal `GROUND_RENDER_VERSION` hæves. Eksport i fuld opløsning bruger ikke de gemte fliser.
+**Kvalitet.** Knappen *Kvalitet* i topbjælken vælger forhåndsvisningens kvalitet: **Lav** (hurtigst, men stadig pæn), **Medium** (standard) eller **Høj** (den fulde forhåndsvisning). Valget gemmes i browseren (`localStorage`) og ændrer kun det, man ser og arbejder i: terrænets opløsning (0,2 / 0,35 / 0,5 pixels pr. verdenspixel), lærredets pixeltæthed på skærme med høj opløsning (1 / 1,5 / fuld), genstandenes tegneopløsning og skyggens sløring (`render/quality.ts`). **Eksporten er altid i fuld kvalitet** og påvirkes ikke.
+
+**Gemte terrænfliser.** Terrænet er dyrt at regne (især på en telefon), så de færdigtegnede fliser gemmes som webp hos serveren, når kortet gemmes (`$USERDATA/mapcreator/bake/<kort>/<lag>/<skala>/`, én mappe pr. kvalitet, så Lav, Medium og Høj ikke overskriver hinanden). Hver flise har et fingeraftryk af de maskeceller, den er regnet ud fra (`tileSignature` i `groundCache.ts`: masken og stien omkring flisen, seed, skala og `GROUND_RENDER_VERSION`). Ved åbning hentes de fliser, hvis fingeraftryk stadig passer, og resten regnes forfra; et penselstrøg ændrer kun fingeraftrykket for de fliser, det rører, så kun de regnes og gemmes igen (ved næste Gem, eller automatisk lidt efter, at tegningen er færdig). Cachen kan slettes uden tab. Ændres `renderGroundTile` så billedet bliver et andet, skal `GROUND_RENDER_VERSION` hæves. Eksport i fuld opløsning bruger ikke de gemte fliser.
 
 ## Genstande
 
@@ -121,7 +123,7 @@ Dokumentet (`mapcreator/src/model/types.ts`): `version`, `id`, `name`, `widthCel
 
 ## API (`/api/mapcreator/`)
 
-`GET maps` (liste), `GET|PUT|DELETE maps/<id>`; gemte terrænfliser: `GET maps/<id>/bake` (manifester), `GET maps/<id>/bake/<lag>/<tx>_<ty>.webp`, `POST maps/<id>/bake/<lag>` (multipart: `manifest` og `t_<tx>_<ty>`); egne genstande: `GET|POST assets`, `PATCH|DELETE assets/<id>`, `GET assets/<id>.webp` (se [mapcreator-format.md](mapcreator-format.md)). Id'er er `a-z0-9-`, 4 til 64 tegn. Ingen login: kun til internt brug.
+`GET maps` (liste), `GET|PUT|DELETE maps/<id>`; gemte terrænfliser: `GET maps/<id>/bake?scale=<skala*1000>` (manifester), `GET maps/<id>/bake/<lag>/<skala*1000>/<tx>_<ty>.webp`, `POST maps/<id>/bake/<lag>` (multipart: `manifest` og `t_<tx>_<ty>`); egne genstande: `GET|POST assets`, `PATCH|DELETE assets/<id>`, `GET assets/<id>.webp` (se [mapcreator-format.md](mapcreator-format.md)). Id'er er `a-z0-9-`, 4 til 64 tegn. Ingen login: kun til internt brug.
 
 ## Udvikling
 

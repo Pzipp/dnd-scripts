@@ -2,6 +2,7 @@ import type { MapDoc, Rect } from '../model/types';
 import { CELL_PX, hasGround } from '../model/types';
 import type { GroundData } from '../model/ground';
 import { GROUND_RENDER_VERSION, renderGroundTile } from './ground';
+import { profile } from './quality';
 
 const TILE = 256;
 /** Hvor langt (verdenspixels) en terrænændring kan påvirke tegningen uden for sig selv. */
@@ -60,7 +61,7 @@ export function tileSignature(ground: GroundData, seed: number, scale: number, t
  * så siden ikke fryser; et penselstrøg gentegner kun de fliser, det rører.
  */
 export class GroundCache {
-  scale = 0.5;
+  scale = 0.35;
   private entries = new Map<string, Entry>();
   private queue: { layerId: string; tx: number; ty: number }[] = [];
   private queued = new Set<string>();
@@ -92,7 +93,8 @@ export class GroundCache {
   sync(doc: MapDoc): void {
     const mw = doc.widthCells * CELL_PX;
     const mh = doc.heightCells * CELL_PX;
-    const scale = Math.min(0.5, 2400 / Math.max(mw, mh));
+    const p = profile();
+    const scale = Math.min(p.ground, p.groundEdge / Math.max(mw, mh));
     if (scale !== this.scale) {
       this.reset();
       this.scale = scale;

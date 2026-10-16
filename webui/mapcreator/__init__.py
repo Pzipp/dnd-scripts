@@ -33,6 +33,7 @@ MAX_ASSET_SIDE = 1024
 MAX_ASSETS = 2000
 LAYER_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 TILE_RE = re.compile(r"^\d{1,3}_\d{1,3}$")
+SCALE_RE = re.compile(r"^\d{1,5}$")
 SIG_RE = re.compile(r"^[a-f0-9]{16}$")
 MAX_BAKE_BYTES = 96 * 1024 * 1024
 MAX_BAKE_TILE = 4 * 1024 * 1024
@@ -188,19 +189,26 @@ def _prune_bake(map_id: str, layer_ids: set[str]) -> None:
             shutil.rmtree(sub, ignore_errors=True)
 
 
-def _layer_bake_dir(map_id: str, layer_id: str) -> Path:
+def _layer_bake_dir(map_id: str, layer_id: str, scale_key: str) -> Path:
+    """Fliserne gemmes pr. skala (kvalitet), så Lav, Medium og Høj ikke overskriver hinanden: <kort>/<lag>/<skala*1000>/."""
     if not LAYER_RE.match(layer_id):
         raise Fejl("Ugyldigt lag-id.")
-    return bake_dir(map_id) / layer_id
+    if not SCALE_RE.match(scale_key):
+        raise Fejl("Ugyldig skala.")
+    return bake_dir(map_id) / layer_id / scale_key
 
 
 @bp.get("/api/mapcreator/maps/<map_id>/bake")
 def get_bake(map_id: str):
+    """Manifesterne for én skala (`?scale=<skala*1000>`): {lag-id: manifest}."""
+    scale_key = request.args.get("scale", "")
+    if not SCALE_RE.match(scale_key):
+        raise Fejl("Ugyldig skala.")
     out = {}
     d = bake_dir(map_id)
     if d.is_dir():
         for sub in d.iterdir():
-            f = sub / "manifest.json"
+            f = sub / scale_key / "manifest.json"
             if sub.is_dir() and f.is_file():
                 try:
                     out[sub.name] = json.loads(f.read_text("utf-8"))
@@ -209,11 +217,11 @@ def get_bake(map_id: str):
     return jsonify(out)
 
 
-@bp.get("/api/mapcreator/maps/<map_id>/bake/<layer_id>/<tile>.webp")
-def get_bake_tile(map_id: str, layer_id: str, tile: str):
+@bp.get("/api/mapcreator/maps/<map_id>/bake/<layer_id>/<scale_key>/<tile>.webp")
+def get_bake_tile(map_id: str, layer_id: str, scale_key: str, tile: str):
     if not TILE_RE.match(tile):
         raise Fejl("Ugyldig flise.")
-    f = _layer_bake_dir(map_id, layer_id) / f"{tile}.webp"
+    f = _layer_bake_dir(map_id, layer_id, scale_key) / f"{tile}.webp"
     if not f.is_file():
         raise Fejl("Flisen findes ikke.", 404)
     head = f.read_bytes()[:12]
@@ -242,9 +250,13 @@ def post_bake(map_id: str, layer_id: str):
     version, scale, tile = m.get("version"), m.get("scale"), m.get("tile")
     if not isinstance(version, int) or not isinstance(tile, int) or not isinstance(scale, (int, float)) or isinstance(scale, bool):
         raise Fejl("Manifestet har ugyldige felter.")
-    d = _layer_bake_dir(map_id, layer_id)
+    if not 0 < scale <= 4:
+        raise Fejl("Ugyldig skala.")
+    d = _layer_bake_dir(map_id, layer_id, str(round(float(scale) * 1000)))
     with LOCK:
         d.mkdir(parents=True, exist_ok=True)
+        for old in d.parent.glob("*.*"):  # ældre filer uden skala-mappe
+            old.unlink(missing_ok=True)
         for name, fs in request.files.items():
             if not name.startswith("t_") or not TILE_RE.match(name[2:]) or name[2:] not in sigs:
                 raise Fejl("Ugyldig flise i uploaden.")

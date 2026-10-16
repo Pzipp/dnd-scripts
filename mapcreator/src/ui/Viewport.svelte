@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, untrack } from 'svelte';
   import { editor } from '../model/store.svelte';
   import { zoomAt } from '../render/camera';
   import { groundCache } from '../render/groundCache';
+  import { profile } from '../render/quality';
   import { drawScene } from '../render/scene';
   import { screenToWorld, worldToScreen } from '../render/camera';
   import { HANDLES, handlePos, resizeBy, rotationTo, type HandleId } from '../model/geometry';
@@ -21,6 +22,13 @@
   let firstFit = true;
   /** Musens position i verdenskoordinater (til penselringen). */
   let hover: { x: number; y: number } | null = null;
+
+  let applySize: (() => void) | null = null;
+  // kvaliteten ændres: tilpas lærredets opløsning
+  $effect(() => {
+    void editor.quality;
+    untrack(() => applySize?.());
+  });
 
   function schedule() {
     if (queued) return;
@@ -88,9 +96,10 @@
   });
 
   onMount(() => {
-    const ro = new ResizeObserver(() => {
+    applySize = () => {
       const r = box.getBoundingClientRect();
-      dpr = window.devicePixelRatio || 1;
+      // lavere kvalitet bruger færre pixels på skærme med høj opløsning
+      dpr = Math.min(window.devicePixelRatio || 1, profile().dpr);
       w = Math.max(1, Math.floor(r.width));
       h = Math.max(1, Math.floor(r.height));
       canvas.width = Math.floor(w * dpr);
@@ -101,7 +110,8 @@
         editor.fitView();
       }
       schedule();
-    });
+    };
+    const ro = new ResizeObserver(() => applySize?.());
     ro.observe(box);
     return () => ro.disconnect();
   });

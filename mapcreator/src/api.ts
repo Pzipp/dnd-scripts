@@ -98,9 +98,13 @@ export interface BakeManifest {
   sigs: Record<string, string>;
 }
 
-export const loadBakeManifests = (mapId: string) => call<Record<string, BakeManifest>>(`${BASE}/maps/${encodeURIComponent(mapId)}/bake`);
-export const bakeTileUrl = (mapId: string, layerId: string, key: string, sig: string) =>
-  `${BASE}/maps/${encodeURIComponent(mapId)}/bake/${encodeURIComponent(layerId)}/${key}.webp?s=${sig}`;
+/** Skalaen skrives som heltal (skala * 1000), så den kan stå i en adresse. */
+export const scaleKey = (scale: number): number => Math.round(scale * 1000);
+
+export const loadBakeManifests = (mapId: string, scale: number) =>
+  call<Record<string, BakeManifest>>(`${BASE}/maps/${encodeURIComponent(mapId)}/bake?scale=${scaleKey(scale)}`);
+export const bakeTileUrl = (mapId: string, layerId: string, scale: number, key: string, sig: string) =>
+  `${BASE}/maps/${encodeURIComponent(mapId)}/bake/${encodeURIComponent(layerId)}/${scaleKey(scale)}/${key}.webp?s=${sig}`;
 export const saveBake = (mapId: string, layerId: string, manifest: BakeManifest, tiles: Map<string, Blob>) => {
   const form = new FormData();
   form.append('manifest', JSON.stringify(manifest));

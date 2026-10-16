@@ -12,6 +12,7 @@ import { ScatterStroke, elementsInCircle } from './scatter';
 import { hitWall, nearestOnPath, pathLength, pathOf, type Pt } from './walls';
 import { defaultThickness, OPENING_KINDS } from '../render/walls';
 import { groundCache } from '../render/groundCache';
+import { initialQuality, saveQuality, setQualityMode, type Quality } from '../render/quality';
 import { MATERIAL_GRASS } from '../render/materials';
 import { History, type Command } from './history';
 import { newId, newSeed } from './ids';
@@ -555,6 +556,25 @@ class Editor {
     this.onServer = false;
     this.dirty = true;
   }
+  /** Forhåndsvisningens kvalitet (Lav, Medium, Høj). Eksporten er altid i fuld kvalitet. */
+  quality = $state<Quality>(initialQuality());
+
+  async setQuality(q: Quality): Promise<void> {
+    if (q === this.quality) return;
+    this.quality = q;
+    saveQuality(q);
+    setQualityMode(q);
+    groundCache.reset();
+    groundCache.paused = true;
+    try {
+      groundCache.sync(this.doc);
+      if (this.onServer && !this.dirty) await this.useBake(this.doc, this.doc.id);
+    } finally {
+      groundCache.paused = false;
+      this.drawRev++;
+    }
+  }
+
   async open(id: string): Promise<void> {
     groundCache.paused = true; // hold tegningen, til de gemte fliser er hentet
     try {
@@ -563,16 +583,7 @@ class Editor {
       this.onServer = true;
       this.error = '';
       this.status = `Åbnede "${this.doc.name}"`;
-      try {
-        const baked = await api.loadBakeManifests(id);
-        await groundCache.applyBake(doc, baked, async (layerId, key, sig) => {
-          const r = await fetch(api.bakeTileUrl(id, layerId, key, sig));
-          if (!r.ok) throw new Error(`flise ${key}: ${r.status}`);
-          return r.blob();
-        });
-      } catch {
-        /* gemte fliser er kun en genvej: uden dem regnes terrænet som sædvanligt */
-      }
+      await this.useBake(doc, id);
     } catch (e) {
       this.error = (e as Error).message;
     } finally {
@@ -580,6 +591,22 @@ class Editor {
       this.drawRev++;
     }
   }
+  /** Hent de gemte terrænfliser for den valgte kvalitet; mangler de, regnes terrænet som sædvanligt. */
+  private async useBake(doc: MapDoc, id: string): Promise<void> {
+    try {
+      groundCache.sync(doc);
+      const scale = groundCache.scale;
+      const baked = await api.loadBakeManifests(id, scale);
+      await groundCache.applyBake(doc, baked, async (layerId, key, sig) => {
+        const r = await fetch(api.bakeTileUrl(id, layerId, scale, key, sig));
+        if (!r.ok) throw new Error(`flise ${key}: ${r.status}`);
+        return r.blob();
+      });
+    } catch {
+      /* gemte fliser er kun en genvej */
+    }
+  }
+
   async save(): Promise<void> {
     try {
       await api.saveMap(this.doc);

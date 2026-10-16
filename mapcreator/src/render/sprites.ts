@@ -1,5 +1,6 @@
 import { resolveKind, type ObjectKind } from '../objects';
 import type { Layer, MapDoc, MapElement } from '../model/types';
+import { FULL_PROFILE, type QualityProfile } from './quality';
 
 /** Tegner hver genstand én gang til et lille lærred og genbruger det, så mange genstande kan tegnes hurtigt. */
 interface Sprite {
@@ -15,8 +16,8 @@ const MAX_PIXELS = 6_000_000;
 const cache = new Map<string, Sprite>();
 
 /** Sprite-opløsning (pixels pr. verdenspixel) ud fra det samlede zoom: potens af 2, så cachen genbruges. */
-export function spriteScale(deviceScale: number): number {
-  return Math.min(2, Math.max(0.125, 2 ** Math.ceil(Math.log2(Math.max(deviceScale, 1e-6)))));
+export function spriteScale(deviceScale: number, cap = 2): number {
+  return Math.min(cap, Math.max(0.125, 2 ** Math.ceil(Math.log2(Math.max(deviceScale, 1e-6)))));
 }
 
 function paramsKey(p: MapElement['params']): string {
@@ -60,7 +61,7 @@ export function sortedElements(layer: Layer): MapElement[] {
  * Tegner én genstand med skygge. `deviceScale` er den samlede skalering på lærredet (zoom i forhåndsvisningen,
  * pixels pr. verdenspixel i eksporten); skyggens forskydning og sløring regnes i lærredets pixels.
  */
-export function drawElement(ctx: CanvasRenderingContext2D, el: MapElement, layer: Layer, doc: Pick<MapDoc, 'lightAngle'>, deviceScale: number): void {
+export function drawElement(ctx: CanvasRenderingContext2D, el: MapElement, layer: Layer, doc: Pick<MapDoc, 'lightAngle'>, deviceScale: number, q: QualityProfile = FULL_PROFILE): void {
   const kind = resolveKind(el.kind);
   ctx.save();
   ctx.translate(el.x, el.y);
@@ -73,12 +74,12 @@ export function drawElement(ctx: CanvasRenderingContext2D, el: MapElement, layer
     ctx.restore();
     return;
   }
-  const spr = getSprite(el, kind, spriteScale(deviceScale));
+  const spr = getSprite(el, kind, spriteScale(deviceScale, q.sprite));
   if (kind.shadow > 0) {
     const dist = kind.shadow + (layer.height + el.z) * 6;
     const a = (doc.lightAngle * Math.PI) / 180;
     ctx.shadowColor = 'rgba(0,0,0,0.38)';
-    ctx.shadowBlur = dist * 0.55 * deviceScale;
+    ctx.shadowBlur = dist * 0.55 * q.shadow * deviceScale;
     ctx.shadowOffsetX = -Math.cos(a) * dist * deviceScale;
     ctx.shadowOffsetY = -Math.sin(a) * dist * deviceScale;
   }
@@ -86,6 +87,6 @@ export function drawElement(ctx: CanvasRenderingContext2D, el: MapElement, layer
   ctx.restore();
 }
 
-export function drawElementsLayer(ctx: CanvasRenderingContext2D, layer: Layer, doc: Pick<MapDoc, 'lightAngle'>, deviceScale: number): void {
-  for (const el of sortedElements(layer)) drawElement(ctx, el, layer, doc, deviceScale);
+export function drawElementsLayer(ctx: CanvasRenderingContext2D, layer: Layer, doc: Pick<MapDoc, 'lightAngle'>, deviceScale: number, q: QualityProfile = FULL_PROFILE): void {
+  for (const el of sortedElements(layer)) drawElement(ctx, el, layer, doc, deviceScale, q);
 }
