@@ -2,6 +2,11 @@
 
 Alle prompts til billeder, vi har lavet (eller vil lave) til kortbyggeren. `[x]` = billedet er lavet og lagt ind som materiale i `mapcreator/src/assets/mat/` (se `docs/mapcreator.md`, afsnittet Materialer); `[ ]` = ikke lavet endnu.
 
+Sådan bruges billederne bagefter (næste skridt, når de er lavet):
+
+- **Teksturer:** læg PNG'en et sted, hvor Claude kan læse den (fx mappen `Ground paint`, originaler ligger udenfor git), og bed om at få den tilføjet som malemateriale. Den formindskes til 768 px WebP i `mapcreator/src/assets/mat/` og får et nyt id bagerst i `render/imageMaterials.ts`. Marmor får `scale` = 250/768.
+- **Genstandsark og totter:** importér arket i kortbyggeren med *Egne genstande …*, eller bed Claude skære dem ud. Totter lægges i familien *Høje græstotter* (se `docs/mapcreator-objects.md`).
+
 Regler for prompterne:
 
 - Designer tillader højst **1000 tegn** pr. prompt. Alle prompts her er under.
