@@ -43,6 +43,7 @@ export const MATERIALS: Material[] = [
   { id: 21, key: 'void_ice', name: 'Tomrum, iskant', swatch: '#0d1217', group: 'Tomrum' },
   { id: 17, key: 'planks', name: 'Trægulv', swatch: '#8a5f38', group: 'Veje og gulve', crisp: true, pathable: true },
   { id: 22, key: 'planks_oak', name: 'Plankegulv, eg', swatch: '#8b5a2f', group: 'Veje og gulve', pathable: true },
+  { id: 23, key: 'planks_broken', name: 'Plankegulv, ødelagt', swatch: '#5a5047', group: 'Veje og gulve', pathable: true },
 ];
 
 const BY_ID = new Map(MATERIALS.map((m) => [m.id, m]));
@@ -282,11 +283,12 @@ export function shade(id: number, x: number, y: number, seed: number, margin: nu
       return;
     }
     case 22:
+    case 23:
       // malet plankegulv (billede, se imageTextures.ts); brun, til billedet er læst ind
       if (!sampleTexture(id, x, y, o)) {
-        o[0] = 139;
-        o[1] = 90;
-        o[2] = 47;
+        o[0] = id === 22 ? 139 : 90;
+        o[1] = id === 22 ? 90 : 80;
+        o[2] = id === 22 ? 47 : 71;
       }
       return;
     case 14:

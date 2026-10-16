@@ -1,4 +1,5 @@
 import planksOak from '../assets/planks_oak.jpg';
+import planksBroken from '../assets/planks_broken.jpg';
 
 /**
  * Materialer, der er et gentagende billede (maling i stedet for udregnet mønster). Billedet læses ind én gang; `sampleTexture`
@@ -11,7 +12,10 @@ interface Tex {
 }
 
 /** Billedet og hvor stort det vises: verdenspixels pr. billedpixel (billedet formindskes ved indlæsningen). */
-const SOURCES: Record<number, { url: string; scale: number }> = { 22: { url: planksOak, scale: 0.25 } };
+const SOURCES: Record<number, { url: string; scale: number }> = {
+  22: { url: planksOak, scale: 0.25 },
+  23: { url: planksBroken, scale: 0.36 },
+};
 const loaded = new Map<number, Tex>();
 
 async function loadOne(id: number, url: string, scale: number): Promise<void> {
