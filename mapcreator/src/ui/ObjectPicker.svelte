@@ -85,7 +85,7 @@
 </div>
 
 <style>
-  .picker { max-height: 52vh; overflow-y: auto; padding-right: 2px; margin-bottom: 8px; }
+  .picker { max-height: calc(100vh - 300px); min-height: 200px; overflow-y: auto; padding-right: 2px; margin-bottom: 8px; }
   input[type='search'] { width: 100%; margin-bottom: 6px; background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 4px 8px; }
   .cats { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
   .cats button { padding: 2px 8px; font-size: 12px; }

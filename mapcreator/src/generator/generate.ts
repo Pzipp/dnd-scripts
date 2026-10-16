@@ -375,7 +375,7 @@ class Generator {
     let list = allKinds().filter((o) => !o.key.startsWith('custom-'));
     if (spec.keys) list = list.filter((o) => spec.keys!.includes(o.key));
     else {
-      if (spec.families) list = list.filter((o) => spec.families!.includes(o.family));
+      if (spec.families) list = list.filter((o) => spec.families!.includes(o.origin ?? o.family));
       if (spec.tags) {
         const tagged = list.filter((o) => tagsOf(o).some((t) => spec.tags!.includes(t)));
         if (tagged.length) list = tagged;
@@ -488,7 +488,7 @@ class Generator {
           }
           if (keepClear.some(([dx, dy]) => Math.hypot(dx - x, dy - y) < 2.2)) continue;
           const el = this.element(kind, x, y, 1, rot);
-          const overlay = kind.family === 'light' || kind.family === 'fog';
+          const overlay = (kind.origin ?? kind.family) === 'light' || (kind.origin ?? kind.family) === 'fog';
           if (!overlay && this.occ.hit(el.x, el.y, radiusOf(el), 1)) continue;
           if (!overlay) this.occ.add(el.x, el.y, radiusOf(el));
           (overlay ? this.effects : this.objects).push(el);

@@ -1,12 +1,14 @@
 import type { LayerType, ParamValue } from '../model/types';
 
-export type CategoryKey = 'nature' | 'interior' | 'remains' | 'architecture' | 'effects' | 'own';
+export type CategoryKey = 'nature' | 'animals' | 'interior' | 'architecture' | 'hazards' | 'remains' | 'effects' | 'own';
 
 export const CATEGORIES: { key: CategoryKey; label: string }[] = [
   { key: 'nature', label: 'Natur' },
+  { key: 'animals', label: 'Dyr' },
   { key: 'interior', label: 'Indretning' },
-  { key: 'remains', label: 'Levn' },
   { key: 'architecture', label: 'Arkitektur' },
+  { key: 'hazards', label: 'Fælder og farer' },
+  { key: 'remains', label: 'Levn' },
   { key: 'effects', label: 'Lys og effekter' },
   { key: 'own', label: 'Egne' },
 ];
@@ -20,26 +22,8 @@ export interface Family {
   randomDefault: boolean;
 }
 
-export const FAMILIES: Family[] = [
-  { key: 'tree', label: 'Træer', category: 'nature', randomDefault: true },
-  { key: 'rock', label: 'Sten', category: 'nature', randomDefault: true },
-  { key: 'plant', label: 'Planter', category: 'nature', randomDefault: true },
-  { key: 'wood', label: 'Træstammer', category: 'nature', randomDefault: false },
-  { key: 'table', label: 'Borde', category: 'interior', randomDefault: false },
-  { key: 'seat', label: 'Siddepladser', category: 'interior', randomDefault: false },
-  { key: 'barrel', label: 'Tønder', category: 'interior', randomDefault: false },
-  { key: 'crate', label: 'Kasser', category: 'interior', randomDefault: false },
-  { key: 'chest', label: 'Kister', category: 'interior', randomDefault: false },
-  { key: 'bed', label: 'Senge', category: 'interior', randomDefault: false },
-  { key: 'corpse', label: 'Lig', category: 'remains', randomDefault: false },
-  { key: 'blood', label: 'Blod', category: 'remains', randomDefault: false },
-  { key: 'bones', label: 'Knogler', category: 'remains', randomDefault: true },
-  { key: 'pillar', label: 'Piller', category: 'architecture', randomDefault: false },
-  { key: 'stairs', label: 'Trapper', category: 'architecture', randomDefault: false },
-  { key: 'rubble', label: 'Murbrokker', category: 'architecture', randomDefault: true },
-  { key: 'light', label: 'Lys', category: 'effects', randomDefault: false },
-  { key: 'fog', label: 'Tåge', category: 'effects', randomDefault: false },
-];
+/** Familierne i den rækkefølge, de vises i vælgeren (se `taxonomy.ts`). Egne genstande tilføjer deres egen. */
+export const FAMILIES: Family[] = [];
 
 export type ParamDef =
   | { key: string; label: string; type: 'select'; options: { value: string; label: string }[]; default: string }
@@ -58,6 +42,8 @@ export interface ObjectKind {
   key: string;
   /** Familien (se FAMILIES), fx 'tree'. */
   family: string;
+  /** Den familie, genstanden blev lavet i, før den blev flyttet (se `taxonomy.ts`). Generatoren og tags bruger den. */
+  origin?: string;
   /** Navn på varianten, fx "Birk". */
   name: string;
   /** Standardstørrelse i felter. */

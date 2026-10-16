@@ -146,3 +146,22 @@ describe('genstandskommandoer', () => {
     expect(e.params).toEqual({ x: 1 });
   });
 });
+
+describe('ordningen af genstande (taxonomy)', () => {
+  it('alle familier har genstande og en kendt kategori, og alle genstande ligger i en kendt familie', async () => {
+    const { FAMILIES, CATEGORIES, allKinds } = await import('../objects');
+    const cats = new Set(CATEGORIES.map((c) => c.key));
+    for (const f of FAMILIES) {
+      expect(cats.has(f.category), f.key).toBe(true);
+      expect(allKinds().some((k) => k.family === f.key), `tom familie ${f.key}`).toBe(true);
+    }
+    const fams = new Set(FAMILIES.map((f) => f.key));
+    for (const k of allKinds()) expect(fams.has(k.family), k.key).toBe(true);
+  });
+  it('flyttede genstande bevarer deres tags og oprindelige familie', async () => {
+    const { getKind, tagsOf } = await import('../objects');
+    const k = getKind('tree_spruce')!;
+    expect(k.origin).toBe('tree');
+    expect(tagsOf(k)).toContain('arctic');
+  });
+});

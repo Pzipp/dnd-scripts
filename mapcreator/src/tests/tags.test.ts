@@ -6,7 +6,8 @@ const draw = () => {};
 
 describe('tags', () => {
   it('tabellerne peger kun på familier og varianter, der findes', () => {
-    for (const f of Object.keys(FAMILY_TAGS)) expect(FAMILIES.some((x) => x.key === f), `familie ${f}`).toBe(true);
+    // tags følger genstandens oprindelige familie (se taxonomy.ts), så en familie, der er slået sammen, skal stadig være oprindelsen for nogen
+    for (const f of Object.keys(FAMILY_TAGS)) expect(allKinds().some((k) => (k.origin ?? k.family) === f) || FAMILIES.some((x) => x.key === f), `familie ${f}`).toBe(true);
     for (const k of Object.keys(KIND_TAGS)) expect(getKind(k), `variant ${k}`).toBeDefined();
   });
 

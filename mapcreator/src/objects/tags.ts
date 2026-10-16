@@ -125,8 +125,8 @@ export const KIND_TAGS: Record<string, Tag[]> = {
 };
 
 /** Alle tags for en variant: familiens + variantens egne. */
-export function tagsOf(kind: Pick<ObjectKind, 'key' | 'family'> & { tags?: string[] }): Tag[] {
-  const out = new Set<Tag>([...(FAMILY_TAGS[kind.family] ?? []), ...(KIND_TAGS[kind.key] ?? []), ...((kind.tags ?? []) as Tag[])]);
+export function tagsOf(kind: Pick<ObjectKind, 'key' | 'family'> & { origin?: string; tags?: string[] }): Tag[] {
+  const out = new Set<Tag>([...(FAMILY_TAGS[kind.origin ?? kind.family] ?? []), ...(KIND_TAGS[kind.key] ?? []), ...((kind.tags ?? []) as Tag[])]);
   return [...out];
 }
 

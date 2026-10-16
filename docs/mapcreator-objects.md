@@ -31,6 +31,7 @@ Skal et billede erstattes, så læg en ny fil med samme nøgle (filen overskrive
 | Sti | Hvad |
 |---|---|
 | `registry.ts` | Typerne (`ObjectKind`, `Family`, `DrawInput`), `kind({...})`, `FAMILIES`, opslag |
+| `taxonomy.ts` | Den samlede ordning: familier, kategorier og hvilke genstande der er flyttet |
 | `tags.ts` | Tags-ordforrådet og tabellerne over familiernes og varianternes tags |
 | `util.ts` | Fælles tegnehjælp: `rng`, `blob`, `smooth`, `roundRect`, `planks`, `softDot`, farver |
 | `nature.ts`, `interior.ts`, `remains.ts`, `architecture.ts`, `effects.ts` | De oprindelige basisgenstande |
@@ -76,7 +77,7 @@ Regler:
 
 ## Familier og tags
 
-En **familie** samler varianter (Træer, Borde, Tønder). Den har `category` (`nature | interior | remains | architecture | effects`) og `randomDefault` (vælges "Tilfældig" automatisk, når man klikker på familien i vælgeren; til natur, der skal spredes). Nye familier lægges i `FAMILIES` (grundfamilier) eller i `...Families` i den pakkes `index.ts`.
+En **familie** samler varianter (Træer, Borde, Tønder). Den har `category` (`nature | animals | interior | architecture | hazards | remains | effects`) og `randomDefault` (vælges "Tilfældig" automatisk, når man klikker på familien i vælgeren; til natur, der skal spredes). **Alle familier står samlet i `objects/taxonomy.ts`** (`FINAL_FAMILIES`), uanset hvilken pakkemappe genstandene er skrevet i; en ny familie lægges dér. En genstand kan skrives med en hvilken som helst familie i sin pakke: `taxonomy.ts` flytter den (`FAMILY_MERGE` for hele familier, `KIND_MOVE` for enkelte genstande), og `origin` husker den oprindelige familie, så generatorens temaer og tags virker uændret. Genstandens nøgle ændres aldrig.
 
 **Tags** (`tags.ts`) beskriver, hvor en genstand hører hjemme: `forest`, `swamp`, `desert`, `arctic`, `mountain`, `cave`, `village`, `city`, `tavern`, `house`, `dungeon`, `crypt`, `graveyard`, `ruin`, `rich`, `poor` m.fl. En variants tags er familiens (`FAMILY_TAGS`) + enkeltes ekstra (`KIND_TAGS`) + `tags` på varianten. Alle varianter skal have mindst ét tag; `tests/tags.test.ts` tjekker det. Det er tags og familier, en generator bygger på (`tagsOf`), så **nye og forbedrede genstande kommer med uden rettelser i generatoren**.
 

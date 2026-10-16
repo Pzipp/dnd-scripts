@@ -1,5 +1,5 @@
 import { assetUrl, listAssets, type AssetItem } from '../api';
-import { FAMILIES, kind, registerFamily, replaceKindsWithPrefix, type ObjectKind } from '../objects';
+import { familyAlias, FAMILIES, kind, registerFamily, replaceKindsWithPrefix, type ObjectKind } from '../objects';
 
 /** Egne genstande: billeder, brugeren har importeret. De registreres som almindelige varianter med nøglen `custom-<id>`. */
 export const ASSET_PREFIX = 'custom-';
@@ -21,7 +21,8 @@ async function loadImage(id: string): Promise<HTMLImageElement> {
 }
 
 function toKind(item: AssetItem): ObjectKind {
-  const family = FAMILIES.some((f) => f.key === item.family) ? item.family : OWN_FAMILY;
+  const wanted = familyAlias(item.family);
+  const family = FAMILIES.some((f) => f.key === wanted) ? wanted : OWN_FAMILY;
   return kind({
     key: assetKey(item.id),
     family,
