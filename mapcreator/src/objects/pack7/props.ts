@@ -52,7 +52,7 @@ export function candle(g: G, x: number, y: number, s: number, lit = true, col: R
 }
 
 export function steam(g: G, r: Rnd, x: number, y: number, rad: number, n = 5, a = 0.2): void {
-  for (let i = 0; i < n; i++) softDot(g, x + (r() - 0.5) * rad, y + (r() - 0.5) * rad, rad * (0.5 + r() * 0.5), [240, 244, 250], a);
+  for (let i = 0; i < n; i++) softDot(g, x + (r() - 0.5) * rad * 0.3, y + (r() - 0.5) * rad * 0.3, rad * (0.25 + r() * 0.2), [240, 244, 250], a * 1.4);
 }
 
 export function goblet(g: G, x: number, y: number, s: number, wine: RGB | null = [120, 24, 40], metal: RGB = [200, 170, 70]): void {
