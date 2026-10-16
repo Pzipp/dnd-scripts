@@ -2,7 +2,7 @@ import planksOak from '../assets/planks_oak.jpg';
 
 /**
  * Materialer, der er et gentagende billede (maling i stedet for udregnet mønster). Billedet læses ind én gang; `sampleTexture`
- * slår op med gentagelse i begge retninger og blød overgang mellem pixels. Én billedpixel er én verdenspixel ved mønsterskala 100 %.
+ * slår op med gentagelse i begge retninger og blød overgang mellem pixels. Billedet formindskes ved indlæsningen, så én billedpixel er én verdenspixel ved mønsterskala 100 %.
  */
 interface Tex {
   w: number;
@@ -10,18 +10,20 @@ interface Tex {
   data: Uint8ClampedArray;
 }
 
-const SOURCES: Record<number, string> = { 22: planksOak };
+/** Billedet og hvor stort det vises: verdenspixels pr. billedpixel (billedet formindskes ved indlæsningen). */
+const SOURCES: Record<number, { url: string; scale: number }> = { 22: { url: planksOak, scale: 0.25 } };
 const loaded = new Map<number, Tex>();
 
-async function loadOne(id: number, url: string): Promise<void> {
+async function loadOne(id: number, url: string, scale: number): Promise<void> {
   const img = new Image();
   img.src = url;
   await img.decode();
   const c = document.createElement('canvas');
-  c.width = img.naturalWidth;
-  c.height = img.naturalHeight;
+  c.width = Math.max(1, Math.round(img.naturalWidth * scale));
+  c.height = Math.max(1, Math.round(img.naturalHeight * scale));
   const ctx = c.getContext('2d', { willReadFrequently: true })!;
-  ctx.drawImage(img, 0, 0);
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(img, 0, 0, c.width, c.height);
   loaded.set(id, { w: c.width, h: c.height, data: ctx.getImageData(0, 0, c.width, c.height).data });
 }
 
@@ -29,7 +31,7 @@ async function loadOne(id: number, url: string): Promise<void> {
 export const texturesReady: Promise<void> =
   typeof document === 'undefined' || typeof Image === 'undefined'
     ? Promise.resolve()
-    : Promise.all(Object.entries(SOURCES).map(([id, url]) => loadOne(+id, url).catch(() => undefined))).then(() => undefined);
+    : Promise.all(Object.entries(SOURCES).map(([id, v]) => loadOne(+id, v.url, v.scale).catch(() => undefined))).then(() => undefined);
 
 export const isImageMaterial = (id: number): boolean => id in SOURCES;
 
