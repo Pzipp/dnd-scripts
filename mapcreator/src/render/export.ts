@@ -1,5 +1,5 @@
 import { CELL_PX, hasGround, type ExportFormat, type ExportPreset, type MapDoc } from '../model/types';
-import { renderGroundTile } from './ground';
+import { drawPaintLayer, materializeAll } from './paintView';
 import { drawElementsLayer } from './sprites';
 import { drawWallsLayer } from './walls';
 import '../objects';
@@ -13,7 +13,6 @@ export const FORMATS: Record<ExportFormat, { mime: string; ext: string; label: s
 export const PX_PER_CELL_OPTIONS = [25, 50, 75, 100];
 const MAX_SIDE = 16384;
 const MAX_PIXELS = 120_000_000;
-const TILE = 512;
 
 export function exportSize(doc: Pick<MapDoc, 'widthCells' | 'heightCells'>, preset: Pick<ExportPreset, 'pxPerCell'>) {
   return { w: doc.widthCells * preset.pxPerCell, h: doc.heightCells * preset.pxPerCell };
@@ -44,7 +43,7 @@ export function includedLayers(doc: MapDoc, preset: ExportPreset) {
 
 const yieldToUi = () => new Promise<void>((r) => setTimeout(r, 0));
 
-/** Tegner kortet i fuld opløsning (fliser, så siden ikke fryser) og returnerer billedfilen. */
+/** Tegner kortet i den valgte opløsning lag for lag (så siden ikke fryser) og returnerer billedfilen. */
 export async function renderExport(doc: MapDoc, preset: ExportPreset, onProgress?: (done: number) => void): Promise<Blob> {
   const problem = exportProblem(doc, preset);
   if (problem) throw new Error(problem);
@@ -62,14 +61,10 @@ export async function renderExport(doc: MapDoc, preset: ExportPreset, onProgress
   }
 
   const layers = includedLayers(doc, preset);
-  const tilesX = Math.ceil(w / TILE);
-  const tilesY = Math.ceil(h / TILE);
-  const total = Math.max(1, layers.reduce((n, l) => n + (hasGround(l.type) ? tilesX * tilesY : 1), 0));
+  const total = Math.max(1, layers.length);
   let done = 0;
-  const tmp = document.createElement('canvas');
-  tmp.width = TILE;
-  tmp.height = TILE;
-  const tctx = tmp.getContext('2d')!;
+  // baggrunde og ældre lag tegnes færdige først
+  await materializeAll(doc);
 
   for (const layer of layers) {
     if (layer.type === 'objects' || layer.type === 'effects') {
@@ -92,24 +87,16 @@ export async function renderExport(doc: MapDoc, preset: ExportPreset, onProgress
       await yieldToUi();
       continue;
     }
-    for (let ty = 0; ty < tilesY; ty++) {
-      for (let tx = 0; tx < tilesX; tx++) {
-        const x = tx * TILE;
-        const y = ty * TILE;
-        const tw = Math.min(TILE, w - x);
-        const th = Math.min(TILE, h - y);
-        if (hasGround(layer.type) && layer.ground) {
-          const img = tctx.createImageData(tw, th);
-          renderGroundTile(img, layer.ground, doc.seed, x / scale, y / scale, scale, layer.type === 'floor');
-          tctx.putImageData(img, 0, 0);
-          ctx.globalAlpha = layer.opacity;
-          ctx.drawImage(tmp, 0, 0, tw, th, x, y, tw, th);
-          ctx.globalAlpha = 1;
-        }
-        onProgress?.(++done / total);
-        await yieldToUi();
-      }
+    if (hasGround(layer.type) && layer.paint) {
+      ctx.save();
+      ctx.scale(scale, scale);
+      ctx.globalAlpha = layer.opacity;
+      ctx.imageSmoothingQuality = 'high';
+      drawPaintLayer(ctx, layer.paint, null, scale);
+      ctx.restore();
     }
+    onProgress?.(++done / total);
+    await yieldToUi();
   }
 
   return new Promise<Blob>((resolve, reject) => {

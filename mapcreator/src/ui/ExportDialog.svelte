@@ -69,6 +69,7 @@
     sentRef = '';
     message = `Tegner "${p.name}" …`;
     try {
+      await editor.whenLoaded();
       const blob = await renderExport(editor.doc, p, (d) => (progress = d));
       const mb = `${(blob.size / 1e6).toFixed(1)} MB`;
       if (p.target?.kind === 'vtt') {

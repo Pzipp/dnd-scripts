@@ -1,6 +1,6 @@
 import type { Command } from './history';
-import { writeChange, type CellChange } from './ground';
-import type { Layer, MapDoc, MapElement, Opening, Wall } from './types';
+import { snapshotBytes, swapTiles, type FillSpec, type LazySource, type PaintData, type TileSnapshot } from './paint';
+import type { Layer, MapDoc, MapElement, Opening, Rect, Wall } from './types';
 
 function indexOf(doc: MapDoc, id: string): number {
   const i = doc.layers.findIndex((l) => l.id === id);
@@ -111,18 +111,66 @@ export function renameDoc(name: string): Command {
   };
 }
 
-/** Maler eller fylder celler i et grundlag. Selve strøget er allerede tegnet, når kommandoen køres første gang. */
-export function paintCells(layerId: string, change: CellChange): Command {
-  const write = (doc: MapDoc, values: Uint8Array) => {
-    const g = doc.layers[indexOf(doc, layerId)]!.ground;
-    if (!g) throw new Error('Laget har ingen terrænmaske.');
-    writeChange(g, change, values);
+/**
+ * Et penselstrøg på et malet lag. Selve strøget er allerede tegnet, når kommandoen køres første gang; `before` er fliserne, som de
+ * var før. Fortryd og gentag bytter fliserne med det, kommandoen holder på (se `swapTiles`).
+ */
+export function paintTiles(layerId: string, before: TileSnapshot, rect: Rect, label = 'Mal'): Command {
+  let first = true;
+  const swap = (doc: MapDoc) => {
+    const p = doc.layers[indexOf(doc, layerId)]!.paint;
+    if (!p) throw new Error('Laget har intet malet underlag.');
+    swapTiles(p, before);
   };
   return {
-    label: change.target === 'path' ? 'Mal sti' : 'Mal terræn',
-    touches: { layerId, rect: change.rect },
-    apply: (doc) => write(doc, change.after),
-    revert: (doc) => write(doc, change.before),
+    label,
+    touches: { layerId, rect },
+    get bytes() {
+      return snapshotBytes(before);
+    },
+    apply(doc) {
+      if (first) first = false;
+      else swap(doc);
+    },
+    revert: swap,
+  };
+}
+
+/** Dækker hele laget med et materiale (som baggrund, tegnet ved behov) eller rydder det (`material` 0). */
+export function fillPaint(layerId: string, material: number, source: (p: PaintData, fill: FillSpec) => LazySource | undefined, label: string): Command {
+  let saved: Pick<PaintData, 'tiles' | 'fill' | 'lazy'> | null = null;
+  return {
+    label,
+    selectsLayer: layerId,
+    apply(doc) {
+      const p = doc.layers[indexOf(doc, layerId)]!.paint;
+      if (!p) throw new Error('Laget har intet malet underlag.');
+      saved = { tiles: p.tiles, fill: p.fill, lazy: p.lazy };
+      for (const k of p.tiles.keys()) p.dirty.add(k);
+      p.tiles = new Map();
+      if (material) {
+        p.fill = { material, ox: 0, oy: 0 };
+        const lazy = source(p, p.fill);
+        if (lazy) p.lazy = lazy;
+        else delete p.lazy;
+      } else {
+        delete p.fill;
+        delete p.lazy;
+      }
+    },
+    revert(doc) {
+      const p = doc.layers[indexOf(doc, layerId)]!.paint;
+      if (!p || !saved) return;
+      for (const k of saved.tiles.keys()) p.dirty.add(k);
+      p.tiles = saved.tiles;
+      if (saved.fill) p.fill = saved.fill;
+      else delete p.fill;
+      if (saved.lazy) p.lazy = saved.lazy;
+      else delete p.lazy;
+    },
+    get bytes() {
+      return (saved?.tiles.size ?? 0) * 256 * 256 * 4;
+    },
   };
 }
 

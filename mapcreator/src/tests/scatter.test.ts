@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { elementsInCircle, radiusOf, ScatterStroke, type ScatterOptions } from '../model/scatter';
-import { materialAt, createGround } from '../model/ground';
 import { getKind } from '../objects';
 
 function seeded(seed: number): () => number {
@@ -84,15 +83,5 @@ describe('scatter', () => {
     expect(s.placed.length).toBeGreaterThan(5);
     const inside = elementsInCircle(s.placed, 1000, 500, 100);
     expect(inside.every((e) => Math.hypot(e.x - 1000, e.y - 500) <= 100)).toBe(true);
-  });
-
-  it('materialAt finder øverste lag med terræn', () => {
-    const lower = createGround(4, 4, 1);
-    const upper = createGround(4, 4, 0);
-    upper.data[0] = 6;
-    const doc = { layers: [{ visible: true, ground: lower }, { visible: true, ground: upper }] };
-    expect(materialAt(doc, 5, 5)).toBe(6);
-    expect(materialAt(doc, 100, 100)).toBe(1);
-    expect(materialAt({ layers: [{ visible: false, ground: lower }] }, 5, 5)).toBe(0);
   });
 });

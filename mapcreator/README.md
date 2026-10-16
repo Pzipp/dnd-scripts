@@ -37,7 +37,8 @@ src/
     commands.ts   alle ændringer som fortrydelige kommandoer
     history.ts    fortryd/gentag (og sammenlægning af skydertrin)
     store.svelte.ts  editorens tilstand (værktøj, valg, filer)
-    ground.ts     terrænmaske, penselstrøg, kørselslængdekodning
+    paint.ts      malet underlag: fliser, fortryd-billeder, gem/indlæs, ændr størrelse
+    ground.ts     den gamle terrænmaske (kun ældre kort, generatoren og formudfyldning)
     geometry.ts   transformation, hit-test, skalering, rotation af genstande
     walls.ts      murgeometri (buelængde, stykker, huller)
     shapes.ts     frihåndsforenkling, udjævning, firkant/ellipse, punkt i polygon
@@ -46,7 +47,9 @@ src/
     resize.ts     ændr kortstørrelse (terræn, genstande og mure følger med; kan fortrydes)
   render/       tegning (Canvas 2D), bruges af både forhåndsvisning og eksport
     scene.ts      forhåndsvisningen (lag, grid, håndtag, ghosts)
-    ground.ts, materials.ts, stones.ts, noise.ts, groundCache.ts   terræn
+    materials.ts, stones.ts, noise.ts, grassTexture.ts   materialer (farve pr. punkt)
+    paintBrush.ts, paintTuft.ts, paintView.ts, paintSource.ts   pensler, tuftpensel, visning/lazy tegning af fliser, baggrund og ældre kort
+    ground.ts     den gamle maske-tegning (ældre kort og formudfyldning)
     sprites.ts    genstande (sprite-cache, skygge)
     walls.ts      mure og åbninger
     export.ts     eksport i fuld opløsning (fliser), filnavne

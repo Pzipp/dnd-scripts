@@ -2,7 +2,7 @@
   import { onMount, untrack } from 'svelte';
   import { editor } from '../model/store.svelte';
   import { zoomAt } from '../render/camera';
-  import { groundCache } from '../render/groundCache';
+  import { stepLazy } from '../render/paintView';
   import { profile } from '../render/quality';
   import { drawScene } from '../render/scene';
   import { screenToWorld, worldToScreen } from '../render/camera';
@@ -12,7 +12,7 @@
   import { constrainAngle, midpoints, nearestOnPath, pathLength, pathOf, type Pt } from '../model/walls';
   import { getKind } from '../objects';
   import { ROT_HANDLE_PX } from '../render/scene';
-  import { type Stroke } from '../model/ground';
+  import { gridRect, type PaintStroke } from '../render/paintBrush';
 
   let canvas: HTMLCanvasElement;
   let box: HTMLDivElement;
@@ -38,9 +38,7 @@
       queued = false;
       const ctx = canvas.getContext('2d');
       if (!ctx || w === 0) return;
-      groundCache.sync(editor.doc);
-      const more = groundCache.step(editor.doc, 10);
-      if (!more) editor.bakeWhenIdle();
+      const more = stepLazy(editor.doc, { x: -editor.camera.panX / editor.camera.zoom, y: -editor.camera.panY / editor.camera.zoom, w: w / editor.camera.zoom, h: h / editor.camera.zoom }, 10);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       // Kameraet ganges med dpr, så tegningen er skarp på høj-opløsningsskærme.
       const cam = { zoom: editor.camera.zoom * dpr, panX: editor.camera.panX * dpr, panY: editor.camera.panY * dpr };
@@ -59,7 +57,7 @@
       }
       drawScene(ctx, w * dpr, h * dpr, cam, editor.doc, {
         grid: editor.showGrid,
-        brush: paint ? { x: hover!.x, y: hover!.y, r: (editor.brushCells * 50) / 2, ok: !!editor.paintableLayer }
+        brush: paint ? { x: hover!.x, y: hover!.y, r: (editor.brushCells * 50) / 2, ok: !!editor.paintableLayer, square: editor.brushKind === 'grid' ? gridRect(hover!.x, hover!.y, editor.brushCells * 50) : undefined }
           : scatter ? { x: hover!.x, y: hover!.y, r: (editor.scatterCells * 50) / 2, ok: !!editor.placeableLayer } : null,
         selected: editor.tool === 'select' ? editor.selection?.el ?? null : null,
         ghosts,
@@ -91,7 +89,7 @@
   // Tegn igen, når dokument, kamera eller grid ændres.
   $effect(() => {
     void editor.camera.zoom, editor.camera.panX, editor.camera.panY;
-    void editor.showGrid, editor.doc.widthCells, editor.doc.heightCells, editor.drawRev, editor.tool, editor.brushCells, editor.selectedElementId, editor.stampKind, editor.stampFamily, editor.snap, editor.pending.seed, editor.wallDraft, editor.selectedWallId, editor.selectedOpeningId, editor.scatterPlaced.length, editor.scatterRemoving.length, editor.scatterCells, editor.wallStyle, editor.wallThicknessCells, editor.openingKind;
+    void editor.showGrid, editor.doc.widthCells, editor.doc.heightCells, editor.drawRev, editor.tool, editor.brushCells, editor.brushKind, editor.selectedElementId, editor.stampKind, editor.stampFamily, editor.snap, editor.pending.seed, editor.wallDraft, editor.selectedWallId, editor.selectedOpeningId, editor.scatterPlaced.length, editor.scatterRemoving.length, editor.scatterCells, editor.wallStyle, editor.wallThicknessCells, editor.openingKind;
     void editor.doc.layers.map((l) => [l.id, l.visible, l.opacity, l.height, l.elements?.map((e) => [e.id, e.x, e.y, e.w, e.h, e.rot, e.z, JSON.stringify(e.params)])]);
     void editor.doc.layers.map((l) => l.walls?.map((wl) => [wl.id, wl.style, wl.thickness, wl.closed, JSON.stringify(wl.points), wl.openings.map((o) => [o.id, o.kind, o.at, o.width, o.open, o.flip])]));
     void editor.doc.lightAngle;
@@ -137,26 +135,22 @@
     zoomAt(editor.camera, p.x, p.y, f);
   }
 
-  let stroke: Stroke | null = null;
+  let stroke: PaintStroke | null = null;
   let strokeLayer = '';
   let last: [number, number] | null = null;
 
   function stamp(p: { x: number; y: number }) {
-    const layer = editor.paintableLayer;
-    if (!stroke || !layer?.ground) return;
+    if (!stroke) return;
     const [wx, wy] = screenToWorld(editor.camera, p.x, p.y);
-    const mat = editor.tool === 'erase' ? 0 : editor.material;
-    const r = (editor.brushCells * 50) / 2;
     const [ax, ay] = last ?? [wx, wy];
-    const dirty = stroke.line(layer.ground, ax, ay, wx, wy, r, mat);
+    const dirty = stroke.line(ax, ay, wx, wy);
     last = [wx, wy];
     if (dirty) editor.invalidate(strokeLayer, dirty);
   }
 
   function cancelStroke() {
-    const layer = editor.doc.layers.find((l) => l.id === strokeLayer);
-    if (stroke && layer?.ground) {
-      const rect = stroke.undoAll(layer.ground);
+    if (stroke) {
+      const rect = stroke.cancel();
       if (rect) editor.invalidate(strokeLayer, rect);
     }
     stroke = null;

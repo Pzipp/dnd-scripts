@@ -1,7 +1,8 @@
 import type { GroundData } from './ground';
+import type { PaintData } from './paint';
 
 /** Kortdokumentet: én JSON-fil pr. kort. Alt andet (billede, eksport) er afledt af den. */
-export const DOC_VERSION = 1;
+export const DOC_VERSION = 2;
 /** Pixels pr. felt (5 ft) i eksport og verdenskoordinater. */
 export const CELL_PX = 50;
 export const MAX_CELLS = 300;
@@ -76,7 +77,7 @@ export interface Wall {
 
 export type LayerType = 'ground' | 'floor' | 'objects' | 'walls' | 'effects';
 
-/** Lag med en terrænmaske: Grund og Gulv. På Gulv skæres planker, brosten og fliser til ved kanten af det malede. */
+/** Lag med malet underlag: Grund og Gulv. */
 export const hasGround = (type: LayerType): boolean => type === 'ground' || type === 'floor';
 
 export const LAYER_TYPE_LABEL: Record<LayerType, string> = {
@@ -97,7 +98,9 @@ export interface Layer {
   opacity: number;
   /** Lagets højde: styrer tegnerækkefølge og skyggelængde. */
   height: number;
-  /** Kun grund- og gulvlag: terrænmasken. */
+  /** Kun grund- og gulvlag: det malede underlag (et fladt billede i fliser). */
+  paint?: PaintData;
+  /** Kun kort fra før det malede underlag: terrænmasken, indtil laget er omdannet (se `adoptLegacy`). */
   ground?: GroundData;
   /** Kun genstands- og effektlag. */
   elements?: MapElement[];

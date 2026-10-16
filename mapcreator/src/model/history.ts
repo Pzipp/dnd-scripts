@@ -7,6 +7,8 @@ export interface Command {
   revert(doc: MapDoc): void;
   /** Returnér true, hvis `next` er lagt ind i denne kommando (så den ikke skal på stakken). */
   merge?(next: Command): boolean;
+  /** Hukommelse, kommandoen fylder (bytes), så historikken kan smide de ældste væk, når der er for meget. */
+  readonly bytes?: number;
   /** Lag og område (verdenspixels), der skal tegnes igen, når kommandoen er udført eller fortrudt. */
   touches?: { layerId: string; rect: Rect };
   /** Kortets mål eller lag er skiftet ud: al forhåndsvisning skal bygges forfra. */
@@ -21,6 +23,7 @@ export interface Command {
 }
 
 const MERGE_WINDOW_MS = 800;
+const MAX_BYTES = 300 * 1024 * 1024;
 
 export class History {
   private undoStack: Command[] = [];
@@ -53,6 +56,14 @@ export class History {
     }
     this.lastAt = t;
     this.redoStack = [];
+    this.trim();
+  }
+
+  /** Smider de ældste handlinger væk, når de samlet fylder for meget (malede fliser fylder mest). */
+  private trim(): void {
+    let total = 0;
+    for (const c of this.undoStack) total += c.bytes ?? 0;
+    while (total > MAX_BYTES && this.undoStack.length > 1) total -= this.undoStack.shift()!.bytes ?? 0;
   }
 
   undo(doc: MapDoc): Command | null {

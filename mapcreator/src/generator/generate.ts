@@ -94,7 +94,10 @@ class Generator {
     this.doc.seed = opts.seed;
     this.W = this.doc.widthCells;
     this.H = this.doc.heightCells;
-    this.g = this.doc.layers[0]!.ground!;
+    // generatoren tegner terrænet som en maske; den bliver til malede fliser, når kortet åbnes (se `adoptLegacy`)
+    const base = this.doc.layers[0]!;
+    delete base.paint;
+    this.g = base.ground = createGround(this.W, this.H);
     this.g.data.fill(matId(theme.base));
     this.mw = this.g.w;
     this.mh = this.g.h;

@@ -1,20 +1,24 @@
 import * as api from '../api';
 import { createCamera, fit, type Camera } from '../render/camera';
 import {
-  addElements, addLayer, addOpening, addWall, moveLayer, moveOpening, paintCells, removeElements, removeLayer, removeOpening, removeWall, renameDoc,
+  addElements, addLayer, addOpening, addWall, fillPaint, moveLayer, moveOpening, paintTiles, removeElements, removeLayer, removeOpening, removeWall, renameDoc,
   transformElement, transformWall, updateElement, updateLayer, updateOpening, updateWall, type ElementPatch, type OpeningPatch, type WallPatch,
 } from './commands';
 import { createDoc, createLayer, createPreset, type NewDocOptions } from './doc';
 import { generateMap, type GenOptions } from '../generator';
 import { resizeMap, type Anchor } from './resize';
-import { fillChange, materialAt, Stroke } from './ground';
+import { keyName, liveKeys, looksLikeWater, PAINT_TILE, pixelAt, putTile, scaleOf, type PaintData } from './paint';
 import { ScatterStroke, elementsInCircle } from './scatter';
 import { hitWall, nearestOnPath, pathLength, pathOf, type Pt } from './walls';
 import { defaultThickness, OPENING_KINDS, wallStyle } from '../render/walls';
 import { chaikin, simplify } from './shapes';
-import { groundCache } from '../render/groundCache';
+import { PaintStroke, type Brush, type BrushKind } from '../render/paintBrush';
+import { tuftStamper } from '../render/paintTuft';
+import { fillSource } from '../render/paintSource';
+import { materializeAll, tileCanvas } from '../render/paintView';
+import { adoptLegacy } from '../render/paintSource';
 import { initialQuality, saveQuality, setQualityMode, type Quality } from '../render/quality';
-import { MATERIAL_GRASS } from '../render/materials';
+import { MATERIAL_GRASS, MATERIAL_WATER } from '../render/materials';
 import { History, type Command } from './history';
 import { newId, newSeed } from './ids';
 import { defaultParams, familyKinds, getKind, type ObjectKind } from '../objects';
@@ -69,10 +73,29 @@ class Editor {
   scatterErase = $state(false);
   snap = $state(false);
   material = $state(MATERIAL_GRASS);
-  /** Maler penslen selve terrænet eller en sti oven på det? */
-  paintMode = $state<'base' | 'path'>('base');
   /** Penselens diameter i felter. */
   brushCells = $state(3);
+  brushKind = $state<BrushKind>('round');
+  /** Gennemsigtighed 0..1 (1 = dækker helt). */
+  brushOpacity = $state(1);
+  /** Rund pensel: 1 = hård kant, 0 = blød. */
+  brushHardness = $state(0.85);
+  /** Kantpensel: hvor ujævn kanten er. */
+  brushRoughness = $state(0.6);
+  /** Mønstrets størrelse (1 = normal) og drejning i grader. */
+  textureScale = $state(1);
+  textureRotation = $state(0);
+  /** Brosten, fliser og planker males som hele sten. */
+  wholeStones = $state(true);
+  // tuftpenslen
+  tuftKind = $state('grass_tuft');
+  tuftTone = $state('green');
+  /** Afstand mellem totter og tottens størrelse, i felter. */
+  tuftSpacing = $state(0.6);
+  tuftSize = $state(0.7);
+  tuftDensity = $state(0.9);
+  /** Senest brugte materialer (nyeste først). */
+  recentMaterials = $state<number[]>([]);
   /** Stiger, når forhåndsvisningen skal tegnes igen (flise færdig, område ugyldigt). */
   drawRev = $state(0);
   dirty = $state(false);
@@ -119,8 +142,6 @@ class Editor {
     this.dirty = true;
     this.rev++;
     if (cmd.relayout) {
-      groundCache.reset();
-      groundCache.sync(this.doc);
       this.keepSelection();
       this.selectedElementId = null;
       this.selectedWallId = null;
@@ -138,9 +159,8 @@ class Editor {
     }
   }
 
-  /** Gentegn forhåndsvisningen af et grundlag (område i verdenspixels, null = hele laget). */
-  invalidate(layerId: string, rect: Rect | null): void {
-    groundCache.invalidate(layerId, rect, this.doc);
+  /** Gentegn forhåndsvisningen (det malede underlag tegnes direkte fra sine fliser). */
+  invalidate(_layerId?: string, _rect?: Rect | null): void {
     this.drawRev++;
   }
 
@@ -419,7 +439,7 @@ class Editor {
       density: this.scatterDensity,
       radius,
       avoidWater: this.scatterAvoidWater,
-      materialAt: (x, y) => materialAt(this.doc, x, y),
+      materialAt: (x, y) => this.materialAt(x, y),
       blocked: (x, y, r) => this.doc.layers.some((l) => l.visible && l.walls?.some((w) => hitWall(w, x, y, r))),
       pickKind,
       newId,
@@ -540,26 +560,71 @@ class Editor {
   /** Det valgte lag, hvis man kan male på det. */
   get paintableLayer() {
     const l = this.selectedLayer;
-    return l && hasGround(l.type) && l.ground && l.visible && !l.locked ? l : null;
+    return l && hasGround(l.type) && l.paint && l.visible && !l.locked ? l : null;
   }
 
-  newStroke(): Stroke {
-    return new Stroke(this.paintMode);
+  /** Vand (id 6), hvis punktet ligner vand i det øverste malede lag med noget i punktet; ellers 0. Bruges af spredningen. */
+  private materialAt(x: number, y: number): number {
+    for (let i = this.doc.layers.length - 1; i >= 0; i--) {
+      const l = this.doc.layers[i]!;
+      const p = l.paint;
+      if (!p || !l.visible) continue;
+      const c = pixelAt(p, x, y);
+      if (c) {
+        if (c[3] > 128) return looksLikeWater(c) ? MATERIAL_WATER : 1;
+        continue;
+      }
+      if (p.fill && p.lazy && x >= 0 && y >= 0 && x < this.doc.widthCells * CELL_PX && y < this.doc.heightCells * CELL_PX) return p.fill.material;
+    }
+    return 0;
   }
-  commitStroke(layerId: string, stroke: Stroke): void {
-    const g = this.doc.layers.find((l) => l.id === layerId)?.ground;
-    const change = g && stroke.result(g);
-    if (change) this.run(paintCells(layerId, change));
+
+  /** Penslen, som den står i indstillingerne (viskelæderet bruger de samme, men uden materiale). */
+  get brush(): Brush {
+    const erase = this.tool === 'erase';
+    const brush: Brush = {
+      kind: this.brushKind,
+      size: this.brushCells * CELL_PX,
+      opacity: this.brushOpacity,
+      hardness: this.brushHardness,
+      roughness: this.brushRoughness,
+      material: this.material,
+      textureScale: this.textureScale,
+      rotation: this.textureRotation,
+      wholeStones: this.wholeStones,
+      erase,
+      seed: this.doc.seed,
+    };
+    if (brush.kind === 'tuft' && !erase) {
+      brush.size = Math.max(brush.size, CELL_PX);
+      brush.stamp = tuftStamper(
+        { kind: this.tuftKind, tone: this.tuftTone, spacing: this.tuftSpacing * CELL_PX, density: this.tuftDensity, size: this.tuftSize * CELL_PX },
+        newSeed(),
+        this.brushOpacity,
+      );
+    }
+    return brush;
   }
+
+  newStroke(): PaintStroke | null {
+    const l = this.paintableLayer;
+    if (!l?.paint) return null;
+    if (this.tool === 'paint') {
+      this.recentMaterials = [this.material, ...this.recentMaterials.filter((m) => m !== this.material)].slice(0, 8);
+    }
+    return new PaintStroke(l.paint, this.brush);
+  }
+  commitStroke(layerId: string, stroke: PaintStroke): void {
+    const done = stroke.finish();
+    if (done) this.run(paintTiles(layerId, done.before, done.rect, stroke.brush.erase ? 'Visk ud' : 'Mal'));
+  }
+  /** Dækker hele laget med det valgte materiale (som baggrund, tegnet ved behov), eller rydder det med viskelæderet. */
   fillSelected(): void {
     const l = this.paintableLayer;
-    if (!l?.ground) return;
-    const change = fillChange(l.ground, this.tool === 'erase' ? 0 : this.material, this.paintMode);
-    if (change) {
-      const cmd = paintCells(l.id, change);
-      cmd.label = 'Fyld lag';
-      this.run(cmd);
-    }
+    if (!l?.paint) return;
+    const erase = this.tool === 'erase';
+    const seed = this.doc.seed;
+    this.run(fillPaint(l.id, erase ? 0 : this.material, (p: PaintData, f) => fillSource(f.material, seed, scaleOf(p), f.ox, f.oy), erase ? 'Ryd lag' : 'Fyld lag'));
   }
 
   // ---- udgaver (eksport) ----
@@ -590,7 +655,6 @@ class Editor {
     // Nye lag lægges oven på det valgte lag (eller øverst).
     const sel = this.doc.layers.findIndex((l) => l.id === this.selectedLayerId);
     this.run(addLayer(layer, sel < 0 ? undefined : sel + 1));
-    groundCache.sync(this.doc);
     this.drawRev++;
   }
   removeLayer(id: string): void {
@@ -614,8 +678,11 @@ class Editor {
   }
 
   // ---- filer ----
+  /** Stiger, hver gang et kort åbnes eller laves, så en hentning af fliser til et forladt kort stopper. */
+  private loadToken = 0;
   private load(doc: MapDoc): void {
-    groundCache.reset();
+    this.loadToken++;
+    adoptLegacy(doc);
     this.doc = doc;
     this.history.clear();
     this.rev++;
@@ -628,7 +695,9 @@ class Editor {
     this.fitView();
     this.drawRev++;
   }
-  resizeMap(widthCells: number, heightCells: number, anchor: Anchor): void {
+  async resizeMap(widthCells: number, heightCells: number, anchor: Anchor): Promise<void> {
+    await this.whenLoaded();
+    await materializeAll(this.doc, { onlyLegacy: true, onProgress: (d, t) => (this.status = `Tegner terrænet… ${Math.round((d / Math.max(1, t)) * 100)} %`) });
     this.run(resizeMap(widthCells, heightCells, anchor));
   }
   /** Nyt kort lavet af en generator (tema + seed); bagefter et almindeligt kort, der kan redigeres frit. */
@@ -645,98 +714,126 @@ class Editor {
   /** Forhåndsvisningens kvalitet (Lav, Medium, Høj). Eksporten er altid i fuld kvalitet. */
   quality = $state<Quality>(initialQuality());
 
-  async setQuality(q: Quality): Promise<void> {
+  setQuality(q: Quality): void {
     if (q === this.quality) return;
     this.quality = q;
     saveQuality(q);
     setQualityMode(q);
-    groundCache.reset();
-    groundCache.paused = true;
-    try {
-      groundCache.sync(this.doc);
-      if (this.onServer && !this.dirty) await this.useBake(this.doc, this.doc.id);
-    } finally {
-      groundCache.paused = false;
-      this.drawRev++;
-    }
+    this.drawRev++;
+  }
+
+  /** Den igangværende hentning af malede fliser (løst, når alle er hentet). */
+  private loading: Promise<void> = Promise.resolve();
+  whenLoaded(): Promise<void> {
+    return this.loading;
   }
 
   async open(id: string): Promise<void> {
-    groundCache.paused = true; // hold tegningen, til de gemte fliser er hentet
     try {
       const doc = await api.loadMap(id);
       this.load(doc);
       this.onServer = true;
       this.error = '';
       this.status = `Åbnede "${this.doc.name}"`;
-      await this.useBake(doc, id);
+      this.loading = this.fetchPaint(doc, id);
+      await this.loading;
     } catch (e) {
       this.error = (e as Error).message;
     } finally {
-      groundCache.paused = false;
       this.drawRev++;
     }
   }
-  /** Hent de gemte terrænfliser for den valgte kvalitet; mangler de, regnes terrænet som sædvanligt. */
-  private async useBake(doc: MapDoc, id: string): Promise<void> {
-    try {
-      groundCache.sync(doc);
-      const scale = groundCache.scale;
-      const baked = await api.loadBakeManifests(id, scale);
-      await groundCache.applyBake(doc, baked, async (layerId, key, sig) => {
-        const r = await fetch(api.bakeTileUrl(id, layerId, scale, key, sig));
-        if (!r.ok) throw new Error(`flise ${key}: ${r.status}`);
-        return r.blob();
-      });
-    } catch {
-      /* gemte fliser er kun en genvej */
-    }
+
+  /** Henter lagenes malede fliser fra serveren (seks ad gangen); forhåndsvisningen fyldes ud, efterhånden som de kommer. */
+  private async fetchPaint(doc: MapDoc, mapId: string): Promise<void> {
+    const jobs: { p: PaintData; layerId: string; key: number }[] = [];
+    for (const l of doc.layers) if (l.paint) for (const key of l.paint.remote) jobs.push({ p: l.paint, layerId: l.id, key });
+    if (jobs.length === 0) return;
+    const token = this.loadToken;
+    const total = jobs.length;
+    let done = 0;
+    let next = 0;
+    const canvas = document.createElement('canvas');
+    canvas.width = PAINT_TILE;
+    canvas.height = PAINT_TILE;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
+    const worker = async () => {
+      while (next < jobs.length && token === this.loadToken) {
+        const job = jobs[next++]!;
+        try {
+          const r = await fetch(api.paintTileUrl(mapId, job.layerId, keyName(job.key)));
+          if (!r.ok) throw new Error(String(r.status));
+          const bmp = await createImageBitmap(await r.blob(), { premultiplyAlpha: 'none' });
+          ctx.clearRect(0, 0, PAINT_TILE, PAINT_TILE);
+          ctx.drawImage(bmp, 0, 0);
+          bmp.close();
+          putTile(job.p, job.key, ctx.getImageData(0, 0, PAINT_TILE, PAINT_TILE).data);
+        } catch {
+          // flisen findes ikke hos serveren: laget er tomt dér (eller tegnes ud fra sin baggrund)
+          job.p.remote.delete(job.key);
+          job.p.saved.delete(job.key);
+        }
+        done++;
+        if (done % 6 === 0 || done === total) {
+          this.status = done === total ? `Åbnede "${doc.name}"` : `Henter terræn… ${Math.round((done / total) * 100)} %`;
+          this.drawRev++;
+        }
+      }
+    };
+    await Promise.all(Array.from({ length: 6 }, worker));
   }
 
+  /** Gemmer kortet. Først de malede fliser (nye og ændrede), så selve dokumentet, som kun nævner, hvilke fliser der findes. */
   async save(): Promise<void> {
     try {
-      await api.saveMap(this.doc);
+      this.status = 'Gemmer…';
+      await this.whenLoaded();
+      await materializeAll(this.doc, { onlyLegacy: true, onProgress: (d, t) => (this.status = `Tegner terrænet… ${Math.round((d / Math.max(1, t)) * 100)} %`) });
+      const doc = this.doc;
+      const keys = new Map<string, number[]>();
+      const done: { p: PaintData; key: number; ver: number }[] = [];
+      for (const l of doc.layers) {
+        const p = l.paint;
+        if (!p) continue;
+        const live = liveKeys(p);
+        keys.set(l.id, live);
+        const tiles = new Map<string, Blob>();
+        for (const key of live) {
+          const t = p.tiles.get(key);
+          if (!t || !(p.dirty.has(key) || !this.onServer || !p.saved.has(key))) continue;
+          const blob = await new Promise<Blob | null>((res) => tileCanvas(t).toBlob(res, 'image/png'));
+          if (!blob) throw new Error('Browseren kunne ikke gemme en flise.');
+          tiles.set(keyName(key), blob);
+          done.push({ p, key, ver: t.ver });
+        }
+        const all = live.map(keyName);
+        const names = [...tiles.keys()];
+        if (names.length === 0 && all.length === p.saved.size && all.every((n) => p.saved.has(tileKeyOf(n)))) continue;
+        for (let i = 0; i < Math.max(1, names.length); i += 40) {
+          const part = new Map(names.slice(i, i + 40).map((n) => [n, tiles.get(n)!] as const));
+          await api.savePaint(doc.id, l.id, all, part);
+          this.status = `Gemmer terræn… ${Math.min(names.length, i + 40)} af ${names.length}`;
+        }
+      }
+      await api.saveMap(doc, keys);
+      for (const l of doc.layers) if (l.paint) l.paint.saved = new Set(keys.get(l.id));
+      for (const d of done) if (d.p.tiles.get(d.key)?.ver === d.ver) d.p.dirty.delete(d.key);
       this.dirty = false;
       this.onServer = true;
       this.error = '';
       this.status = 'Gemt';
     } catch (e) {
       this.error = (e as Error).message;
-      return;
     }
-    void this.saveBake();
   }
 
-  /** Findes det åbne kort på serveren (åbnet eller gemt)? Først da kan de tegnede fliser gemmes. */
+  /** Findes det åbne kort på serveren (åbnet eller gemt)? Ellers gemmes alle fliser. */
   private onServer = false;
-  private bakeBusy = false;
-  private bakeTimer: ReturnType<typeof setTimeout> | null = null;
-
-  /** Gem de færdigtegnede terrænfliser hos serveren, så kortet åbner hurtigt næste gang (også på en telefon). Fejl ignoreres. */
-  async saveBake(): Promise<void> {
-    if (this.bakeBusy || !this.onServer) return;
-    this.bakeBusy = true;
-    try {
-      const id = this.doc.id;
-      for (const p of await groundCache.bakePayload(this.doc)) {
-        await api.saveBake(id, p.layerId, p.manifest, p.tiles);
-        groundCache.markStored(p.layerId, p.manifest);
-      }
-    } catch {
-      /* cachen er valgfri */
-    } finally {
-      this.bakeBusy = false;
-    }
-  }
-
-  /** Kaldes, når terrænet er tegnet færdigt: gem fliserne lidt efter, hvis kortet er gemt og uændret. */
-  bakeWhenIdle(): void {
-    if (this.bakeTimer || this.dirty || !this.onServer || !groundCache.unstored) return;
-    this.bakeTimer = setTimeout(() => {
-      this.bakeTimer = null;
-      if (!this.dirty && !groundCache.pending) void this.saveBake();
-    }, 1500);
-  }
 }
+
+const tileKeyOf = (name: string): number => {
+  const [x, y] = name.split('_').map(Number) as [number, number];
+  return y * 256 + x;
+};
 
 export const editor = new Editor();

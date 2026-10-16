@@ -57,6 +57,10 @@
       editor.nudgeSelected(e.key === 'ArrowLeft' ? -d : e.key === 'ArrowRight' ? d : 0, e.key === 'ArrowUp' ? -d : e.key === 'ArrowDown' ? d : 0);
     } else if (!mod && !e.altKey) {
       const k = e.key.toLowerCase();
+      if ((editor.tool === 'paint' || editor.tool === 'erase') && (e.key === '[' || e.key === ']')) {
+        editor.brushCells = Math.min(16, Math.max(0.5, editor.brushCells + (e.key === ']' ? 0.5 : -0.5)));
+        return;
+      }
       const map: Record<string, typeof editor.tool> = { h: 'hand', v: 'select', g: 'stamp', s: 'scatter', l: 'line', f: 'shape', m: 'line', d: 'opening', b: 'paint', e: 'erase' };
       if (map[k]) editor.setTool(map[k]!);
     }

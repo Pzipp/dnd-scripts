@@ -1,6 +1,6 @@
 import { type Camera } from './camera';
-import { groundCache } from './groundCache';
-import { CELL_PX, hasGround, type Layer, type MapDoc, type MapElement, type Opening, type Wall, type WallStyle } from '../model/types';
+import { drawPaintLayer } from './paintView';
+import { CELL_PX, hasGround, type Layer, type MapDoc, type MapElement, type Opening, type Rect, type Wall, type WallStyle } from '../model/types';
 import { midpoints, pathOf, pointAt, type Pt } from '../model/walls';
 import { drawOpening, drawWallsLayer, wallStyle } from './walls';
 import { HANDLES, handlePos } from '../model/geometry';
@@ -11,7 +11,7 @@ import '../objects';
 export interface ViewOptions {
   grid: boolean;
   /** Penselring (verdenskoordinater og radius i verdenspixels), hvis et malerværktøj er valgt. */
-  brush?: { x: number; y: number; r: number; ok: boolean } | null;
+  brush?: { x: number; y: number; r: number; ok: boolean; square?: Rect } | null;
   /** Valgt genstand: tegnes med ramme og håndtag. */
   selected?: MapElement | null;
   /** Genstande, der er ved at blive sat ud (halvgennemsigtige): enkelt udsætning eller et scatter-strøg. */
@@ -44,14 +44,17 @@ export function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, c
   ctx.fillStyle = THEME.paper;
   ctx.fillRect(0, 0, mw, mh);
 
+  const seen = { x: -cam.panX / cam.zoom, y: -cam.panY / cam.zoom, w: w / cam.zoom, h: h / cam.zoom };
   for (const layer of doc.layers) {
     if (!layer.visible) continue;
-    if (hasGround(layer.type)) {
-      const c = groundCache.canvas(layer.id);
-      if (!c) continue;
+    if (hasGround(layer.type) && layer.paint) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, 0, mw, mh);
+      ctx.clip();
       ctx.globalAlpha = layer.opacity;
-      ctx.drawImage(c, 0, 0, mw, mh);
-      ctx.globalAlpha = 1;
+      drawPaintLayer(ctx, layer.paint, seen, cam.zoom);
+      ctx.restore();
     }
     if (layer.type === 'objects' || layer.type === 'effects') {
       ctx.globalAlpha = layer.opacity;
@@ -115,7 +118,8 @@ export function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, c
   if (view.brush) {
     const b = view.brush;
     ctx.beginPath();
-    ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+    if (b.square) ctx.rect(b.square.x, b.square.y, b.square.w, b.square.h);
+    else ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
     ctx.lineWidth = 3 / cam.zoom;
     ctx.strokeStyle = 'rgba(0,0,0,.6)';
     ctx.stroke();

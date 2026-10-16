@@ -1,11 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { paintCells } from '../model/commands';
 import { createDoc } from '../model/doc';
-import { createGround, decodeGround, encodeGround, fillChange, Stroke } from '../model/ground';
+import { createGround, decodeGround, encodeGround } from '../model/ground';
 import { History } from '../model/history';
 import { renderGroundTile, type PixelBuffer } from '../render/ground';
 import { isStoneMaterial, STONE_STYLES, stone, stoneAt } from '../render/stones';
-import { tileSignature } from '../render/groundCache';
 import { FULL_PROFILE, PROFILES } from '../render/quality';
 import { spriteScale } from '../render/sprites';
 import { MATERIALS } from '../render/materials';
@@ -35,41 +33,8 @@ describe('terrænmaske', () => {
     expect(() => decodeGround({ ...g, w: 0 })).toThrow();
   });
 
-  it('et penselstrøg ændrer en cirkel og kan fortrydes og gentages', () => {
-    const doc = createDoc({ name: 't', widthCells: 10, heightCells: 10 });
-    const g = doc.layers[0]!.ground!;
-    const before = Uint8Array.from(g.data);
-    const h = new History();
-    const stroke = new Stroke();
-    const rect = stroke.line(g, 100, 100, 300, 100, 40, 6);
-    expect(rect).not.toBeNull();
-    const painted = Uint8Array.from(g.data);
-    expect(painted.filter((v) => v === 6).length).toBeGreaterThan(20);
-    const change = stroke.result(g)!;
-    h.execute(doc, paintCells(doc.layers[0]!.id, change));
-    expect(Array.from(g.data)).toEqual(Array.from(painted));
-    h.undo(doc);
-    expect(Array.from(g.data)).toEqual(Array.from(before));
-    h.redo(doc);
-    expect(Array.from(g.data)).toEqual(Array.from(painted));
-  });
 
-  it('et afbrudt strøg lægger det gamle tilbage', () => {
-    const g = createGround(10, 10, 1);
-    const s = new Stroke();
-    s.stamp(g, 250, 250, 60, 2);
-    expect(g.data.includes(2)).toBe(true);
-    s.undoAll(g);
-    expect(g.data.every((v) => v === 1)).toBe(true);
-  });
 
-  it('fyld ændrer kun de celler, der er anderledes', () => {
-    const g = createGround(4, 4, 1);
-    g.data[3] = 2;
-    const c = fillChange(g, 1)!;
-    expect(c.indices.length).toBe(1);
-    expect(fillChange(createGround(4, 4, 1), 1)).toBeNull();
-  });
 });
 
 describe('terræntegning', () => {
@@ -159,49 +124,12 @@ describe('bløde overgange', () => {
 });
 
 describe('stier', () => {
-  it('en sti males ovenpå og kan fortrydes uden at røre terrænet', () => {
-    const doc = createDoc({ name: 't', widthCells: 10, heightCells: 10 });
-    const g = doc.layers[0]!.ground!;
-    const base = Uint8Array.from(g.data);
-    const h = new History();
-    const stroke = new Stroke('path');
-    stroke.line(g, 100, 250, 400, 250, 30, 14);
-    expect(g.path?.includes(14)).toBe(true);
-    expect(Array.from(g.data)).toEqual(Array.from(base));
-    const change = stroke.result(g)!;
-    expect(change.target).toBe('path');
-    h.execute(doc, paintCells(doc.layers[0]!.id, change));
-    const painted = Uint8Array.from(g.path!);
-    h.undo(doc);
-    expect(g.path!.every((v) => v === 0)).toBe(true);
-    h.redo(doc);
-    expect(Array.from(g.path!)).toEqual(Array.from(painted));
-  });
-
-  it('en viskelæder uden stier opretter ingen', () => {
-    const g = createGround(4, 4, 1);
-    const s = new Stroke('path');
-    expect(s.stamp(g, 100, 100, 30, 0)).toBeNull();
-    expect(g.path).toBeUndefined();
-    expect(fillChange(g, 0, 'path')).toBeNull();
-  });
-
-  it('stier gemmes og indlæses, og et kort uden stier fylder ikke mere', () => {
-    const g = createGround(10, 10, 1);
-    expect(encodeGround(g).path).toBeUndefined();
-    new Stroke('path').stamp(g, 100, 100, 40, 15);
-    const enc = encodeGround(g);
-    expect(enc.path).toBeDefined();
-    const back = decodeGround(enc);
-    expect(Array.from(back.path!)).toEqual(Array.from(g.path!));
-  });
-
   it('stien tegnes med sit materiale i midten og ligner terrænet uden for', () => {
     const g = createGround(10, 10, 1);
     const plain = buf(40, 40);
     renderGroundTile(plain, g, 3, 80, 230, 1);
-    const s = new Stroke('path');
-    s.line(g, 0, 250, 500, 250, 40, 15); // grus tværs over kortet
+    g.path = new Uint8Array(g.w * g.h);
+    for (let y = 17; y < 24; y++) g.path.fill(15, y * g.w, (y + 1) * g.w); // grus tværs over kortet (verdenspixels ca. 210..300)
     const t = buf(40, 40);
     renderGroundTile(t, g, 3, 80, 230, 1);
     const at = (b: PixelBuffer, x: number, y: number) => [b.data[(y * 40 + x) * 4]!, b.data[(y * 40 + x) * 4 + 1]!, b.data[(y * 40 + x) * 4 + 2]!];
@@ -287,27 +215,6 @@ describe('sten i rækker', () => {
   });
 });
 
-describe('flisernes fingeraftryk (gemte fliser)', () => {
-  it('ændrer sig kun, når noget inden for flisens rækkevidde ændres', () => {
-    const g = createGround(90, 65, 1);
-    const base = tileSignature(g, 3, 0.5, 4, 4);
-    expect(tileSignature(g, 3, 0.5, 4, 4)).toBe(base);
-    expect(tileSignature(g, 4, 0.5, 4, 4)).not.toBe(base); // andet seed
-    expect(tileSignature(g, 3, 0.4, 4, 4)).not.toBe(base); // anden skala
-    // en celle langt væk (flise 4,4 dækker verdenspixels 2048..2560) rører ikke
-    g.data[(20) * g.w + 300] = 14;
-    expect(tileSignature(g, 3, 0.5, 4, 4)).toBe(base);
-    // en celle midt i flisen gør
-    g.data[185 * g.w + 185] = 14;
-    expect(tileSignature(g, 3, 0.5, 4, 4)).not.toBe(base);
-    // også en sti
-    const g2 = createGround(90, 65, 1);
-    g2.path = new Uint8Array(g2.w * g2.h);
-    g2.path[185 * g2.w + 185] = 15;
-    expect(tileSignature(g2, 3, 0.5, 4, 4)).not.toBe(base);
-  });
-});
-
 describe('gulvlag', () => {
   it('på et gulv skæres planker til ved kanten; på grund er de hele og kan række ud over det malede', () => {
     const g = createGround(8, 8, 0);
@@ -326,21 +233,14 @@ describe('gulvlag', () => {
     expect(outside(false)).toBeGreaterThan(0);
   });
 
-  it('fingeraftrykket afhænger af lagtypen', () => {
-    const g = createGround(8, 8, 17);
-    expect(tileSignature(g, 1, 0.5, 0, 0, true)).not.toBe(tileSignature(g, 1, 0.5, 0, 0, false));
-  });
 });
 
 describe('forhåndsvisningens kvalitet', () => {
   it('Lav er lettere end Medium, og Medium er lettere end Høj; eksporten er fuld', () => {
     const { low, medium, high } = PROFILES;
-    expect(low.ground).toBeLessThan(medium.ground);
-    expect(medium.ground).toBeLessThan(high.ground);
     expect(low.dpr).toBeLessThanOrEqual(medium.dpr);
     expect(low.sprite).toBeLessThan(high.sprite);
     expect(low.shadow).toBeLessThan(high.shadow);
-    expect(FULL_PROFILE.ground).toBeGreaterThanOrEqual(high.ground);
     expect(FULL_PROFILE.shadow).toBe(1);
   });
 

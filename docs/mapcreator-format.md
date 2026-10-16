@@ -23,12 +23,14 @@ Fælles felter: `id`, `name`, `type` (`ground | floor | objects | walls | effect
 
 | Lagtype | Ekstra felt | Indhold |
 |---|---|---|
-| `ground` | `ground` | `{ res, w, h, rle }`: terrænmaske, 4 × 4 celler pr. felt. `rle` er kørselslængdekodet (værdi-byte + varint-længde) og base64. Celleværdien er et materiale-id (`render/materials.ts`, aldrig omnummereret, 0 = tomt) |
-| `floor` | `ground` | Som `ground`, men planker, brosten og fliser skæres til ved kanten af det malede (gulv i huse og rum). Ældre klienter, der ikke kender typen, viser ikke laget |
+| `ground` | `paint` | Malet underlag: `{ ppc, w, h, tiles, fill?, blank? }`. `ppc` = pixels pr. felt (50, 25, 10 eller 5), `w`/`h` = lagets størrelse i pixels, `tiles` = de fliser ("tx_ty", 256 × 256 pixels), serveren har som PNG, `fill` = baggrund `{ material, ox, oy }` (materiale-id, `render/materials.ts`, aldrig omnummereret) som fliser uden indhold tegnes ud fra, `blank` = fliser, der er malet helt væk. Billederne ligger ikke i JSON (se nedenfor) |
+| `floor` | `paint` | Som `ground` (et malet lag oven på Grund; bruges til gulve i huse og rum). Ældre klienter, der ikke kender typen, viser ikke laget |
 | `objects`, `effects` | `elements` | Liste af genstande (se nedenfor) |
 | `walls` | `walls` | Liste af linjer og former (se nedenfor) |
 
-Et grundlag har `ground: { res, w, h, rle, path? }`: `rle` er terrænmaskens materiale-id'er og `path` (kun hvis der er stier) stierne oven på, begge kørselslængde-kodet. Et kort uden `path` åbnes som før.
+**Malede fliser.** Flisernes billeder gemmes som PNG hos serveren (`$USERDATA/mapcreator/paint/<kort>/<lag>/<tx>_<ty>.png`, RGBA uden forhåndsmultiplikation); flisen `tx_ty` dækker pixels `[tx·256, tx·256+256) × [ty·256, ty·256+256)` i laget, og verdenspixel = lagpixel · 50 / `ppc`. Fliser uden indhold findes ikke. Dokumentversion 2.
+
+**Ældre kort (version 1).** Et grundlag havde `ground: { res, w, h, rle, path? }`: `rle` er terrænmaskens materiale-id'er (4 × 4 celler pr. felt, 0 = tomt) og `path` (kun hvis der var stier) stierne oven på, begge kørselslængde-kodet (værdi-byte + varint-længde, base64). Klienten læser dem stadig og omdanner dem til et malet lag ved åbning; gemmes kortet, står det i det nye format.
 
 ### Genstande (`elements[]`)
 

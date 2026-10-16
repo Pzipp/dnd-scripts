@@ -1,12 +1,17 @@
-import { createGround, decodeGround, encodeGround, type EncodedGround } from './ground';
+import { decodeGround, type EncodedGround } from './ground';
+import { createPaint, decodePaintMeta, encodePaintMeta } from './paint';
+import { adoptLegacy, attachSource } from '../render/paintSource';
 import { newId, newSeed } from './ids';
 import { DOC_VERSION, hasGround, MAX_CELLS, type ExportPreset, type Layer, type LayerType, type MapDoc } from './types';
 import { MATERIAL_GRASS } from '../render/materials';
 import { resolveKind } from '../objects';
 
-export function createLayer(type: LayerType, name: string, doc?: Pick<MapDoc, 'widthCells' | 'heightCells'>, fill = 0): Layer {
+export function createLayer(type: LayerType, name: string, doc?: Pick<MapDoc, 'widthCells' | 'heightCells'> & { seed?: number }, fill = 0): Layer {
   const layer: Layer = { id: newId(), name, type, visible: true, locked: false, opacity: 1, height: 0 };
-  if (hasGround(type) && doc) layer.ground = createGround(doc.widthCells, doc.heightCells, fill);
+  if (hasGround(type) && doc) {
+    layer.paint = createPaint(doc.widthCells, doc.heightCells, fill);
+    attachSource(layer.paint, doc.seed ?? 0);
+  }
   if (type === 'objects' || type === 'effects') layer.elements = [];
   if (type === 'walls') layer.walls = [];
   return layer;
@@ -29,25 +34,29 @@ export function clampCells(n: number): number {
 export function createDoc(opts: NewDocOptions): MapDoc {
   const name = opts.name.trim() || 'Nyt kort';
   const dims = { widthCells: clampCells(opts.widthCells), heightCells: clampCells(opts.heightCells) };
+  const seed = newSeed();
   return {
     version: DOC_VERSION,
     id: newId(),
     name,
     ...dims,
-    seed: newSeed(),
+    seed,
     lightAngle: 225,
-    layers: [createLayer('ground', 'Grund', dims, MATERIAL_GRASS)],
+    layers: [createLayer('ground', 'Grund', { ...dims, seed }, MATERIAL_GRASS)],
     exports: [createPreset(name)],
   };
 }
 
-/** Dokumentet som ren JSON (masker kørselslængde-kodet). Bruges ved gem. */
-export function serializeDoc(doc: MapDoc): unknown {
+/**
+ * Dokumentet som ren JSON. Malede lag står kun med oplysninger (opløsning og hvilke fliser der findes); selve billederne
+ * gemmes som fliser hos serveren (se `api.savePaint`). Lag fra ældre kort skal være tegnet færdige først (`materializeAll`).
+ */
+export function serializeDoc(doc: MapDoc, keys?: Map<string, number[]>): unknown {
   return {
     ...doc,
     layers: doc.layers.map((l) => {
-      const { ground, ...rest } = l;
-      return ground ? { ...rest, ground: encodeGround(ground) } : rest;
+      const { ground: _ground, paint, ...rest } = l;
+      return paint ? { ...rest, paint: encodePaintMeta(paint, keys?.get(l.id)) } : rest;
     }),
     exports: doc.exports.map((e) => ({ ...e, hiddenLayerIds: [...e.hiddenLayerIds] })),
   };
@@ -65,6 +74,7 @@ export function parseDoc(raw: unknown): MapDoc {
   const doc = d as MapDoc;
   for (const l of doc.layers) {
     const g = l.ground as unknown as { rle?: string } | undefined;
+    const meta = (l as unknown as { paint?: unknown }).paint;
     if (l.type === 'objects' || l.type === 'effects') {
       l.elements ??= [];
       // udgåede varianter peger videre til deres afløser
@@ -72,9 +82,18 @@ export function parseDoc(raw: unknown): MapDoc {
     }
     if (l.type === 'walls') l.walls ??= [];
     if (hasGround(l.type)) {
-      l.ground = g?.rle !== undefined ? decodeGround(g as EncodedGround) : createGround(doc.widthCells, doc.heightCells);
+      if (meta) {
+        l.paint = decodePaintMeta(meta, doc.widthCells, doc.heightCells);
+        attachSource(l.paint, doc.seed ?? 0);
+        delete l.ground;
+      } else if (g?.rle !== undefined) l.ground = decodeGround(g as EncodedGround);
+      else {
+        l.paint = createPaint(doc.widthCells, doc.heightCells);
+        delete l.ground;
+      }
     }
   }
+  adoptLegacy(doc);
   if (!Array.isArray(doc.exports)) doc.exports = [createPreset(doc.name)];
   return doc;
 }

@@ -4,7 +4,7 @@ Editor til slagkort (top-down, uden grid i selve billedet): lag med terræn, gen
 
 ## Status
 
-Færdigt: dokumentmodel og lag (tilføj, slet, flyt, skjul, lås, opacitet, højde), kamera (pan, zoom, knib), fortryd/gentag, gem og åbn, **terrænmaling** (pensel, viskelæder, fyld; 8 materialer), **genstande** (familier med varianter, vælger, flyt/skalér/rotér, skygger), **linjer og former** (mure, stier, broer, kløfter, bygninger) med døre, porte og vinduer, en **objektliste**, et **scatter-værktøj** til skov og planter, og **eksport** med navngivne udgaver (download eller direkte i VTT'et). **Egne genstande** (billedimport med automatisk fjernelse af baggrund) er også med. En **generator** laver en base ud fra et områdetema, og kortets **størrelse** kan ændres bagefter. Mangler: polering. Se [mapcreator-plan.md](mapcreator-plan.md).
+Færdigt: dokumentmodel og lag (tilføj, slet, flyt, skjul, lås, opacitet, højde), kamera (pan, zoom, knib), fortryd/gentag, gem og åbn, **terrænmaling** (flad, malet underlag med pensler: rund, kant, gitter og totter; gennemsigtighed, hårdhed og mønster), **genstande** (familier med varianter, vælger, flyt/skalér/rotér, skygger), **linjer og former** (mure, stier, broer, kløfter, bygninger) med døre, porte og vinduer, en **objektliste**, et **scatter-værktøj** til skov og planter, og **eksport** med navngivne udgaver (download eller direkte i VTT'et). **Egne genstande** (billedimport med automatisk fjernelse af baggrund) er også med. En **generator** laver en base ud fra et områdetema, og kortets **størrelse** kan ændres bagefter. Mangler: polering. Se [mapcreator-plan.md](mapcreator-plan.md).
 
 Flere dokumenter: [mapcreator-format.md](mapcreator-format.md) (JSON-format og API), [mapcreator-objects.md](mapcreator-objects.md) (laver og forbedre genstande) og [`mapcreator/README.md`](../mapcreator/README.md) (kode og udvikling).
 
@@ -19,7 +19,7 @@ Flere dokumenter: [mapcreator-format.md](mapcreator-format.md) (JSON-format og A
 | L | Linje (også M) |
 | F | Form |
 | D | Dør/åbning |
-| B / E | Pensel / viskelæder (terræn) |
+| B / E | Pensel / viskelæder (terræn); `[` og `]` ændrer størrelsen |
 | Ctrl+Z / Ctrl+Y | Fortryd / gentag |
 | Ctrl+S | Gem |
 | Ctrl+D | Duplikér valgt genstand |
@@ -28,25 +28,26 @@ Flere dokumenter: [mapcreator-format.md](mapcreator-format.md) (JSON-format og A
 | Esc | Tilbage til Vælg / fravælg / afbryd mur |
 | Shift under træk | Lås proportioner eller rund af til 15° / lås murens vinkel til 15° |
 
-## Terræn
+## Terræn (malet underlag)
 
-Et grundlag (`type: ground`) har en maske med 4 × 4 celler pr. felt; hver celle er et materiale-id (`render/materials.ts`, id'er må aldrig omnummereres, 0 = tomt). Masken gemmes kørselslængde-kodet og base64 i kortets JSON.
+Et grund- eller gulvlag (`type: ground | floor`) er et **fladt billede**, som i et almindeligt tegneprogram: laget husker ikke, hvordan noget er malet, kun pixels. Man vælger en pensel og et materiale og maler; fortryd virker stadig. Intet regnes om bagefter, og kun de fliser, man har rørt, gemmes igen.
 
-**Materialer.** Natur: tre slags græs (mark, skov, tørt), jord, mudder, sne. Sand og sten: fire slags sand (almindeligt, strand, rødt, mørkt), ørken, sten, mørkt fjeld (grottevæg). Vand. Veje og gulve: brosten, grus, fliser, trægulv. Hvert materiale er en lille funktion af position (`shade` i `materials.ts`); nye materialer tilføjes bagerst med nyt id.
+**Penslen** (B; viskelæder E). Valgene står i panelet til venstre:
 
-**Overgange.** Maskens celler glattes til vægte pr. materiale i et fast gitter (`render/ground.ts`), og to materialer blandes blødt over en overgang på ca. 40 px. Overgangens kant forskydes med støj, så den bliver organisk. Mellem vand og land er der en lys skumkant og våd jord. Fliserne passer sammen, fordi gitteret ligger fast i verdenen.
+- **Rund**: rund pensel med *hårdhed* (høj = skarp kant, lav = blød kant, til sløring og bløde overgange).
+- **Kant**: skarp, men *ujævn* kant (strand, klippekant, jordpletter). Ujævnheden følger verdenen (støj i verdenskoordinater), så flere stempler giver én sammenhængende, uregelmæssig kant.
+- **Gitter**: maler hele felter ad gangen (størrelsen rundes til hele felter).
+- **Totter**: sætter græstotter (genstandene *Høj græstot* og *Tæt græs*, med farve) ud med en vis **afstand**, **størrelse** og **tæthed**. Tottene bliver til pixels i laget; hver plads i et skævt net afgøres højst én gang pr. strøg, så man kan male frem og tilbage uden at de hober sig op. Nettet forskydes for hvert strøg.
+- **Størrelse** (`[` og `]` ændrer den), **gennemsigtighed** (gælder hele strøget, så overlappende stempler ikke stakker: sæt den til 40 % og mal vand op i sandet for en blød strand), **mønsterstørrelse** og **drejning** af materialets mønster, en række **seneste materialer**, og *Fyld hele laget* / *Ryd hele laget*.
+- Brosten, fliser og trægulv males som **hele sten** (afgjort ved stenens midte), så kanten af en plet består af hele sten; slå *Hele sten* fra for at skære dem til ved penselkanten (fx et gulv, der skal ende nøjagtigt ved en væg). Fugerne er gennemsigtige, så det, der ligger under, skinner igennem.
 
-**Græs.** De tre slags græs får deres strå fra en lille tekstur (`render/grassTexture.ts`): ca. 3400 buede strå med mørk rod, lys spids og svag skygge tegnes én gang ved første brug og slås derefter blot op pr. pixel (to opslag i forskellig skala og retning skjuler gentagelsen, og forhåndsvisningen bruger en udglattet halv størrelse). Det koster kun ca. 10 % mere regnetid pr. flise end de gamle støjpletter (mål med `mapcreator/tools/bench/grass.ts`) og giver et tydeligt mere naturligt græs. Teksturen er den samme på alle kort; kortets seed forskyder den. Ændres den, skal `GROUND_RENDER_VERSION` hæves.
+**Materialer** (`render/materials.ts`; id'er må aldrig omnummereres, nye får nyt id bagerst). Natur: tre slags græs (mark, skov, tørt), jord, mudder, sne. Sand og sten: fire slags sand, ørken, sten, mørkt fjeld. Vand. Veje og gulve: brosten, grus, fliser, trægulv. Hvert materiale er en lille funktion af position (`shade`); penslen læser den pixel for pixel i verdenskoordinater, så to strøg med samme materiale passer sammen. Græsset får sine strå fra en lille tekstur (`render/grassTexture.ts`). De tre sorte *Tomrum*-materialer findes ikke i paletten mere; brug Linje-værktøjets *Kløft* og *Klippekant*.
 
-**Hele sten og planker.** Brosten, fliser og trægulv blandes ikke blødt, men er lagt som hele sten og planker i forskudte rækker (`render/stones.ts`), ligesom genstanden Brosten. Terrænet afgør pr. sten, om den hører til materialet (efter terrænet ved stenens midte, med lidt tilfældighed), så en overgang består af hele sten uden halve, og kanten af en plet opløses i enkeltsten. Stenene har lys fra øverst til venstre. Fugen er gennemsigtig (kun en blød skygge), så det, der ligger under, skinner igennem: læg fx grus på et Grund-lag under et lag med brosten eller planker, eller mal brosten som sti oven på andet terræn. Hvor sten og planker er hele sten, eller skåres til, afgøres af **lagtypen**: på et **Grund**-lag er de hele (en plet eller vej får en kant af enkeltsten, og de kan række lidt ud over det malede), på et **Gulv**-lag skæres de til præcis ved kanten af det malede område, så et gulv i et hus eller et dungeonrum ender nøjagtigt ved væggen. Gulv er ellers et almindeligt terrænlag (samme maske, materialer, pensel og gemte fliser) og lægges oven på Grund; fugerne er gennemsigtige, så læg jord eller sten på Grund under. Generatoren lægger bygningers og dungeonrums sten- og plankegulve på et Gulv-lag over jord eller sten. Det gælder både som terræn og som sti. Størrelse og farver pr. materiale står i `STONE_STYLES`; et nyt rækkemateriale tilføjes dér og i `shade`.
+**Lag.** *Fyld hele laget* gør materialet til lagets **baggrund**: fliser, der ikke er malet i, tegnes først, når de ses, gemmes eller eksporteres (et nyt kort starter med græs som baggrund på Grund-laget). Gulv-lag er ellers helt almindelige malede lag oven på Grund. Lag fra før det malede underlag (en terrænmaske med 4 × 4 celler pr. felt) omdannes, når kortet åbnes: fliserne tegnes én gang med den gamle tegning (`render/ground.ts`, `adoptLegacy` i `render/paintSource.ts`), og først når man gemmer, er laget helt malet (Gem tegner de sidste fliser færdige). Generatoren tegner stadig en maske, som omdannes på samme måde.
 
-**Sti oven på.** Pensel-værktøjet kan male enten **Terræn** eller **Sti oven på**. En sti ligger i en separat maske (`path`) oven på terrænet, så terrænet under ikke ændres og stien kan fjernes igen med viskelæderen. Stien blandes med det, den ligger på: ved kanten skinner terrænet igennem (græs vokser ind i en jordsti, sand dusker en grussti), og i midten tager den lidt farve fra underlaget. Stier kan være jord, mudder, sne, sand, ørken, sten, brosten, grus, fliser eller trægulv. Brosten kan altså males som en hel by-gade eller et torv uden at sætte tusind genstande ud.
+**Lagring.** Lagets billede deles i fliser på 256 × 256 pixels (RGBA, `model/paint.ts`); fliser uden indhold findes ikke. Opløsningen er et helt antal pixels pr. felt (50, 25, 10 eller 5), valgt efter kortets størrelse, så længste side højst er 4096 pixels (små og mellemstore kort har fuld opløsning, 50 px pr. felt). Selve billederne gemmes hos serveren som PNG (`$USERDATA/mapcreator/paint/<kort>/<lag>/<tx>_<ty>.png`); kortets JSON nævner kun opløsning, hvilke fliser der findes og evt. baggrunden. Ved Gem sendes kun nye og ændrede fliser. Fortryd gemmer fliserne, som de var før strøget (op til ca. 300 MB, så de ældste trin glemmes).
 
-Samme tegnekode bruges i forhåndsvisningen (i fliser og lavere opløsning, `render/groundCache.ts`) og i eksporten (fuld opløsning).
-
-**Kvalitet.** Knappen *Kvalitet* i topbjælken vælger forhåndsvisningens kvalitet: **Lav** (hurtigst, men stadig pæn), **Medium** (standard) eller **Høj** (den fulde forhåndsvisning). Valget gemmes i browseren (`localStorage`) og ændrer kun det, man ser og arbejder i: terrænets opløsning (0,2 / 0,35 / 0,5 pixels pr. verdenspixel), lærredets pixeltæthed på skærme med høj opløsning (1 / 1,5 / fuld), genstandenes tegneopløsning og skyggens sløring (`render/quality.ts`). **Eksporten er altid i fuld kvalitet** og påvirkes ikke.
-
-**Gemte terrænfliser.** Terrænet er dyrt at regne (især på en telefon), så de færdigtegnede fliser gemmes som webp hos serveren, når kortet gemmes (`$USERDATA/mapcreator/bake/<kort>/<lag>/<skala>/`, én mappe pr. kvalitet, så Lav, Medium og Høj ikke overskriver hinanden). Hver flise har et fingeraftryk af de maskeceller, den er regnet ud fra (`tileSignature` i `groundCache.ts`: masken og stien omkring flisen, seed, skala og `GROUND_RENDER_VERSION`). Ved åbning hentes de fliser, hvis fingeraftryk stadig passer, og resten regnes forfra; et penselstrøg ændrer kun fingeraftrykket for de fliser, det rører, så kun de regnes og gemmes igen (ved næste Gem, eller automatisk lidt efter, at tegningen er færdig). Cachen kan slettes uden tab. Ændres `renderGroundTile` så billedet bliver et andet, skal `GROUND_RENDER_VERSION` hæves. Eksport i fuld opløsning bruger ikke de gemte fliser.
+**Kvalitet.** Knappen *Kvalitet* i topbjælken vælger forhåndsvisningens kvalitet: **Lav**, **Medium** (standard) eller **Høj**. Valget gemmes i browseren (`localStorage`) og ændrer lærredets pixeltæthed på skærme med høj opløsning, genstandenes tegneopløsning og skyggens sløring (`render/quality.ts`). Det malede underlag vises altid i sin egen opløsning. **Eksporten** tegner lagene i den valgte opløsning (er den højere end lagets, skaleres billedet op).
 
 ## Genstande
 
@@ -68,13 +69,13 @@ Genstande ligger i genstands- og effektlag (`elements[]`): `kind`, position, st�
 
 Temaerne er data i `mapcreator/src/generator/themes.ts` (terrænpletter, vand, veje, bygninger, dungeon/grotte, regler for genstande efter familie og tags); motoren står i `generate.ts`. Genstande vælges ud fra familier og tags, så nye genstande kommer med af sig selv. Se `generator/spec.ts` for alle felter.
 
-## Tomrum og grottevægge
+## Grottevægge og kløfter
 
-Under *Tomrum* i terrænpaletten findes tre sorte materialer (brun, lilla og is-kant). Mal dem, hvor der ikke skal være kort: mod andet terræn får de automatisk en kantet klippekant med skygge på gulvsiden, og resten er sort. Det er det samme som at male "væg på den ene side og sort på den anden". Linje-værktøjet har desuden tre grottevægge (*Grottevæg, brun / mørk / is*) af overlappende sten til frie vægge og afgrænsninger. Grotte-temaet i generatoren bruger tomrum som fjeld.
+Linje-værktøjet har tre grottevægge (*Grottevæg, brun / mørk / is*) af overlappende sten til frie vægge og afgrænsninger samt *Kløft* og *Klippekant* til afgrunde. Grotte-temaet i generatoren bruger dem sammen med et mørkt fjeldmateriale.
 
 ## Kortstørrelse
 
-**Størrelse …** øverst ændrer et eksisterende kort (felter i bredde og højde, de samme standardstørrelser som ved Nyt). Vælg, hvor det nuværende kort placeres (9 felter): resten udvides eller beskæres derfra. Terrænet udvides med det, der ligger ved kanten; genstande og mure flyttes med, og genstande, hvis midte havner uden for kortet, fjernes. Det kan fortrydes.
+**Størrelse …** øverst ændrer et eksisterende kort (felter i bredde og højde, de samme standardstørrelser som ved Nyt). Vælg, hvor det nuværende kort placeres (9 felter): resten udvides eller beskæres derfra. Det malede underlag flyttes med; nyt område er tomt (eller følger lagets baggrund, hvis det har en); genstande og mure flyttes med, og genstande, hvis midte havner uden for kortet, fjernes. Det kan fortrydes.
 
 ## Egne genstande (billedimport)
 
@@ -130,7 +131,7 @@ Dokumentet (`mapcreator/src/model/types.ts`): `version`, `id`, `name`, `widthCel
 
 ## API (`/api/mapcreator/`)
 
-`GET maps` (liste), `GET|PUT|DELETE maps/<id>`; gemte terrænfliser: `GET maps/<id>/bake?scale=<skala*1000>` (manifester), `GET maps/<id>/bake/<lag>/<skala*1000>/<tx>_<ty>.webp`, `POST maps/<id>/bake/<lag>` (multipart: `manifest` og `t_<tx>_<ty>`); egne genstande: `GET|POST assets`, `PATCH|DELETE assets/<id>`, `GET assets/<id>.webp` (se [mapcreator-format.md](mapcreator-format.md)). Id'er er `a-z0-9-`, 4 til 64 tegn. Ingen login: kun til internt brug.
+`GET maps` (liste), `GET|PUT|DELETE maps/<id>`; malede fliser: `GET maps/<id>/paint/<lag>/<tx>_<ty>.png`, `POST maps/<id>/paint/<lag>` (multipart: `keep` = JSON-liste over alle fliser, laget har, og `t_<tx>_<ty>` for nye og ændrede; resten slettes); egne genstande: `GET|POST assets`, `PATCH|DELETE assets/<id>`, `GET assets/<id>.webp` (se [mapcreator-format.md](mapcreator-format.md)). Id'er er `a-z0-9-`, 4 til 64 tegn. Ingen login: kun til internt brug.
 
 ## Udvikling
 

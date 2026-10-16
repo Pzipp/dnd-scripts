@@ -11,8 +11,6 @@ export interface PixelBuffer {
   data: Uint8ClampedArray;
 }
 
-/** Versionen af terrænets tegning. Hæves, hver gang `renderGroundTile` giver et andet billede, så gemte fliser (se groundCache.ts) kasseres. */
-export const GROUND_RENDER_VERSION = 4;
 
 /** Afstanden (verdenspixels) mellem punkterne i vægtgitteret. Gitteret ligger fast i verdenen, så fliser passer sammen. */
 const STEP = CELL_PX / 8;

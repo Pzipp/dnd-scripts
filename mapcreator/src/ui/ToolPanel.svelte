@@ -2,6 +2,9 @@
   import { MATERIAL_GROUPS, MATERIALS } from '../render/materials';
   import { OPENING_KINDS, WALL_STYLES } from '../render/walls';
   import { editor, type Tool } from '../model/store.svelte';
+  import { familyKinds, getKind } from '../objects';
+  import type { BrushKind } from '../render/paintBrush';
+  import { isStoneMaterial } from '../render/stones';
 
   const tools: { id: Tool; label: string; hint: string }[] = [
     { id: 'hand', label: 'Hånd', hint: 'Flyt kortet (træk)' },
@@ -14,11 +17,18 @@
     { id: 'paint', label: 'Pensel', hint: 'Mal terræn på et grundlag' },
     { id: 'erase', label: 'Viskelæder', hint: 'Fjern terræn (gør laget gennemsigtigt)' },
   ];
-  /** Stier kan kun være af de materialer, der er markeret som `pathable`. */
-  function setPathMode() {
-    editor.paintMode = 'path';
-    if (!MATERIALS.find((m) => m.id === editor.material)?.pathable) editor.material = 2;
-  }
+  const BRUSHES: { id: BrushKind; label: string; hint: string }[] = [
+    { id: 'round', label: 'Rund', hint: 'Rund pensel med blød eller hård kant' },
+    { id: 'edge', label: 'Kant', hint: 'Skarp, men ujævn kant (strand, klippe, jordpletter)' },
+    { id: 'grid', label: 'Gitter', hint: 'Maler hele felter ad gangen' },
+    { id: 'tuft', label: 'Totter', hint: 'Sætter græstotter ud med en vis afstand' },
+  ];
+  const tuftKinds = familyKinds('tallgrass');
+  const toneParam = $derived.by(() => {
+    const def = getKind(editor.tuftKind)?.params.find((p) => p.key === 'tone');
+    return def && def.type === 'select' ? def : null;
+  });
+  const isStone = $derived(isStoneMaterial(editor.material));
   const wallGroups = [...new Set(WALL_STYLES.map((s) => s.group))];
   const painting = $derived(editor.tool === 'paint' || editor.tool === 'erase');
 </script>
@@ -150,15 +160,74 @@
 
 {#if painting}
   {#if !editor.paintableLayer}
-    <p class="warn">Vælg et synligt, ulåst <b>Grund</b>-lag for at male.</p>
+    <p class="warn">Vælg et synligt, ulåst <b>Grund</b>- eller <b>Gulv</b>-lag for at male.</p>
   {/if}
-  <div class="modes" role="radiogroup" aria-label="Hvad skal males">
-    <button role="radio" aria-checked={editor.paintMode === 'base'} class:on={editor.paintMode === 'base'} onclick={() => (editor.paintMode = 'base')} title="Mal selve terrænet">Terræn</button>
-    <button role="radio" aria-checked={editor.paintMode === 'path'} class:on={editor.paintMode === 'path'} onclick={() => setPathMode()} title="Mal en sti oven på terrænet; den blander sig med det, den ligger på">Sti oven på</button>
+  <h3>Pensel</h3>
+  <div class="kinds4" role="radiogroup" aria-label="Penseltype">
+    {#each BRUSHES.filter((b) => editor.tool === 'paint' || b.id !== 'tuft') as b}
+      <button role="radio" aria-checked={editor.brushKind === b.id} class:on={editor.brushKind === b.id} title={b.hint} onclick={() => (editor.brushKind = b.id)}>{b.label}</button>
+    {/each}
   </div>
-  {#if editor.tool === 'paint'}
-    {#each MATERIAL_GROUPS as group}
-      {@const list = MATERIALS.filter((m) => m.group === group && (editor.paintMode === 'base' || m.pathable))}
+  <label>Størrelse: {editor.brushCells} felter ({Math.round(editor.brushCells * 50)} px)
+    <input type="range" min="0.5" max="16" step="0.5" bind:value={editor.brushCells} />
+  </label>
+  {#if editor.brushKind !== 'tuft' || editor.tool === 'erase'}
+    <label>Gennemsigtighed: {Math.round(editor.brushOpacity * 100)} %
+      <input type="range" min="0.05" max="1" step="0.05" bind:value={editor.brushOpacity} />
+    </label>
+  {/if}
+  {#if editor.brushKind === 'round' || (editor.brushKind === 'tuft' && editor.tool === 'erase')}
+    <label>Hårdhed: {Math.round(editor.brushHardness * 100)} % <span class="sub">(lav = blød kant)</span>
+      <input type="range" min="0" max="1" step="0.05" bind:value={editor.brushHardness} />
+    </label>
+  {:else if editor.brushKind === 'edge'}
+    <label>Ujævnhed: {Math.round(editor.brushRoughness * 100)} %
+      <input type="range" min="0" max="1" step="0.05" bind:value={editor.brushRoughness} />
+    </label>
+  {:else if editor.brushKind === 'grid'}
+    <p class="hint">Maler hele felter ad gangen (størrelsen rundes til hele felter).</p>
+  {/if}
+
+  {#if editor.tool === 'paint' && editor.brushKind === 'tuft'}
+    <h3>Totter</h3>
+    <label>Type
+      <select bind:value={editor.tuftKind}>
+        {#each tuftKinds as k}<option value={k.key}>{k.name}</option>{/each}
+      </select>
+    </label>
+    {#if toneParam}
+      <label>{toneParam.label}
+        <select bind:value={editor.tuftTone}>
+          {#each toneParam.options as o}<option value={o.value}>{o.label}</option>{/each}
+        </select>
+      </label>
+    {/if}
+    <label>Afstand mellem totter: {editor.tuftSpacing} felter
+      <input type="range" min="0.2" max="3" step="0.1" bind:value={editor.tuftSpacing} />
+    </label>
+    <label>Tottens størrelse: {editor.tuftSize} felter
+      <input type="range" min="0.3" max="2" step="0.1" bind:value={editor.tuftSize} />
+    </label>
+    <label>Tæthed: {Math.round(editor.tuftDensity * 100)} %
+      <input type="range" min="0.1" max="1" step="0.05" bind:value={editor.tuftDensity} />
+    </label>
+    <label>Gennemsigtighed: {Math.round(editor.brushOpacity * 100)} %
+      <input type="range" min="0.05" max="1" step="0.05" bind:value={editor.brushOpacity} />
+    </label>
+  {:else if editor.tool === 'paint'}
+    {#if editor.recentMaterials.length}
+      <h3>Seneste</h3>
+      <div class="recent">
+        {#each editor.recentMaterials as id}
+          {@const m = MATERIALS.find((x) => x.id === id)}
+          {#if m}
+            <button class:on={editor.material === id} title={m.name} aria-label={m.name} onclick={() => (editor.material = id)}><span class="sw big" style="background:{m.swatch}"></span></button>
+          {/if}
+        {/each}
+      </div>
+    {/if}
+    {#each MATERIAL_GROUPS.filter((g) => g !== 'Tomrum') as group}
+      {@const list = MATERIALS.filter((m) => m.group === group)}
       {#if list.length}
         <h3>{group}</h3>
         <div class="mats" role="radiogroup" aria-label={group}>
@@ -170,15 +239,22 @@
         </div>
       {/if}
     {/each}
-  {:else if editor.paintMode === 'path'}
-    <p class="hint">Visker fjerner stier. Terrænet under står, som det var.</p>
+    {#if isStone}
+      <label class="chk"><input type="checkbox" bind:checked={editor.wholeStones} /> Hele sten (ikke skåret ved penselkanten)</label>
+    {:else}
+      <h3>Mønster</h3>
+      <label>Størrelse: {Math.round(editor.textureScale * 100)} %
+        <input type="range" min="0.5" max="2" step="0.05" bind:value={editor.textureScale} />
+      </label>
+      <label>Drejning: {editor.textureRotation}°
+        <input type="range" min="0" max="345" step="15" bind:value={editor.textureRotation} />
+      </label>
+    {/if}
   {/if}
-  <label>Penselstørrelse: {editor.brushCells} felter
-    <input type="range" min="0.5" max="16" step="0.5" bind:value={editor.brushCells} />
-  </label>
   <button disabled={!editor.paintableLayer} onclick={() => editor.fillSelected()}>
-    {editor.tool === 'erase' ? (editor.paintMode === 'path' ? 'Fjern alle stier' : 'Ryd hele laget') : editor.paintMode === 'path' ? 'Dæk hele laget med sti' : 'Fyld hele laget'}
+    {editor.tool === 'erase' ? 'Ryd hele laget' : 'Fyld hele laget'}
   </button>
+  <p class="hint">Underlaget er et fladt billede: det huskes ikke, hvordan noget er malet. Fortryd virker stadig. Tast [ og ] for at ændre størrelsen.</p>
 {/if}
 
 <style>
@@ -188,6 +264,11 @@
   .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 8px; }
   .kinds { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-bottom: 8px; }
   h3 { font-size: 11px; color: var(--muted); margin: 6px 0 4px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+  .kinds4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 8px; }
+  .recent { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 6px; }
+  .recent button { padding: 3px; }
+  .sw.big { width: 22px; height: 22px; display: block; }
+  .sub { font-size: 11px; opacity: .75; }
   .mats { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 6px; }
   .mats button { display: flex; align-items: center; gap: 6px; text-align: left; padding: 4px 6px; }
   .sw { width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(0,0,0,.5); flex: none; }

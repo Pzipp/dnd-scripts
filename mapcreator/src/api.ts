@@ -20,11 +20,12 @@ const BASE = '/api/mapcreator';
 
 export const listMaps = () => call<MapInfo[]>(`${BASE}/maps`);
 export const loadMap = async (id: string) => parseDoc(await call<unknown>(`${BASE}/maps/${encodeURIComponent(id)}`));
-export const saveMap = (doc: MapDoc) =>
+/** `keys`: de fliser (pr. lag-id), kortet nævner (de samme, som er sendt med `savePaint`). */
+export const saveMap = (doc: MapDoc, keys?: Map<string, number[]>) =>
   call<{ ok: true }>(`${BASE}/maps/${encodeURIComponent(doc.id)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(serializeDoc(doc)),
+    body: JSON.stringify(serializeDoc(doc, keys)),
   });
 export const deleteMap = (id: string) => call<{ ok: true }>(`${BASE}/maps/${encodeURIComponent(id)}`, { method: 'DELETE' });
 
@@ -88,26 +89,15 @@ export async function uploadToVtt(blob: Blob, filename: string, campaign: string
   return body.saved[0]!;
 }
 
-// ---- færdigtegnede terrænfliser ----
+// ---- malede fliser (underlaget) ----
 
-export interface BakeManifest {
-  version: number;
-  scale: number;
-  tile: number;
-  /** "tx_ty" -> fingeraftryk. */
-  sigs: Record<string, string>;
-}
+export const paintTileUrl = (mapId: string, layerId: string, key: string) =>
+  `${BASE}/maps/${encodeURIComponent(mapId)}/paint/${encodeURIComponent(layerId)}/${key}.png`;
 
-/** Skalaen skrives som heltal (skala * 1000), så den kan stå i en adresse. */
-export const scaleKey = (scale: number): number => Math.round(scale * 1000);
-
-export const loadBakeManifests = (mapId: string, scale: number) =>
-  call<Record<string, BakeManifest>>(`${BASE}/maps/${encodeURIComponent(mapId)}/bake?scale=${scaleKey(scale)}`);
-export const bakeTileUrl = (mapId: string, layerId: string, scale: number, key: string, sig: string) =>
-  `${BASE}/maps/${encodeURIComponent(mapId)}/bake/${encodeURIComponent(layerId)}/${scaleKey(scale)}/${key}.webp?s=${sig}`;
-export const saveBake = (mapId: string, layerId: string, manifest: BakeManifest, tiles: Map<string, Blob>) => {
+/** Gemmer et lags fliser: `tiles` er de nye og ændrede (PNG), `keep` alle fliser, laget har; resten slettes hos serveren. */
+export const savePaint = (mapId: string, layerId: string, keep: string[], tiles: Map<string, Blob>) => {
   const form = new FormData();
-  form.append('manifest', JSON.stringify(manifest));
-  for (const [key, blob] of tiles) form.append(`t_${key}`, blob, `${key}.webp`);
-  return call<{ ok: true }>(`${BASE}/maps/${encodeURIComponent(mapId)}/bake/${encodeURIComponent(layerId)}`, { method: 'POST', body: form });
+  form.append('keep', JSON.stringify(keep));
+  for (const [key, blob] of tiles) form.append(`t_${key}`, blob, `${key}.png`);
+  return call<{ ok: true }>(`${BASE}/maps/${encodeURIComponent(mapId)}/paint/${encodeURIComponent(layerId)}`, { method: 'POST', body: form });
 };
