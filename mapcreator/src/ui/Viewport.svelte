@@ -302,6 +302,9 @@
       cancelStroke();
       if (scattering) editor.cancelScatter();
       scattering = false;
+      editor.freeDraft = null; // to fingre = knib/panorér: afbryd en påbegyndt frihåndslinje eller form
+      editor.shapeDraft = null;
+      shapeAnchor = null;
       drag = null;
       panning = false;
       return;
