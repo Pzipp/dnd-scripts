@@ -13,8 +13,26 @@ function potionCrate(g:CanvasRenderingContext2D,o:DrawInput):void{
 function ingredientsTray(g:CanvasRenderingContext2D,o:DrawInput):void{
  const r=rng(o.seed),{w,h}=o;
  rectBody(g,-w*.47,-h*.43,w*.94,h*.86,Math.min(w,h)*.05,[105,66,37],{lw:1.8,light:24,dark:32});
- for(let i=0;i<6;i++){const x=-w*.35+i*w*.14;ellBody(g,x,0,w*.075,h*.21,[191,174,131],{lw:1,light:22,dark:24});const col:RGB=shift(([83,122,62] as RGB),r()*50-15);for(let j=0;j<3;j++){ellBody(g,x+(r()-.5)*w*.05,-h*.05+(r()-.5)*h*.12,w*.024,h*.045,col,{lw:.5,light:18,dark:20});}}
- rectBody(g,-w*.44,-h*.36,w*.88,h*.08,1,[151,109,57],{lw:.9,light:18,dark:22});
+ rectBody(g,-w*.43,-h*.39,w*.86,h*.78,Math.min(w,h)*.035,[66,43,28],{lw:.8,light:12,dark:24});
+ // Three to five little bowls, each with different herbs, berries, powders or dried roots.
+ const count=3+Math.floor(r()*3);
+ for(let i=0;i<count;i++){
+  const cols=count===3?[-.27,0,.27]:count===4?[-.3,-.1,.12,.31]:[-.32,-.16,0,.16,.32];
+  const x=w*cols[i]!,y=h*((i%2===0)?-.17:.16),rx=w*(.065+r()*.012),ry=h*(.14+r()*.025);
+  const bowl:RGB= r()>.5?[129,88,53]:[94,70,48];
+  ellBody(g,x,y,rx*1.18,ry*1.12,bowl,{lw:1,light:22,dark:28});
+  ellBody(g,x,y-h*.01,rx,ry,[189,151,86],{lw:.7,light:18,dark:20});
+  const herb= Math.floor(r()*4);
+  for(let j=0;j<7+Math.floor(r()*5);j++){
+   const a=r()*Math.PI*2,rad=Math.sqrt(r())*.78,px=x+Math.cos(a)*rx*rad,py=y+Math.sin(a)*ry*rad;
+   const color:RGB=herb===0?[67,111,53]:herb===1?[136,55,50]:herb===2?[210,174,76]:[94,104,139];
+   ellBody(g,px,py,rx*(.12+r()*.12),ry*(.08+r()*.12),shift(color,(r()-.5)*22),{lw:.35,light:16,dark:18,ao:0,rim:.2});
+  }
+ }
+ // A pestle and a few loose sprigs/roots make the tray read as an active work surface.
+ ellBody(g,w*.31,-h*.23,w*.075,h*.08,[171,165,142],{lw:1,light:24,dark:25});
+ g.save();g.translate(w*.31,-h*.23);g.rotate(.55);rectBody(g,-w*.018,-h*.16,w*.036,h*.32,1,[202,191,161],{lw:.7,light:20,dark:25});g.restore();
+ for(let i=0;i<5;i++){const x=-w*.34+i*w*.14,y=h*(.31+(r()-.5)*.06);g.strokeStyle='rgba(76,104,49,.85)';g.lineWidth=1.2;g.beginPath();g.moveTo(x-w*.025,y+h*.025);g.quadraticCurveTo(x,y-h*.015,x+w*.035,y-h*.03);g.stroke();ellBody(g,x+w*.01,y-h*.015,w*.018,h*.025,[78,121,57],{lw:.3,light:14,dark:18,ao:0,rim:0});}
 }
 function potionBottles(g:CanvasRenderingContext2D,o:DrawInput):void{
  const r=rng(o.seed),{w,h}=o,style=param(o,'sort','blandet');
