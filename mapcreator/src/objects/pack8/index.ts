@@ -1,17 +1,11 @@
 import type { Family, ObjectKind } from '../registry';
-import { ruinKinds } from './ruins';
-import { shrineKinds } from './shrines';
-import { campKinds } from './camps';
-import { siegeKinds } from './siege';
+import { treeKinds } from './trees';
+import { waterKinds } from './water';
 
-/** Ekstra genstande (pack8). Hver fil i mappen eksporterer en liste af varianter; samles her. Nye familier lægges i `pack8Families`. */
+/** Ekstra genstande (pack8): natur, vand, miner og landbrug. Hver fil eksporterer en liste af varianter; samles her. Nye familier lægges i `pack8Families`. */
 export const pack8Families: Family[] = [
-  { key: 'ruins', label: 'Ruiner', category: 'architecture', randomDefault: false },
-  { key: 'shrines', label: 'Helligdomme og monumenter', category: 'architecture', randomDefault: false },
-  { key: 'fieldcamp', label: 'Lejr og felt', category: 'interior', randomDefault: false },
-  { key: 'siege', label: 'Belejringsmaskiner', category: 'architecture', randomDefault: false },
-  { key: 'boats', label: 'Både og skibe', category: 'architecture', randomDefault: false },
-  { key: 'dockside', label: 'Havn og kaj', category: 'interior', randomDefault: false },
+  { key: 'flora', label: 'Flora: nye træer og planter', category: 'nature', randomDefault: true },
+  { key: 'waterx', label: 'Vand og kyst', category: 'nature', randomDefault: false },
 ];
 
-export const pack8Kinds: ObjectKind[] = [...ruinKinds, ...shrineKinds, ...campKinds, ...siegeKinds];
+export const pack8Kinds: ObjectKind[] = [...treeKinds, ...waterKinds];
