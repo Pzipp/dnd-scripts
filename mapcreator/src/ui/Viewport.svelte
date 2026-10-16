@@ -225,7 +225,7 @@
         }
       }
     }
-    const hit = pickAt(editor.doc, wx, wy, 4 / editor.camera.zoom);
+    const hit = pickAt(editor.doc, wx, wy, 4 / editor.camera.zoom, editor.selectedLayerId);
     if (hit?.type === 'element') {
       editor.selectElement(hit.layer.id, hit.el.id);
       drag = { kind: 'move', layerId: hit.layer.id, id: hit.el.id, before: { x: hit.el.x, y: hit.el.y }, grab: [wx - hit.el.x, wy - hit.el.y] };

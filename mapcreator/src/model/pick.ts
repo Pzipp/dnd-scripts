@@ -9,12 +9,13 @@ export type Picked =
   | { type: 'wall'; layer: Layer; wall: Wall }
   | { type: 'opening'; layer: Layer; wall: Wall; opening: Opening };
 
-/** Det øverste i punktet blandt synlige, ulåste lag. Store effekter (lys, tåge) vælges kun, hvis intet andet er i vejen. */
-export function pickAt(doc: MapDoc, wx: number, wy: number, tolerance = 0): Picked | null {
+/** Det øverste i punktet blandt synlige, ulåste lag (kun det ene lag, hvis `onlyLayerId` er givet). Store effekter (lys, tåge) vælges kun, hvis intet andet er i vejen. */
+export function pickAt(doc: MapDoc, wx: number, wy: number, tolerance = 0, onlyLayerId?: string | null): Picked | null {
   for (const pass of [0, 1]) {
     for (let i = doc.layers.length - 1; i >= 0; i--) {
       const layer = doc.layers[i]!;
       if (!layer.visible || layer.locked) continue;
+      if (onlyLayerId && layer.id !== onlyLayerId) continue;
       if (layer.walls && pass === 0) {
         for (let w = layer.walls.length - 1; w >= 0; w--) {
           const wall = layer.walls[w]!;

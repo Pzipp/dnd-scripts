@@ -6,17 +6,9 @@
   import type { BrushKind } from '../render/paintBrush';
   import { isStoneMaterial } from '../render/stones';
 
-  const tools: { id: Tool; label: string; hint: string }[] = [
-    { id: 'hand', label: 'Hånd', hint: 'Flyt kortet (træk)' },
-    { id: 'select', label: 'Vælg', hint: 'Vælg, flyt, skalér og rotér genstande (V)' },
-    { id: 'stamp', label: 'Genstand', hint: 'Sæt genstande ud (G)' },
-    { id: 'scatter', label: 'Spred', hint: 'Mal en skov, spred sten eller planter (S)' },
-    { id: 'line', label: 'Linje', hint: 'Tegn mure, stier, broer, kløfter og hegn: punkt for punkt eller frihånd (L)' },
-    { id: 'shape', label: 'Form', hint: 'Tegn firkanter, cirkler og frie former med kant og udfyldning, fx bygninger (F)' },
-    { id: 'opening', label: 'Dør', hint: 'Sæt døre, porte og vinduer i en mur (D)' },
-    { id: 'paint', label: 'Pensel', hint: 'Mal terræn på et grundlag' },
-    { id: 'erase', label: 'Viskelæder', hint: 'Fjern terræn (gør laget gennemsigtigt)' },
-  ];
+  const TITLES: Record<Tool, string> = {
+    hand: 'Hånd', select: 'Vælg', stamp: 'Genstand', scatter: 'Spred', line: 'Linje', shape: 'Form', opening: 'Dør', paint: 'Pensel', erase: 'Viskelæder',
+  };
   const BRUSHES: { id: BrushKind; label: string; hint: string }[] = [
     { id: 'round', label: 'Rund', hint: 'Rund pensel med blød eller hård kant' },
     { id: 'edge', label: 'Kant', hint: 'Skarp, men ujævn kant (strand, klippe, jordpletter)' },
@@ -33,13 +25,7 @@
   const painting = $derived(editor.tool === 'paint' || editor.tool === 'erase');
 </script>
 
-<h2>Værktøj</h2>
-<div class="tools" role="radiogroup" aria-label="Værktøj">
-  {#each tools as t}
-    <button role="radio" aria-checked={editor.tool === t.id} class:on={editor.tool === t.id} title={t.hint} onclick={() => editor.setTool(t.id)}>{t.label}</button>
-  {/each}
-</div>
-
+<h2>{TITLES[editor.tool]}</h2>
 {#if editor.tool === 'stamp'}
   {#if !editor.placeableLayer}
     <p class="warn">Vælg et synligt, ulåst <b>Genstande</b>- eller <b>Effekter</b>-lag (eller opret et).</p>
@@ -258,24 +244,21 @@
 {/if}
 
 <style>
-  .tools { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-bottom: 10px; }
-  .tools button { padding: 5px 4px; }
   button.on { border-color: var(--accent); background: #3a3426; }
   .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 8px; }
   .kinds { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-bottom: 8px; }
-  h3 { font-size: 11px; color: var(--muted); margin: 6px 0 4px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+  h3 { font-size: 9px; color: var(--muted); margin: 6px 0 4px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
   .kinds4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 8px; }
   .recent { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 6px; }
   .recent button { padding: 3px; }
   .sw.big { width: 22px; height: 22px; display: block; }
-  .sub { font-size: 11px; opacity: .75; }
+  .sub { font-size: 8px; opacity: .75; }
   .mats { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 6px; }
   .mats button { display: flex; align-items: center; gap: 6px; text-align: left; padding: 4px 6px; }
   .sw { width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(0,0,0,.5); flex: none; }
   label.chk { flex-direction: row; align-items: center; gap: 6px; }
   label { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; color: var(--muted); }
   .warn { color: var(--danger); margin: 0 0 8px; }
-  .hint { color: var(--muted); font-size: 12px; margin: 0 0 8px; }
+  .hint { color: var(--muted); font-size: 9px; margin: 0 0 8px; }
   .row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
-  h2 + .tools { margin-top: 0; }
 </style>

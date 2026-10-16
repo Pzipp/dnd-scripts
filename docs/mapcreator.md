@@ -61,7 +61,9 @@ Genstande ligger i genstands- og effektlag (`elements[]`): `kind`, position, st�
 
 **Skygger og højde.** Skyggen følger kortets `lightAngle`; dens længde er varianten's `shadow` plus (lagets højde + genstandens `z`) × 6 px. Genstande tegnes i rækkefølgen lag, derefter `z`, derefter rækkefølgen i laget. Hver genstand tegnes én gang til et lille lærred (`render/sprites.ts`) og genbruges, så mange genstande kan tegnes hurtigt.
 
-**Værktøjer.** *Vælg* (V): klik, træk for at flytte, håndtag til skalering (Shift låser/frigiver proportioner) og rotation (Shift runder til 15°), pile flytter, Delete sletter, Ctrl+D duplikerer. *Genstand* (G): sæt ud med forhåndsvisning; Esc går tilbage til Vælg. "Fastgør til halve felter" er valgfri.
+**Opbygning.** Yderst til venstre ligger en smal kolonne med et ikon pr. værktøj (navn og genvej vises, når musen holdes over); ved siden af den står det valgte værktøjs indstillinger. Til højre for kortet ligger kolonnen Objekter (med kortets og det valgte lags egenskaber; kan foldes ind til siden) og yderst kolonnen Lag (lagliste, skjul/lås, nyt lag; kan foldes sammen, så kun lagenes ikoner vises). Hver lagtype har sit ikon.
+
+**Værktøjer.** *Vælg* (V) vælger kun det, der ligger på det valgte lag: klik, træk for at flytte, håndtag til skalering (Shift låser/frigiver proportioner) og rotation (Shift runder til 15°), pile flytter, Delete sletter, Ctrl+D duplikerer. *Genstand* (G): sæt ud med forhåndsvisning; Esc går tilbage til Vælg. "Fastgør til halve felter" er valgfri.
 
 ## Nyt kort og generator
 

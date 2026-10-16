@@ -5,9 +5,16 @@
   import WallInspector from './WallInspector.svelte';
   import ObjectList from './ObjectList.svelte';
 
+  import Icon from './Icon.svelte';
+
+  let { collapsed = false, ontoggle }: { collapsed?: boolean; ontoggle: () => void } = $props();
   const l = $derived(editor.selectedLayer);
 </script>
 
+<button class="fold" title={collapsed ? 'Fold objekter og egenskaber ud' : 'Fold sammen til siden'} aria-label="Fold objekter" onclick={ontoggle}>
+  <Icon name={collapsed ? 'left' : 'right'} size={14} />
+</button>
+{#if !collapsed}
 <ObjectList />
 
 <h2>Kort</h2>
@@ -34,8 +41,10 @@
 
 <ElementInspector />
 <WallInspector />
+{/if}
 
 <style>
+  .fold { padding: 3px 5px; float: right; }
   label { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; color: var(--muted); }
   .info { color: var(--muted); margin: 0 0 12px; }
 </style>

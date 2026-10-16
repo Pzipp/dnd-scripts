@@ -7,11 +7,15 @@
   import ResizeDialog from './ui/ResizeDialog.svelte';
   import NewMapDialog from './ui/NewMapDialog.svelte';
   import OpenDialog from './ui/OpenDialog.svelte';
+  import ToolBar from './ui/ToolBar.svelte';
   import ToolPanel from './ui/ToolPanel.svelte';
   import ObjectPicker from './ui/ObjectPicker.svelte';
   import ExportDialog from './ui/ExportDialog.svelte';
   import Gallery from './ui/Gallery.svelte';
   import ImportDialog from './ui/ImportDialog.svelte';
+
+  let layersFolded = $state(false);
+  let objectsFolded = $state(false);
 
   const gallery = new URLSearchParams(location.search).has('galleri');
 
@@ -76,7 +80,7 @@
 {#if gallery}
   <Gallery />
 {:else}
-<div class="app">
+<div class="app" style:--right-w={objectsFolded ? "30px" : "240px"} style:--layers-w={layersFolded ? "44px" : "190px"}>
   <header>
     <a class="home" href="/" title="Til forsiden">←</a>
     <input
@@ -106,9 +110,11 @@
     <button onclick={() => editor.fitView()}>Hele kortet</button>
     <span class="msg" class:err={editor.error}>{editor.error || editor.status}</span>
   </header>
-  <aside class="left"><ToolPanel />{#if editor.tool === 'stamp' || (editor.tool === 'scatter' && !editor.scatterErase)}<ObjectPicker />{/if}<LayerPanel /></aside>
+  <aside class="tools"><ToolBar /></aside>
+  <aside class="left"><ToolPanel />{#if editor.tool === 'stamp' || (editor.tool === 'scatter' && !editor.scatterErase)}<ObjectPicker />{/if}</aside>
   <main><Viewport /></main>
-  <aside class="right"><Inspector /></aside>
+  <aside class="right" class:folded={objectsFolded}><Inspector collapsed={objectsFolded} ontoggle={() => (objectsFolded = !objectsFolded)} /></aside>
+  <aside class="layers" class:folded={layersFolded}><LayerPanel collapsed={layersFolded} ontoggle={() => (layersFolded = !layersFolded)} /></aside>
 </div>
 
 {/if}
@@ -122,7 +128,7 @@
 <style>
   .app {
     display: grid; height: 100%;
-    grid-template: 'top top top' auto 'left main right' 1fr / 240px 1fr 260px;
+    grid-template: 'top top top top top' auto 'tools left main right layers' 1fr / 48px 220px 1fr var(--right-w, 240px) var(--layers-w, 190px);
   }
   header {
     grid-area: top; display: flex; align-items: center; gap: 8px; padding: 6px 10px;
@@ -136,11 +142,16 @@
   .msg { margin-left: auto; color: var(--muted); }
   .msg.err { color: var(--danger); }
   aside { background: var(--panel); padding: 10px; overflow: auto; min-height: 0; }
+  .tools { grid-area: tools; padding: 6px 6px; border-right: 1px solid var(--line); }
+  .layers { grid-area: layers; border-left: 1px solid var(--line); }
+  .layers.folded { padding: 6px 4px; }
+  .right.folded { padding: 6px 4px; }
   .left { grid-area: left; border-right: 1px solid var(--line); }
   .right { grid-area: right; border-left: 1px solid var(--line); }
   main { grid-area: main; min-width: 0; min-height: 0; position: relative; }
   @media (max-width: 900px) {
-    .app { grid-template: 'top' auto 'main' 1fr 'left' auto 'right' auto / 1fr; }
+    .app { grid-template: 'top' auto 'main' 1fr 'tools' auto 'left' auto 'right' auto 'layers' auto / 1fr; }
+    .tools :global(.bar) { flex-direction: row; flex-wrap: wrap; }
     aside { border: 0; border-top: 1px solid var(--line); max-height: 30vh; }
   }
 </style>
