@@ -729,9 +729,9 @@ function giantBones(g: G, o: DrawInput, mode: 'ribs' | 'pile' | 'skull'): void {
   const r = rng(o.seed);
   const { w, h } = o;
   if (mode === 'skull') {
-    skull(g, -w * 0.1, 0, Math.min(w, h) * 0.8, 0.1, false);
+    skull(g, -w * 0.08, -h * 0.05, Math.min(w, h) * 0.6, 0.1, false);
     // knogler nedenunder
-    bone(g, [-w * 0.3, h * 0.4], [w * 0.4, h * 0.3], 7);
+    bone(g, [-w * 0.35, h * 0.38], [w * 0.4, h * 0.3], 6);
     return;
   }
   if (mode === 'ribs') {
