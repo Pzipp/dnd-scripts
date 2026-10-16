@@ -1,6 +1,6 @@
 import type { GroundData } from '../model/ground';
 import { CELL_PX } from '../model/types';
-import { isVoid, materialById, MATERIAL_WATER, rimShade, shade, shadeOut } from './materials';
+import { isVoid, materialById, MATERIAL_WATER, rimShade, setShadeScale, shade, shadeOut } from './materials';
 import { fbm, smoothstep, valueNoise } from './noise';
 import { isStoneMaterial, STONE_STYLES, stone, stoneAt, stoneColor } from './stones';
 
@@ -12,7 +12,7 @@ export interface PixelBuffer {
 }
 
 /** Versionen af terrænets tegning. Hæves, hver gang `renderGroundTile` giver et andet billede, så gemte fliser (se groundCache.ts) kasseres. */
-export const GROUND_RENDER_VERSION = 3;
+export const GROUND_RENDER_VERSION = 4;
 
 /** Afstanden (verdenspixels) mellem punkterne i vægtgitteret. Gitteret ligger fast i verdenen, så fliser passer sammen. */
 const STEP = CELL_PX / 8;
@@ -209,6 +209,7 @@ const WATER_FOAM: [number, number, number] = [236, 246, 248];
  * med det terræn, de ligger på.
  */
 export function renderGroundTile(buf: PixelBuffer, ground: GroundData, seed: number, x0: number, y0: number, scale: number, floor = false): void {
+  setShadeScale(scale);
   const { w: mw, h: mh, data: mask } = ground;
   const out = buf.data;
   const wx1 = x0 + buf.width / scale;

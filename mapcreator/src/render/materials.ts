@@ -1,3 +1,4 @@
+import { grassDetail, grassOut } from './grassTexture';
 import { stoneShade } from './stones';
 import { cellOut, cellular, fbm, hash32, smoothstep, valueNoise } from './noise';
 
@@ -78,6 +79,26 @@ function tint(out: Float64Array, r: number, g: number, b: number): void {
   out[2] = out[2]! + b;
 }
 
+/** Pixels pr. verdenspixel for den tegning, der er i gang (sættes af `renderGroundTile`); græsstråene bruger den til at vælge tekstur. */
+export let shadeScale = 1;
+export const setShadeScale = (s: number): void => { shadeScale = s; };
+/** Til sammenligning i tests: slå strå-teksturen fra. */
+export let grassTextured = true;
+export const setGrassTextured = (v: boolean): void => { grassTextured = v; };
+
+/** Strå-teksturen i (x, y) med forskydning efter kortets seed (resultatet står i `grassOut`). */
+function grassAt(x: number, y: number, seed: number): void {
+  if (seed !== grassSeed) {
+    grassSeed = seed;
+    grassOx = hash32(seed, 11, 0) & 255;
+    grassOy = hash32(seed, 13, 0) & 255;
+  }
+  grassDetail(x, y, grassOx, grassOy, shadeScale);
+}
+let grassSeed = NaN;
+let grassOx = 0;
+let grassOy = 0;
+
 /** Udgang fra `shade`: r, g, b (0..255) og a (0..1). */
 export const shadeOut = new Float64Array(4);
 
@@ -97,9 +118,19 @@ export function shade(id: number, x: number, y: number, seed: number, margin: nu
   const grain = valueNoise(x / 5, y / 5, seed + 7) - 0.5;
   switch (id) {
     case 1: {
-      // græs: store pletter af lys og mørk, fint korn og enkelte mørke totter
-      const t = smoothstep(0.3, 0.7, fbm(x / 240, y / 240, seed + 1, 3));
+      // græs: store pletter af lys og mørk, strå i en lille tekstur (se grassTexture.ts) og enkelte mørke totter
+      const t = smoothstep(0.3, 0.7, fbm(x / 240, y / 240, seed + 1, 2));
       mix3(o, 78, 128, 46, 138, 172, 72, t);
+      if (grassTextured) {
+        grassAt(x, y, seed);
+        const tuft = smoothstep(0.62, 0.8, valueNoise(x / 14, y / 14, seed + 3));
+        const f = 1 + grassOut.lum * 0.3 - tuft * 0.1;
+        const up = Math.max(0, grassOut.lum) * grassOut.tip;
+        o[0] = o[0]! * f + up * 26;
+        o[1] = o[1]! * f + up * 16;
+        o[2] = o[2]! * f - up * 6;
+        return;
+      }
       const tuft = smoothstep(0.62, 0.8, valueNoise(x / 14, y / 14, seed + 3));
       const k = grain * 22 - tuft * 18;
       tint(o, k * 0.6, k, k * 0.4);
@@ -166,8 +197,16 @@ export function shade(id: number, x: number, y: number, seed: number, margin: nu
       mix3(o, 44, 84, 40, 80, 122, 54, t);
       const litter = smoothstep(0.66, 0.86, fbm(x / 9, y / 9, seed + 93, 2)) * 0.8;
       const moss = smoothstep(0.55, 0.8, fbm(x / 40, y / 40, seed + 95, 2));
-      const k = grain * 20;
-      tint(o, k * 0.5, k, k * 0.4);
+      if (grassTextured) {
+        grassAt(x, y, seed);
+        const f = 1 + grassOut.lum * 0.34;
+        o[0] = o[0]! * f;
+        o[1] = o[1]! * f;
+        o[2] = o[2]! * f;
+      } else {
+        const k = grain * 20;
+        tint(o, k * 0.5, k, k * 0.4);
+      }
       tint(o, litter * 22 - moss * 8, litter * 4 - moss * 2, litter * -10 - moss * 8);
       return;
     }
@@ -179,6 +218,15 @@ export function shade(id: number, x: number, y: number, seed: number, margin: nu
       o[0] = o[0]! + (150 - o[0]!) * bare * 0.55;
       o[1] = o[1]! + (116 - o[1]!) * bare * 0.55;
       o[2] = o[2]! + (74 - o[2]!) * bare * 0.55;
+      if (grassTextured) {
+        grassAt(x, y, seed);
+        const f = 1 + grassOut.lum * 0.3;
+        const up = Math.max(0, grassOut.lum) * (0.4 + grassOut.tip);
+        o[0] = o[0]! * f + up * 22;
+        o[1] = o[1]! * f + up * 18;
+        o[2] = o[2]! * f + up * 2;
+        return;
+      }
       const blade = valueNoise(x / 1.8, y / 7, seed + 105) * 0.6 + valueNoise(x / 3.5, y / 14, seed + 107) * 0.4;
       const k = grain * 14 + (blade - 0.5) * 40;
       tint(o, k, k * 0.9, k * 0.4);

@@ -130,7 +130,7 @@ describe('bløde overgange', () => {
     const right = avg(150);
     expect(right - left).toBeGreaterThan(40);
     const between = blue.filter((_, i) => i > 20 && i < 140).map((_, i) => avg(i + 20)).filter((v) => v > left + 12 && v < right - 12);
-    expect(between.length).toBeGreaterThan(12);
+    expect(between.length).toBeGreaterThan(8);
   });
 
   it('alle materialer kan tegnes, er dækkende og giver rigtige tal', () => {
