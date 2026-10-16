@@ -48,8 +48,8 @@ python3 dnd.py llm-opslag ...                 # opslag i 5etools til dig (script
 | `mapcreator/`, `webui/mapcreator/` | Kortbygger (`/mapcreator`): klienten i TypeScript + Svelte bygges med Node (`mapcreator/build-docker.sh`) til `webui/static/mapcreator/` (gitignoreret); Flask-blueprint gemmer kort i `$USERDATA/mapcreator/` (standard `/userdata`). Se `docs/mapcreator.md` |
 | `webui/builder/` | Byggerens kode: `model.py` (valg og state), `character_yaml.py` (udregning), `render.py` (ark), `default_layout.py` (standardlayout, når `sheets.yaml` mangler), `spellbox.py` (spell- og cantrip-lister), `kort.py`/`cards.py` (kort), `e5tools.py` (opslag og dansk overlay), `copies.py`/`versions.py` (`_copy`, `_versions`), `descriptions.py`/`effects.py`/`llm_client.py` (danske beskrivelser og effekter), `baggrund.py`, `layout_edit.py`, `routes.py` |
 | `webui/static/` | CSS/JS til webui'en, `baggrunde/` (billeder til ark og kort), `theme-*.css` (sidetemaer, endnu ikke tilsluttet) |
-| `karakterer/<navn>/` | Én mappe pr. karakter, se tabellen ovenfor. Ældre: `karakter.yaml` (`docs/karakterark-yaml.md`) |
-| `karakterer/<navn>/udskrifter/` | **Genereret, ikke i git.** Redigér aldrig i hånden |
+| `vol/userdata/karakterer/<navn>/` | Én mappe pr. karakter ($USERDATA/karakterer, ikke i git; uden USERDATA bruger dnd.py denne mappe, hvis den findes), se tabellen ovenfor. Ældre: `karakter.yaml` (`docs/karakterark-yaml.md`) |
+| `vol/userdata/karakterer/<navn>/udskrifter/` | **Genereret, ikke i git.** Redigér aldrig i hånden |
 | `karakterer/_skabelon/` | Kommenterede skabeloner til nye karakterer (`karakter.yaml`, `kort.yaml`, `sheets.yaml`) |
 | `bibliotek/*.yaml` | Delte kort (id -> kort) |
 | `bibliotek/_cards.yaml`, `_descriptions.yaml`, `_effects.yaml` | **Genererede caches** til det nye system: kortudkast, danske beskrivelser og udtrukne effekter. Se `bibliotek/README.md` |
@@ -63,11 +63,11 @@ python3 dnd.py llm-opslag ...                 # opslag i 5etools til dig (script
 
 ## Sådan laver du en ny karakter med `character.yaml` (LLM-vejen, uden bygger)
 
-Brugeren beskriver en karakter, og du skriver `karakterer/<navn>/character.yaml` (ikke `karakter.yaml`, og ingen `choices.yaml`).
+Brugeren beskriver en karakter, og du skriver `vol/userdata/karakterer/<navn>/character.yaml` (ikke `karakter.yaml`, og ingen `choices.yaml`).
 
 1. Læs `docs/llm-karakter-prompt.md` (reglerne for dig) og `docs/character-yaml.md` (formatet). Spørg, hvis du mangler det væsentlige: klasse og level, art, baggrund, evner, udstyr. Gæt ikke på tal.
 2. Slå regler op i stedet for at huske dem: `python3 dnd.py llm-opslag` (race, klasse, feats, spells fra 5etools).
-3. `mkdir karakterer/<navn>` (små bogstaver og bindestreg) og skriv `character.yaml`. Tal som `proficiency_bonus`, `hit_dice` og saves følger levelet og klassen.
+3. `mkdir vol/userdata/karakterer/<navn>` (små bogstaver og bindestreg) og skriv `character.yaml`. Tal som `proficiency_bonus`, `hit_dice` og saves følger levelet og klassen.
 4. `python3 dnd.py tjek-ark <navn>` og ret hver FEJL (linje og kolonne står i beskeden) og hver ADVARSEL, du kan. Gentag, til der ingen fejl er.
 5. `python3 dnd.py ark <navn> --pdf`, derefter **kig på resultatet** (HTML eller PDF-siderne; tekst, der er for lang, klippes ved kanten af A4-siden). Har karakteren ingen `sheets.yaml`, laver `webui/builder/default_layout.py` et neutralt standardlayout ud fra `character.yaml` (spells, cantrips, angreb, evner); ret layoutet kun i en egen `karakterer/<navn>/sheets.yaml` (se `docs/sheets-yaml.md`).
 
@@ -80,7 +80,7 @@ Hovedvejen er webui'en: opret en karakter på `/builder`, vælg art, klasse, bag
 Ældre arbejdsgang (`karakter.yaml`):
 
 1. Spørg, hvis du mangler det væsentlige: klasse og level, art (species), baggrund, evner, udstyr. Gæt ikke på tal.
-2. `cp -r karakterer/_skabelon karakterer/<navn>` (navn med små bogstaver og bindestreg).
+2. `cp -r karakterer/_skabelon vol/userdata/karakterer/<navn>` (navn med små bogstaver og bindestreg).
 3. Udfyld `karakter.yaml` og `kort.yaml`. Udregn ikke modifiers i hånden: skriv `'{+DEX+PB}'`, og generatoren regner det ud.
 4. Nye kort: se om de findes i `bibliotek/` først. Ellers læg dem i `bibliotek/` (kan genbruges) eller under `egne:` i `kort.yaml`.
 5. `python3 dnd.py tjek`, derefter `python3 dnd.py alt <navn> --pdf`.
@@ -111,7 +111,7 @@ Hovedvejen er webui'en: opret en karakter på `/builder`, vælg art, klasse, bag
 ## Må og må ikke
 
 * **Redigér ikke** filer i `udskrifter/` i hånden. Generér dem igen.
-* **Slet eller overskriv ikke** en anden spillers karakter uden at spørge. Hver spiller ejer sin mappe i `karakterer/`.
+* **Slet eller overskriv ikke** en anden spillers karakter uden at spørge. Hver spiller ejer sin mappe i `vol/userdata/karakterer/`.
 * Commit **ikke** genererede filer: hele `udskrifter/` (HTML og PDF) og `__pycache__` er i `.gitignore`. Der er ingen færdige PDF'er i repoet; de laves i webui'en eller med `python3 dnd.py ... --pdf`.
 * Commit ikke bogtekster og oversættelser af dem (`data/books/*.json`, `data/*-da.json`, `data/spells/`, `data/class/`; ophavsretligt materiale), `.env`, `vol/`. Se `.gitignore`.
 * Foretræk at lave ændringer på en **gren** og lade en pull request gennemgå dem. Skriv ikke direkte til `main`, medmindre ejeren siger det.

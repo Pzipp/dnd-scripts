@@ -14,13 +14,14 @@ from . import sheets as sheets_module
 bp = Blueprint("builder", __name__)
 
 ROOT = Path(__file__).resolve().parent.parent.parent
-CHARACTERS = ROOT / "karakterer"
 NAME_OK = re.compile(r"^[a-z0-9-]+$")
 
 # Samme PDF-generator som det gamle system (scripts/pdf/), genbrugt uændret.
 sys.path.insert(0, str(ROOT / "scripts" / "pdf"))
 import lav_pdf  # noqa: E402
 import faelles  # noqa: E402
+
+CHARACTERS = Path(faelles.KARAKTERER)  # $USERDATA/karakterer
 
 PDF_STYLES = {"farve", *render.STYLE_FILES}
 # Kort: grundstilene plus tema-overlays (se scripts/kort/spellkort.py); tema -> grundstil.

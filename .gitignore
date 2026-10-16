@@ -25,10 +25,8 @@ data/*-da.json
 data/spells/
 data/class/
 
-# vol/ er runtime-data. karakterer/ er den gældende kopi; vol/karakterer var en forældet kopi.
+# vol/ er runtime-data. Karakterer ligger i vol/userdata/karakterer/ (kun karakterer/_skabelon følger repoet).
 # Homebrew og alt andet brugerindhold ligger i vol/userdata/ (ikke i det delte repo).
-vol/karakterer/
-vol/simpelvtt/
 vol/userdata/
 
 # Genereret opslagsfil til LLM-vejen (afledt af bogindhold; lav den med dnd.py llm-opslag)

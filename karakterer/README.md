@@ -1,9 +1,9 @@
 # karakterer/
 
-Én mappe pr. karakter. Alt til en karakter ligger samlet her.
+Her ligger kun skabelonen (`_skabelon/`). Selve karaktererne ligger i `$USERDATA/karakterer/` (`vol/userdata/karakterer/` i dev; ikke i git). Uden `USERDATA` bruger `dnd.py` `vol/userdata/karakterer/`, hvis den findes. Én mappe pr. karakter, og alt til en karakter ligger samlet:
 
 ```
-karakterer/
+$USERDATA/karakterer/
   <navn>/
     choices.yaml      byggerens rå valg                -> docs/choices-yaml.md        (nyt system)
     character.yaml    udregnede stats, genberegnes     -> docs/character-yaml.md      (nyt system)
@@ -13,6 +13,7 @@ karakterer/
     udskrifter/       genererede filer (rediger aldrig i hånden)
       karakterark-farve.pdf    karakterark-sorthvid.pdf    karakterark-<tema>.pdf
       kort-farve.pdf           kort-sorthvid.pdf           kort-<tema>.pdf
+karakterer/ (i repoet)
   _skabelon/          kommenterede skabeloner til nye karakterer (karakter.yaml, kort.yaml, sheets.yaml)
 ```
 

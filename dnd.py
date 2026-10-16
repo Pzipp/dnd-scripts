@@ -75,7 +75,7 @@ def _lookup(character_check):
 def ark_kontrol(navn, lookup=None):
     """Kontrollér karakterens character.yaml + sheets.yaml. Skriver fund og returnerer (antal fejl, antal advarsler)."""
     character_check, *_ = _ark_import()
-    mappe = Path(faelles.KARAKTERER) / navn
+    mappe = Path(faelles.karakter_mappe(navn))
     if not (mappe / "character.yaml").is_file():
         faelles.fejl(f"karakterer/{navn}/character.yaml findes ikke. Se docs/character-yaml.md og docs/llm-karakter-prompt.md.")
     fund = character_check.check_dir(mappe, lookup or _lookup(character_check))
@@ -98,7 +98,7 @@ def ark(navn, stil, pdf, skrifttyper, ud):
     fejl, _ = ark_kontrol(navn)
     if fejl:
         faelles.fejl(f"{fejl} fejl i karakterer/{navn}. Ret dem først (python3 dnd.py tjek-ark {navn}).")
-    mappe = Path(faelles.KARAKTERER) / navn
+    mappe = Path(faelles.karakter_mappe(navn))
     karakter, layout = character_yaml.load(mappe), sheets.load(mappe)
     stile = ["farve", *render.STYLE_FILES] if stil == "alle" else [stil]
     ud_mappe = Path(ud) if ud else mappe / "udskrifter"
@@ -136,7 +136,7 @@ def tjek():
     """Byg alle karakterark og kort i en midlertidig mappe. Returnerer antal fejl."""
     fejl_antal = 0
     navne = faelles.karakter_navne()
-    if os.path.isdir(os.path.join(faelles.KARAKTERER, "_skabelon")):
+    if os.path.isdir(faelles.SKABELON):
         navne.append("_skabelon")                 # skabelonen skal altid kunne bygges
     # Byggerens karakterer (choices.yaml + character.yaml + sheets.yaml) har ikke karakter.yaml/kort.yaml;
     # de tjekkes ved at rendere arket i alle stile (kun i hukommelsen).
@@ -151,7 +151,7 @@ def tjek():
         character_check, *_ = _ark_import()
         lookup = _lookup(character_check)
     for navn in kun_ark:
-        mappe = Path(faelles.KARAKTERER) / navn
+        mappe = Path(faelles.karakter_mappe(navn))
         try:
             fund = character_check.check_dir(mappe, lookup)
             for filnavn, issue in fund:
@@ -166,7 +166,7 @@ def tjek():
             fejl_antal += 1
             print(f"FEJL   {navn:<14} character.yaml-ark: {type(e).__name__}: {e}")
     for navn in bygger:
-        d = Path(faelles.KARAKTERER) / navn
+        d = Path(faelles.karakter_mappe(navn))
         try:
             karakter, layout = character_yaml.load(d), sheets.load(d)
             for stil in (None, *render.STYLE_FILES):
@@ -180,7 +180,7 @@ def tjek():
         for navn in navne:
             moduler = (karakterark, spellkort)
             if navn in kun_ark:                      # kun kort, hvis karakteren har et; arket er kontrolleret ovenfor
-                moduler = (spellkort,) if faelles._i_mappe(os.path.join(faelles.KARAKTERER, navn), "kort") else ()
+                moduler = (spellkort,) if faelles._i_mappe(faelles.karakter_mappe(navn), "kort") else ()
             for modul in moduler:
                 try:
                     modul.lav(navn, "begge", os.path.join(tmp, navn))
