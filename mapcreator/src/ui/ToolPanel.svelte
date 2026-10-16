@@ -212,7 +212,7 @@
         {/each}
       </div>
     {/if}
-    {#each MATERIAL_GROUPS.filter((g) => g !== 'Tomrum') as group}
+    {#each MATERIAL_GROUPS as group}
       {@const list = MATERIALS.filter((m) => m.group === group)}
       {#if list.length}
         <h3>{group}</h3>

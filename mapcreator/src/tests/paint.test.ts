@@ -39,6 +39,19 @@ describe('opløsning', () => {
 });
 
 describe('penselstrøg', () => {
+  it('tomrum maler sort inde i midten og en klippekant mod land', () => {
+    const p = blank();
+    solid(p, [150, 150, 150]);
+    const s = new PaintStroke(p, brush({ material: 19, size: 200 }));
+    s.dab(250, 250);
+    expect(Array.from(pixelAt(p, 250, 250)!)).toEqual([8, 7, 9, 255]); // sort tomrum
+    expect(Array.from(pixelAt(p, 250 + 120, 250)!)).toEqual([150, 150, 150, 255]); // uden for penslen: urørt
+    const edge = pixelAt(p, 250 + 95, 250)!; // lige inden for kanten: klippe, hverken land eller sort
+    expect(edge[3]).toBe(255);
+    expect(edge[0]).not.toBe(150);
+    expect(edge[0]).toBeGreaterThan(20);
+  });
+
   it('en hård rund pensel maler en dækkende cirkel i materialets farver', () => {
     const p = blank();
     const s = new PaintStroke(p, brush());
