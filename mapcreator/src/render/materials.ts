@@ -49,6 +49,9 @@ export const MATERIALS: Material[] = [
   { id: 26, key: 'grass_forest_img', name: 'Græs, skov (billede)', swatch: '#353b1e', group: 'Natur' },
   { id: 27, key: 'grass_dry_img', name: 'Græs, tørt (billede)', swatch: '#987545', group: 'Natur' },
   { id: 28, key: 'grass_meadow_img', name: 'Græs, mark (billede)', swatch: '#609530', group: 'Natur' },
+  { id: 29, key: 'planks_oak_broken', name: 'Plankegulv, eg, ødelagt', swatch: '#684b34', group: 'Veje og gulve', pathable: true },
+  { id: 30, key: 'water_deep', name: 'Vand, dybt (billede)', swatch: '#0e283f', group: 'Vand' },
+  { id: 31, key: 'water_rough', name: 'Vand, uroligt (billede)', swatch: '#31697d', group: 'Vand' },
 ];
 
 const BY_ID = new Map(MATERIALS.map((m) => [m.id, m]));
@@ -294,6 +297,9 @@ export function shade(id: number, x: number, y: number, seed: number, margin: nu
     case 26:
     case 27:
     case 28:
+    case 29:
+    case 30:
+    case 31:
       // malet plankegulv (billede, se imageTextures.ts); brun, til billedet er læst ind
       if (!sampleTexture(id, x, y, o)) {
         const [r, g, b] = textureAverage(id);

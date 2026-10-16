@@ -5,6 +5,9 @@ import waterCalm from '../assets/water_calm.jpg';
 import grassForest from '../assets/grass_forest_img.jpg';
 import grassDry from '../assets/grass_dry_img.jpg';
 import grassMeadow from '../assets/grass_meadow_img.jpg';
+import planksOakBroken from '../assets/planks_oak_broken.jpg';
+import waterDeep from '../assets/water_deep.jpg';
+import waterRough from '../assets/water_rough.jpg';
 
 /**
  * Materialer, der er et gentagende billede (maling i stedet for udregnet mønster). Billedet læses ind én gang; `sampleTexture`
@@ -21,13 +24,16 @@ interface Tex {
  * der bruges, til billedet er læst ind. Billederne dækker 8 × 8 m (ca. 5,3 felter), så 768 px vises med 0,34.
  */
 const SOURCES: Record<number, { url: string; scale: number; avg: [number, number, number] }> = {
-  22: { url: planksOak, scale: 0.25, avg: [139, 90, 47] },
+  22: { url: planksOak, scale: 0.25, avg: [123, 82, 50] },
   23: { url: planksBroken, scale: 0.36, avg: [90, 80, 71] },
   24: { url: planksGrey, scale: 0.34, avg: [71, 65, 62] },
   25: { url: waterCalm, scale: 0.34, avg: [51, 183, 211] },
   26: { url: grassForest, scale: 0.34, avg: [53, 59, 30] },
   27: { url: grassDry, scale: 0.34, avg: [152, 117, 69] },
   28: { url: grassMeadow, scale: 0.34, avg: [96, 149, 48] },
+  29: { url: planksOakBroken, scale: 0.36, avg: [104, 75, 52] },
+  30: { url: waterDeep, scale: 0.34, avg: [14, 40, 63] },
+  31: { url: waterRough, scale: 0.34, avg: [49, 105, 125] },
 };
 const loaded = new Map<number, Tex>();
 
