@@ -36,6 +36,7 @@ export const TAGS = {
   magic: 'Magi',
   // karakter
   rich: 'Rig',
+  shop: 'Butik og handel',
   poor: 'Fattig',
 } as const;
 
@@ -89,6 +90,12 @@ export const FAMILY_TAGS: Record<string, Tag[]> = {
   farm: ['farm', 'village', 'outdoor'],
   arcane: ['magic', 'dungeon', 'temple'],
   workshop: ['magic', 'indoor', 'house', 'rich'],
+  smithy: ['indoor', 'village', 'city', 'shop'],
+  fletcher: ['indoor', 'village', 'city', 'shop', 'military'],
+  leatherwork: ['indoor', 'village', 'city', 'shop'],
+  cartographer: ['indoor', 'city', 'shop', 'rich'],
+  bookseller: ['indoor', 'city', 'village', 'shop', 'rich'],
+  alchemist: ['indoor', 'magic', 'shop', 'rich'],
   city: ['city', 'village', 'outdoor'],
   prison: ['dungeon', 'military', 'indoor'],
   tavern: ['tavern', 'indoor', 'house'],

@@ -83,6 +83,12 @@ export const FINAL_FAMILIES: Family[] = [
 /** Hele den gamle familie flyttes til den nye (se `FINAL_FAMILIES`). */
 export const FAMILY_MERGE: Record<string, string> = {
   flora: 'plant',
+  smithy: 'craft',
+  fletcher: 'craft',
+  leatherwork: 'craft',
+  cartographer: 'study',
+  bookseller: 'shop',
+  alchemist: 'shop',
   groundcover: 'plant',
   desert: 'plant',
   wilds: 'hazardx',
