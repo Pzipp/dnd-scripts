@@ -143,3 +143,16 @@ table.sit td.sv{text-align:right;width:7mm}
 .magi-liste dd{margin:0;font-size:9pt}
 .magi-slots{font-size:9pt;margin:0}
 .magi-celle small.f{font-size:7.5pt;font-style:normal;word-spacing:.15em}
+/* spells og cantrips (webui/builder/spellbox.py): level-overskrifter, kompakt tabel */
+table.spl{font-size:7.6pt;table-layout:auto}
+table.spl th{padding:.3mm .6mm}
+table.spl td{padding:.25mm .6mm;vertical-align:top}
+table.spl td.sn{font-weight:700}
+table.spl td.sn small{display:block;font-weight:400;font-style:italic;color:var(--muted);font-size:6.2pt;line-height:1.05}
+table.spl td.cp{white-space:nowrap;color:var(--muted)}
+table.spl tr.lvl th{font-size:8.4pt;text-transform:none;letter-spacing:0;color:var(--accent);border-bottom:1px solid var(--accent);padding-top:1.4mm;font-weight:700}
+table.spl tr.lvl .sl{float:right;font-weight:400;font-size:7pt;color:var(--muted)}
+table.spl tr.lvl .sl .cbx{width:2.2mm;height:2.2mm}
+.pm{display:inline-block;width:2.4mm;font-size:6.5pt;margin-right:.4mm;color:var(--muted)}
+.fl{display:inline-block;font-size:5.8pt;font-weight:700;line-height:1;border:1px solid var(--muted);border-radius:.6mm;padding:.1mm .5mm;margin-left:.8mm;color:var(--muted);vertical-align:.3mm}
+.spl2{display:grid;grid-template-columns:1fr 1fr;gap:0 3mm;align-items:start}

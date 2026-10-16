@@ -3,6 +3,8 @@
 Gælder alle bøger i denne mappe. Udvid de faste termer, når en ny bog bringer nye begreber.
 
 ## Regler
+
+Note: reglerne her gælder den oversatte forklarende tekst (bogtekst, træk, spells), hvor et spilbegreb skrives `dansk (English)`. Karakterark og kort er ikke oversat bogtekst, men følger `docs/navnekonvention.md`: engelske regelnavne står alene, og dansk forklaring står rundt om. Trækoverskrifter i species og klasser oversættes som `Dansk titel (English Name)` (se nedenfor).
 - Kun tekstværdier oversættes. `{@...}`-tags er uændrede, byte for byte (også visningsteksten).
 - Spilbegreber (stats, skills, conditions, skadetyper, handlinger, enheder) oversættes i løbende
   tekst som `dansk (English)`, fx `hastighed (Speed)`, `Dexterity`-> `Smidighed (Dexterity)`.
@@ -27,3 +29,13 @@ Opportunity Attack lejlighedsangreb · Difficulty Class (DC) sværhedsgrad · He
 Exhaustion udmattelse · Blinded blændet · Charmed charmeret · Deafened døv · Frightened bange ·
 Grappled grebet · Incapacitated uduelig · Invisible usynlig · Paralyzed lammet · Petrified forstenet ·
 Poisoned forgiftet · Prone liggende · Restrained fastholdt · Stunned bedøvet · Unconscious bevidstløs
+
+## Besværgelser og species (opslagsfiler)
+- Gælder `spells-*.json`, `races.json` og `feats.json`: Navnet på selve besværgelsen, species, subrace eller feat udtrækkes ikke og står på engelsk. Trækoverskrifter og valgmuligheder inde i teksten oversættes som almindelige overskrifter.
+- Skade og redningsslag: `Acid-skade`, `Dexterity-redningsslag` (engelsk type + dansk grundord). Væsenstyper, størrelser og våbenkategorier (Beast, Large, Ranged) står på engelsk.
+- Handlings-tags: `{@action Magic|XPHB}-handling`. Tilstande: `tilstanden {@condition Charmed|XPHB}`.
+- "Using a Higher-Level Spell Slot" = `Brug af en højere besværgelsesplads`. "Cantrip Upgrade" = `Cantrip-opgradering`.
+- Materialekomponenter oversættes som korte danske navneled (`en bid mad`); beløb skrives `1.000 GP`.
+- `ft.`/`feet` i løbende tekst: `fod`; `miles` = `mile`, `inch` = `tomme`.
+- Species-træk (overskrifter): `Dansk titel (English Name)`, så navnet kan genkendes mod bogen. Faste: `Alder (Age)`, `Størrelse (Size)`, `Sprog (Languages)`, `Væsenstype (Creature Type)`. Senses og regelord står alene (`Darkvision`, `Blindsight`, `Tremorsense`, `Truesight`, `Alignment` er eksempler på kategorien, ikke en udtømmende liste); sammensatte navne som `Superior Darkvision` skrives `Superior Darkvision` uden dansk led. Samme engelske træknavn oversættes ens overalt, fordi `_mod ... replace` slår navnet op.
+- Ældre tekster uden tags: `proficient`/`proficiency` beholdes, `resistance mod Necrotic-skade`, `fordel (advantage)`, `lang hvile`, `bonushandling`, `færdighedsbonus`, `flyvehastighed`.

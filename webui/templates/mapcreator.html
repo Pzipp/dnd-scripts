@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kortbygger</title>
+  <link rel="icon" href="{{ url_for('static', filename='favicon-32.png') }}">
+  {% if built %}<link rel="stylesheet" href="{{ url_for('static', filename='mapcreator/app.css') }}?v={{ v }}">{% endif %}
+</head>
+<body>
+{% if built %}
+<div id="app"></div>
+<script type="module" src="{{ url_for('static', filename='mapcreator/app.js') }}?v={{ v }}"></script>
+{% else %}
+<p style="font-family:system-ui;padding:2rem;max-width:40rem">
+  Kortbyggerens klient er ikke bygget. Kør <code>mapcreator/build-docker.sh</code> (se <code>docs/mapcreator.md</code>).
+</p>
+{% endif %}
+</body>
+</html>

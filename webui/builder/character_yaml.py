@@ -19,11 +19,10 @@ eksisterende character.yaml, i stedet for at blive overskrevet).
 `languages` var tidligere i samme kategori (choices.yaml trackede intet
 sprogvalg) - PHB 2024 kap. 2's "Choose Languages"-regel (Common + 2 valgt
 fra Standard Languages-tabellen, se languages.known i choices.yaml) er nu
-modelleret direkte, og `_languages()` bygger den fulde streng. KENDT,
-BEVIDST gap: "Your class and other features might also give you languages"
-(fx Rogue/Thieves' Cant, Druid/Druidic) er IKKE talt med her - de vises kun
-som tekst i den feature, der giver dem (Træning og valg), ikke tilføjet til
-languages-linjen. Se "Kendte forenklinger" i docs/character-yaml.md.
+modelleret direkte, og `_languages()` bygger den fulde streng, inkl. sprog en
+klassefeature med sprogets navn giver (Rogue: Thieves' Cant, Druid: Druidic).
+Frit valgte ekstra sprog fra features er ikke med. Se "Kendte forenklinger" i
+docs/character-yaml.md.
 
 `ac` var tidligere i samme kategori (ingen udstyrs-tilstand i choices.yaml),
 men udstyret rustning tracked nu direkte (equipment.armor/shield) - `_ac()`
@@ -46,12 +45,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import re
 import yaml
 
 from . import e5tools as e
 from . import effects
 from . import feat_rules
 from . import foundry
+from . import items
 from . import model
 from . import optionalfeatures
 from . import races
@@ -115,13 +116,28 @@ def _hp(data: dict, primary_id: str | None, primary_hit_die: int, con_mod: int, 
     return total + con_mod * total_level
 
 
-def _languages(data: dict) -> str:
-    """Common (fast) + languages.known (PHB 2024 kap. 2's 2-sprogs valg fra
-    Standard Languages-tabellen, se e5tools.standard_languages()). Tæller
-    IKKE klasse-/feature-tildelte ekstra sprog (fx Thieves' Cant) med - se
-    modul-docstringens note om det kendte, bevidste gap."""
+def _class_languages(data: dict, sources: set[str]) -> list[str]:
+    """Sprog, klassen giver som en klassefeature med sprogets eget navn (Rogue: Thieves' Cant, Druid: Druidic), til og
+    med klassens niveau. Sprogene findes i 5etools' languages.json (type rare/secret) uden tekst; reglen står i featuren."""
+    secret = {l["name"] for l in e._load("languages.json").get("language", []) + e._homebrew_entries("language")
+              if l.get("type") in ("rare", "secret") and l.get("source") in sources | {"XPHB"}}
+    out: list[str] = []
+    for entry in (data.get("classes") or {}).values():
+        class_obj = e.get_class(entry.get("name"), {entry["source"]} if entry.get("source") else sources) if entry.get("name") else None
+        if not class_obj:
+            continue
+        for feature in e.class_features(class_obj["name"], {class_obj["source"]}, entry.get("level", 1)):
+            if feature["name"] in secret and feature["name"] not in out:
+                out.append(feature["name"])
+    return out
+
+
+def _languages(data: dict, sources: set[str]) -> str:
+    """Common (fast) + languages.known (PHB 2024 kap. 2's 2-sprogs valg fra Standard Languages-tabellen, se
+    e5tools.standard_languages()) + sprog, klassen giver (Thieves' Cant, Druidic, se _class_languages()). Ikke med:
+    de ekstra, frit valgte sprog fra klassefeatures (fx det ekstra sprog til Rogue-featuren Thieves' Cant)."""
     known = data.get("languages", {}).get("known") or []
-    return ", ".join(["Common", *known])
+    return ", ".join(dict.fromkeys(["Common", *known, *_class_languages(data, sources)]))
 
 
 def _ac(data: dict, sources: set[str], dex_mod: int) -> tuple[int, str]:
@@ -262,6 +278,8 @@ def empty_character_sheet() -> dict:
         "condition_immunities": [],
         "granted_spells": [],
         "masteries": [],
+        "weapons": [],
+        "inventory": [],
         "feats": [],
         "spells_known": [],
         "optional_features": [],
@@ -429,6 +447,92 @@ def _masteries(data: dict, sources: set[str]) -> list[list[str]]:
                 if pair not in out:
                     out.append(pair)
     return out
+_PROPERTY_NAMES = {"F": "Finesse", "L": "Light", "T": "Thrown", "V": "Versatile", "H": "Heavy", "R": "Reach", "2H": "Two-Handed",
+                   "A": "Ammunition", "LD": "Loading"}
+_DAMAGE_TYPES = {"S": "Slashing", "P": "Piercing", "B": "Bludgeoning"}
+
+
+def _weapon_entry(w: dict) -> dict:
+    """Ét våben fra items-base til character.yaml: navn, kategori, skade, egenskaber, rækkevidde og Weapon Mastery."""
+    props = items.properties(w)
+    out = {
+        "name": w["name"], "source": w.get("source"), "category": w.get("weaponCategory"),
+        "ranged": (w.get("type") or "").split("|")[0] == "R",
+        "damage": w.get("dmg1"), "damage_type": _DAMAGE_TYPES.get(w.get("dmgType"), w.get("dmgType")),
+        "properties": props,
+    }
+    if items.NAME_DA.get(w["name"]):
+        out["name_da"] = items.NAME_DA[w["name"]]
+    if "Versatile" in props and w.get("dmg2"):
+        out["damage_versatile"] = w["dmg2"]
+    if w.get("range"):
+        out["range"] = w["range"]
+    mastery = [items._ref(m) for m in w.get("mastery") or []]
+    if mastery:
+        out["mastery"] = mastery[0]
+    return out
+
+
+def _equipment_refs(data: dict, primary_class_obj: dict | None, background_obj: dict | None) -> list[dict]:
+    """Alt udstyr karakteren har, som [{name, source, quantity}] (source kan være None): startpakkerne for
+    primærklassen og baggrunden (equipment.class_package/background_package), valg i pakkerne (equipment.picks),
+    udstyrsvælgerens ting (equipment.items) og fritekst i equipment.extra (komma/semikolon/linjeskift)."""
+    equipment = data.get("equipment") or {}
+    refs: list[dict] = []
+    class_data = ((primary_class_obj or {}).get("startingEquipment") or {}).get("defaultData") or [{}]
+    bg_data = (background_obj or {}).get("startingEquipment") or [{}]
+    for prefix, pool in (("class", class_data[0]), ("background", bg_data[0])):
+        key = equipment.get(f"{prefix}_package")
+        for index, item in enumerate((pool or {}).get(key) or []):
+            if not isinstance(item, dict):
+                item = {"item": item}
+            if item.get("equipmentType"):
+                for n in range(item.get("quantity") or 1):
+                    pick = (equipment.get("picks") or {}).get(f"{prefix}_{key}_{index}_{n}") or {}
+                    if pick.get("name"):
+                        refs.append({"name": pick["name"], "source": pick.get("source"), "quantity": 1})
+            elif isinstance(item.get("item"), str):
+                parts = item["item"].split("|")
+                refs.append({"name": parts[0], "source": parts[1].upper() if len(parts) > 1 and parts[1] else None, "quantity": item.get("quantity") or 1})
+    for item in equipment.get("items") or []:
+        if isinstance(item, dict) and item.get("name"):
+            refs.append({"name": item["name"], "source": item.get("source"), "quantity": max(1, int(item.get("quantity") or 1))})
+    for line in equipment.get("extra") or []:
+        refs += [{"name": part.strip(), "source": None, "quantity": 1} for part in re.split(r"[,;\n]", str(line)) if part.strip()]
+    return refs
+
+
+def _merge(refs: list[dict]) -> list[dict]:
+    """Samme ting nævnt flere gange (fx Dagger fra pakken og fra vælgeren) lægges sammen."""
+    out: dict[str, dict] = {}
+    for ref in refs:
+        key = ref["name"].lower()
+        if key in out:
+            out[key]["quantity"] += ref["quantity"]
+        else:
+            out[key] = dict(ref)
+    return list(out.values())
+
+
+def _equipment(data: dict, primary_class_obj: dict | None, background_obj: dict | None, sources: set[str]) -> tuple[list[dict], list[dict]]:
+    """(weapons, inventory) af _equipment_refs(): våben (items-base) til angrebs-/udstyrsboksen, alt andet til
+    inventory. Rustning/Shield der er valgt som udstyret (equipment.armor/shield) står i ac_note, ikke her."""
+    known: dict[str, dict] = {}
+    for item in items._pool():
+        if item.get("name") and item.get("source") in sources | {"XPHB"}:
+            known.setdefault(item["name"].lower(), item)
+    weapons: list[dict] = []
+    inventory: list[dict] = []
+    for ref in _merge(_equipment_refs(data, primary_class_obj, background_obj)):
+        item = items.lookup(ref["name"], ref["source"], sources) if ref["source"] else None
+        item = item or known.get(ref["name"].lower())
+        if item and items.kind_of(item) == "weapon":
+            weapons.append({**_weapon_entry(item), **({"quantity": ref["quantity"]} if ref["quantity"] > 1 else {})})
+        elif item:
+            inventory.append({"name": item["name"], "source": item.get("source"), "quantity": ref["quantity"]})
+        else:
+            inventory.append({"name": ref["name"], "quantity": ref["quantity"]})
+    return weapons, inventory
 
 
 _RECHARGE_KEYS = {"daily": "long_rest", "restLong": "long_rest", "rest": "short_rest"}
@@ -775,6 +879,8 @@ def derive_from_state(data: dict, state: dict) -> dict:
         ] if value
     ]
 
+    equipment_out = _equipment(data, primary_class_obj, background_obj, sources)
+
     return {
         "name": "",  # sættes af derive_and_save ud fra mappenavnet - choices.yaml har ikke selv et navnefelt
         "level": total_level,
@@ -794,7 +900,7 @@ def derive_from_state(data: dict, state: dict) -> dict:
         "skills": skills,
         "expertise": expertise,
         "tools": tools,
-        "languages": _languages(data),  # se _languages() - klasse-/feature-tildelte ekstra sprog er IKKE talt med, kendt gap
+        "languages": _languages(data, sources),  # Common + valgte + klassens (Thieves' Cant, Druidic), se _languages()
         "can_use": can_use,
         "size": _size(race_eff, race_stored),
         "speeds": derived["speeds"],  # {'walk': 30, 'fly': 30, ...} i ft
@@ -805,6 +911,8 @@ def derive_from_state(data: dict, state: dict) -> dict:
         "condition_immunities": derived["condition_immunities"],
         "granted_spells": granted_spells,
         "masteries": _masteries(data, sources),
+        "weapons": equipment_out[0],  # fra startpakkerne, pakkevalg, udstyrsvælgeren og equipment.extra, se _equipment()
+        "inventory": equipment_out[1],  # det øvrige udstyr: [{name, source, quantity}]
         "feats": feats,
         "spells_known": spells_known,
         "optional_features": optional_features,  # valgte Metamagic/Invocations/Maneuvers ...: {name, source, types, class}

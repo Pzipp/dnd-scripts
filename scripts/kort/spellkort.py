@@ -151,9 +151,22 @@ def bibliotek():
     return lib
 
 
-def build(deck, stil="sorthvid"):
+# Valgfrie tema-overlays: tema -> (grundstil, CSS-fil). Lægges oven på grundstilen (se README).
+TEMAER = {
+    "skovland": ("farve", "stil-farve-skovland.css"),
+    "stormblaa": ("farve", "stil-farve-stormblaa.css"),
+    "vinroed": ("farve", "stil-farve-vinroed.css"),
+    "gravure": ("sorthvid", "stil-sorthvid-gravure.css"),
+    "herbarium": ("sorthvid", "stil-sorthvid-herbarium.css"),
+}
+
+
+def build(deck, stil="sorthvid", tema=None):
     if stil not in faelles.STILE:
         faelles.fejl(f"Ukendt stil '{stil}'.")
+    if tema and (tema not in TEMAER or TEMAER[tema][0] != stil):
+        faelles.fejl(f"Ukendt tema '{tema}' til stilen '{stil}'. Vælg blandt: "
+                     + ", ".join(t for t, (g, _) in TEMAER.items() if g == stil) + ".")
     farve = stil == "farve"
     lib = bibliotek()
     for kid, kort in (deck.get("egne") or {}).items():
@@ -168,6 +181,8 @@ def build(deck, stil="sorthvid"):
     css = open(os.path.join(HERE, "spellkort.css"), encoding="utf-8").read()
     if farve:
         css += "\n" + open(os.path.join(HERE, "spellkort-farve.css"), encoding="utf-8").read()
+    if tema:
+        css += "\n" + open(os.path.join(HERE, TEMAER[tema][1]), encoding="utf-8").read()
     cards = [lib[i] for i in deck["kort"]]
     sheets = []
     for n, start in enumerate(range(0, len(cards), PR_ARK), 1):
@@ -194,10 +209,17 @@ def build(deck, stil="sorthvid"):
 '''
 
 
-def lav(kilde, stil=None, ud_mappe=None):
-    """Lav kort-HTML i de valgte stile. Returnerer listen af filer."""
+def lav(kilde, stil=None, ud_mappe=None, tema=None):
+    """Lav kort-HTML i de valgte stile (eller ét tema: kort-<tema>.html). Returnerer listen af filer."""
     src = faelles.find_fil(kilde, "kort")
     deck = faelles.indlaes(src)
+    if tema:
+        if tema not in TEMAER:
+            faelles.fejl(f"Ukendt tema '{tema}'. Vælg blandt: {', '.join(TEMAER)}.")
+        dst = faelles.ud_sti(src, "kort", tema, ".html", ud_mappe)
+        with open(dst, "w", encoding="utf-8") as f:
+            f.write(build(deck, TEMAER[tema][0], tema))
+        return [dst]
     filer = []
     for s in faelles.stile(stil):
         dst = faelles.ud_sti(src, "kort", s, ".html", ud_mappe)
@@ -211,7 +233,8 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="Lav spellkort-HTML (63 x 88 mm, 9 pr. A4).")
     ap.add_argument("kilde", help="karakternavn (fx valak), mappe eller sti til kort.yaml")
     ap.add_argument("--stil", choices=["farve", "sorthvid", "begge"], default="begge")
+    ap.add_argument("--tema", choices=list(TEMAER), help="ét tema-overlay (erstatter --stil): " + ", ".join(TEMAER))
     ap.add_argument("--ud", help="mappe til outputfiler (standard: karakterer/<navn>/udskrifter/)")
     a = ap.parse_args()
-    for f in lav(a.kilde, a.stil, a.ud):
+    for f in lav(a.kilde, a.stil, a.ud, a.tema):
         print(f)

@@ -2,7 +2,7 @@
 # docker-compose.yml (den kan ændre sig, og kammeraten har sin egen opsætning).
 # Koden og Dockerfile kommer fra ../dnd-scripts-dev, der bygges og bind-mountes derfra.
 #
-# Port 8081 er kun til lokal test (127.0.0.1). Udefra-adgang går via nginx (todo-sebastian punkt 44),
+# Porte (værts-side): dev (denne fil, dnd-webui-dev) = 8082, prod (../dnd-scripts) = 8081. Begge kun lokalt (127.0.0.1). Udefra-adgang går via nginx (todo-sebastian punkt 44),
 # og containeren er på proxy-netværket, så nginx kan nå den.
 name: dnd
 
@@ -11,9 +11,9 @@ services:
   # hvis UPDATE_E5TOOLS=true er sat i .env. Kører én gang og stopper -
   # dnd-webui venter på den (se depends_on), men den fejler aldrig hårdt
   # (se update-e5tools.sh), så en manglende opdatering blokerer ikke siden.
-  e5tools-updater:
+  5etools-updater:
     image: alpine/git
-    container_name: e5tools-updater
+    container_name: 5etools-updater
     entrypoint: ["sh", "/update-e5tools.sh"]
     restart: "no"
     user: "${DND_UID:-1000}:${DND_GID:-1000}"
@@ -28,12 +28,12 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  dnd-webui:
+  dnd-webui-dev:
     build: ../dnd-scripts-dev
-    container_name: dnd-webui
+    container_name: dnd-webui-dev
     restart: unless-stopped
     depends_on:
-      e5tools-updater:
+      5etools-updater:
         condition: service_completed_successfully
 
     # Samme UID/GID som ejeren af dnd-scripts-dev/-mappen, så genererede filer ejes af sebastian.
@@ -46,16 +46,19 @@ services:
       - .:/app
       # 5etools-data (JSON-regelbøger), read-only - se /srv/dnd5etools
       - /srv/dnd5etools:/e5tools:ro
-      # Homebrew lægges her (gitignoreret vol/, redigerbar) og mountes OVEN PÅ
-      # /e5tools/homebrew, så gruppens eget indhold ikke ryger ved en opdatering
-      # eller oprydning af e5tools-klonen, og ikke skal ind i det delte repo.
-      - ./vol/homebrew:/e5tools/homebrew
+      # Fælles datamappe (backup tages her): vol/userdata i arbejdsmappen, /userdata i containeren.
+      # Kortbyggeren gemmer i /userdata/mapcreator, Simpelvtt i /userdata/simpelvtt.
+      - ./vol/userdata:/userdata
+      # Homebrew ligger i userdata og mountes OVEN PÅ /e5tools/homebrew, så gruppens eget
+      # indhold ikke ryger ved en opdatering eller oprydning af e5tools-klonen, og ikke skal ind i det delte repo.
+      - ./vol/userdata/homebrew:/e5tools/homebrew
 
     ports:
-      - "${DND_BIND_IP:-127.0.0.1}:${DND_PORT:-8081}:8080"
+      - "${DND_BIND_IP:-127.0.0.1}:${DND_PORT:-8082}:8080"
 
     environment:
       - TZ=Europe/Copenhagen
+      - USERDATA=/userdata
       - LLM_API_BASE=${LLM_API_BASE:-}
       - LLM_API_KEY=${LLM_API_KEY:-}
       - LLM_MODEL=${LLM_MODEL:-}
@@ -65,7 +68,7 @@ services:
 
     labels:
       - "homelab.stack=games"
-      - "homelab.service=dnd-webui"
+      - "homelab.service=dnd-webui-dev"
 
     logging:
       driver: json-file

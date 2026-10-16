@@ -1,0 +1,227 @@
+[
+ {
+  "key": "busk_rund",
+  "name": "Busk, rund",
+  "family": "plant",
+  "w": 2.5,
+  "h": 2.51,
+  "shadow": true,
+  "randomRotation": true
+ },
+ {
+  "key": "traekrone_lys",
+  "name": "Trækrone, lys",
+  "family": "tree",
+  "w": 3.0,
+  "h": 3.02,
+  "shadow": true,
+  "randomRotation": true
+ },
+ {
+  "key": "grantop",
+  "name": "Grantop",
+  "family": "tree",
+  "w": 2.5,
+  "h": 2.54,
+  "shadow": true,
+  "randomRotation": true
+ },
+ {
+  "key": "stor_sten",
+  "name": "Stor sten",
+  "family": "rock",
+  "w": 2.0,
+  "h": 2.24,
+  "shadow": true,
+  "randomRotation": true
+ },
+ {
+  "key": "stenbroend",
+  "name": "Stenbrønd",
+  "family": "well",
+  "w": 2.0,
+  "h": 2.06,
+  "shadow": true,
+  "randomRotation": false
+ },
+ {
+  "key": "traekasse",
+  "name": "Trækasse",
+  "family": "crate",
+  "w": 1.0,
+  "h": 1.04,
+  "shadow": true,
+  "randomRotation": false
+ },
+ {
+  "key": "toende_set_oppefra",
+  "name": "Tønde, set oppefra",
+  "family": "barrel",
+  "w": 1.0,
+  "h": 1.05,
+  "shadow": true,
+  "randomRotation": false
+ },
+ {
+  "key": "vogn",
+  "name": "Vogn",
+  "family": "cart",
+  "w": 2.5,
+  "h": 2.14,
+  "shadow": true,
+  "randomRotation": false
+ },
+ {
+  "key": "baalplads_med_sten",
+  "name": "Bålplads med sten",
+  "family": "camp",
+  "w": 1.5,
+  "h": 1.54,
+  "shadow": true,
+  "randomRotation": false
+ },
+ {
+  "key": "telt_rundt",
+  "name": "Telt, rundt",
+  "family": "tent",
+  "w": 3.0,
+  "h": 2.95,
+  "shadow": true,
+  "randomRotation": false
+ },
+ {
+  "key": "dam_med_aakander",
+  "name": "Dam med åkander",
+  "family": "waterplant",
+  "w": 3.0,
+  "h": 2.74,
+  "shadow": true,
+  "randomRotation": false
+ },
+ {
+  "key": "fluesvampe",
+  "name": "Fluesvampe",
+  "family": "mushroom",
+  "w": 1.0,
+  "h": 1.02,
+  "shadow": true,
+  "randomRotation": false
+ },
+ {
+  "key": "statue_paa_sokkel",
+  "name": "Statue på sokkel",
+  "family": "statue",
+  "w": 1.5,
+  "h": 1.71,
+  "shadow": true,
+  "randomRotation": false
+ },
+ {
+  "key": "kiste_med_baelter",
+  "name": "Kiste med bælter",
+  "family": "chest",
+  "w": 1.5,
+  "h": 1.11,
+  "shadow": true,
+  "randomRotation": false
+ },
+ {
+  "key": "bregne_med_blomster",
+  "name": "Bregne med blomster",
+  "family": "plant",
+  "w": 1.5,
+  "h": 1.39,
+  "shadow": true,
+  "randomRotation": true
+ },
+ {
+  "key": "flad_sten",
+  "name": "Flad sten",
+  "family": "rock",
+  "w": 1.5,
+  "h": 1.24,
+  "shadow": true,
+  "randomRotation": true
+ },
+ {
+  "key": "blomstrende_busk",
+  "name": "Blomstrende busk",
+  "family": "plant",
+  "w": 1.5,
+  "h": 1.42,
+  "shadow": true,
+  "randomRotation": true
+ },
+ {
+  "key": "guldbunke",
+  "name": "Guldbunke",
+  "family": "treasure",
+  "w": 1.5,
+  "h": 1.37,
+  "shadow": true,
+  "randomRotation": false
+ },
+ {
+  "key": "traestub",
+  "name": "Træstub",
+  "family": "wood",
+  "w": 1.5,
+  "h": 1.43,
+  "shadow": true,
+  "randomRotation": false
+ },
+ {
+  "key": "krystalklump",
+  "name": "Krystalklump",
+  "family": "magic",
+  "w": 1.5,
+  "h": 1.52,
+  "shadow": true,
+  "randomRotation": false
+ },
+ {
+  "key": "stenskive_med_stjerne",
+  "name": "Stenskive med stjerne",
+  "family": "magic",
+  "w": 2.0,
+  "h": 2.01,
+  "shadow": true,
+  "randomRotation": false
+ },
+ {
+  "key": "bord_med_service",
+  "name": "Bord med service",
+  "family": "table",
+  "w": 2.0,
+  "h": 1.62,
+  "shadow": true,
+  "randomRotation": false
+ },
+ {
+  "key": "robaad",
+  "name": "Robåd",
+  "family": "harbor",
+  "w": 2.0,
+  "h": 2.42,
+  "shadow": true,
+  "randomRotation": false
+ },
+ {
+  "key": "hul_i_jorden",
+  "name": "Hul i jorden",
+  "family": "well",
+  "w": 2.0,
+  "h": 1.95,
+  "shadow": true,
+  "randomRotation": false
+ },
+ {
+  "key": "braendestabel",
+  "name": "Brændestabel",
+  "family": "wood",
+  "w": 1.5,
+  "h": 1.43,
+  "shadow": true,
+  "randomRotation": false
+ }
+]

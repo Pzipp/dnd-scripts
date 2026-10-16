@@ -69,7 +69,7 @@ def merge_subrace(race: dict, sr: dict) -> dict:
     if sub.get("entries"):
         for ent in sub.pop("entries"):
             target = (ent.get("data") or {}).get("overwrite") if isinstance(ent, dict) else None
-            index = next((i for i, it in enumerate(out.get("entries", [])) if target and isinstance(it, dict) and str(it.get("name", "")).strip().lower() == target.strip().lower()), -1)
+            index = next((i for i, it in enumerate(out.get("entries", [])) if target and isinstance(it, dict) and versions.name_matches(it.get("name"), target)), -1)
             if index >= 0:
                 out["entries"][index] = ent
             else:

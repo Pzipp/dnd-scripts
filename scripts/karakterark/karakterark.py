@@ -255,9 +255,6 @@ def box_evner(node, v, env):
     return f'<div class="abil">{s1_abilities(v, env)}{legend}</div>'
 
 
-STANDARD_STATS = ("AC", "Max HP", "Hit Dice", "Initiativ", "Fart", "Prof. bonus", "Passiv Perc.")
-
-
 def box_stats(node, v, env):
     """Stat-rækken øverst. Uden felter bruges standarden ud fra faelles (ac, hp, level, fart, hit_die, evner, skills)."""
     felter = node.get("felter")
@@ -557,10 +554,6 @@ REGISTRY = {
 }
 
 
-# Fejl i enkelte bokse. Sættes til en liste af tjek.py, så alle fejl samles med boksen i stedet for at stoppe ved den første.
-FEJLLISTE = None
-
-
 def _boksfejl(typ, exc):
     if isinstance(exc, KeyError):
         return f"Mangler feltet {exc.args[0]!r} i boksen {typ!r}."
@@ -593,11 +586,7 @@ def layout_node(node, v, env, flat=False):
     try:
         inner = reg["fn"](data, v, env)
     except (KeyError, TypeError, ValueError, IndexError, AttributeError) as exc:
-        besked = _boksfejl(typ, exc)
-        if FEJLLISTE is None:
-            raise ValueError(besked) from exc
-        FEJLLISTE.append((node, besked))
-        return ""
+        raise ValueError(_boksfejl(typ, exc)) from exc
     if not inner or flat or node.get("bokstype") == "none" or not reg["card"]:
         return inner
     cls = "box small" if reg["small"] else "box"

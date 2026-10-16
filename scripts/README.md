@@ -1,13 +1,13 @@
 # scripts/
 
-Generatorerne. Du kører dem normalt via `python3 dnd.py ...` i roden af repoet (se [`../README.md`](../README.md)). Hver mappe har sin egen README.
+Generatorerne bag kommandolinjen (`python3 dnd.py ...` i roden af repoet, se [`../README.md`](../README.md)). Webui'en (`../webui/`) genbruger kortgeneratoren, PDF-generatoren og arkenes CSS, men bygger selve karakterarket med `webui/builder/render.py`. `dnd.py ark` og `dnd.py tjek-ark` bruger samme `render.py` og `webui/builder/character_check.py` direkte (`character.yaml` + `sheets.yaml`, se [`../docs/character-yaml.md`](../docs/character-yaml.md)); PDF'en laves af `pdf/lav_pdf.py`. Hver mappe har sin egen README.
 
 | Mappe | Laver | README |
 |---|---|---|
-| `karakterark/` | Karakterark, 4 sider A4, farve og sort/hvid | [karakterark/README.md](karakterark/README.md) |
-| `kort/` | Spell-/evne-/udstyrskort, 63 × 88 mm, farve og sort/hvid | [kort/README.md](kort/README.md) |
-| `pdf/` | PDF ud fra HTML | [pdf/README.md](pdf/README.md) |
-| `data/` | Udtræk fra 5etools til `data/*.yaml` (`feats_xphb.py`), felter i [docs/feats-xphb-da.md](../docs/feats-xphb-da.md) | |
+| `karakterark/` | Ældre karakterark (`karakter.yaml`), A4, typisk 4 sider, farve og sort/hvid. Indeholder også CSS-temaerne, som webui'en deler | [karakterark/README.md](karakterark/README.md) |
+| `kort/` | Spell-/evne-/udstyrskort, 63 × 88 mm, farve og sort/hvid, fem tema-overlays og måling af tekst uden for rammen (`maal_overflow.js`). Bruges af både `dnd.py` og webui'en | [kort/README.md](kort/README.md) |
+| `pdf/` | PDF ud fra HTML, med advarsel om kort med tekst uden for rammen. Bruges af både `dnd.py` og webui'en | [pdf/README.md](pdf/README.md) |
+| `data/` | Udtræk af XPHB-feats fra 5etools til `data/feats-XPHB-da.yaml` (`feats_xphb.py`), felter i [docs/feats-xphb-da.md](../docs/feats-xphb-da.md). `llm_opslag.py` er opslagsværktøjet til LLM'en (`python3 dnd.py llm-opslag`, se [docs/llm-karakter-prompt.md](../docs/llm-karakter-prompt.md)) | |
 | `faelles.py` | Fælles hjælpere (indlæs YAML/JSON, find filer, stile, outputstier) | |
 
 ## Fælles konventioner

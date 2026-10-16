@@ -16,7 +16,23 @@ import sys
 
 SCRIPTS = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(SCRIPTS)
-KARAKTERER = os.path.join(ROOT, "karakterer")
+SKABELON = os.path.join(ROOT, "karakterer", "_skabelon")   # følger repoet
+
+
+def _karakter_rod():
+    """Karaktermappen: $USERDATA/karakterer (Docker), ellers vol/userdata/karakterer, ellers karakterer/ i repoet."""
+    if os.environ.get("USERDATA"):
+        return os.path.join(os.environ["USERDATA"], "karakterer")
+    lokal = os.path.join(ROOT, "vol", "userdata", "karakterer")
+    return lokal if os.path.isdir(lokal) else os.path.join(ROOT, "karakterer")
+
+
+KARAKTERER = _karakter_rod()
+
+
+def karakter_mappe(navn):
+    """Mappen for en karakter; skabelonen ligger i repoet, resten i KARAKTERER."""
+    return SKABELON if navn == "_skabelon" else os.path.join(KARAKTERER, navn)
 BIBLIOTEK = os.path.join(ROOT, "bibliotek")
 STILE = ("farve", "sorthvid")
 ENDELSER = (".yaml", ".yml", ".json")
@@ -71,7 +87,7 @@ def find_fil(arg, filnavn):
         if p:
             return p
         fejl(f"Mappen {arg} har ingen {filnavn}.yaml")
-    p = _i_mappe(os.path.join(KARAKTERER, arg), filnavn)
+    p = _i_mappe(karakter_mappe(arg), filnavn)
     if p:
         return p
     navne = ", ".join(karakter_navne()) or "(ingen)"

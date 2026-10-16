@@ -7,8 +7,8 @@ redigerer i hånden - den læses og skrives af `webui/builder/model.py`
 (`load()`/`save()`), og dens felter giver kun mening sammen med 5etools'
 egen regeldata (mountet på `/e5tools`, se `webui/builder/e5tools.py`).
 
-En karakter har enten en `karakter.yaml` (den manuelle, ældre vej) eller en
-`choices.yaml` (bygget via `/builder`), ikke nødvendigvis begge.
+En karakter har en `karakter.yaml` (den manuelle, ældre vej), en
+`choices.yaml` (bygget via `/builder`) eller begge (konverterede karakterer beholder deres gamle fil).
 
 ## To niveauer: rå valg vs. udregnet state
 
@@ -37,11 +37,9 @@ hukommelsen, når `/api/builder/state` kaldes, og skrives ikke til disk.
 merger den gemte YAML ovenpå med `template.update(data)` - kun på
 TOP-niveau. Et felt, som IKKE findes i skabelonen, forsvinder altså ikke,
 hvis det allerede står i filen, men bliver heller aldrig læst af nogen
-nuværende kode. **Vigtigt for en ny bygger:** mindst to eksisterende
-testkarakterer (`dev-two`, `dev-three`) har et efterladt top-niveau-felt
-`level:` og `class:` (ental, ikke `classes:`) fra en meget tidligere
-version af skemaet, før multiclass-dictet fandtes. De er døde data - ingen
-kode læser dem, og en ny bygger bør IKKE bruge dem (brug `classes`-dictet
+nuværende kode. **Vigtigt for en ny bygger:** en gammel fil kan have et efterladt top-niveau-felt
+`level:` og `class:` (ental, ikke `classes:`) fra skemaet før multiclass-dictet. De er døde data - ingen
+kode læser dem, og en ny bygger skal IKKE bruge dem (brug `classes`-dictet
 og summen af dets `level`-felter, se nedenfor).
 
 ## Opbygning
@@ -106,7 +104,9 @@ spells:
 equipment:
   class_package: A         # bogstav-nøgle ind i 5etools' startingEquipment-valgsæt for den PRIMÆRE klasse
   background_package: A    # samme, for baggrunden
-  extra: []                # fritekst, ekstra udstyr brugeren selv har tilføjet
+  extra: []                # fritekst, ekstra udstyr brugeren selv har tilføjet (komma/semikolon/linjeskift)
+  items: []                # udstyrsvælgerens ting: [{name: Longsword, source: XPHB, quantity: 1}] - se "Udstyrsvælger"
+  picks: {}                # valg i startpakkerne: {class_A_2_0: {name: Drum, source: XPHB}} - se "Udstyrsvælger"
   armor: {name: Chain Mail, source: XPHB}  # udstyret kropsrustning, eller {name: null, source: null} = ingen
   shield: false             # Shield (+2 AC) - separat fra armor, kan bæres sammen med enhver rustning
 
@@ -117,6 +117,18 @@ settings:                  # PR. KARAKTER, ikke delt mellem karakterer
   allowed_sources: [XPHB]  # hvilke 5etools-kildekoder der må slås op i for DENNE karakter
   race_ability: false      # tæl ældre racers egne evnepoint med (2024 flyttede dem til baggrunden)
 ```
+
+`settings` har kun `allowed_sources` og `race_ability`. Ældre filer kan have et efterladt `half_feats`; ingen kode læser det, og det kan fjernes.
+
+### Udstyrsvælger (`equipment.items`, `equipment.picks`, `equipment.armor`, `equipment.shield`)
+
+Fanen Udstyr har en vælger over 5etools' almindelige (ikke-magiske) ting i karakterens tilladte kilder (`GET /api/builder/items?name=<navn>`, `builder/items.py`; XPHB som standard, homebrew `baseitem`/`item` med). Der kan søges på navn og filtreres på slags (Våben, Rustning, Shield, Ammunition, Værktøj og instrumenter, Spellcasting Focus, Eventyrudstyr, Andet), på Simple/Martial og Melee/Ranged for våben og på Light/Medium/Heavy for rustning. Hver linje viser damage, properties, Mastery, rækkevidde, AC, vægt og pris.
+
+* **Våben og eventyrudstyr** lægges i `equipment.items` som `{name, source, quantity}`. Samme ting to gange lægges sammen (antal).
+* **Rustning** sætter `equipment.armor` (én rustning ad gangen, som dropdownen); **Shield** sætter `equipment.shield: true`. Begge afgør AC, se `character_yaml._ac()`.
+* **Valg i startpakken** ("ét Simple-våben", "et Musical Instrument", "et Gaming Set", "et Holy Symbol" ... = `equipmentType` i 5etools' `startingEquipment`) vises som en dropdown under den valgte pakke og gemmes i `equipment.picks.<pakke>_<pakkenøgle>_<indeks>_<n>`, fx `class_A_2_0`. `indeks` er postens plads i pakken, `n` tæller, hvis posten har `quantity` over 1. Et valg hører til sin pakke: skiftes pakke, bruges det gamle valg ikke. Valgene er frivillige (de står ikke i `missing`).
+
+Til `character.yaml` (`weapons`, `inventory`) lægges: startpakkerne, `picks`, `items` og `extra`. Våben (items-base) bliver til `weapons`, alt andet til `inventory`.
 
 ### Klassens spells (`classes.<id>.choices`)
 

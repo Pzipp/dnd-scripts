@@ -1,3 +1,12 @@
+# Trin 1: kortbyggerens klient (TypeScript + Svelte) bygges med Node. Node kommer ikke med i det endelige image.
+FROM node:24-slim AS mapcreator-build
+WORKDIR /build
+COPY mapcreator/package.json mapcreator/package-lock.json ./
+RUN npm ci
+COPY mapcreator/ ./
+ENV MAPCREATOR_OUT=/out
+RUN npm run build
+
 # Webui til dnd-scripts: HTML og PDF. PDF laves med Playwright + Chromium (scripts/pdf/).
 # Python 3.12 er nødvendig: scripts/karakterark bruger f-strings, der kræver det.
 FROM python:3.12-slim
@@ -18,6 +27,7 @@ RUN pip install --no-cache-dir -r requirements.txt -r webui/requirements.txt \
     && rm -rf /var/lib/apt/lists/*
 
 COPY . .
+COPY --from=mapcreator-build /out /app/webui/static/mapcreator
 
 EXPOSE 8080
 

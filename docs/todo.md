@@ -36,17 +36,23 @@ for effekt-udtræks-designet.
   - ingen auto-generering fra character.yaml, ingen nye "smarte" bokse til
   resistenser/darkvision/osv. Det venter til en senere runde.
 
+## LLM-vejen (`character.yaml` uden bygger)
+
+- **Kontrollen i layout-editoren:** `character_check.check_sheets_text()` kunne kobles på `/api/builder/sheets_check`, så Ark-fanens
+  editor markerer ukendte bokstyper og nøgler (i dag kun YAML-syntaks).
+- **`tjek-ark` på byggerens egne karakterer** (med `choices.yaml`) er ikke koblet på `dnd.py tjek`; kontrollen giver dog ingen fejl på dem.
+
 ## Andre kendte, åbne punkter
 
 - **Browser-UI for HP/Hit Dice ikke visuelt testet** (commit `705e895`) -
   kun backend-logik er verificeret. Åbn builder-UI'en, tjek den nye
   pr.-klasse HP-sektion og det låste niveau-1-felt ser rigtigt ud.
-- **Browser-UI for layout-editoren i Print-fanen ikke visuelt testet**
+- **Browser-UI for layout-editoren i Ark-fanen ikke visuelt testet**
   (commit `b930a9d`) - alle fire backend-endepunkter (sheets_yaml GET/POST,
   sheets_check, sheets_preview) er testet direkte via curl, men selve
   CodeMirror-editoren ("Rediger layout"-knappen, live-forhåndsvisning,
   Ctrl+S) er aldrig åbnet i en browser. Samme forbehold for den nye
-  menu-side ("/") og "/editor"-flytningen af den gamle YAML-editor.
+  menu-side ("/").
 - **Mistral-endpointet**: `429 Rate limit exceeded` - afventer undersøgelse
   af kontoens kvote/betaling på console.mistral.ai.
 - **Git: `karakterark-nyt-system` vs. opdateret `main`.** `karakterbygger`
@@ -58,8 +64,12 @@ for effekt-udtræks-designet.
   vises ikke noget sted i dag.
 - **Weapon Mastery pr. våben, værktøj grupperet efter evne** - stadig ikke
   udledt (ældre, kendte forenklinger, se [character-yaml.md](character-yaml.md)).
-- **Det gamle `karakterark.py`-system** (8 rigtige spillere) - urørt;
-  fjernelse er en erklæret fremtidig hensigt, ikke besluttet endnu.
+- **Det gamle `karakterark.py`-system** (`karakter.yaml`, `dnd.py`) - bruges stadig af de karakterer, der ikke er konverteret
+  (`valak`, `terrin`, `chukio` og `kvist` er konverteret, men beholder deres gamle filer); fjernelse er en erklæret fremtidig
+  hensigt, ikke besluttet endnu.
+- **Oversættelserne ligger kun på disken.** `data/*-da.json`, `data/spells/`, `data/class/` og `data/books/oversaettelse/*/` er
+  gitignoreret (bogtekster er ophavsretligt materiale); tag selv sikkerhedskopi af dem.
+- **Sidetemaer til webui'en** (`webui/static/theme-*.css`, fire filer) er ikke tilsluttet nogen vælger endnu.
 
 ## Fra gennemgangen af `races.json`
 
@@ -69,7 +79,10 @@ for effekt-udtræks-designet.
   uændret (en Abyssal Tiefling får derfor 120 ft) og har bevidst ingen
   omvej; fjernes, når 5etools er rettet. Afklar mod bogen, inden der meldes.
 - **Ældre racer, bevidst ikke dækket:** `languageProficiencies` (sprog vælges i
-  byggerens egen dialog efter 2024-reglen) og de 17 racer med `_copy`. Subraces,
+  byggerens egen dialog efter 2024-reglen). `_copy` foldes ud (`copies.py`, efter de danske felter, så kopier arver dansk tekst). Tekster i
+  `_copy._mod` (træk, kopien selv tilføjer, fx Flamekin) udtrækkes af oversættelsesværktøjet i egne batches
+  (`forudfyld` genbruger færdige danske tekster). Tjek med `python3 oversaet_bog.py races status`, om alle batches er oversat;
+  en uoversat `_mod`-tekst vises på engelsk. Subraces,
   racers `ability` (indstilling `race_ability`), armor-/weaponProficiencies,
   immune/vulnerable og Variant Humans feat er bygget.
 - **Spell Mastery** (Wizard 18): står kun som tekst. Foundry-dataene har ingen valgregler for den. Valget (ét

@@ -17,9 +17,11 @@ from __future__ import annotations
 
 import os
 import re
+from contextvars import ContextVar
 
 from . import descriptions
 from . import spell_grants
+from . import spellbox
 
 ABILITY_ROWS = [("STR", "Styrke", "str"), ("DEX", "Smidighed", "dex"), ("CON", "Udholdenhed", "con"),
                 ("INT", "Intelligens", "int"), ("WIS", "Visdom", "wis"), ("CHA", "Karisma", "cha")]
@@ -341,17 +343,67 @@ def box_languages(node, character, env):
     """Uden text falder tilbage til character['languages'] (Common + de 2
     valgt i byggeren, se character_yaml._languages()) - samme auto-mønster
     som box_passive(). text kan stadig angives for at overstyre/tilføje
-    klasse-/feature-tildelte sprog (fx Thieves' Cant), som IKKE er talt med
-    automatisk, se character_yaml.py's modul-docstring."""
+    frit valgte ekstra sprog fra features, som ikke er talt med automatisk (klassens egne, fx Thieves' Cant, er)."""
     text = node.get("text")
     if text is None:
         text = character.get("languages", "Common")
     return f'<h2>{node["title"]}</h2>{fmt(text, env)}'
 
 
+def _weapon_proficient(character: dict, w: dict) -> bool:
+    """Trænet i våbnet ud fra can_use.weapons ('simple, martial', eller 'simple, Martial weapons that have the Finesse or Light property')."""
+    text = str((character.get("can_use") or {}).get("weapons", "")).lower()
+    cat = str(w.get("category", "")).lower()
+    if not cat or cat not in text:
+        return False
+    if cat == "martial" and "that have" in text:  # fx Rogue: "Martial weapons that have the Finesse or Light property"
+        return any(p.lower() in text for p in w.get("properties", []))
+    return True
+
+
+def _weapon_name(w: dict) -> str:
+    """Dansk navn øverst og engelsk under (navnekonvention): 'Dolk <em>Dagger</em>'; uden dansk navn kun det engelske. Antal > 1 foran."""
+    name = f"{w['name_da']} <em>{w['name']}</em>" if w.get("name_da") else w["name"]
+    return f"{w['quantity']}× {name}" if w.get("quantity", 1) > 1 else name
+
+
+def weapon_attack(character: dict, env: dict, w: dict) -> list:
+    """[navn, træf, skade, note] for ét våben: STR (nærkamp), DEX (ranged) eller den højeste af dem (Finesse)."""
+    props = w.get("properties", [])
+    if w.get("ranged"):
+        ab = "DEX"
+    elif "Finesse" in props:
+        ab = "DEX" if env.get("DEX", 0) > env.get("STR", 0) else "STR"
+    else:
+        ab = "STR"
+    pb = "+PB" if _weapon_proficient(character, w) else ""
+    dmg = f"{w['damage']}{{+{ab}}} {w.get('damage_type', '')}".strip() if w.get("damage") else ""
+    notes = []
+    for p in props:
+        if p == "Versatile" and w.get("damage_versatile"):
+            notes.append(f"Versatile ({w['damage_versatile']})")
+        elif p in ("Thrown", "Ammunition") and w.get("range"):
+            notes.append(f"{p} ({w['range']} ft)")
+        else:
+            notes.append(p)
+    if any(m[1] == w["name"] for m in character.get("masteries") or []):
+        notes.append("Mastery: " + ", ".join(m[0] for m in character["masteries"] if m[1] == w["name"]))
+    return [_weapon_name(w), f"{{+{ab}{pb}}}", dmg, ", ".join(notes)]
+
+
+def auto_attacks(character: dict, env: dict) -> list[list]:
+    rows = [weapon_attack(character, env, w) for w in character.get("weapons") or []]
+    if not rows:
+        rows = [["Unarmed Strike", "{+STR+PB}", "1{+STR} Bludgeoning", ""]]
+    return rows
+
+
 def box_attacks(node, character, env):
+    """attacks: [[navn, træf, skade, note]] skrevet i hånden. auto: true bygger rækkerne af character.yaml's weapons
+    (uden våben: Unarmed Strike), og attacks: lægges til bagefter."""
+    rows = (auto_attacks(character, env) if node.get("auto") else []) + list(node.get("attacks", []))
     o = [f'<h2>{node["title"]}</h2><table><tr><th>Våben</th><th>Ramme</th><th>Skade</th><th>Noter</th></tr>']
-    for n, hit, dmg, note in node.get("attacks", []):
+    for n, hit, dmg, note in rows:
         o.append(f'<tr><td class="n">{dual_name(n, env)}</td><td>{formula_cell(hit, env, roll=True)}</td>'
                  f'<td class="nw">{formula_cell(dmg, env, roll=False)}</td><td>{fmt(note, env)}</td></tr>')
     o.append("</table>")
@@ -363,7 +415,11 @@ def box_rules(node, character, env):
     return h + '<ul class="t">' + "".join(f"<li>{fmt(p, env)}</li>" for p in node.get("items", [])) + "</ul>"
 
 
-def _auto_feat_items(character: dict, exclude: list[str]) -> list[dict]:
+# Klassefeatures, der ikke giver mening som egen post på arket: valg-pladsholdere og spellcasting (har sin egen side).
+_SKIP_FEATURES = {"ability score improvement", "subclass feature", "epic boon", "spellcasting", "pact magic"}
+
+
+def _auto_feat_items(character: dict, exclude: list[str], include=None) -> list[dict]:
     """items til box_features(), automatisk fra character['feats'] i stedet
     for hånd-skrevet i sheets.yaml - navn + dansk beskrivelse via
     descriptions.lookup() (samme opslagskæde som "mangler beskrivelse"-
@@ -371,15 +427,29 @@ def _auto_feat_items(character: dict, exclude: list[str]) -> list[dict]:
     exclude: liste af feat-navne (case-insensitive) der IKKE skal vises her
     - fx hvis spilleren selv vil skrive én af dem i hånden et andet sted."""
     excluded = {n.lower() for n in exclude}
-    items = []
-    for f in character.get("feats", []):
-        if f["name"].lower() in excluded:
+    include = include or ["feats"]
+    pools = []
+    if "class_features" in include:
+        pools += [(f, f"Niveau {f['level']}" if f.get("level") else None) for f in character.get("class_features", [])
+                  if f["name"].lower() not in _SKIP_FEATURES and not f["name"].lower().endswith(" subclass")]
+    if "race_traits" in include:
+        pools += [(t, None) for t in character.get("race_traits", [])]
+    if "feats" in include:
+        pools += [(f, None) for f in character.get("feats", []) if f["name"].lower() not in _SKIP_FEATURES]
+    items, seen = [], set()
+    for f, tag in pools:
+        key = f["name"].lower()
+        if key in excluded or key in seen:
             continue
+        seen.add(key)
         found = descriptions.lookup(f["name"], f.get("source"))
         name_da = found.get("name_da") if found else None
         text = (found.get("description_da") if found else None) or ""
         display_name = f'{f["name"]} <i>· {name_da}</i>' if name_da else f["name"]
-        items.append({"name": display_name, "text": text})
+        item = {"name": display_name, "text": text}
+        if tag:
+            item["tag"] = tag
+        items.append(item)
     return items
 
 
@@ -439,7 +509,7 @@ def box_features(node, character, env):
     elif node.get("type") in _ACTIVATION_KINDS:
         items = _auto_activation_items(character, node.get("exclude", []), _ACTIVATION_KINDS[node["type"]])
     else:
-        items = _auto_feat_items(character, node.get("exclude", []))
+        items = _auto_feat_items(character, node.get("exclude", []), node.get("include"))
     if node.get("auto") and not items:
         return ""  # automatisk boks uden indhold (fx Reactions for en karakter uden) udelades helt
     for i, t in enumerate(items):
@@ -595,8 +665,30 @@ def _list(items, blank_lines, env) -> str:
     return f'<ul class="ruled">{rows}</ul>' if rows else ""
 
 
+def equipment_lines(character: dict) -> list[str]:
+    """Våben (navn, skade, egenskaber) og rustning for boksen 'Våben og rustning' med auto: true."""
+    out = []
+    if character.get("ac_note"):
+        out.append(f"<b>Rustning</b>: {character['ac_note']} · AC {character.get('ac', '')}")
+    for w in character.get("weapons") or []:
+        bits = [b for b in (f"{w['damage']} {w.get('damage_type', '')}".strip() if w.get("damage") else "", ", ".join(w.get("properties", [])),
+                            f"range {w['range']} ft" if w.get("range") else "") if b]
+        name = f"<b>{w['name_da']}</b> <em>{w['name']}</em>" if w.get("name_da") else f"<b>{w['name']}</b>"
+        if w.get("quantity", 1) > 1:
+            name = f"{w['quantity']}× {name}"
+        out.append(f"{name} · {' · '.join(bits)}" if bits else name)
+    return out
+
+
+def inventory_lines(character: dict) -> list[str]:
+    """Det øvrige udstyr (character.yaml: inventory) til boksen 'Udstyr' med auto: true: 'Backpack ×2'."""
+    return [f"{i['name']} ×{i['quantity']}" if i.get("quantity", 1) > 1 else i["name"] for i in character.get("inventory") or [] if i.get("name")]
+
+
 def box_list(node, character, env):
-    return _h2(node) + _list(node.get("items", []), node.get("blank_lines", 0), env)
+    auto = (inventory_lines(character) if node.get("type") == "gear" else equipment_lines(character)) if node.get("auto") else []
+    items = auto + list(node.get("items", []))
+    return _h2(node) + _list(items, node.get("blank_lines", 0), env)
 
 
 def box_training(node, character, env):
@@ -608,7 +700,8 @@ def box_money(node, character, env):
 
 
 def box_text(node, character, env):
-    return _h2(node) + '<div class="prose">' + "".join(f"<p>{fmt(p, env)}</p>" for p in node.get("paragraphs", [])) + "</div>"
+    prose = '<div class="prose">' + "".join(f"<p>{fmt(p, env)}</p>" for p in node.get("paragraphs", [])) + "</div>"
+    return _h2(node) + prose + _list([], node.get("blank_lines", 0), env)
 
 
 def box_facts(node, character, env):
@@ -617,7 +710,11 @@ def box_facts(node, character, env):
 
 
 def box_magic(node, character, env):
-    """Besværgelser: DC-celler, besværgelseslister (label og text) og slots (afkrydsning)."""
+    """Besværgelser: DC-celler, besværgelseslister (label og text) og slots (afkrydsning).
+    auto: true henter DC-celler og tællere fra character.yaml (spellcasting, granted_spells); dc/lists/slots lægges til bagefter."""
+    if node.get("auto"):
+        auto = spellbox.magic_auto(character)
+        node = {**node, "dc": auto["dc"] + list(node.get("dc", [])), "lists": auto["lists"] + list(node.get("lists", []))}
     dc = "".join(
         f'<div class="stat magi-celle"><div class="lbl">{c.get("name", "")}</div>'
         f'<div class="big">{fmt(c.get("roll", ""), env)}</div>'
@@ -635,6 +732,17 @@ def box_magic(node, character, env):
     if slots:
         o += f'<p class="magi-slots">{slots}</p>'
     return o
+
+
+def box_cantrips(node, character, env):
+    """Alle cantrips (level 0) fra klassen, race og feats i én liste. Aldrig blandet med spells (se box_spells)."""
+    return spellbox.cantrips_html(character, node, _h2(node))
+
+
+def box_spells(node, character, env):
+    """Spells fra level 1 og op, grupperet og sorteret efter level med slots i hver level-overskrift.
+    list: prepared (standard) | spellbook | all."""
+    return spellbox.spells_html(character, node, _h2(node))
 
 
 def box_granted_spells(node, character, env):
@@ -710,6 +818,8 @@ REGISTRY = {
     "passive": _box(box_passive),
     "languages": _box(box_languages, small=True),
     "magic": _box(box_magic, "Magi <i>Spellcasting</i>"),
+    "cantrips": _box(box_cantrips, "Cantrips <i>level 0</i>", small=True),
+    "spells": _box(box_spells, "Spells <i>efter level</i>", small=True),
     "granted_spells": _box(box_granted_spells, "Tildelte spells <i>Granted spells</i>", small=True),
     "attacks": _box(box_attacks),
     "rules": _box(box_rules, small=True),
@@ -761,24 +871,50 @@ def _box_error(typ, exc) -> str:
     return f"Fejl i boksen {typ!r}: {type(exc).__name__}: {exc}"
 
 
-def layout_node(node, character, env, flat=False) -> str:
+# Redigeringstilstand (træk og slip): boksene får data-path (stien til knuden i sheets.yaml, fx
+# "0/layout/1/columns/0/content/2") og beholdere data-stack (stien til listen, boksene ligger i).
+# Kun i forhåndsvisningen - almindelig HTML/PDF er uændret.
+_EDIT: ContextVar[bool] = ContextVar("sheet_edit_mode", default=False)
+
+
+def _p(path) -> str:
+    return "/".join(str(x) for x in path)
+
+
+def _node_attr(path) -> str:
+    return f' data-path="{_p(path)}"' if _EDIT.get() else ""
+
+
+def _stack_attr(path) -> str:
+    return f' data-stack="{_p(path)}"' if _EDIT.get() else ""
+
+
+def _tag_first(html: str, attrs: str) -> str:
+    """Lægger attributter på rod-elementet i et stykke HTML (boksindhold uden egen ramme)."""
+    return re.sub(r"^(\s*<[A-Za-z][^\s>/]*)", lambda m: m.group(1) + attrs, html, count=1) if attrs else html
+
+
+def layout_node(node, character, env, flat=False, path=()) -> str:
     """Én node i layout-træet: en kolonne-gruppe, en række-stak eller en boks.
 
     flat=True: boksene får ingen egen ramme (de ligger i en samlet kasse, se "merged" under columns).
+    path: knudens sti i sheets.yaml (bruges kun i redigeringstilstand).
     """
     if "columns" in node:
         cols = []
-        for k in node["columns"]:
+        for c, k in enumerate(node["columns"]):
             merged = bool(k.get("merged"))
-            inner = layout_stack(k.get("content", []), character, env, flat or merged)
+            stack = path + ("columns", c, "content")
+            inner = layout_stack(k.get("content", []), character, env, flat or merged, stack)
             if merged:
                 tight = " taet" if k.get("merged") == "tight" else ""
                 frame = "" if flat else " box"  # uden ramme (box_type: none) beholdes skriftindstillingen
                 inner = f'<div class="samlet{frame}{tight}" data-type="merged">{inner}</div>'
-            cols.append(f'<div class="kol" style="--bredde:{k.get("width", 1)}">{inner}</div>')
-        return f'<div class="kolonner">{"".join(cols)}</div>'
+            cols.append(f'<div class="kol"{_stack_attr(stack)} style="--bredde:{k.get("width", 1)}">{inner}</div>')
+        return f'<div class="kolonner"{_node_attr(path)}>{"".join(cols)}</div>'
     if "rows" in node:
-        return f'<div class="raekker">{layout_stack(node["rows"], character, env, flat)}</div>'
+        stack = path + ("rows",)
+        return f'<div class="raekker"{_node_attr(path)}{_stack_attr(stack)}>{layout_stack(node["rows"], character, env, flat, stack)}</div>'
     typ = node.get("type")
     if typ not in REGISTRY:
         raise ValueError(f"Ukendt boks-type i layout: {typ!r}. Kendte typer: {', '.join(REGISTRY)}.")
@@ -789,16 +925,17 @@ def layout_node(node, character, env, flat=False) -> str:
     except (KeyError, TypeError, ValueError, IndexError, AttributeError) as exc:
         raise ValueError(_box_error(typ, exc)) from exc
     if not inner or flat or node.get("box_type") == "none" or not reg["card"]:
-        return inner
+        return _tag_first(inner, _node_attr(path)) if inner else inner
     cls = "box small" if reg["small"] else "box"
-    return f'<div class="{cls}" data-type="{typ}">{inner}</div>'
+    return f'<div class="{cls}" data-type="{typ}"{_node_attr(path)}>{inner}</div>'
 
 
-def layout_stack(nodes, character, env, flat=False) -> str:
-    return "".join(layout_node(n, character, env, flat) for n in nodes)
+def layout_stack(nodes, character, env, flat=False, path=()) -> str:
+    """path = stien til selve listen; hver knude får path + (indeks,)."""
+    return "".join(layout_node(n, character, env, flat, path + (i,)) for i, n in enumerate(nodes))
 
 
-def page(p, character, env) -> str:
+def page(p, character, env, index=0) -> str:
     """Én side: valgfri top (title, subtitle, summary), layout og footer.
 
     top.summary udeladt helt -> character['summary'] (Klasse/Art/Baggrund,
@@ -816,7 +953,8 @@ def page(p, character, env) -> str:
                 f'<span class="epithet">{top.get("subtitle", "")}</span></div>'
                 f'{ident(summary)}</header>')
     no_frame = p.get("box_type") == "none"  # box_type: none på en side fjerner rammerne på alle bokse på siden
-    body = f'<div class="layout">{layout_stack(p.get("layout", []), character, env, no_frame)}</div>'
+    stack = (index, "layout")
+    body = f'<div class="layout"{_stack_attr(stack)}>{layout_stack(p.get("layout", []), character, env, no_frame, stack)}</div>'
     foot = f'<div class="foot">{p.get("footer", "")}</div>' if p.get("footer") else ""
     marg = {"small": " margin-small", "none": " margin-none"}.get(p.get("margin"), "")
     return f'<section class="pg s1{marg}"><div class="page">{head}{body}{foot}</div></section>'
@@ -846,6 +984,83 @@ section.pg.margin-none > .page{width:210mm;padding-top:0}
 }
 """
 
+EDIT_CSS = """
+[data-path]:not(.kolonner):not(.raekker){position:relative;cursor:grab}
+[data-path]:not(.kolonner):not(.raekker):hover{outline:2px dashed #6e2a12;outline-offset:-2px}
+[data-path].dnd-dragging{opacity:.35}
+.kol[data-stack]{min-height:28px}
+.kol[data-stack]:empty,.raekker[data-stack]:empty{outline:1px dashed #a88a5c}
+.dnd-x{position:absolute;top:2px;right:2px;z-index:5;width:18px;height:18px;line-height:16px;padding:0;border:1px solid #9c2b2b;border-radius:50%;
+ background:#fff;color:#9c2b2b;font:700 12px/16px sans-serif;cursor:pointer;display:none}
+[data-path]:hover > .dnd-x{display:block}
+.dnd-line{position:fixed;height:3px;background:#2d6e3f;border-radius:2px;pointer-events:none;z-index:99;display:none}
+"""
+
+# Kører i forhåndsvisningens iframe. Intet gemmes her: et slip sendes som besked til builderen,
+# som kalder /api/builder/layout og tegner arket forfra.
+EDIT_JS = r"""
+(function () {
+  var line = document.createElement('div'); line.className = 'dnd-line'; document.body.appendChild(line);
+  var dragging = null;
+  function send(msg) { msg.dnd = true; parent.postMessage(msg, '*'); }
+  document.querySelectorAll('[data-path]').forEach(function (el) {
+    el.draggable = true;
+    if (el.matches('.kolonner,.raekker')) return;
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'dnd-x'; x.textContent = '×'; x.title = 'Fjern boksen';
+    x.addEventListener('click', function (e) { e.stopPropagation(); e.preventDefault(); send({ op: 'remove', path: el.dataset.path }); });
+    el.appendChild(x);
+  });
+  document.addEventListener('dragstart', function (e) {
+    var el = e.target.closest ? e.target.closest('[data-path]') : null;
+    if (!el) return;
+    dragging = el; el.classList.add('dnd-dragging');
+    e.dataTransfer.setData('text/plain', 'move:' + el.dataset.path); e.dataTransfer.effectAllowed = 'move';
+    e.stopPropagation();
+  });
+  document.addEventListener('dragend', function () { if (dragging) dragging.classList.remove('dnd-dragging'); dragging = null; line.style.display = 'none'; });
+  function stackAt(e) {
+    var t = e.target.closest ? e.target.closest('[data-stack]') : null;
+    if (t) return t;
+    var pg = e.target.closest ? e.target.closest('section.pg') : null;
+    return pg ? pg.querySelector('.layout[data-stack]') : null;
+  }
+  function items(stack) {
+    return Array.prototype.filter.call(stack.querySelectorAll('[data-path]'), function (c) {
+      return c.parentElement.closest('[data-stack]') === stack && c !== dragging && !(dragging && dragging.contains(c));
+    });
+  }
+  function where(stack, e) {
+    var list = items(stack), idx = list.length, y;
+    for (var i = 0; i < list.length; i++) {
+      var r = list[i].getBoundingClientRect();
+      if (e.clientY < r.top + r.height / 2) { idx = i; break; }
+    }
+    var sr = stack.getBoundingClientRect(), left = sr.left, width = sr.width;
+    if (!list.length) y = sr.top + 2;
+    else if (idx < list.length) y = list[idx].getBoundingClientRect().top - 2;
+    else y = list[list.length - 1].getBoundingClientRect().bottom + 1;
+    return { idx: idx, y: y, left: left, width: width, list: list };
+  }
+  document.addEventListener('dragover', function (e) {
+    var stack = stackAt(e); if (!stack) return;
+    e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+    var w = where(stack, e);
+    line.style.display = 'block'; line.style.top = w.y + 'px'; line.style.left = w.left + 'px'; line.style.width = w.width + 'px';
+  });
+  document.addEventListener('drop', function (e) {
+    var stack = stackAt(e); if (!stack) return;
+    e.preventDefault(); line.style.display = 'none';
+    // index i listen af ALLE knuder i beholderen (også den, der trækkes): omregnes af serveren
+    var w = where(stack, e), all = Array.prototype.filter.call(stack.querySelectorAll('[data-path]'), function (c) { return c.parentElement.closest('[data-stack]') === stack; });
+    var index = w.idx < w.list.length ? all.indexOf(w.list[w.idx]) : all.length;
+    var data = e.dataTransfer.getData('text/plain') || '';
+    if (data.indexOf('move:') === 0) send({ op: 'move', path: data.slice(5), stack: stack.dataset.stack, index: index });
+    else if (data.indexOf('new:') === 0) send({ op: 'add', type: data.slice(4), stack: stack.dataset.stack, index: index });
+  });
+})();
+"""
+
+
 CSS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "scripts", "karakterark")
 
 
@@ -873,11 +1088,17 @@ def _css(stil: str | None) -> str:
     return s + "\n" + open(os.path.join(CSS_DIR, STYLE_FILES[stil]), encoding="utf-8").read()
 
 
-def build(character: dict, sheets: dict, stil: str | None = None) -> str:
-    env = make_env(character)
-    pages = [page(p, character, env) for p in sheets.get("pages", [])]
+def build(character: dict, sheets: dict, stil: str | None = None, edit: bool = False) -> str:
+    """edit=True: forhåndsvisning til træk og slip (data-path/data-stack + et lille script)."""
+    token = _EDIT.set(edit)
+    try:
+        env = make_env(character)
+        pages = [page(p, character, env, i) for i, p in enumerate(sheets.get("pages", []))]
+    finally:
+        _EDIT.reset(token)
     title = character.get("name") or "Karakterark"
-    style = scope_css(_css(stil), "s1") + "\n" + FRAME_CSS
+    style = scope_css(_css(stil), "s1") + "\n" + FRAME_CSS + (EDIT_CSS if edit else "")
+    script = f"<script>{EDIT_JS}</script>" if edit else ""
     return f'''<!DOCTYPE html>
 <html lang="da">
 <head>
@@ -893,6 +1114,7 @@ def build(character: dict, sheets: dict, stil: str | None = None) -> str:
 <main class="sheets">
 {chr(10).join(pages)}
 </main>
+{script}
 </body>
 </html>
 '''

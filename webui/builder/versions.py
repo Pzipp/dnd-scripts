@@ -1,4 +1,6 @@
-"""Udfolder 5etools' `_versions` til fulde objekter - samme regler som
+"""(`_copy` løses i copies.py, som genbruger `_mod` herfra.)
+
+Udfolder 5etools' `_versions` til fulde objekter - samme regler som
 5etools' egen kode (js/utils.js: DataUtil.generic.getVersions og
 copyApplier.getCopy), kun de dele data faktisk bruger.
 
@@ -90,14 +92,27 @@ def _as_list(value) -> list:
 
 
 def _find(items: list, replace) -> int:
-    """Indeks for replace-målet: navn, {index}, {regex} eller selve strengen."""
+    """Indeks for replace-målet: navn (også "Dansk (Navn)"), {index}, {regex} eller selve strengen."""
     if isinstance(replace, dict):
         if replace.get("index") is not None:
             return replace["index"]
         if replace.get("regex"):
             rx = re.compile(replace["regex"], re.I if "i" in replace.get("flags", "") else 0)
             return next((i for i, it in enumerate(items) if rx.search(it.get("name", "") if isinstance(it, dict) else str(it))), -1)
-    return next((i for i, it in enumerate(items) if (it.get("name") == replace if isinstance(it, dict) else it == replace)), -1)
+    exact = next((i for i, it in enumerate(items) if (it.get("name") == replace if isinstance(it, dict) else it == replace)), -1)
+    if exact >= 0 or not isinstance(replace, str):
+        return exact
+    return next((i for i, it in enumerate(items) if isinstance(it, dict) and name_matches(it.get("name"), replace)), -1)
+
+
+def name_matches(name, target) -> bool:
+    """Samme navn, også når den ene side er en dansk overskrift: "Størrelse (Size)" og "Size" er samme mål.
+    Data i data/*-da.json oversætter navnene i entries, men ikke de engelske henvisninger til dem
+    (_mod replace, subrace-overwrite, kolonnenavne)."""
+    if not isinstance(name, str) or not isinstance(target, str):
+        return False
+    a, b = name.strip().lower(), target.strip().lower()
+    return a == b or a.endswith(f"({b})") or b.endswith(f"({a})")
 
 
 def _mod(entity: dict, prop: str, op) -> None:

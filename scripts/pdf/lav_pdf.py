@@ -57,8 +57,19 @@ def lokal_skrift_css(mappe):
     return "\n".join(css)
 
 
+MAAL_JS = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "kort", "maal_overflow.js")
+
+
+def tekst_uden_for(maal):
+    """Dansk advarselstekst ud fra målingen: ['Navn (forside, 12 % for meget)', ...]."""
+    return [f'{m["navn"]} ({"bagside" if m["side"] == "bag" else "forside"}, {m["procent"]} % for meget)' for m in maal]
+
+
 def lav_pdf(par, skrifttyper=None):
-    """par: liste af (html_sti, pdf_sti). Én browser bruges til alle filer."""
+    """par: liste af (html_sti, pdf_sti). Én browser bruges til alle filer.
+    Returnerer liste af kort, hvor teksten løber uden for rammen: [{navn, side, px, procent}]
+    (måling: scripts/kort/maal_overflow.js; advarslerne skrives også til terminalen)."""
+    advarsler = []
     try:
         from playwright.sync_api import sync_playwright
     except ImportError:
@@ -87,12 +98,19 @@ def lav_pdf(par, skrifttyper=None):
                     print(f"ADVARSEL: skrifttyperne blev ikke hentet til {os.path.basename(src)} (ingen internet?). "
                           "PDF'en får reserveskrifter. Se --skrifttyper.", file=sys.stderr)
                 pg.emulate_media(media="print")
+                pg.add_script_tag(content=open(MAAL_JS, encoding="utf-8").read())
+                maal = pg.evaluate("maalKortOverflow(document).map(({card, ...r}) => r)")
+                if maal:
+                    print(f"ADVARSEL: {len(maal)} kort har tekst uden for rammen i {os.path.basename(src)}: "
+                          + "; ".join(tekst_uden_for(maal)) + ". Teksten klippes i PDF'en; forkort den.", file=sys.stderr)
+                    advarsler += maal
                 pg.pdf(path=dst, format="A4", print_background=True, prefer_css_page_size=True)
                 pg.close()
             finally:
                 os.remove(tmp)
             print(dst)
         b.close()
+    return advarsler
 
 
 if __name__ == "__main__":

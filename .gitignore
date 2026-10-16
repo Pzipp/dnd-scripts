@@ -15,6 +15,25 @@ node_modules/
 webui/builder/settings.yaml
 
 # Bogtekster og deres oversættelser (ophavsretsligt materiale; repoet er offentligt) — kun værktøjet i data/books/oversaettelse/ committes
-data/books/book-*.json
+data/books/*.json
 data/books/5etools-*.json
 data/books/oversaettelse/*/
+data/feats.json
+
+# Danske oversættelser af 5etools-opslagsfiler (bogtekster; ophavsretligt) — feats-da.json er undtaget, den er sporet
+data/*-da.json
+data/spells/
+data/class/
+
+# vol/ er runtime-data. Karakterer ligger i vol/userdata/karakterer/ (kun karakterer/_skabelon følger repoet).
+# Homebrew og alt andet brugerindhold ligger i vol/userdata/ (ikke i det delte repo).
+vol/userdata/
+
+# Genereret opslagsfil til LLM-vejen (afledt af bogindhold; lav den med dnd.py llm-opslag)
+llm-karakter-opslag.md
+
+# Mapcreator: bygget klient (laves af mapcreator/build-docker.sh eller Dockerfile)
+webui/static/mapcreator/
+
+# Originale materialebilleder (kilder til mapcreator/src/assets/mat, store PNG-filer)
+Ground paint/

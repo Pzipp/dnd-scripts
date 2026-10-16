@@ -7,7 +7,7 @@ karakter.yaml bagefter (menneske eller AI) - den vises aldrig direkte for en
 spiller.
 
 Findes der en dansk oversættelse i repoets data/<fil>-da.json (fx feats-da.json),
-lægges dens felter ovenpå 5etools' entry for entry (matchet på name+source), så resten
+lægges dens felter ovenpå 5etools' entry for entry (matchet på copies.key: name+source, og for klasse-features/subclasses også klasse og level), så resten
 af koden ser dansk tekst uden at vide det. Navne og andre strukturfelter forbliver
 5etools'; entries uden oversættelse forbliver engelske.
 
@@ -27,6 +27,8 @@ import os
 import re
 from functools import lru_cache
 from pathlib import Path
+
+from . import copies
 
 E5TOOLS_DATA = Path(os.environ.get("E5TOOLS_DATA", "/e5tools/data"))
 E5TOOLS_HOMEBREW = E5TOOLS_DATA.parent / "homebrew"
@@ -54,7 +56,7 @@ def _da_path(rel_path: str) -> Path:
 
 
 def _overlay_dansk(base: dict, da: dict) -> dict:
-    """Lægger de danske felter ovenpå 5etools' engelske, entry for entry (matchet på name+source).
+    """Lægger de danske felter ovenpå 5etools' engelske, entry for entry (matchet på copies.key: name+source, og for klasse-features/subclasses også klasse og level).
     Et felt i den danske fil vinder; felter den ikke har, forbliver 5etools'. Entries uden
     dansk modstykke er uændrede."""
     out = dict(base)
@@ -62,8 +64,8 @@ def _overlay_dansk(base: dict, da: dict) -> dict:
         da_entries = da.get(key)
         if not isinstance(entries, list) or not isinstance(da_entries, list):
             continue
-        by_id = {(e.get("name"), e.get("source")): e for e in da_entries if isinstance(e, dict)}
-        out[key] = [_merge_entry(e, by_id.get((e.get("name"), e.get("source")))) if isinstance(e, dict) else e
+        by_id = {copies.key(key, e): e for e in da_entries if isinstance(e, dict)}
+        out[key] = [_merge_entry(e, by_id.get(copies.key(key, e))) if isinstance(e, dict) else e
                     for e in entries]
     return out
 
@@ -90,8 +92,21 @@ def _load_dansk(rel_path: str) -> dict:
         return _overlay_dansk(base, json.load(f))
 
 
+# Lister hvor en post kan være en `_copy` af en anden (se copies.py).
+_COPY_KEYS = ("race", "subrace", "background")
+
+
+@lru_cache(maxsize=None)
+def _load_resolved(rel_path: str) -> dict:
+    """_load_dansk med `_copy` foldet ud - efter de danske felter, så kopier arver dansk tekst."""
+    data = _load_dansk(rel_path)
+    if not any(k in data for k in _COPY_KEYS):
+        return data
+    return {**data, **{k: copies.resolve(k, data[k]) for k in _COPY_KEYS if isinstance(data.get(k), list)}}
+
+
 def _load(rel_path: str) -> dict:
-    return _load_dansk(rel_path)
+    return _load_resolved(rel_path)
 
 
 def available() -> bool:
@@ -253,6 +268,8 @@ def _class_pool() -> dict:
         if "class" in data or "classFeature" in data:
             for key in pool:
                 pool[key].extend(data.get(key, []))
+    for key in ("subclass", "subclassFeature"):  # basen kan ligge i en anden klassefil
+        pool[key] = copies.resolve(key, pool[key])
     return pool
 
 
@@ -296,15 +313,23 @@ def subclass_features(class_name: str, subclass_name: str, sources: set[str], up
 
 
 # ── Racer/species ────────────────────────────────────────────────────────
+def _with_homebrew(prop: str, official: list[dict]) -> list[dict]:
+    """Officielle poster + homebrew, med `_copy` foldet ud på tværs af begge (en homebrew-race kan være en
+    _copy af en officiel). Uden homebrew med _copy returneres den officielle liste uændret."""
+    homebrew = _homebrew_entries(prop)
+    if not any("_copy" in x for x in homebrew):
+        return official + homebrew
+    return copies.resolve(prop, official + homebrew)
+
+
 def races(sources: set[str]) -> list[dict]:
-    all_races = _load("races.json").get("race", []) + _homebrew_entries("race")
-    return [r for r in all_races if r.get("source") in sources]
+    return [r for r in _with_homebrew("race", _load("races.json").get("race", [])) if r.get("source") in sources]
 
 
 def subraces(race: dict, sources: set[str] | None = None) -> list[dict]:
     """Subraces (ældre kilder) til en race: poster i races.json's `subrace`-liste med samme
     raceName/raceSource. En subrace uden navn er racens grundvariant (Human: +1 på alt)."""
-    all_sub = _load("races.json").get("subrace", []) + _homebrew_entries("subrace")
+    all_sub = _with_homebrew("subrace", _load("races.json").get("subrace", []))
     return [sr for sr in all_sub
             if sr.get("raceName") == race.get("name") and sr.get("raceSource", race.get("source")) == race.get("source")
             and (sources is None or sr.get("source", race.get("source")) in sources)]
@@ -319,7 +344,7 @@ def get_race(name: str, sources: set[str]) -> dict | None:
 
 # ── Baggrunde ────────────────────────────────────────────────────────────
 def backgrounds(sources: set[str]) -> list[dict]:
-    all_backgrounds = _load("backgrounds.json").get("background", []) + _homebrew_entries("background")
+    all_backgrounds = _with_homebrew("background", _load("backgrounds.json").get("background", []))
     return [b for b in all_backgrounds if b.get("source") in sources]
 
 
@@ -452,6 +477,11 @@ def spells_by_filter(sources: set[str], level: int | set[int] | None = None, sch
     return out
 
 
+def label_index(labels: list, wanted: str) -> int:
+    """Indeks for kolonnen `wanted` i colLabels, også når kolonnen er oversat til "Dansk (Wanted)". -1 hvis den mangler."""
+    return next((i for i, label in enumerate(labels) if label == wanted or str(label).endswith(f"({wanted})")), -1)
+
+
 def class_table_value(class_obj: dict, column_label: str, level: int) -> int | str | None:
     """Slår en kolonne op i klassens egen tabel (classTableGroups), fx hvor mange
     våben Weapon Mastery giver, eller Sneak Attacks terningeskade, på et givet
@@ -461,8 +491,8 @@ def class_table_value(class_obj: dict, column_label: str, level: int) -> int | s
     terne i samme celle som "1d6+1d4"."""
     for group in class_obj.get("classTableGroups", []):
         labels = group.get("colLabels", [])
-        if column_label in labels:
-            idx = labels.index(column_label)
+        idx = label_index(labels, column_label)
+        if idx >= 0:
             rows = group.get("rows", [])
             if 0 < level <= len(rows):
                 cell = rows[level - 1][idx]

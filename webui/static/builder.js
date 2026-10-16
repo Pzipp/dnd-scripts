@@ -23,10 +23,267 @@ const sectionMissing = (prefix) => (state?.missing || []).some((m) => m.startsWi
 const cls = (bad) => (bad ? "invalid" : "");
 
 async function fetchState() {
+  if (window.BUILDER_SHEET_ONLY) { refreshLivePreview(); return; } // kun character.yaml: ingen choices.yaml at hente
   const res = await fetch(`/api/builder/state?name=${encodeURIComponent(NAME)}`);
   state = await res.json();
   if (state.error) { alert(state.error); return; }
   render();
+  refreshLivePreview();
+}
+
+// ── Live karakterark ved siden af builderen ───────────────────────────
+const LIVE_WIDTH = 830; // A4-arkets bredde i px; iframen skaleres, så hele bredden altid er synlig
+let liveSeq = 0;
+let liveTimer = null;
+
+function fitLiveSheet() {
+  const frame = $("#live-frame"), iframe = $("#sheet-output");
+  if (!frame || !iframe || !frame.clientWidth) return;
+  const scale = Math.min(1, frame.clientWidth / LIVE_WIDTH);
+  iframe.style.width = `${LIVE_WIDTH}px`;
+  iframe.style.height = `${frame.clientHeight / scale}px`;
+  iframe.style.transform = `scale(${scale})`;
+}
+
+function setSheetHtml(html) {
+  const iframe = $("#sheet-output");
+  let scroll = 0;
+  try { scroll = iframe.contentWindow.scrollY; } catch (e) { /* ingen dokument endnu */ }
+  iframe.addEventListener("load", () => { try { iframe.contentWindow.scrollTo(0, scroll); } catch (e) { /* ignorer */ } }, { once: true });
+  $("#live-warn").style.display = "none";
+  iframe.srcdoc = html;
+}
+
+// Kort med tekst uden for rammen: måling i scripts/kort/maal_overflow.js (samme som PDF-genereringen bruger).
+let maalLoaded = null;
+const loadMaal = () => maalLoaded ||= new Promise((ok, fejl) => {
+  const s = document.createElement("script");
+  s.src = "/builder/kort-maal.js"; s.onload = ok; s.onerror = () => { maalLoaded = null; fejl(); };
+  document.head.append(s);
+});
+const SIDE_TXT = { for: "forside", bag: "bagside" };
+const cardWarnText = (m) => `${m.navn} (${SIDE_TXT[m.side]}, ${m.procent} % for meget)`;
+
+// Efter hver gengivelse og når skrifttyperne er indlæst: markér overfyldte kort i iframen og vis samlet advarsel.
+async function measureCards(seq) {
+  const iframe = $("#sheet-output"), warn = $("#live-warn");
+  try {
+    const loaded = new Promise((ok) => iframe.addEventListener("load", ok, { once: true })); // før await: load kan komme under indlæsningen
+    await loadMaal();
+    await loaded;
+    const doc = iframe.contentDocument;
+    await doc.fonts.ready;
+    if (seq !== liveSeq) return;
+    const over = window.maalKortOverflow(doc);
+    const st = doc.createElement("style");
+    st.textContent = ".card.over .frame { border-color: #c0392b !important; box-shadow: 0 0 0 .6mm #c0392b; } .card.over::after { content: attr(data-over); position: absolute; top: 0; left: 0; right: 0; z-index: 9; background: #c0392b; color: #fff; font: 700 7pt sans-serif; padding: .3mm 1.5mm; }";
+    doc.head.append(st);
+    over.forEach((m) => { m.card.classList.add("over"); m.card.dataset.over = `⚠ ${m.navn}: ${m.procent} % for meget`; });
+    warn.style.display = over.length ? "" : "none";
+    warn.textContent = over.length ? `${over.length} kort har tekst uden for rammen: ${over.map(cardWarnText).join("; ")}` : "";
+  } catch (e) { /* måling er kun en hjælp; forhåndsvisningen virker uden */ }
+}
+
+// Ét ark til højre på alle faner. På Print-fanen styrer layout-editoren (ugemt sheets.yaml) eller Print-hentningen arket.
+function refreshLivePreview() {
+  clearTimeout(liveTimer);
+  liveTimer = setTimeout(() => {
+    const page = $(".tabs button.active")?.dataset.page;
+    if (page === "cards") return loadCardsPreview();
+    if (page !== "print") return loadLivePreview();
+    const editor = $("#sheets-editor");
+    if (sheetsEditor && editor && editor.style.display !== "none") sheetsPreview();
+    else loadPrintPage();
+  }, 150);
+}
+
+async function loadLivePreview() {
+  const frame = $("#live-frame"), msg = $("#live-msg");
+  const seq = ++liveSeq;
+  frame.classList.add("loading");
+  fitLiveSheet();
+  try {
+    const style = $("#live-style").value || "farve";
+    const res = await fetch(`/api/builder/sheet?name=${encodeURIComponent(NAME)}&style=${encodeURIComponent(style)}${bgParam()}`);
+    const data = await res.json();
+    if (seq !== liveSeq) return; // et nyere svar er på vej
+    if (data.error) {
+      msg.textContent = data.error;
+      msg.classList.add("show");
+      return;
+    }
+    msg.classList.remove("show");
+    setSheetHtml(data.html);
+  } catch (e) {
+    if (seq === liveSeq) { msg.textContent = "Kunne ikke hente arket."; msg.classList.add("show"); }
+  } finally {
+    if (seq === liveSeq) frame.classList.remove("loading");
+  }
+}
+
+// ── Kort-fanen ────────────────────────────────────────────────────────
+let cardsData = null;
+const cardsKey = "builder-cards-open";
+
+async function fetchCards() {
+  const res = await fetch(`/api/builder/cards?name=${encodeURIComponent(NAME)}`);
+  cardsData = await res.json();
+  renderCards();
+}
+
+function renderCards() {
+  const banner = $("#cards-banner"), list = $("#cards-list");
+  if (cardsData.error) {
+    banner.textContent = cardsData.error;
+    banner.style.display = "";
+    list.innerHTML = "";
+    return;
+  }
+  banner.style.display = "none";
+  const selected = new Set(cardsData.selected);
+  const groups = {};
+  for (const c of cardsData.candidates) (groups[c.group] ||= []).push(c);
+  const order = ["Spells", "Feats", "Klasseevner", "Art-træk"];
+  list.innerHTML = order.filter((g) => groups[g]).map((g) => {
+    const items = groups[g].slice();
+    if (g === "Spells") items.sort((a, b) => (a.level ?? 0) - (b.level ?? 0) || a.name.localeCompare(b.name));
+    const picked = items.filter((c) => selected.has(c.id)).length;
+    const rows = items.map((c) => `
+      <label class="card-row">
+        <input type="checkbox" data-card="${esc(c.id)}" ${selected.has(c.id) ? "checked" : ""}>
+        <span class="cn">${esc(c.name)}${c.name_da && c.name_da !== c.name ? ` <small>${esc(c.name_da)}</small>` : ""}</span>
+        ${c.level != null ? `<span class="tag">${c.level === 0 ? "Cantrip" : `Level ${c.level}`}</span>` : ""}
+        ${c.curated ? `<span class="tag curated" title="Håndlavet kort i bibliotek/">bibliotek</span>` : ""}
+        ${selected.has(c.id) && !c.curated ? `<button type="button" class="btn secondary regen" data-regen="${esc(c.id)}" title="Byg kortet om fra 5etools (overskriver rettelser i kort.yaml)">Byg om</button>` : ""}
+      </label>`).join("");
+    return `<details class="step cards-group" data-group="${esc(g)}" ${openGroups().has(g) ? "open" : ""}>
+      <summary>${esc(g)}<span class="count">${picked}/${items.length}</span></summary>
+      <div class="step-body">${rows}</div></details>`;
+  }).join("");
+}
+
+function openGroups() {
+  try { return new Set(JSON.parse(localStorage.getItem(cardsKey) || '["Spells"]')); } catch (e) { return new Set(["Spells"]); }
+}
+
+async function selectCards(ids) {
+  $("#cards-status").textContent = "Gemmer...";
+  const res = await fetch("/api/builder/cards/select", {
+    method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: NAME, ids }),
+  });
+  const data = await res.json();
+  if (data.error) { $("#cards-status").textContent = data.error; return; }
+  cardsData.selected = data.selected;
+  $("#cards-status").textContent = `${data.selected.length} kort valgt.`;
+  renderCards();
+  refreshLivePreview();
+}
+
+async function loadCardsPreview() {
+  const frame = $("#live-frame"), msg = $("#live-msg");
+  const seq = ++liveSeq;
+  frame.classList.add("loading");
+  fitLiveSheet();
+  try {
+    const style = $("#live-style").value || "farve";
+    const res = await fetch(`/api/builder/cards/preview?name=${encodeURIComponent(NAME)}&style=${encodeURIComponent(style)}${bgParam()}`);
+    const data = await res.json();
+    if (seq !== liveSeq) return;
+    if (data.error) { msg.textContent = data.error; msg.classList.add("show"); return; }
+    msg.classList.remove("show");
+    setSheetHtml(data.html);
+    measureCards(seq);
+  } catch (e) {
+    if (seq === liveSeq) { msg.textContent = "Kunne ikke hente kortene."; msg.classList.add("show"); }
+  } finally {
+    if (seq === liveSeq) frame.classList.remove("loading");
+  }
+}
+
+async function makeCardsPdf() {
+  const status = $("#cards-status");
+  status.textContent = "Laver PDF...";
+  const res = await fetch("/api/builder/cards/pdf", {
+    method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ name: NAME, style: $("#live-style").value || "farve", background: $("#live-bg").value }),
+  });
+  const data = await res.json();
+  if (data.error) { status.textContent = data.error; return; }
+  status.innerHTML = `<a href="${esc(data.pdf)}">Hent PDF</a>`
+    + (data.warnings?.length ? ` <span class="bad">Advarsel: ${data.warnings.length} kort har tekst uden for rammen (klippes i PDF'en): ${esc(data.warnings.join("; "))}</span>` : "");
+}
+
+function wireCards() {
+  $("#cards-list").addEventListener("change", (e) => {
+    const box = e.target.closest("input[data-card]");
+    if (!box) return;
+    const now = new Set(cardsData.selected);
+    if (box.checked) now.add(box.dataset.card); else now.delete(box.dataset.card);
+    selectCards([...now]);
+  });
+  $("#cards-list").addEventListener("click", async (e) => {
+    const btn = e.target.closest("[data-regen]");
+    if (!btn) return;
+    e.preventDefault();
+    await fetch("/api/builder/cards/regenerate", {
+      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: NAME, id: btn.dataset.regen }),
+    });
+    refreshLivePreview();
+  });
+  $("#cards-list").addEventListener("toggle", (e) => {
+    const open = [...document.querySelectorAll("#cards-list details[open]")].map((d) => d.dataset.group);
+    try { localStorage.setItem(cardsKey, JSON.stringify(open)); } catch (err) { /* ignorer */ }
+  }, true);
+  $("#cards-all-btn").addEventListener("click", () => selectCards(cardsData.candidates.map((c) => c.id)));
+  $("#cards-none-btn").addEventListener("click", () => selectCards([]));
+  $("#cards-pdf-btn").addEventListener("click", makeCardsPdf);
+}
+
+// Udseende og baggrund pr. fane-type: Kort-fanen har egne temaer (scripts/kort/) og egne valg; alle andre faner deler arkets.
+const isCardsPage = () => $(".tabs button.active")?.dataset.page === "cards";
+const bgParam = () => { const b = $("#live-bg")?.value; return b ? `&background=${encodeURIComponent(b)}` : ""; };
+let bgFiles = [];
+
+async function loadBackgrounds() {
+  try {
+    const res = await fetch("/api/builder/backgrounds");
+    bgFiles = (await res.json()).files || [];
+  } catch (e) { bgFiles = []; }
+  syncLiveControls();
+}
+
+// Fyld Udseende/Baggrund efter den aktive fane og gendan fanens sidst valgte værdi.
+function syncLiveControls() {
+  const live = $("#live-style"), main = $("#sheet-style"), bg = $("#live-bg");
+  if (!live || !main || !bg) return;
+  const cards = isCardsPage();
+  const read = (k, fallback) => { try { return localStorage.getItem(k) || fallback; } catch (e) { return fallback; } };
+  live.innerHTML = (cards ? $("#cards-style-options") : main).innerHTML;
+  live.value = read(cards ? "builder-cards-style" : "builder-live-style", "farve");
+  if (live.selectedIndex < 0) live.value = "farve";
+  if (!cards) main.value = live.value;
+  const wanted = read(cards ? "builder-cards-bg" : "builder-live-bg", "");
+  bg.innerHTML = `<option value="">Ingen</option>` + bgFiles.map((f) => `<option value="${esc(f)}">${esc(f)}</option>`).join("");
+  bg.value = bgFiles.includes(wanted) ? wanted : "";
+}
+
+function initLivePreview() {
+  const live = $("#live-style"), main = $("#sheet-style"), bg = $("#live-bg");
+  if (!live || !main || !bg) return;
+  syncLiveControls();
+  loadBackgrounds();
+  const store = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* ignorer */ } };
+  live.addEventListener("change", () => {
+    if (isCardsPage()) store("builder-cards-style", live.value);
+    else { main.value = live.value; store("builder-live-style", live.value); }
+    refreshLivePreview();
+  });
+  bg.addEventListener("change", () => {
+    store(isCardsPage() ? "builder-cards-bg" : "builder-live-bg", bg.value);
+    refreshLivePreview();
+  });
+  window.addEventListener("resize", fitLiveSheet);
+  new ResizeObserver(fitLiveSheet).observe($("#live-frame"));
 }
 
 async function answer(fields, confirmed = false) {
@@ -49,6 +306,31 @@ async function answer(fields, confirmed = false) {
   state = data;
   setStatus("Gemt.");
   render();
+  refreshLivePreview();
+}
+
+// Løbende opdatering mens man skriver: gem stille og opdatér kun arket.
+// Ingen render(), så feltet ikke mister fokus; blur-"change" gemmer og tegner bagefter som sædvanligt.
+let typingTimer = null;
+function answerWhileTyping(fieldEl) {
+  clearTimeout(typingTimer);
+  typingTimer = setTimeout(async () => {
+    const path = fieldEl.dataset.field;
+    const raw = fieldEl.value;
+    const value = fieldEl.type === "number" ? (raw === "" ? null : Number(raw)) : raw;
+    try {
+      const res = await fetch("/api/builder/answer", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: NAME, fields: { [path]: value }, confirmed: false }),
+      });
+      const data = await res.json();
+      if (data.error || data.needs_confirmation) return; // afgøres ved blur
+      state = data;
+      setStatus("Gemt.");
+      refreshLivePreview();
+    } catch (e) { /* netværksfejl: blur-gemningen prøver igen */ }
+  }, 400);
 }
 
 function setStatus(text) {
@@ -584,14 +866,132 @@ function renderClassHp(k, c) {
 }
 
 // ── Udstyrs-siden ──────────────────────────────────────────────────────
+// Udstyrskatalog (GET /api/builder/items): hentes én gang pr. sæt tilladte kilder og filtreres i browseren.
+let itemCatalog = null;
+let itemCatalogKey = null;
+let itemCatalogLoading = false;
+const picker = { q: "", kind: "", category: "", range: "", atype: "", limit: 60 };
+
+function sourcesKey() {
+  return ((state.choices.settings || {}).allowed_sources || []).join(",");
+}
+
+async function ensureItemCatalog() {
+  const key = sourcesKey();
+  if (itemCatalogLoading || itemCatalogKey === key) return;
+  itemCatalogLoading = true;
+  try {
+    const res = await fetch(`/api/builder/items?name=${encodeURIComponent(NAME)}`);
+    const data = await res.json();
+    itemCatalog = data;
+    itemCatalogKey = key;
+  } catch (err) {
+    itemCatalog = { items: [], kinds: {} };
+    itemCatalogKey = key;
+  }
+  itemCatalogLoading = false;
+  morphChildren($("#page-equipment"), renderEquipmentPage());
+}
+
+function itemStats(it) {
+  const bits = [];
+  if (it.kind === "weapon") {
+    bits.push(`${it.category === "martial" ? "Martial" : "Simple"} ${it.ranged ? "Ranged" : "Melee"}`);
+    if (it.damage) bits.push(it.damage);
+    if (it.properties?.length) bits.push(it.properties.join(", "));
+    if (it.range) bits.push(`range ${it.range} ft`);
+    if (it.mastery) bits.push(`Mastery: ${it.mastery}`);
+  } else if (it.kind === "armor") {
+    const dex = it.armor_type === "Light" ? " + DEX" : it.armor_type === "Medium" ? " + DEX (maks 2)" : "";
+    bits.push(`${it.armor_type}: AC ${it.ac}${dex}`);
+    if (it.strength) bits.push(`Str ${it.strength}`);
+    if (it.stealth) bits.push("Stealth: Disadvantage");
+  } else if (it.kind === "shield") {
+    bits.push(`AC +${it.ac ?? 2}`);
+  }
+  if (it.weight) bits.push(it.weight);
+  if (it.price) bits.push(it.price);
+  return bits.join(" · ");
+}
+
+function filteredItems() {
+  const q = picker.q.trim().toLowerCase();
+  return (itemCatalog?.items || []).filter((it) =>
+    (!picker.kind || it.kind === picker.kind)
+    && (!q || it.name.toLowerCase().includes(q))
+    && (it.kind !== "weapon" || ((!picker.category || it.category === picker.category) && (!picker.range || (picker.range === "ranged") === it.ranged)))
+    && (it.kind !== "armor" || !picker.atype || it.armor_type === picker.atype));
+}
+
+function pickerResults() {
+  if (!itemCatalog) return `<p class="muted">Henter udstyrskatalog...</p>`;
+  const all = filteredItems();
+  const shown = all.slice(0, picker.limit);
+  const rows = shown.map((it) => `
+    <div class="pick-row">
+      <div class="pick-main"><strong>${esc(it.name)}</strong>${it.source !== "XPHB" ? ` <small>(${esc(it.source)})</small>` : ""}
+        <div class="pick-stats">${esc(itemStats(it))}</div></div>
+      <button type="button" class="btn secondary" data-pick-add="${esc(it.name)}|${esc(it.source ?? "")}">${it.kind === "armor" ? "Tag på" : it.kind === "shield" ? "Tag på" : "Tilføj"}</button>
+    </div>`).join("");
+  const more = all.length > shown.length ? `<button type="button" class="btn secondary" data-pick-more>Vis flere (${shown.length} af ${all.length})</button>` : "";
+  return rows ? rows + more : `<p class="muted">Ingen ting matcher filteret.</p>`;
+}
+
+function pickerSelected() {
+  const c = state.choices.equipment;
+  const find = (name, source) => (itemCatalog?.items || []).find((i) => i.name === name && (i.source === source || !source));
+  const rows = [];
+  if (c.armor?.name) {
+    const it = find(c.armor.name, c.armor.source);
+    rows.push(`<div class="pick-row"><div class="pick-main"><strong>${esc(c.armor.name)}</strong> <small>(båret rustning)</small>
+      <div class="pick-stats">${it ? esc(itemStats(it)) : ""}</div></div>
+      <button type="button" class="btn secondary" data-pick-armor-off>Fjern</button></div>`);
+  }
+  if (c.shield) {
+    rows.push(`<div class="pick-row"><div class="pick-main"><strong>Shield</strong> <small>(båret, +2 AC)</small></div>
+      <button type="button" class="btn secondary" data-pick-shield-off>Fjern</button></div>`);
+  }
+  (c.items || []).forEach((entry, idx) => {
+    const it = find(entry.name, entry.source);
+    rows.push(`<div class="pick-row"><div class="pick-main"><strong>${esc(entry.name)}</strong>
+      <div class="pick-stats">${it ? esc(itemStats(it)) : ""}</div></div>
+      <input type="number" min="1" max="999" class="pick-qty" data-pick-qty="${idx}" value="${entry.quantity || 1}" title="Antal">
+      <button type="button" class="btn secondary" data-pick-remove="${idx}">Fjern</button></div>`);
+  });
+  return rows.length ? rows.join("") : `<p class="muted">Intet valgt endnu. Startpakkernes udstyr kommer med automatisk.</p>`;
+}
+
+function pickerBody() {
+  const kinds = itemCatalog?.kinds || {};
+  const sel = (id, value, options) => `<select data-pick-filter="${id}">${options.map(([v, l]) => `<option value="${v}" ${v === value ? "selected" : ""}>${l}</option>`).join("")}</select>`;
+  return `
+    <h4>Valgt udstyr</h4>
+    <div id="pick-selected">${pickerSelected()}</div>
+    <h4>Find udstyr</h4>
+    <div class="pick-filters">
+      <input type="search" placeholder="Søg på navn..." data-pick-filter="q" value="${esc(picker.q)}">
+      ${sel("kind", picker.kind, [["", "Alle slags"], ...Object.entries(kinds)])}
+      ${picker.kind === "weapon" ? sel("category", picker.category, [["", "Simple + Martial"], ["simple", "Simple"], ["martial", "Martial"]]) + sel("range", picker.range, [["", "Melee + Ranged"], ["melee", "Melee"], ["ranged", "Ranged"]]) : ""}
+      ${picker.kind === "armor" ? sel("atype", picker.atype, [["", "Light + Medium + Heavy"], ["Light", "Light"], ["Medium", "Medium"], ["Heavy", "Heavy"]]) : ""}
+    </div>
+    <div id="pick-results">${pickerResults()}</div>`;
+}
+
 function renderEquipmentPage() {
   const c = state.choices;
-  const pkg = (packages, field, chosenKey) => Object.entries(packages || {})
+  ensureItemCatalog();
+  const slots = (list) => (list || []).map((slot) => `
+    <label class="field"><span>Vælg ${esc(slot.label)}</span>
+      <select data-field-combo="equipment.picks.${slot.id}">
+        <option value="">Vælg...</option>${optionList(slot.options, slot.chosen?.name)}
+      </select>
+    </label>`).join("");
+  const pkg = (packages, field, chosenKey, slotList) => Object.entries(packages || {})
     .map(([key, items]) => `
       <div class="equip-pkg ${chosenKey === key ? "chosen" : ""}" data-field="${field}" data-value="${key}">
         <strong>Pakke ${key}</strong>
         <ul>${items.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>
-      </div>`).join("");
+      </div>`).join("") + slots(slotList);
   const armorBody = `
     <label class="field"><span>Rustning</span>
       <select data-field-combo="equipment.armor">
@@ -603,11 +1003,18 @@ function renderEquipmentPage() {
       Shield <small>(+2 AC, kan bæres sammen med enhver rustning)</small>
     </label>
   `;
+  const slotsOf = state.equipment.pick_slots || {};
   return `
     ${wrapDetails("equip-armor", false, "Rustning (AC)", armorBody)}
-    ${wrapDetails("equip-class", isMissing("equipment.class_package"), "Udstyr fra klasse", pkg(state.equipment.class_packages, "equipment.class_package", c.equipment.class_package))}
-    ${wrapDetails("equip-background", isMissing("equipment.background_package"), "Udstyr fra baggrund", pkg(state.equipment.background_packages, "equipment.background_package", c.equipment.background_package))}
+    ${wrapDetails("equip-class", isMissing("equipment.class_package"), "Udstyr fra klasse", pkg(state.equipment.class_packages, "equipment.class_package", c.equipment.class_package, slotsOf.class))}
+    ${wrapDetails("equip-background", isMissing("equipment.background_package"), "Udstyr fra baggrund", pkg(state.equipment.background_packages, "equipment.background_package", c.equipment.background_package, slotsOf.background))}
+    ${wrapDetails("equip-picker", false, "Udstyrsvælger (våben, rustning, eventyrudstyr ...)", pickerBody())}
   `;
+}
+
+function refreshPicker() {
+  const res = $("#pick-results");
+  if (res) morphChildren(res, pickerResults());
 }
 
 // <details> bygges helt om ved hvert svar (innerHTML), så vi skal selv huske
@@ -655,19 +1062,58 @@ function setPrintBanner(text, { showButton = false, enabled = true } = {}) {
   banner.style.display = "flex";
 }
 
-async function loadPrintPage() {
-  const output = $("#sheet-output");
-  hideManualPrompt();
-  setPrintBanner("Henter karakterarket...");
-  const style = $("#sheet-style")?.value || "farve";
-  const res = await fetch(`/api/builder/sheet?name=${encodeURIComponent(NAME)}&style=${encodeURIComponent(style)}`);
+// ── Træk og slip af bokse ──────────────────────────────────────────────
+let dndMode = false;
+let dndTypes = null;
+
+async function toggleDnd() {
+  dndMode = !dndMode;
+  $("#dnd-btn").setAttribute("aria-pressed", String(dndMode));
+  $("#dnd-panel").style.display = dndMode ? "" : "none";
+  if (dndMode && !dndTypes) {
+    const res = await fetch("/api/builder/layout_types");
+    dndTypes = (await res.json()).types || [];
+    $("#dnd-palette").innerHTML = dndTypes.map((t) =>
+      `<span class="dnd-chip" draggable="true" data-new="${esc(t.type)}" title="${esc(t.type)}">${esc(t.label)}</span>`).join("");
+  }
+  refreshLivePreview();
+}
+
+async function layoutOp(op) {
+  setPrintBanner("Gemmer layout...");
+  const res = await fetch("/api/builder/layout", {
+    method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: NAME, ...op }),
+  });
   const data = await res.json();
   if (data.error) {
-    output.srcdoc = "";
     setPrintBanner(data.error);
     return;
   }
-  output.srcdoc = data.html;
+  if (sheetsEditor) { // YAML-editoren viser samme fil: opdatér den, så den ikke gemmer en gammel version over træk og slip
+    sheetsSavedYaml = data.yaml;
+    sheetsEditor.dispatch({ changes: { from: 0, to: sheetsEditor.state.doc.length, insert: data.yaml } });
+  }
+  setPrintBanner("");
+  refreshLivePreview();
+}
+
+window.addEventListener("message", (e) => {
+  if (e.source !== $("#sheet-output")?.contentWindow || !e.data?.dnd || !dndMode) return;
+  const { dnd, ...op } = e.data;
+  layoutOp(op);
+});
+
+async function loadPrintPage() {
+  hideManualPrompt();
+  setPrintBanner("Henter karakterarket...");
+  const style = $("#sheet-style")?.value || "farve";
+  const res = await fetch(`/api/builder/sheet?name=${encodeURIComponent(NAME)}&style=${encodeURIComponent(style)}${bgParam()}${dndMode ? "&edit=1" : ""}`);
+  const data = await res.json();
+  if (data.error) {
+    setPrintBanner(data.error);
+    return;
+  }
+  setSheetHtml(data.html);
   const n = (data.missing_descriptions || []).length;
   setPrintBanner(n ? `${n} regler/besværgelser mangler en dansk beskrivelse.` : "", { showButton: true });
 }
@@ -747,15 +1193,14 @@ async function makePdf() {
   const style = $("#sheet-style")?.value || "farve";
   try {
     const res = await fetch("/api/builder/pdf", {
-      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: NAME, style }),
+      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: NAME, style, background: $("#live-bg").value }),
     });
     const data = await res.json();
     if (data.error) {
       status.textContent = data.error;
       return;
     }
-    status.textContent = "";
-    window.open(data.pdf, "_blank");
+    status.innerHTML = `<a href="${esc(data.pdf)}">Hent PDF</a>`;
   } finally {
     btn.disabled = false;
   }
@@ -798,14 +1243,14 @@ async function sheetsLint(view) {
 async function sheetsPreview() {
   const text = sheetsEditor.state.doc.toString();
   const res = await fetch("/api/builder/sheets_preview", {
-    method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: NAME, yaml: text, style: $("#sheet-style")?.value || "farve" }),
+    method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: NAME, yaml: text, style: $("#sheet-style")?.value || "farve", background: $("#live-bg").value, edit: dndMode }),
   });
   const data = await res.json();
   if (data.error) {
     setSheetsStatus(data.error, true);
     return;
   }
-  $("#sheet-output").srcdoc = data.html;
+  setSheetHtml(data.html);
   const n = (data.missing_descriptions || []).length;
   setPrintBanner(n ? `${n} regler/besværgelser mangler en dansk beskrivelse.` : "", { showButton: true });
   setSheetsStatus(text === sheetsSavedYaml ? "Gemt." : "Ugemt - viser dine rettelser.");
@@ -904,16 +1349,26 @@ function wireEvents() {
     if (!btn) return;
     document.querySelectorAll(".tabs button[data-page]").forEach((b) => b.classList.toggle("active", b === btn));
     document.querySelectorAll(".page").forEach((p) => p.classList.toggle("active", p.id === `page-${btn.dataset.page}`));
-    if (btn.dataset.page === "print") loadPrintPage();
+    if (btn.dataset.page === "cards") fetchCards();
+    loadBackgrounds(); // gendanner også fanens udseende/baggrund og henter evt. nye filer
+    refreshLivePreview();
   });
 
   $("#translate-btn").addEventListener("click", translateMissing);
   $("#translate-copy-btn").addEventListener("click", copyPrompt);
   $("#translate-apply-btn").addEventListener("click", applyManualResponse);
   $("#edit-layout-btn").addEventListener("click", toggleLayoutEditor);
+  $("#dnd-btn").addEventListener("click", toggleDnd);
+  $("#dnd-palette").addEventListener("dragstart", (e) => {
+    const chip = e.target.closest("[data-new]");
+    if (!chip) return;
+    e.dataTransfer.setData("text/plain", `new:${chip.dataset.new}`);
+    e.dataTransfer.effectAllowed = "copyMove";
+  });
   $("#pdf-btn").addEventListener("click", makePdf);
   $("#sheets-save-btn").addEventListener("click", saveSheetsYaml);
   $("#sheet-style")?.addEventListener("change", () => {
+    $("#live-style").value = $("#sheet-style").value;
     const editor = $("#sheets-editor");
     if (sheetsEditor && editor && editor.style.display !== "none") sheetsPreview();
     else loadPrintPage();
@@ -929,7 +1384,34 @@ function wireEvents() {
     render();
   });
 
+  document.querySelector("main").addEventListener("input", (e) => {
+    const filter = e.target.closest("[data-pick-filter]");
+    if (filter) {  // kun resultatlisten tegnes om, så søgefeltet beholder fokus
+      picker[filter.dataset.pickFilter] = filter.value;
+      picker.limit = 60;
+      refreshPicker();
+      return;
+    }
+    const el = e.target.closest("input[data-field]");
+    if (el && !el.dataset.multi && (el.type === "text" || el.type === "number")) answerWhileTyping(el);
+  });
+
   document.querySelector("main").addEventListener("change", (e) => {
+    const filter = e.target.closest("select[data-pick-filter]");
+    if (filter) {
+      picker[filter.dataset.pickFilter] = filter.value;
+      if (filter.dataset.pickFilter === "kind") Object.assign(picker, { category: "", range: "", atype: "" });
+      picker.limit = 60;
+      morphChildren($("#page-equipment"), renderEquipmentPage());
+      return;
+    }
+    const qty = e.target.closest("[data-pick-qty]");
+    if (qty) {
+      const next = (state.choices.equipment.items || []).map((x, i) => (i === Number(qty.dataset.pickQty) ? { ...x, quantity: Math.max(1, Number(qty.value) || 1) } : x));
+      answer({ "equipment.items": next });
+      return;
+    }
+    clearTimeout(typingTimer); // blur gemmer selv
     const comboEl = e.target.closest("[data-field-combo]");
     if (comboEl) {
       const base = comboEl.dataset.fieldCombo;
@@ -953,6 +1435,27 @@ function wireEvents() {
   });
 
   document.querySelector("main").addEventListener("click", (e) => {
+    const addBtn = e.target.closest("[data-pick-add]");
+    if (addBtn) {
+      const { name, source } = parseCombo(addBtn.dataset.pickAdd);
+      const it = (itemCatalog?.items || []).find((i) => i.name === name && (i.source || null) === source);
+      if (it?.kind === "armor") answer({ "equipment.armor.name": name, "equipment.armor.source": source });
+      else if (it?.kind === "shield") answer({ "equipment.shield": true });
+      else {
+        const items = state.choices.equipment.items || [];
+        const same = items.find((x) => x.name === name && (x.source || null) === source);
+        answer({ "equipment.items": same ? items.map((x) => (x === same ? { ...x, quantity: (x.quantity || 1) + 1 } : x)) : [...items, { name, source, quantity: 1 }] });
+      }
+      return;
+    }
+    const rm = e.target.closest("[data-pick-remove]");
+    if (rm) {
+      answer({ "equipment.items": (state.choices.equipment.items || []).filter((_, i) => i !== Number(rm.dataset.pickRemove)) });
+      return;
+    }
+    if (e.target.closest("[data-pick-armor-off]")) { answer({ "equipment.armor.name": null, "equipment.armor.source": null }); return; }
+    if (e.target.closest("[data-pick-shield-off]")) { answer({ "equipment.shield": false }); return; }
+    if (e.target.closest("[data-pick-more]")) { picker.limit += 60; refreshPicker(); return; }
     const removeBtn = e.target.closest("[data-remove-class]");
     if (removeBtn) {
       e.preventDefault(); // ellers lukker/åbner klikket også <details>, da knappen sidder i <summary>
@@ -994,5 +1497,8 @@ function getPath(obj, path) {
 
 $("#missing-banner").addEventListener("toggle", (e) => { missingListOpen = e.target.open; }, true);
 wireEvents();
+wireCards();
+initLivePreview();
+if ($(".tabs button.active")?.dataset.page === "cards") fetchCards();
 fetchState();
-if ($(".tabs button.active")?.dataset.page === "print") loadPrintPage();
+

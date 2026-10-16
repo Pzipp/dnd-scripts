@@ -57,7 +57,7 @@ Disse CSS-filer er **alternative visuelle lag** oven på grundstilen. De ændrer
 | [`stil-farve-stormblaa.css`](stil-farve-stormblaa.css) | Farve | Skiferblå detaljer på køligt, lyst papir |
 | [`stil-farve-vinroed.css`](stil-farve-vinroed.css) | Farve | Støvet vinrød og elfenbensfarvet papir |
 
-**Indlæsningsrækkefølge:** brug `spellkort.css` først. Til farvekort lægges `spellkort-farve.css` ovenpå, og derefter ét af de tre farvetemaer. Til sort/hvid lægges ét af de to sort/hvid-temaer efter `spellkort.css`. Temaerne er separate CSS-overlays; den nuværende generator vælger stadig kun mellem grundstilen sort/hvid og standardfarve automatisk.
+**Indlæsningsrækkefølge:** brug `spellkort.css` først. Til farvekort lægges `spellkort-farve.css` ovenpå, og derefter ét af de tre farvetemaer. Til sort/hvid lægges ét af de to sort/hvid-temaer efter `spellkort.css`. Temaerne er separate CSS-overlays. `build(deck, stil, tema)` i `spellkort.py` lægger dem oven på grundstilen (`TEMAER` mapper tema til grundstil; et farvetema kræver stilen `farve`, et sort/hvid-tema `sorthvid`). Fra kommandolinjen: `python3 scripts/kort/spellkort.py valak --tema vinroed` (laver `kort-vinroed.html`). Temaerne er `skovland`, `stormblaa`, `vinroed` (farve) og `gravure`, `herbarium` (sort/hvid). `dnd.py` bruger endnu kun grundstilene; webui'ens Kort-fane kan vælge dem alle og gemmer PDF'en som `kort-<tema>.pdf` (fx `kort-vinroed.pdf`; grundstilene giver `kort-farve.pdf` og `kort-sorthvid.pdf`).
 
 ## Filer
 
@@ -66,9 +66,12 @@ Disse CSS-filer er **alternative visuelle lag** oven på grundstilen. De ændrer
 | `spellkort.py` | Generatoren |
 | `spellkort.css`, `spellkort-farve.css` | Grundlayout og standardstile |
 | `stil-*.css` | Fem valgfrie tema-overlays |
+| `maal_overflow.js` | Måler tekst uden for kortets ramme (delt af webui og PDF) |
 
 Kortdata findes ikke her, men i `bibliotek/*.yaml`, og alle filer dér indlæses. Et id skal være unikt på tværs af filerne.
 
 ## Tjek før print
 
-Generatoren tjekker ikke selv, om teksten passer. Dele, der ikke kan skrumpe (terningboks, skala), har forrang, og en for lang effekttekst bliver skåret af. Hold forsideteksten kort, og kig på kortet, før du printer.
+Generatoren tjekker ikke selv under bygningen, om teksten passer. Dele, der ikke kan skrumpe (terningboks, skala), har forrang, og en for lang effekttekst bliver skåret af. Hold forsideteksten kort.
+
+Målingen sker i browseren med `maal_overflow.js` (`maalKortOverflow(document)`): for hvert kort ses på `.frame` og de indre elementer med `overflow: hidden` (`.eff`, `.kicker`, `.dice`), om indholdet er mere end 2 px større end elementet (`scrollHeight`/`scrollWidth` mod `clientHeight`/`clientWidth`). Resultatet er `[{navn, side: "for"|"bag", px, procent, card}]`. Den bruges af `scripts/pdf/lav_pdf.py` (advarsel i terminalen) og af webuiens Kort-fane (rød ramme og samlet advarsel). Procenten er i forhold til det klippende element (fx den lille effekttekst), så brug den som tegn på alvor, ikke som sidefyldning.

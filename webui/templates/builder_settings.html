@@ -3,13 +3,16 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="48x48">
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32.png') }}">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
   <title>Karakterbygger – Indstillinger – {{ name }}</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&display=swap">
   <link rel="stylesheet" href="{{ url_for('static', filename='builder.css') }}">
 </head>
 <body>
 <header class="builder-top">
-  <h1>Karakterbygger</h1>
+  <h1><a class="logo-link" href="/" title="Til forsiden" aria-label="Til forsiden"><img class="logo" src="{{ url_for('static', filename='logo.png') }}" alt=""></a> <span class="title-text">Karakterbygger</span></h1>
   <div class="meta">
     <a href="/builder/{{ name }}">&larr; {{ name }}</a>
   </div>

@@ -1,6 +1,6 @@
 # Karakterark: format for `karakter.yaml`
 
-Én fil pr. karakter: `karakterer/<navn>/karakter.yaml`. Generatoren er `scripts/karakterark/karakterark.py`. Kommenteret skabelon: [`karakterer/_skabelon/karakter.yaml`](../karakterer/_skabelon/karakter.yaml). Kopiér den, i stedet for at skrive fra bunden.
+Én fil pr. karakter i det ældre system: `karakterer/<navn>/karakter.yaml`. Generatoren er `scripts/karakterark/karakterark.py`. Det nye system (webui'ens byggerkarakterer) bruger i stedet `character.yaml` + `sheets.yaml`, se [`sheets-yaml.md`](sheets-yaml.md); layout-sproget er det samme med engelske nøgler. Kommenteret skabelon: [`karakterer/_skabelon/karakter.yaml`](../karakterer/_skabelon/karakter.yaml). Kopiér den, i stedet for at skrive fra bunden.
 
 ```
 python3 dnd.py karakterark <navn> [--stil farve|sorthvid|begge] [--pdf]

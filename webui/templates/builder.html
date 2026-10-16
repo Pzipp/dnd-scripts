@@ -3,10 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="48x48">
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32.png') }}">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
   <title>Karakterbygger – {{ name }}</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&display=swap">
   <link rel="stylesheet" href="{{ url_for('static', filename='builder.css') }}">
-  <!-- Samme CodeMirror-import-map som den gamle YAML-editor (webui/templates/index.html) - til layout-editoren på Print-siden. -->
+  <!-- CodeMirror-import-map til layout-editoren på Ark-fanen. -->
   <script type="importmap">
   {
     "imports": {
@@ -27,24 +30,42 @@
 </head>
 <body>
 <header class="builder-top">
-  <h1>Karakterbygger</h1>
+  <h1><a class="logo-link" href="/" title="Til forsiden" aria-label="Til forsiden"><img class="logo" src="{{ url_for('static', filename='logo.png') }}" alt=""></a> <span class="title-text">Karakterbygger</span></h1>
   <div class="meta">
     <a href="/builder">&larr; Alle karakterer</a>
     <span id="total-level"></span>
     <span>{{ name }}</span>
     <span class="status" id="save-status"></span>
+    {%- if sheet_only %}
+    <span title="Kun character.yaml (ingen choices.yaml): filen redigeres direkte, ikke i byggeren">Kun ark</span>
+    {%- else %}
+    <a class="gear" href="/builder/{{ name }}/settings" title="Indstillinger" aria-label="Indstillinger">&#9881;</a>
+    {%- endif %}
   </div>
 </header>
 <nav class="tabs">
+  {%- if not sheet_only %}
   <button type="button" data-page="character" class="{{ 'active' if page == 'character' else '' }}">Karakter</button>
   <button type="button" data-page="equipment" class="{{ 'active' if page == 'equipment' else '' }}">Udstyr</button>
-  <button type="button" data-page="print" class="{{ 'active' if page == 'print' else '' }}">Print</button>
-  <button type="button" onclick="location.href='/builder/{{ name }}/settings'">Kilder</button>
+  {%- endif %}
+  <button type="button" data-page="cards" class="{{ 'active' if page == 'cards' else '' }}">Kort</button>
+  <button type="button" data-page="print" class="{{ 'active' if page == 'print' else '' }}">Ark</button>
 </nav>
+<div class="workspace has-preview" id="workspace">
 <main class="sheet">
   <div id="missing-banner" class="missing-banner" style="display:none"></div>
   <div class="page {{ 'active' if page == 'character' else '' }}" id="page-character"></div>
   <div class="page {{ 'active' if page == 'equipment' else '' }}" id="page-equipment"></div>
+  <div class="page {{ 'active' if page == 'cards' else '' }}" id="page-cards">
+    <div id="cards-banner" class="missing-banner" style="display:none"></div>
+    <div class="cards-toolbar">
+      <button type="button" class="btn secondary" id="cards-all-btn">Vælg alle</button>
+      <button type="button" class="btn secondary" id="cards-none-btn">Fravælg alle</button>
+      <button type="button" class="btn" id="cards-pdf-btn">Lav PDF</button>
+      <span id="cards-status"></span>
+    </div>
+    <div id="cards-list"></div>
+  </div>
   <div class="page {{ 'active' if page == 'print' else '' }}" id="page-print">
     <div id="print-banner" class="missing-banner with-action" style="display:none">
       <span id="print-banner-text"></span>
@@ -79,6 +100,11 @@
       </select>
     </label>
     <button type="button" class="btn secondary" id="edit-layout-btn" style="margin-bottom:.6rem">Rediger layout</button>
+    <button type="button" class="btn secondary" id="dnd-btn" style="margin-bottom:.6rem" aria-pressed="false">Træk og slip</button>
+    <div id="dnd-panel" style="display:none">
+      <p class="dnd-help">Træk en boks i arket for at flytte den, også til en anden kolonne eller side. Tryk på &times; for at fjerne den. Træk en ny boks fra listen ind i arket.</p>
+      <div id="dnd-palette" class="dnd-palette"></div>
+    </div>
     <button type="button" class="btn" id="pdf-btn" style="margin-bottom:.6rem">Lav PDF</button>
     <span id="pdf-status"></span>
     <div id="sheets-editor" style="display:none">
@@ -89,9 +115,25 @@
       </div>
       <div id="sheets-editor-mount"></div>
     </div>
-    <iframe id="sheet-output" title="Karakterark"></iframe>
   </div>
 </main>
+<aside class="live-preview" id="live-preview" aria-label="Live karakterark">
+  <div class="live-head">
+    <span>Karakterark</span>
+    <label>Udseende
+      <select id="live-style"></select>
+    </label>
+    <label>Baggrund
+      <select id="live-bg"><option value="">Ingen</option></select>
+    </label>
+  </div>
+  <div class="missing-banner" id="live-warn" style="display:none"></div>
+  <div class="live-frame" id="live-frame">
+    <iframe id="sheet-output" title="Karakterark"></iframe>
+    <div class="live-msg" id="live-msg"></div>
+  </div>
+</aside>
+</div>
 
 <div class="modal-backdrop" id="confirm-modal">
   <div class="modal">
@@ -104,8 +146,16 @@
   </div>
 </div>
 
+<!-- Udseende-valg til Kort-fanen (grundstile + tema-overlays fra scripts/kort/); JS bytter live-style til dem på den fane. -->
+<select id="cards-style-options" hidden>
+{%- for key, label in card_themes %}
+  <option value="{{ key }}">{{ label }}</option>
+{%- endfor %}
+</select>
+
 <script>
   window.BUILDER_NAME = {{ name|tojson }};
+  window.BUILDER_SHEET_ONLY = {{ 'true' if sheet_only else 'false' }};
 </script>
 <script type="module" src="{{ url_for('static', filename='builder.js') }}"></script>
 </body>

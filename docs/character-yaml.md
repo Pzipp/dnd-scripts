@@ -1,8 +1,9 @@
 # Karakterark (nyt system): format for `character.yaml`
 
-Én fil pr. choices.yaml-karakter: `karakterer/<navn>/character.yaml`. Engelsk-
-nøglet, i modsætning til den gamle [`karakter.yaml`](karakterark-yaml.md).
-Genereres af `webui/builder/character_yaml.py`.
+Én fil pr. karakter: `karakterer/<navn>/character.yaml`. Engelsk-nøglet, i
+modsætning til den gamle [`karakter.yaml`](karakterark-yaml.md). Genereres af
+`webui/builder/character_yaml.py` (når der er en `choices.yaml`) eller skrives
+direkte (se [Uden byggeren](#uden-byggeren-characteryaml-som-primær-fil)).
 
 Findes der en `choices.yaml` (se [choices-yaml.md](choices-yaml.md)) for
 karakteren, er `character.yaml` en AFLEDT fil: den genberegnes og
@@ -11,8 +12,68 @@ overskrives, hver gang choices.yaml gemmes (`derive_and_save()`). Kun
 `character.yaml` i hånden for en sådan karakter, det bliver overskrevet.
 
 Findes der INGEN `choices.yaml`, er `character.yaml` i stedet den primære
-fil - skrevet direkte, af builder-UI'en eller af et LLM. Denne vej er endnu
-ikke bygget (kun formatet er klar til det).
+fil, skrevet i hånden eller af en LLM. Så røres den aldrig af byggeren. Vejen
+er beskrevet i næste afsnit.
+
+## Uden byggeren: `character.yaml` som primær fil
+
+En karakter kan laves uden den visuelle bygger:
+
+1. En LLM får prompten i [llm-karakter-prompt.md](llm-karakter-prompt.md) og brugerens beskrivelse af karakteren
+   og skriver `karakterer/<navn>/character.yaml` efter formatet nedenfor. Tal, navne og regler slås op i 5etools,
+   ikke gættes; `python3 dnd.py llm-opslag` er værktøjet til opslagene.
+2. `python3 dnd.py tjek-ark <navn>` kontrollerer filen og peger på hver fejl med linje og kolonne.
+3. `python3 dnd.py ark <navn> [--stil <tema>|alle] [--pdf]` laver arket af `character.yaml` og `sheets.yaml`.
+   Mangler `sheets.yaml`, bruges standardlayoutet fra `webui/builder/default_layout.py` (filen skrives ikke), se [sheets-yaml.md](sheets-yaml.md#standardlayout). Kontrollen
+   kører først, og `ark` stopper ved en fejl. Temaerne er dem i `STYLE_FILES` i `webui/builder/render.py`
+   (`farve`, `sorthvid`, `moderne`, `skov`, ...). Filerne lægges i `karakterer/<navn>/udskrifter/` som
+   `karakterark-<tema>.html|pdf`, samme navne som webuiens Ark-fane.
+
+Webui'en viser karakteren under "Kun ark" på `/builder` og åbner den på Ark-fanen (og Kort-fanen). Karakter- og
+Udstyr-fanen kræver `choices.yaml` og er skjult; byggeren kan ikke gemme valg for en karakter uden
+`choices.yaml`, da det ville overskrive `character.yaml`. `dnd.py liste` markerer den med "kun ark", og
+`dnd.py tjek` kontrollerer og bygger den i alle temaer.
+
+### Hvad `tjek-ark` kontrollerer
+
+Kode: `webui/builder/character_check.py`. Intet netværk og ingen LLM. Hvert fund har linje og kolonne og er en
+**FEJL** (arket kan ikke bygges, eller tallene bliver forkerte; `tjek-ark` slutter med exit 1) eller en **ADVARSEL**
+(mistænkeligt, men arket bygges). Tastefejl får et forslag ("Mente du 'insight'?").
+
+`character.yaml`:
+
+* YAML-syntaks og dobbelte nøgler.
+* **Påkrævede felter:** `name`, `level`, `race`, `background`, `classes`, `abilities`, `proficiency_bonus`, `hp`,
+  `hit_dice`, `ac`, `speed`, `saves`, `skills`. Mangler `initiative`, `languages`, `can_use` eller `summary`, er det en
+  advarsel (arket bruger en standard eller et tomt felt). Ukendte nøgler er en advarsel.
+* **Typer og værdier:** `level` 1-20; `abilities` har præcis STR, DEX, CON, INT, WIS, CHA som hele tal (over 20 er en
+  advarsel); `saves` er evner; `skills` er 5etools' skillnavne med små bogstaver (`sleight of hand`);
+  `hit_dice` har `die` (6/8/10/12) og `count`; `speeds`, `senses`, `size`, `masteries` (de otte Weapon Mastery-navne),
+  `resources`, `class_numbers`, `modifiers`, `activations`, `summary`, `spell_slots` og `pact_slots` har den form, `render.py` læser.
+* **Sammenhæng:** `level` er summen af `classes[].level`; `proficiency_bonus` passer til level (2/3/4/5/6);
+  `hit_dice` giver lige så mange terninger som level; `expertise` står også i `skills` (værktøj i `tools` er tilladt);
+  `hp` er ikke under 1 (null er en advarsel) og ikke urimeligt højt eller lavt for levelet; `speeds.walk` er lig `speed`;
+  subclass mangler på niveau 3 eller derover (advarsel); en klasse står ikke to gange.
+* **Formler** i `{...}` (`ac`, `initiative`, `languages` og al anden tekst): kun tal, STR..CHA, PB og `+ - * /`, ellers FEJL. Kald og
+  attributter afvises altid, fordi `render.fmt()` ellers ville køre dem.
+* **5etools** (kun hvis `E5TOOLS_DATA` findes; ellers springes det over, og `tjek-ark` skriver en note): race, baggrund og klasse
+  findes under den angivne `source` (FEJL, hvis kilden findes, men navnet ikke gør; en ukendt kilde er en advarsel, da den kan være
+  homebrew); `subclass`, feats og spells findes (advarsel); `saves` indeholder primærklassens saves; `hit_dice` passer til
+  klassernes terninger.
+
+`sheets.yaml` (eller standarden): YAML-syntaks, `pages`, sidenøgler (`top`, `layout`, `footer`, `margin`, `box_type`), kolonner
+(`width` er et positivt tal, `content`, `merged`), boks-typer (kendte typer er `REGISTRY` i `render.py`), nøgler, som boksen ikke bruger
+(advarsel), og formler. Når `character.yaml` er uden fejl, renderes hver boks for sig mod karakteren (samme kode som arket), så fejl som
+"Mangler feltet 'subtitle' i boksen 'turn'" peger på boksens linje.
+
+### Hvad kontrollen ikke kan
+
+* At race-, klasse- og feat-egenskaber er regnet rigtigt: `hp`, `ac`, `initiative`, `speed`, senses og resistances kontrolleres kun for
+  form og groft rimelige grænser, ikke mod reglerne. `hp` kan ikke afgøres, fordi terningslag er spillerens valg.
+* At skills, tools og sprog er dem, baggrunden og klassen giver, og at antallet af valg er rigtigt.
+* At spells, `spell_slots` og `spellcasting` passer til klassens tabel (kun form og evne).
+* At teksten i `sheets.yaml` er rigtig, eller at et ark ser pænt ud: kig på arket (A4-siderne klipper tekst, der er for lang).
+* Homebrew uden for 5etools: kilder, der ikke findes, giver kun en advarsel.
 
 ## Opbygning
 
@@ -56,6 +117,9 @@ activations:                   # hvilke features der er action/bonus/reaction (F
 modifiers:                     # fordele/bonusser, der ikke er regnet ind i arkets tal (Foundry-data)
 - {from: Danger Sense, what: DEX saves, value: fordel, note: '', active: true}
 masteries: [[Vex, Shortsword]]  # [egenskab, våben] fra classes.*.choices.weapon_mastery - se character_yaml._masteries()
+weapons:                       # valgfri: våben til angrebsboksen og udstyrslisten, se "Våben" nedenfor
+- {name: Shortsword, source: XPHB, category: martial, ranged: false, damage: 1d6, damage_type: Piercing, properties: [Finesse, Light], mastery: Vex}
+inventory: [{name: Backpack, source: XPHB, quantity: 1}]   # valgfri: det øvrige udstyr (ikke våben), se "Våben" nedenfor
 feats: [{name: Tavern Brawler, source: XPHB}]
 spells_known: [{name: Fire Bolt, source: XPHB}]   # spillerens egne valg: cantrips, forberedte, arcanum, ekstra (ikke spellbogen)
 optional_features: [{name: Careful Spell, source: XPHB, types: [MM], class: Sorcerer}]   # valgte Metamagic/Invocations/Maneuvers
@@ -69,6 +133,10 @@ race_traits: [{name: Darkvision, source: XPHB}]
 extra_training: []
 summary: [[Klasse, Fighter 5], [Art, Human], [Baggrund, Soldier]]
 ```
+
+## Våben
+
+`weapons` er en valgfri liste. Boksen `attacks` med `auto: true` laver én række pr. våben (træf `d20 + STR/DEX + PB`, skade, egenskaber, Mastery), og `weapons` med `auto: true` lister dem sammen med rustningen (`ac_note`). Byggeren udleder listen af startpakkerne for primærklassen og baggrunden (`equipment.class_package`/`background_package`), valg i pakkerne (`equipment.picks`, fx "ét Simple-våben"), udstyrsvælgeren (`equipment.items`) og navne i `equipment.extra` (`character_yaml._equipment()`). Samme ting nævnt flere gange lægges sammen (`quantity`, kun med hvis over 1). `name_da` er et dansk navn til angrebstabellen (`Dolk <em>Dagger</em>`; kun for våben, `items.NAME_DA` kender). `inventory` er alt det øvrige udstyr fra de samme kilder: `name`, `source`, `quantity` (ukendt fritekst har kun `name` og `quantity`). Boksen `gear` med `auto: true` lister `inventory`. Uden våben viser angrebsboksen Unarmed Strike. Felter: `name` (påkrævet), `category` (`simple`/`martial`, afgør PB ud fra `can_use.weapons`), `ranged` (true: DEX), `damage`, `damage_type`, `damage_versatile`, `properties` (Finesse, Light, Thrown, Versatile, Two-Handed, Ammunition ...), `range` (`20/60`), `mastery`.
 
 ## Klassens spellcasting
 
@@ -95,7 +163,8 @@ Alt læses fra racens strukturerede 5etools-felter (`webui/builder/races.py`):
 
 * **Subraces.** Ældre racer har deres afstamninger som `subrace`-poster (`raceName` + `raceSource`), filtreret på de tilladte kilder. De lægges ovenpå racen efter 5etools' regler (`races.merge_subrace`): `ability` flettes pr. position (eller erstattes ved `overwrite.ability`), `entries` lægges til, `traitTags`/`languageProficiencies` lægges til (eller erstattes), `skillProficiencies` flettes, og alt andet (speed, darkvision, additionalSpells, armor-/weaponProficiencies, resist) erstattes af subracens egne felter. En subrace uden navn hedder `Standard` (grundvarianten, fx Human: +1 på alt). Valget er det samme `race.choices.lineage` som for `_versions`.
 * **Racers evnepoint** (`ability`: `{con: 2}`, negative tal, `choose: {from, count, amount}`, `weighted: [2, 1]`) tælles KUN med, når indstillingen pr. karakter `race_ability` er slået til (2024 flyttede dem til baggrunden, så de ville ellers tælle dobbelt). Valgene er `ability_option` (flere blokke), `ability_pick` (liste) og `ability_w<n>` (vægtet, n'te vægt). `lineage: "VRGR"` uden egen ability giver frit +2/+1 eller +1/+1/+1, som 5etools selv gør.
-* **Ikke dækket:** `languageProficiencies` på racer (sprog vælges i byggerens egen sprog-dialog efter 2024-reglen), og racer med `_copy` (17 stk.).
+* **`_copy`.** Racer, subraces, baggrunde, subclasses og subclass-features, der er en `_copy` af en anden post, foldes ud i `copies.resolve` (efter de danske felter, før `_versions`), så de har basisens tekst og felter. `_copy._mod` tilføjer/erstatter træk (`replace` matcher også danske overskrifter som `Størrelse (Size)`). Kun den officielle data foldes; `_copy` i homebrew røres ikke.
+* **Ikke dækket:** `languageProficiencies` på racer (sprog vælges i byggerens egen sprog-dialog efter 2024-reglen).
 
 Baggrunde følger samme tool-regler: `anyGamingSet: 1` (Guard, Noble, Soldier), `anyArtisansTool` (Artisan) og `anyMusicalInstrument` (Entertainer) er VALG (`background.choices.gaming_set` / `artisan_tool` / `instrument`), ikke faste værktøjer.
 
@@ -174,12 +243,7 @@ Entries, hvor Foundry giver HP eller initiativ, sendes ikke til LLM-effekt-udtr�
 - `languages`: løst ved at tracke PHB 2024 kap. 2's "Choose Languages"-regel
   direkte (`languages.known`, 2 sprog valgt fra Standard Languages-tabellen,
   se [choices-yaml.md](choices-yaml.md)) - `character_yaml._languages()`
-  bygger `"Common, " + ", ".join(known)`. **Kendt, BEVIDST gap:** "Your
-  class and other features might also give you languages" (fx Rogue får
-  Thieves' Cant, Druid får Druidic) tælles IKKE med her - de vises kun som
-  tekst i den feature, der giver dem (Træning og valg), ikke tilføjet til
-  `languages`-linjen. Der er ingen generel, sikker regel i 5etools' data for
-  at opdage ALLE den slags class-tildelte sprog automatisk.
+  bygger `"Common, " + ", ".join(known)`. Dertil kommer sprog, en klassefeature med sprogets navn giver (Rogue: Thieves' Cant, Druid: Druidic; sprogene findes i 5etools' `languages.json` som type `rare`/`secret`), `character_yaml._class_languages()`. **Ikke med:** frit valgte ekstra sprog fra features (fx det ekstra sprog til Thieves' Cant, Ranger Deft Explorer).
 
 Alle tre genberegnes altid og overskriver BEVIDST en manuel rettelse (samme
 "enkelt og forudsigeligt"-aftale som resten af systemet). `render.py` læser
@@ -190,7 +254,7 @@ altid i `character_yaml.py`, aldrig i renderen.
 
 * **`tools` er en flad liste**, ikke grupperet efter evne som den gamle
   `vaerktoej: {DEX: [...]}`. 5etools' egne data har ikke en sikker,
-  opslåelig "hvilken evne styrer dette værktøj"-regel, og Print-fanen viser
+  opslåelig "hvilken evne styrer dette værktøj"-regel, og Ark-fanen viser
   derfor (endnu) ikke værktøj under evne-boksen.
 * **`masteries`** udledes af de valgte Weapon Mastery-våben; egenskaben slås op i `mastery` på våbnet i 5etools' `items-base.json`. `expertise` kommer fra klassens `choices.expertise`.
 * **HP/Hit Dice bruger nu HVER klasses egen hit die** (rettet - var tidligere
