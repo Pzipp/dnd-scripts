@@ -292,3 +292,37 @@ Hand-painted fantasy RPG battle map asset sheet, top-down orthographic view stra
 ```
 Hand-painted fantasy RPG battle map asset sheet, top-down orthographic view straight from above, soft painted shading lit from the top-left, no cast shadows, plain flat uniform light-grey background, square 1:1, a 3 x 3 grid of 9 different objects, each fully visible, separated by wide empty gaps, nothing touching the image edges, no text, no labels, no frames. 9 different ritual props: a circle of black candles, a skull on a stand, a bowl with a glowing liquid, a bloody sacrificial dagger on cloth, a small stone idol, a chalk pentagram with candles, a book on a lectern, a cauldron, a bundle of bones and feathers. 30 cm to 1.5 m wide.
 ```
+
+## Totter (genstandsark, til Totter-penslen)
+
+Hver tot skæres ud som en genstand i familien *Høje græstotter* og bruges af Totter-penslen. Totter er 40 cm til 1 m, bløde i kanten og uden omrids, så de blander sig, når mange ligger over hinanden.
+
+- [ ] **Græstotter, grønne (eng)**
+
+```
+Hand-painted fantasy RPG battle map asset sheet, top-down orthographic view straight from above, soft painted shading lit from the top-left, no cast shadows, plain flat uniform light-grey background, square 1:1, a 3 x 3 grid of 9 different objects, each fully visible, separated by wide empty gaps, nothing touching the image edges, no text, no labels, no frames. 9 different tufts of lush green grass: short dense tuft, tall loose tuft, two-tone light and dark green tuft, tuft with a few seed heads, tuft with tiny clover leaves, wide flat tuft, sparse tuft, curved windswept tuft, thick clump of broad blades. Blades radiate outward from the center, soft feathered edges, no hard outline, each tuft 40 cm to 1 m wide, so they blend well when many overlap.
+```
+
+- [ ] **Græstotter, tørre og gyldne**
+
+```
+Hand-painted fantasy RPG battle map asset sheet, top-down orthographic view straight from above, soft painted shading lit from the top-left, no cast shadows, plain flat uniform light-grey background, square 1:1, a 3 x 3 grid of 9 different objects, each fully visible, separated by wide empty gaps, nothing touching the image edges, no text, no labels, no frames. 9 different tufts of dry golden grass: straw-yellow tuft, pale beige tuft, brown-gold tuft with seed heads, tall wispy tuft, flat dry tuft, tuft with some green at the base, thin brittle tuft, thick clump, windswept tuft. Warm yellow and tan tones. Blades radiate outward from the center, soft feathered edges, no hard outline, each tuft 40 cm to 1 m wide, so they blend well when many overlap.
+```
+
+- [ ] **Høje strå med aks (kornmark)**
+
+```
+Hand-painted fantasy RPG battle map asset sheet, top-down orthographic view straight from above, soft painted shading lit from the top-left, no cast shadows, plain flat uniform light-grey background, square 1:1, a 3 x 3 grid of 9 different objects, each fully visible, separated by wide empty gaps, nothing touching the image edges, no text, no labels, no frames. 9 different tufts of tall field grass and wild grain: wheat-like stalks with heavy ears, barley with long awns, oat panicles, tall green stalks with seed heads, ripe golden stalks, mixed green and gold, a bent-over clump, thin tall reeds-like grass, a dense stand of stalks seen from above. Blades radiate outward from the center, soft feathered edges, no hard outline, each tuft 40 cm to 1 m wide, so they blend well when many overlap.
+```
+
+- [ ] **Blomstrende græstotter**
+
+```
+Hand-painted fantasy RPG battle map asset sheet, top-down orthographic view straight from above, soft painted shading lit from the top-left, no cast shadows, plain flat uniform light-grey background, square 1:1, a 3 x 3 grid of 9 different objects, each fully visible, separated by wide empty gaps, nothing touching the image edges, no text, no labels, no frames. 9 different grass tufts with small wildflowers: with white daisies, with yellow buttercups, with blue cornflowers, with red poppies, with purple clover heads, with pink thrift, with tiny white flowers, with dandelions, with mixed wildflowers. Blades radiate outward from the center, soft feathered edges, no hard outline, each tuft 40 cm to 1 m wide, so they blend well when many overlap.
+```
+
+- [ ] **Skovens og sumpens totter**
+
+```
+Hand-painted fantasy RPG battle map asset sheet, top-down orthographic view straight from above, soft painted shading lit from the top-left, no cast shadows, plain flat uniform light-grey background, square 1:1, a 3 x 3 grid of 9 different objects, each fully visible, separated by wide empty gaps, nothing touching the image edges, no text, no labels, no frames. 9 different tufts for forest floor and wetland: dark green shaded grass, tuft with small ferns, tuft with moss, tall sedge, rush clump with brown tips, cattail leaves, tuft with fallen leaves, wet olive-green tuft, tuft with tiny mushrooms. Blades radiate outward from the center, soft feathered edges, no hard outline, each tuft 40 cm to 1 m wide, so they blend well when many overlap.
+```
