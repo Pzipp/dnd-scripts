@@ -15,11 +15,12 @@ import { pack7Families, pack7Kinds } from './pack7';
 import { pack8Families, pack8Kinds } from './pack8';
 import { pack9Families, pack9Kinds } from './pack9';
 import { pack10Families, pack10Kinds } from './pack10';
+import { pack11Families, pack11Kinds } from './pack11';
 import { FAMILIES, registerKinds } from './registry';
 import { remainsKinds } from './remains';
 
-FAMILIES.push(...extraFamilies, ...pack2Families, ...pack3Families, ...pack4Families, ...pack5Families, ...pack6Families, ...pack7Families, ...pack8Families, ...pack9Families, ...pack10Families, ...basicsFamilies, ...dungeonFamilies);
-registerKinds([...natureKinds, ...interiorKinds, ...remainsKinds, ...architectureKinds, ...effectKinds, ...extraKinds, ...pack2Kinds, ...pack3Kinds, ...pack4Kinds, ...pack5Kinds, ...pack6Kinds, ...pack7Kinds, ...pack8Kinds, ...pack9Kinds, ...pack10Kinds, ...basicsKinds, ...dungeonKinds, ...designerKinds]);
+FAMILIES.push(...extraFamilies, ...pack2Families, ...pack3Families, ...pack4Families, ...pack5Families, ...pack6Families, ...pack7Families, ...pack8Families, ...pack9Families, ...pack10Families, ...pack11Families, ...basicsFamilies, ...dungeonFamilies);
+registerKinds([...natureKinds, ...interiorKinds, ...remainsKinds, ...architectureKinds, ...effectKinds, ...extraKinds, ...pack2Kinds, ...pack3Kinds, ...pack4Kinds, ...pack5Kinds, ...pack6Kinds, ...pack7Kinds, ...pack8Kinds, ...pack9Kinds, ...pack10Kinds, ...pack11Kinds, ...basicsKinds, ...dungeonKinds, ...designerKinds]);
 
 export * from './registry';
 export * from './tags';
