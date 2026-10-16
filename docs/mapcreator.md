@@ -63,6 +63,8 @@ Genstande ligger i genstands- og effektlag (`elements[]`): `kind`, position, st�
 
 **Opbygning.** Yderst til venstre ligger en smal kolonne med et ikon pr. værktøj (navn og genvej vises, når musen holdes over). Ved siden af står det valgte værktøjs indstillinger; for Vælg og Dør også egenskaberne for den valgte genstand, linje, form eller åbning. Kolonnen folder sig ind, når der intet er at vise (fx Hånd), og kan foldes ind med pilen. Til højre for kortet ligger kolonnen Objekter (kan foldes ind til siden) og yderst kolonnen Lag (lagliste, skjul/lås, nyt lag og det valgte lags navn, opacitet og højde; kan foldes sammen, så kun lagenes ikoner vises). Kortets størrelse står som en lille gennemsigtig tekst nederst til venstre på kortet. Hver lagtype har sit ikon.
 
+**Små skærme** (under 900 px bredde, fx telefon eller lille tablet). Topbaren ruller vandret, og værktøjerne ligger som en række ikoner nederst. Under dem er en fanelinje (Værktøj, Objekter, Lag), som åbner kolonnen som et panel over værktøjerne, ét ad gangen. Et værktøjsskift lukker panelet igen. Zoom med to fingre og træk virker som på en stor skærm. Layoutet er ikke tænkt som perfekt; det er til at se og rette på kort, ikke til at bygge store kort.
+
 **Værktøjer.** *Vælg* (V) vælger kun det, der ligger på det valgte lag: klik, træk for at flytte, håndtag til skalering (Shift låser/frigiver proportioner) og rotation (Shift runder til 15°), pile flytter, Delete sletter, Ctrl+D duplikerer. *Genstand* (G): sæt ud med forhåndsvisning; Esc går tilbage til Vælg. "Fastgør til halve felter" er valgfri.
 
 ## Nyt kort og generator

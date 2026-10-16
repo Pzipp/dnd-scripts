@@ -25,6 +25,24 @@
   const leftHasContent = $derived(editor.tool !== 'hand' && !(editor.tool === 'select' && !editor.selection && !editor.selectionWall));
   const leftCollapsed = $derived(!leftHasContent || leftFolded);
 
+  // Små skærme: kolonnerne bliver til et panel nederst, som åbnes fra en fanelinje under værktøjerne.
+  const narrowQuery = window.matchMedia('(max-width: 900px)');
+  let narrow = $state(narrowQuery.matches);
+  $effect(() => {
+    const on = () => (narrow = narrowQuery.matches);
+    narrowQuery.addEventListener('change', on);
+    return () => narrowQuery.removeEventListener('change', on);
+  });
+  let toolsH = $state(48);
+  let tabsH = $state(0);
+  let sheet = $state<'left' | 'right' | 'layers' | null>(null);
+  const openSheet = (s: 'left' | 'right' | 'layers') => (sheet = sheet === s ? null : s);
+  // et værktøjsskift lukker panelet, så kortet er frit igen
+  $effect(() => {
+    editor.tool;
+    sheet = null;
+  });
+
   const gallery = new URLSearchParams(location.search).has('galleri');
 
   let dialog = $state<'new' | 'open' | 'export' | 'assets' | 'resize' | null>(null);
@@ -88,7 +106,7 @@
 {#if gallery}
   <Gallery />
 {:else}
-<div class="app" style:--left-w={leftCollapsed ? "30px" : "220px"} style:--right-w={objectsFolded ? "30px" : "240px"} style:--layers-w={layersFolded ? "44px" : "190px"}>
+<div class="app" class:narrow style:--dock-h="{toolsH + tabsH}px" style:--left-w={leftCollapsed ? "30px" : "220px"} style:--right-w={objectsFolded ? "30px" : "240px"} style:--layers-w={layersFolded ? "44px" : "190px"}>
   <header>
     <a class="home" href="/" title="Til forsiden">←</a>
     <input
@@ -118,20 +136,25 @@
     <button onclick={() => editor.fitView()}>Hele kortet</button>
     <span class="msg" class:err={editor.error}>{editor.error || editor.status}</span>
   </header>
-  <aside class="tools"><ToolBar /></aside>
-  <aside class="left" class:folded={leftCollapsed}>
+  <aside class="tools" bind:offsetHeight={toolsH}><ToolBar /></aside>
+  <aside class="left" class:folded={leftCollapsed && !narrow} class:open={sheet === 'left'}>
     <button class="fold" disabled={!leftHasContent} title={leftCollapsed ? 'Fold værktøjets indstillinger ud' : 'Fold værktøjets indstillinger ind'} aria-label="Fold værktøjets indstillinger" onclick={() => (leftFolded = !leftFolded)}>
       <Icon name={leftCollapsed ? 'right' : 'left'} size={14} />
     </button>
-    {#if !leftCollapsed}
+    {#if !leftCollapsed || narrow}
       <ToolPanel />
       {#if editor.tool === 'select' || editor.tool === 'opening'}<ElementInspector /><WallInspector />{/if}
       {#if editor.tool === 'stamp' || (editor.tool === 'scatter' && !editor.scatterErase)}<ObjectPicker />{/if}
     {/if}
   </aside>
   <main><Viewport /><div class="foot">{editor.doc.widthCells} × {editor.doc.heightCells} felter · {editor.doc.widthCells * CELL_PX} × {editor.doc.heightCells * CELL_PX} px</div></main>
-  <aside class="right" class:folded={objectsFolded}><Inspector collapsed={objectsFolded} ontoggle={() => (objectsFolded = !objectsFolded)} /></aside>
-  <aside class="layers" class:folded={layersFolded}><LayerPanel collapsed={layersFolded} ontoggle={() => (layersFolded = !layersFolded)} /></aside>
+  <aside class="right" class:folded={objectsFolded && !narrow} class:open={sheet === 'right'}><Inspector collapsed={objectsFolded && !narrow} ontoggle={() => (objectsFolded = !objectsFolded)} /></aside>
+  <aside class="layers" class:folded={layersFolded && !narrow} class:open={sheet === 'layers'}><LayerPanel collapsed={layersFolded && !narrow} ontoggle={() => (layersFolded = !layersFolded)} /></aside>
+  <nav class="tabs" aria-label="Paneler" bind:offsetHeight={tabsH}>
+    <button class:on={sheet === 'left'} disabled={!leftHasContent} onclick={() => openSheet('left')}>Værktøj</button>
+    <button class:on={sheet === 'right'} onclick={() => openSheet('right')}>Objekter</button>
+    <button class:on={sheet === 'layers'} onclick={() => openSheet('layers')}>Lag</button>
+  </nav>
 </div>
 
 {/if}
@@ -169,9 +192,31 @@
   .left { grid-area: left; border-right: 1px solid var(--line); }
   .right { grid-area: right; border-left: 1px solid var(--line); }
   main { grid-area: main; min-width: 0; min-height: 0; position: relative; }
+  .tabs { display: none; }
   @media (max-width: 900px) {
-    .app { grid-template: 'top' auto 'main' 1fr 'tools' auto 'left' auto 'right' auto 'layers' auto / 1fr; }
-    .tools :global(.bar) { flex-direction: row; flex-wrap: wrap; }
-    aside { border: 0; border-top: 1px solid var(--line); max-height: 30vh; }
+    .app {
+      grid-template: 'top' auto 'main' 1fr 'tools' auto 'tabs' auto / 1fr;
+      font-size: 11px;
+    }
+    header { flex-wrap: nowrap; overflow-x: auto; gap: 6px; padding: 5px 8px; }
+    header > :global(*) { flex: none; }
+    .name { width: 130px; }
+    .msg { margin-left: 0; }
+    .app :global(button), .app :global(select) { min-height: 32px; }
+    .app :global(input:not([type='checkbox']):not([type='range'])) { min-height: 30px; }
+    .tools { padding: 4px 6px; overflow-x: auto; overflow-y: hidden; border: 0; border-top: 1px solid var(--line); }
+    .tools :global(.bar) { flex-direction: row; flex-wrap: nowrap; width: max-content; }
+    .tools :global(.bar button) { width: 40px; height: 38px; }
+    .tabs { grid-area: tabs; display: flex; gap: 4px; padding: 4px 6px; background: var(--panel); border-top: 1px solid var(--line); }
+    .tabs button { flex: 1; }
+    .tabs button.on { border-color: var(--accent); color: var(--accent); }
+    /* kolonnerne bliver til et panel over værktøjslinjen, ét ad gangen */
+    aside.left, aside.right, aside.layers {
+      display: none; position: fixed; left: 0; right: 0; bottom: var(--dock-h, 96px); z-index: 20; max-height: 52vh;
+      border: 0; border-top: 2px solid var(--accent); box-shadow: 0 -6px 18px rgba(0,0,0,.45);
+    }
+    aside.open { display: block; }
+    .app :global(.fold) { display: none; }
+    .foot { display: none; }
   }
 </style>
