@@ -1,5 +1,6 @@
 import { grassDetail, grassOut } from './grassTexture';
 import { stoneShade } from './stones';
+import { sampleTexture } from './imageTextures';
 import { cellOut, cellular, fbm, hash32, smoothstep, valueNoise } from './noise';
 
 /** Terrænmaterialer. Id'erne gemmes i kortene og må aldrig omnummereres. 0 = tomt. */
@@ -41,6 +42,7 @@ export const MATERIALS: Material[] = [
   { id: 20, key: 'void_purple', name: 'Tomrum, lilla klippekant', swatch: '#150f17', group: 'Tomrum' },
   { id: 21, key: 'void_ice', name: 'Tomrum, iskant', swatch: '#0d1217', group: 'Tomrum' },
   { id: 17, key: 'planks', name: 'Trægulv', swatch: '#8a5f38', group: 'Veje og gulve', crisp: true, pathable: true },
+  { id: 22, key: 'planks_oak', name: 'Plankegulv, eg', swatch: '#8b5a2f', group: 'Veje og gulve', pathable: true },
 ];
 
 const BY_ID = new Map(MATERIALS.map((m) => [m.id, m]));
@@ -279,6 +281,14 @@ export function shade(id: number, x: number, y: number, seed: number, margin: nu
       tint(o, k, k, k * 0.95);
       return;
     }
+    case 22:
+      // malet plankegulv (billede, se imageTextures.ts); brun, til billedet er læst ind
+      if (!sampleTexture(id, x, y, o)) {
+        o[0] = 139;
+        o[1] = 90;
+        o[2] = 47;
+      }
+      return;
     case 14:
     case 16:
     case 17:

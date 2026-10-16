@@ -1,3 +1,4 @@
+import { texturesReady } from '../render/imageTextures';
 import * as api from '../api';
 import { createCamera, fit, type Camera } from '../render/camera';
 import {
@@ -731,6 +732,7 @@ class Editor {
   async open(id: string): Promise<void> {
     try {
       const doc = await api.loadMap(id);
+      await texturesReady;
       this.load(doc);
       this.onServer = true;
       this.error = '';
