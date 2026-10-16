@@ -17,18 +17,27 @@ function anvil(g:CanvasRenderingContext2D,o:DrawInput):void{
  for(let i=0;i<5;i++){const yy=h*(.12+i*.035);g.strokeStyle='rgba(53,31,17,.55)';g.lineWidth=.7;g.beginPath();g.moveTo(-w*.17,yy);g.quadraticCurveTo(-w*.03,yy+h*.015,w*.12,yy-h*.005);g.stroke();}
  ellBody(g,-w*.36,h*.25,s*.025,s*.025,[76,77,77],{lw:.6,light:12,dark:16,ao:0,rim:0});
 }
-function smithBench(g: CanvasRenderingContext2D,o:DrawInput):void{
- const r=rng(o.seed),{w,h}=o; const wood:RGB=[112+r()*18,67+r()*12,35+r()*8];
+function smithBench(g:CanvasRenderingContext2D,o:DrawInput):void{
+ const r=rng(o.seed),{w,h}=o,wood:RGB=[112+r()*18,67+r()*12,35+r()*8];
  rectBody(g,-w*.48,-h*.44,w*.96,h*.88,Math.min(w,h)*.05,wood,{lw:2,light:26,dark:34});
  g.save();g.beginPath();g.roundRect(-w*.46,-h*.42,w*.92,h*.84,Math.min(w,h)*.04);g.clip();
  woodGrain(g,r,[-w*.46,-h*.42,w*.46,h*.42],wood,{lines:16,knots:3,contrast:1.2});
  for(let i=1;i<6;i++){const x=-w*.46+i*w*.92/6;g.strokeStyle='rgba(29,14,5,.5)';g.lineWidth=1;g.beginPath();g.moveTo(x,-h*.4);g.lineTo(x+(r()-.5)*2,h*.4);g.stroke();}
  g.restore();
- // hammer, tongs and iron blanks
- g.save();g.translate(-w*.23,-h*.12);g.rotate(-.62);rectBody(g,-w*.025,-h*.2,w*.05,h*.35,2,[117,77,42],{lw:1,light:20,dark:25});rectBody(g,-w*.09,-h*.2,w*.18,h*.09,2,[98,103,105],{lw:1.2,light:28,dark:35});g.restore();
- g.save();g.translate(w*.12,-h*.1);g.rotate(.42);rectBody(g,-w*.025,-h*.2,w*.05,h*.42,2,[91,67,45],{lw:1,light:20,dark:26});g.restore();
- polyBody(g,[[w*.18,h*.13],[w*.34,h*.1],[w*.37,h*.2],[w*.22,h*.24]], [112,117,119],{lw:1.2,light:28,dark:35});
- ellBody(g,w*.36,-h*.25,w*.055,h*.07,[166,65,40],{lw:1.2,light:28,dark:32});
+ // Each seed gets a different arrangement of smithing tools and workpieces.
+ const hammerX=-w*(.25+r()*.08),hammerY=-h*(.12+(r()-.5)*.12);
+ g.save();g.translate(hammerX,hammerY);g.rotate((r()-.5)*1.1);
+ rectBody(g,-w*.025,-h*.2,w*.05,h*.35,2,[117,77,42],{lw:1,light:20,dark:25});
+ rectBody(g,-w*.09,-h*.2,w*.18,h*.09,2,[98,103,105],{lw:1.2,light:28,dark:35});g.restore();
+ g.save();g.translate(w*(.08+r()*.1),-h*(.12+(r()-.5)*.12));g.rotate((r()-.5)*1.2);
+ rectBody(g,-w*.018,-h*.2,w*.036,h*.42,2,[91,67,45],{lw:1,light:20,dark:26});
+ ellBody(g,0,-h*.2,w*.028,h*.025,[103,108,110],{lw:.7,light:20,dark:25});g.restore();
+ // Flat iron blank, small tongs and a glowing coal cup.
+ polyBody(g,[[w*.18,h*.12],[w*.33,h*.08],[w*.38,h*.18],[w*.22,h*.24]],shift([112,117,119],r()*12),{lw:1.2,light:28,dark:35});
+ g.save();g.translate(-w*.04,h*.2);g.rotate((r()-.5)*.9);
+ g.strokeStyle='rgba(58,47,37,.95)';g.lineWidth=Math.max(1,w*.012);g.beginPath();g.moveTo(-w*.1,-h*.08);g.lineTo(w*.1,h*.08);g.moveTo(-w*.1,h*.08);g.lineTo(w*.1,-h*.08);g.stroke();g.restore();
+ ellBody(g,w*(.34+(r()-.5)*.05),-h*.25,w*.06,h*.07,[92,51,34],{lw:1.2,light:24,dark:30});
+ ellBody(g,w*.34,-h*.26,w*.035,h*.04,[211,104,37],{lw:.5,light:35,dark:20,ao:0,rim:.2});
 }
 function weaponRack(g:CanvasRenderingContext2D,o:DrawInput):void{
  const r=rng(o.seed),{w,h}=o; const wood:RGB=[105+r()*14,64+r()*10,34+r()*7];
