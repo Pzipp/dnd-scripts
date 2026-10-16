@@ -6,12 +6,19 @@ function leatherBench(g:CanvasRenderingContext2D,o:DrawInput):void{
  const r=rng(o.seed),{w,h}=o,wood:RGB=[119+r()*15,72+r()*10,37+r()*8];
  rectBody(g,-w*.48,-h*.43,w*.96,h*.86,Math.min(w,h)*.05,wood,{lw:2,light:24,dark:32});
  g.save();g.beginPath();g.roundRect(-w*.46,-h*.41,w*.92,h*.82,Math.min(w,h)*.04);g.clip();woodGrain(g,r,[-w*.46,-h*.41,w*.46,h*.41],wood,{lines:14,knots:2});g.restore();
- // folded leather, awl, punch and thread spool
- polyBody(g,[[-w*.37,-h*.27],[-w*.08,-h*.32],[w*.03,-h*.12],[-w*.06,h*.02],[-w*.34,-h*.03]],[126,68,39],{lw:1.3,light:28,dark:28});
- g.strokeStyle='rgba(230,178,105,.8)';g.lineWidth=1;g.beginPath();g.moveTo(-w*.31,-h*.22);g.lineTo(-w*.08,-h*.23);g.lineTo(-w*.02,-h*.12);g.stroke();
- g.save();g.translate(w*.16,-h*.12);g.rotate(.35);rectBody(g,-w*.018,-h*.22,w*.036,h*.42,1,[132,91,52],{lw:.8});polyBody(g,[[-w*.025,-h*.22],[w*.025,-h*.22],[0,-h*.31]],[157,160,156],{lw:.7});g.restore();
- ellBody(g,w*.3,h*.18,w*.075,h*.08,[176,133,74],{lw:1.2,light:24,dark:26});
- ellBody(g,w*.3,h*.18,w*.025,h*.028,[91,52,26],{lw:.6});
+ // One of several leather pieces; shape and hue are seeded so the table contents vary by placement.
+ const leather:RGB= r()>.5?[126,66,39]:[157,94,53],ox=(r()-.5)*w*.18,oy=(r()-.5)*h*.12;
+ polyBody(g,[[ox-w*.36,oy-h*.25],[ox-w*.1,oy-h*.32],[ox+w*.04,oy-h*.12],[ox-w*.04,oy+h*.02],[ox-w*.34,oy-h*.02]],leather,{lw:1.3,light:28,dark:28});
+ g.strokeStyle='rgba(230,178,105,.8)';g.lineWidth=1;g.beginPath();g.moveTo(ox-w*.3,oy-h*.2);g.lineTo(ox-w*.1,oy-h*.22);g.lineTo(ox-w*.02,oy-h*.12);g.stroke();
+ // Awl and leather knife lie at different angles each time.
+ g.save();g.translate(w*(.13+(r()-.5)*.12),h*(.02+(r()-.5)*.12));g.rotate((r()-.5)*1.1);
+ rectBody(g,-w*.018,-h*.22,w*.036,h*.42,1,[132,91,52],{lw:.8});polyBody(g,[[-w*.025,-h*.22],[w*.025,-h*.22],[0,-h*.31]],[157,160,156],{lw:.7});g.restore();
+ g.save();g.translate(-w*.03,h*.18);g.rotate((r()-.5)*.6);
+ polyBody(g,[[-w*.13,-h*.025],[w*.11,-h*.04],[w*.16,h*.015],[-w*.08,h*.04]],[166,169,158],{lw:.8,light:24,dark:28});g.restore();
+ // Thread spool and small brass buckle.
+ ellBody(g,w*(.31+(r()-.5)*.08),h*(.2+(r()-.5)*.08),w*.075,h*.08,[176,133,74],{lw:1.2,light:24,dark:26});
+ ellBody(g,w*.31,h*.2,w*.035,h*.037,[93,61,34],{lw:.7,light:10,dark:20});
+ rectBody(g,-w*.34,h*.18,w*.12,h*.08,1,[189,145,73],{lw:.8,light:20,dark:24});
 }
 function leatherHides(g:CanvasRenderingContext2D,o:DrawInput):void{
  const r=rng(o.seed),{w,h}=o;
