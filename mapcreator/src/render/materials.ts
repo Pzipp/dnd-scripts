@@ -1,6 +1,7 @@
 import { grassDetail, grassOut } from './grassTexture';
 import { stoneShade } from './stones';
-import { sampleTexture, textureAverage } from './imageTextures';
+import { IMAGE_MATERIALS } from './imageMaterials';
+import { isImageMaterial, sampleTexture, textureAverage } from './imageTextures';
 import { cellOut, cellular, fbm, hash32, smoothstep, valueNoise } from './noise';
 
 /** Terrænmaterialer. Id'erne gemmes i kortene og må aldrig omnummereres. 0 = tomt. */
@@ -18,7 +19,7 @@ export interface Material {
   pathable?: boolean;
 }
 
-export const MATERIAL_GROUPS = ['Natur', 'Sand og sten', 'Vand', 'Veje og gulve', 'Tomrum'];
+export const MATERIAL_GROUPS = ['Natur', 'Sand og sten', 'Vand', 'Lava', 'Veje og gulve', 'Tomrum'];
 
 export const MATERIALS: Material[] = [
   { id: 1, key: 'grass', name: 'Græs, mark', swatch: '#6fa043', group: 'Natur' },
@@ -42,18 +43,9 @@ export const MATERIALS: Material[] = [
   { id: 20, key: 'void_purple', name: 'Tomrum, lilla klippekant', swatch: '#150f17', group: 'Tomrum' },
   { id: 21, key: 'void_ice', name: 'Tomrum, iskant', swatch: '#0d1217', group: 'Tomrum' },
   { id: 17, key: 'planks', name: 'Trægulv', swatch: '#8a5f38', group: 'Veje og gulve', crisp: true, pathable: true },
-  { id: 22, key: 'planks_oak', name: 'Plankegulv, eg', swatch: '#8b5a2f', group: 'Veje og gulve', pathable: true },
-  { id: 23, key: 'planks_broken', name: 'Plankegulv, ødelagt', swatch: '#5a5047', group: 'Veje og gulve', pathable: true },
-  { id: 24, key: 'planks_grey', name: 'Plankegulv, grå', swatch: '#47413e', group: 'Veje og gulve', pathable: true },
-  { id: 25, key: 'water_calm', name: 'Vand, stille (billede)', swatch: '#33b7d3', group: 'Vand' },
-  { id: 26, key: 'grass_forest_img', name: 'Græs, skov (billede)', swatch: '#353b1e', group: 'Natur' },
-  { id: 27, key: 'grass_dry_img', name: 'Græs, tørt (billede)', swatch: '#987545', group: 'Natur' },
-  { id: 28, key: 'grass_meadow_img', name: 'Græs, mark (billede)', swatch: '#609530', group: 'Natur' },
-  { id: 29, key: 'planks_oak_broken', name: 'Plankegulv, eg, ødelagt', swatch: '#684b34', group: 'Veje og gulve', pathable: true },
-  { id: 30, key: 'water_deep', name: 'Vand, dybt (billede)', swatch: '#0e283f', group: 'Vand' },
-  { id: 31, key: 'water_rough', name: 'Vand, uroligt (billede)', swatch: '#31697d', group: 'Vand' },
 ];
 
+MATERIALS.push(...IMAGE_MATERIALS);
 const BY_ID = new Map(MATERIALS.map((m) => [m.id, m]));
 export const materialById = (id: number): Material | undefined => BY_ID.get(id);
 
@@ -290,24 +282,6 @@ export function shade(id: number, x: number, y: number, seed: number, margin: nu
       tint(o, k, k, k * 0.95);
       return;
     }
-    case 22:
-    case 23:
-    case 24:
-    case 25:
-    case 26:
-    case 27:
-    case 28:
-    case 29:
-    case 30:
-    case 31:
-      // malet plankegulv (billede, se imageTextures.ts); brun, til billedet er læst ind
-      if (!sampleTexture(id, x, y, o)) {
-        const [r, g, b] = textureAverage(id);
-        o[0] = r;
-        o[1] = g;
-        o[2] = b;
-      }
-      return;
     case 14:
     case 16:
     case 17:
@@ -325,6 +299,16 @@ export function shade(id: number, x: number, y: number, seed: number, margin: nu
       return;
     }
     default:
+      if (isImageMaterial(id)) {
+        // malet materiale (billede, se imageTextures.ts); gennemsnitsfarven, til billedet er læst ind
+        if (!sampleTexture(id, x, y, o)) {
+          const [r, g, b] = textureAverage(id);
+          o[0] = r;
+          o[1] = g;
+          o[2] = b;
+        }
+        return;
+      }
       o[0] = o[1] = o[2] = 0;
       o[3] = 0;
   }

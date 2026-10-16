@@ -1,17 +1,9 @@
-import planksOak from '../assets/planks_oak.jpg';
-import planksBroken from '../assets/planks_broken.jpg';
-import planksGrey from '../assets/planks_grey.jpg';
-import waterCalm from '../assets/water_calm.jpg';
-import grassForest from '../assets/grass_forest_img.jpg';
-import grassDry from '../assets/grass_dry_img.jpg';
-import grassMeadow from '../assets/grass_meadow_img.jpg';
-import planksOakBroken from '../assets/planks_oak_broken.jpg';
-import waterDeep from '../assets/water_deep.jpg';
-import waterRough from '../assets/water_rough.jpg';
+import { IMAGE_MATERIALS } from './imageMaterials';
 
 /**
- * Materialer, der er et gentagende billede (maling i stedet for udregnet mønster). Billedet læses ind én gang; `sampleTexture`
- * slår op med gentagelse i begge retninger og blød overgang mellem pixels. Billedet formindskes ved indlæsningen, så én billedpixel er én verdenspixel ved mønsterskala 100 %.
+ * Materialer, der er et gentagende billede (se `imageMaterials.ts`). Billederne læses ind én gang; `sampleTexture` slår op med
+ * gentagelse i begge retninger og blød overgang mellem pixels. Billedet formindskes ved indlæsningen med materialets `scale`, så én
+ * billedpixel er én verdenspixel ved mønsterskala 100 %.
  */
 interface Tex {
   w: number;
@@ -19,22 +11,8 @@ interface Tex {
   data: Uint8ClampedArray;
 }
 
-/**
- * Billedet, hvor stort det vises (verdenspixels pr. billedpixel; billedet formindskes ved indlæsningen) og en gennemsnitsfarve,
- * der bruges, til billedet er læst ind. Billederne dækker 8 × 8 m (ca. 5,3 felter), så 768 px vises med 0,34.
- */
-const SOURCES: Record<number, { url: string; scale: number; avg: [number, number, number] }> = {
-  22: { url: planksOak, scale: 0.25, avg: [123, 82, 50] },
-  23: { url: planksBroken, scale: 0.36, avg: [90, 80, 71] },
-  24: { url: planksGrey, scale: 0.34, avg: [71, 65, 62] },
-  25: { url: waterCalm, scale: 0.34, avg: [51, 183, 211] },
-  26: { url: grassForest, scale: 0.34, avg: [53, 59, 30] },
-  27: { url: grassDry, scale: 0.34, avg: [152, 117, 69] },
-  28: { url: grassMeadow, scale: 0.34, avg: [96, 149, 48] },
-  29: { url: planksOakBroken, scale: 0.36, avg: [104, 75, 52] },
-  30: { url: waterDeep, scale: 0.34, avg: [14, 40, 63] },
-  31: { url: waterRough, scale: 0.34, avg: [49, 105, 125] },
-};
+const URLS = import.meta.glob('../assets/mat/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+const BY_ID = new Map(IMAGE_MATERIALS.map((m) => [m.id, m]));
 const loaded = new Map<number, Tex>();
 
 async function loadOne(id: number, url: string, scale: number): Promise<void> {
@@ -54,12 +32,17 @@ async function loadOne(id: number, url: string, scale: number): Promise<void> {
 export const texturesReady: Promise<void> =
   typeof document === 'undefined' || typeof Image === 'undefined'
     ? Promise.resolve()
-    : Promise.all(Object.entries(SOURCES).map(([id, v]) => loadOne(+id, v.url, v.scale).catch(() => undefined))).then(() => undefined);
+    : Promise.all(
+        IMAGE_MATERIALS.map((m) => {
+          const url = URLS[`../assets/mat/${m.key}.webp`];
+          return url ? loadOne(m.id, url, m.scale).catch(() => undefined) : undefined;
+        }),
+      ).then(() => undefined);
+
+export const isImageMaterial = (id: number): boolean => BY_ID.has(id);
 
 /** Gennemsnitsfarven, til billedet er læst ind. */
-export const textureAverage = (id: number): [number, number, number] => SOURCES[id]?.avg ?? [128, 128, 128];
-
-export const isImageMaterial = (id: number): boolean => id in SOURCES;
+export const textureAverage = (id: number): [number, number, number] => BY_ID.get(id)?.avg ?? [128, 128, 128];
 
 /** Billedets farve i (x, y) til `out` (r, g, b). Returnerer false, hvis billedet ikke er læst ind endnu. */
 export function sampleTexture(id: number, x: number, y: number, out: Float64Array): boolean {

@@ -38,3 +38,6 @@ llm-karakter-opslag.md
 
 # Mapcreator: bygget klient (laves af mapcreator/build-docker.sh eller Dockerfile)
 webui/static/mapcreator/
+
+# Originale materialebilleder (kilder til mapcreator/src/assets/mat, store PNG-filer)
+Ground paint/
