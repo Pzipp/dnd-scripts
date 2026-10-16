@@ -463,6 +463,22 @@ function boar(g: G, o: DrawInput): void {
   }
 }
 
+function fox(g: G, o: DrawInput): void {
+  const r = rng(o.seed ^ 0x5c);
+  const fur = coatPick(r, [[196, 98, 40], [176, 84, 36], [150, 150, 150]]);
+  run(g, o, { fur, belly: [236, 228, 214], stripes: true, head: 0.26, neck: 0, bodyL: 0.4, tail: 0.4, bw: 0.5, hw: 0.38, snout: 0.8, ear: 'point', earS: 0.8, tailK: 'bushy', tailC: shift(fur, 8), legW: o.w * 0.09, snoutCol: [60, 40, 30] });
+}
+function bear(g: G, o: DrawInput): void {
+  const r = rng(o.seed ^ 0x5d);
+  const fur = coatPick(r, [[86, 60, 40], [58, 44, 36], [120, 92, 64], [226, 224, 216]]);
+  run(g, o, { fur, head: 0.26, neck: 0, bodyL: 0.52, tail: 0.06, bw: 0.8, hw: 0.4, snout: 0.45, ear: 'round', earS: 0.9, tailK: 'short', tailC: fur, legW: o.w * 0.13, snoutCol: shift(fur, 16) });
+}
+function rabbit(g: G, o: DrawInput): void {
+  const r = rng(o.seed ^ 0x5e);
+  const fur = coatPick(r, [[150, 120, 90], [214, 210, 202], [110, 96, 84]]);
+  run(g, o, { fur, belly: [236, 230, 218], head: 0.26, neck: 0.04, bodyL: 0.44, tail: 0.08, bw: 0.62, hw: 0.4, snout: 0.2, ear: 'long', earS: 1.3, tailK: 'short', tailC: [240, 238, 232], legW: o.w * 0.12, snoutCol: [226, 170, 160] });
+}
+
 const coatSel = (list: [string, string][]): ParamDef => ({ key: 'coat', label: 'Pels', type: 'select', default: list[0]![0], options: list.map(([value, label]) => ({ value, label })) });
 const lie = (draw: (g: G, o: DrawInput, lyingCfg?: boolean) => void) => draw;
 void lie;
@@ -496,6 +512,12 @@ function cfgFor(species: string, o: DrawInput): Cfg {
       const fur = coatPick(r, [[184, 120, 60], [58, 52, 52], [172, 168, 160], [214, 208, 198]]);
       return { ...base, fur, stripes: true, tailK: 'whip', hw: 0.26, snout: 0.15, snoutCol: [226, 170, 160], legW: o.h * 0.08 };
     }
+    case 'bear':
+      return { ...base, fur: coatPick(r, [[86, 60, 40], [58, 44, 36]]), ear: 'round', earS: 0.9, tailK: 'short', hw: 0.24, snout: 0.45, legW: o.h * 0.12 };
+    case 'fox': {
+      const fur = coatPick(r, [[196, 98, 40], [176, 84, 36]]);
+      return { ...base, fur, belly: [236, 228, 214], tailK: 'bushy', tailC: shift(fur, 8), hw: 0.22, snout: 0.8, snoutCol: [60, 40, 30] };
+    }
     default: {
       const fur = coatPick(r, [[112, 108, 102], [84, 82, 84], [146, 134, 116]]);
       return { ...base, fur, tailK: 'bushy', snout: 0.8, hw: 0.2, snoutCol: shift(fur, -14) };
@@ -528,6 +550,11 @@ export const animalKinds: ObjectKind[] = [
   kind({ ...A, key: 'creature_wolf', name: 'Ulv', w: 0.7, h: 1.4, params: [poseParam], tags: [...wildTags, 'mountain', 'arctic'], draw: wolf }),
   kind({ ...A, key: 'creature_deer', name: 'Hjort', w: 0.8, h: 1.7, params: [poseParam, { key: 'antlers', label: 'Gevir', type: 'toggle', default: true }, { key: 'spots', label: 'Pletter', type: 'toggle', default: false }], tags: wildTags, draw: deer }),
   kind({ ...A, key: 'creature_boar', name: 'Vildsvin', w: 0.9, h: 1.5, params: [poseParam], tags: wildTags, draw: boar }),
+  kind({ ...A, key: 'creature_fox', name: 'Ræv', w: 0.55, h: 1.2, params: [poseParam], tags: [...wildTags], draw: fox }),
+  kind({ ...A, key: 'creature_bear', name: 'Bjørn', w: 1.2, h: 1.7, params: [poseParam], tags: [...wildTags, 'mountain', 'cave', 'arctic'], draw: bear }),
+  kind({ ...A, key: 'creature_rabbit', name: 'Kanin', w: 0.35, h: 0.6, params: [poseParam], tags: [...wildTags, ...farmTags], draw: rabbit }),
+  kind({ ...A, key: 'creature_bear_sleep', name: 'Bjørn, sovende', w: 1.8, h: 1.3, params: [], tags: [...wildTags, 'mountain', 'cave', 'arctic'], draw: lyingOf((o) => cfgFor('bear', o)) }),
+  kind({ ...A, key: 'creature_fox_sleep', name: 'Ræv, sovende', w: 0.9, h: 0.65, params: [], tags: [...wildTags], draw: lyingOf((o) => cfgFor('fox', o)) }),
   kind({ ...A, key: 'creature_horse_sleep', name: 'Hest, liggende', w: 2.2, h: 1.3, params: [], tags: [...farmTags, 'camp'], draw: lyingOf((o) => cfgFor('horse', o)) }),
   kind({ ...A, key: 'creature_cow_sleep', name: 'Ko, liggende', w: 2.1, h: 1.3, params: [coatSel([['spots', 'Skæmmet'], ['brown', 'Brun']])], tags: farmTags, draw: lyingOf((o) => cfgFor('cow', o)) }),
   kind({ ...A, key: 'creature_pig_sleep', name: 'Gris, sovende', w: 1.5, h: 1.0, params: [], tags: farmTags, draw: lyingOf((o) => cfgFor('pig', o)) }),
