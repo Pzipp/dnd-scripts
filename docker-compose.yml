@@ -1,15 +1,15 @@
-# dnd-webui på homelab. Denne fil er homelabs egen og følger IKKE dnd-repoets
+# dnd-tools på homelab. Denne fil er homelabs egen og følger IKKE dnd-repoets
 # docker-compose.yml (den kan ændre sig, og kammeraten har sin egen opsætning).
-# Koden og Dockerfile kommer fra ../dnd-scripts-dev, der bygges og bind-mountes derfra.
+# Koden og Dockerfile kommer fra ../dnd-tools-dev, der bygges og bind-mountes derfra.
 #
-# Porte (værts-side): dev (denne fil, dnd-webui-dev) = 8082, prod (../dnd-scripts) = 8081. Begge kun lokalt (127.0.0.1). Udefra-adgang går via nginx (todo-sebastian punkt 44),
+# Porte (værts-side): dev (denne fil, dnd-tools-dev) = 8082, prod (../dnd-tools) = 8081. Begge kun lokalt (127.0.0.1). Udefra-adgang går via nginx (todo-sebastian punkt 44),
 # og containeren er på proxy-netværket, så nginx kan nå den.
-name: dnd
+name: dnd-tools
 
 services:
   # Opdaterer /srv/dnd5etools (git-klonen bag 5etools) ved container-start, kun
   # hvis UPDATE_E5TOOLS=true er sat i .env. Kører én gang og stopper -
-  # dnd-webui venter på den (se depends_on), men den fejler aldrig hårdt
+  # dnd-tools venter på den (se depends_on), men den fejler aldrig hårdt
   # (se update-e5tools.sh), så en manglende opdatering blokerer ikke siden.
   5etools-updater:
     image: alpine/git
@@ -28,15 +28,15 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  dnd-webui-dev:
-    build: ../dnd-scripts-dev
-    container_name: dnd-webui-dev
+  dnd-tools-dev:
+    build: ../dnd-tools-dev
+    container_name: dnd-tools-dev
     restart: unless-stopped
     depends_on:
       5etools-updater:
         condition: service_completed_successfully
 
-    # Samme UID/GID som ejeren af dnd-scripts-dev/-mappen, så genererede filer ejes af sebastian.
+    # Samme UID/GID som ejeren af dnd-tools-dev/-mappen, så genererede filer ejes af sebastian.
     user: "${DND_UID:-1000}:${DND_GID:-1000}"
 
     # Chromium (PDF) crasher med Dockers standard på 64 MB delt hukommelse.
@@ -68,7 +68,7 @@ services:
 
     labels:
       - "homelab.stack=games"
-      - "homelab.service=dnd-webui-dev"
+      - "homelab.service=dnd-tools-dev"
 
     logging:
       driver: json-file

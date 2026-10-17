@@ -203,7 +203,7 @@ def versioner(aeldre_end=None):
     import appinfo
     import yaml
     i = appinfo.info()
-    print(f"dnd-scripts {i['label']}")
+    print(f"D&D Tools {i['label']}")
     rader = []
     for navn in faelles.karakter_navne():
         for fil in ("choices.yaml", "character.yaml"):

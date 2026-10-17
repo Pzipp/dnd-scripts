@@ -7,7 +7,7 @@ COPY mapcreator/ ./
 ENV MAPCREATOR_OUT=/out
 RUN npm run build
 
-# Webui til dnd-scripts: HTML og PDF. PDF laves med Playwright + Chromium (scripts/pdf/).
+# Webui til dnd-tools: HTML og PDF. PDF laves med Playwright + Chromium (scripts/pdf/).
 # Python 3.12 er nødvendig: scripts/karakterark bruger f-strings, der kræver det.
 FROM python:3.12-slim
 

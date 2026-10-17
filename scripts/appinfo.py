@@ -1,4 +1,4 @@
-"""Version og bygning af dnd-scripts: hvilken udgave koden er, og hvilke udgaver et kort eller en karakter er lavet og gemt med.
+"""Version og bygning af dnd-tools: hvilken udgave koden er, og hvilke udgaver et kort eller en karakter er lavet og gemt med.
 
 Udgaven (`VERSION`, SemVer) ændres kun ved en udgivelse (`scripts/release.py`). Bygningen er den commit, koden er bygget af: den læses
 fra miljøvariablen `APP_COMMIT` (sættes ved Docker-bygning), ellers direkte fra `.git` (uden at kalde git). Se docs/versioner.md.

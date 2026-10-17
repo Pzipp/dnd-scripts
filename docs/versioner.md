@@ -30,7 +30,7 @@ Skriv `område: hvad der er ændret på dansk`, fx `mapcreator: grottekanten som
 2. På `main`: `python3 scripts/release.py minor` (eller `patch`, `major`, eller et nummer `0.1.0`). Tilføj `--preview` for kun at se ændringslogen.
 3. Scriptet hæver `VERSION`, tilføjer et afsnit i `CHANGELOG.md` med alle commits siden sidste udgivelse (grupperet efter område), laver en commit `Udgivelse vX.Y.Z` og et annoteret tag. Skriv noter, du vil have med i udgivelsen (fx "OBS: kort fra før 0.2 åbnes og omdannes"), under `## Ikke udgivet` i `CHANGELOG.md` før du kører det; de kommer øverst i afsnittet.
 4. Send det afsted: `git push && git push origin vX.Y.Z`.
-5. Prod: bygges med bygningens commit, så den kan vises: `docker compose build --build-arg APP_COMMIT=$(git ls-remote https://github.com/Pzipp/dnd-scripts main | cut -c1-7) dnd-webui`, derefter `docker compose up -d dnd-webui`. Uden `APP_COMMIT` vises kun udgaven.
+5. Prod: bygges med bygningens commit, så den kan vises: `docker compose build --build-arg APP_COMMIT=$(git ls-remote https://github.com/Pzipp/dnd-tools main | cut -c1-7) dnd-tools`, derefter `docker compose up -d dnd-tools`. Uden `APP_COMMIT` vises kun udgaven.
 
 Første udgivelse: `python3 scripts/release.py 0.1.0`.
 

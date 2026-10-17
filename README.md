@@ -1,4 +1,4 @@
-# dnd-scripts
+# D&D Tools
 
 Gruppens værktøjer til **D&D 2024** på dansk: print-klare **karakterark** og **spell-/evnekort** i farve og sort/hvid. Hovedvejen er en **webui med en karakterbygger**, der slår valg op i 5etools' regeldata og laver ark og kort. En ældre kommandolinje (`dnd.py`) bruger håndskrevne YAML-filer og virker stadig.
 
