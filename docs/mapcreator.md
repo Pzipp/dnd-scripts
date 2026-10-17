@@ -75,7 +75,7 @@ Temaerne er data i `mapcreator/src/generator/themes.ts` (terrænpletter, vand, v
 
 ## Grottevægge og kløfter
 
-Linje-værktøjet har tre grottevægge (*Grottevæg, brun / mørk / is*) af overlappende sten til frie vægge og afgrænsninger samt *Kløft* og *Klippekant* til afgrunde. Grotte-temaet i generatoren bruger dem sammen med et mørkt fjeldmateriale.
+Linje-værktøjet har tre grottevægge (*Grottevæg, brun / mørk / is*) af overlappende sten til frie vægge og afgrænsninger samt *Kløft* og *Klippekant* til afgrunde. Grotte-temaet i generatoren bruger dem sammen med et mørkt fjeldmateriale. Desuden er tomrummets klippekant en linjestil (*Grottekant, brun / lilla / is*, gruppen *Kløft og klippe*): land i skygge, en lys kant, klippeflade af kantede sten og sort tomrum på den ene side af linjen (*Vend* skifter side, *Tykkelse* er det sorte felts dybde). Den bruger samme farver og tegning som Tomrum-penslen (`caveRim` i `render/lines.ts`).
 
 ## Kortstørrelse
 
