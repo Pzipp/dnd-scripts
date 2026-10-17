@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { generateMap, THEMES } from '../generator';
 import { parseDoc, serializeDoc } from '../model/doc';
 import { CELL_PX } from '../model/types';
@@ -56,6 +56,14 @@ describe('mure og tomrum', () => {
     const { drawWallsLayer, WALL_STYLES } = await import('../render/walls');
     const { createLayer } = await import('../model/doc');
     const gradient = { addColorStop() {} };
+    // grottekanten tegnes pixel for pixel i en hjælpe-canvas: en forfalsket, så testen kan køre uden browser
+    vi.stubGlobal('document', {
+      createElement: () => ({
+        width: 0,
+        height: 0,
+        getContext: () => ({ createImageData: (w: number, h: number) => ({ data: new Uint8ClampedArray(w * h * 4) }), putImageData() {} }),
+      }),
+    });
     const g = new Proxy({} as Record<string, unknown>, {
       get: (t, k: string) => (k in t ? t[k] : k.startsWith('create') ? () => gradient : () => undefined),
       set: (t, k: string, v) => ((t[k] = v), true),
@@ -65,5 +73,6 @@ describe('mure og tomrum', () => {
       layer.walls = [{ id: 'a', style: st.key, points: [[0, 0], [300, 0], [300, 200]], closed: false, thickness: st.thickness * CELL_PX, seed: 3, openings: [] }];
       expect(() => drawWallsLayer(g, layer, { lightAngle: 225 }, 1), st.key).not.toThrow();
     }
+    vi.unstubAllGlobals();
   });
 });
