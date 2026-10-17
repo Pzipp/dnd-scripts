@@ -33,6 +33,10 @@
     narrowQuery.addEventListener('change', on);
     return () => narrowQuery.removeEventListener('change', on);
   });
+  let appVersion = $state('');
+  $effect(() => {
+    fetch('/api/version').then((r) => r.json()).then((v) => (appVersion = v.label ?? '')).catch(() => {});
+  });
   let toolsH = $state(48);
   let tabsH = $state(0);
   let sheet = $state<'left' | 'right' | 'layers' | null>(null);
@@ -147,7 +151,7 @@
       {#if editor.tool === 'stamp' || (editor.tool === 'scatter' && !editor.scatterErase)}<ObjectPicker />{/if}
     {/if}
   </aside>
-  <main><Viewport /><div class="foot">{editor.doc.widthCells} × {editor.doc.heightCells} felter · {editor.doc.widthCells * CELL_PX} × {editor.doc.heightCells * CELL_PX} px</div></main>
+  <main><Viewport /><div class="foot">{editor.doc.widthCells} × {editor.doc.heightCells} felter · {editor.doc.widthCells * CELL_PX} × {editor.doc.heightCells * CELL_PX} px{appVersion ? ` · v${appVersion}` : ''}</div></main>
   <aside class="right" class:folded={objectsFolded && !narrow} class:open={sheet === 'right'}><Inspector collapsed={objectsFolded && !narrow} ontoggle={() => (objectsFolded = !objectsFolded)} /></aside>
   <aside class="layers" class:folded={layersFolded && !narrow} class:open={sheet === 'layers'}><LayerPanel collapsed={layersFolded && !narrow} ontoggle={() => (layersFolded = !layersFolded)} /></aside>
   <nav class="tabs" aria-label="Paneler" bind:offsetHeight={tabsH}>

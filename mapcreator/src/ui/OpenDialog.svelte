@@ -46,7 +46,7 @@
     {#each maps as m (m.id)}
       <li>
         <button class="open" onclick={() => open(m.id)}>
-          <span>{m.name}</span><small>{m.widthCells} × {m.heightCells} felter · {new Date(m.modified).toLocaleString('da-DK')}</small>
+          <span>{m.name}</span><small>{m.widthCells} × {m.heightCells} felter · {new Date(m.modified).toLocaleString('da-DK')}{m.savedWith ? ` · gemt med ${m.savedWith}` : ''}</small>
         </button>
         <button class="danger" onclick={() => remove(m)} title="Slet">Slet</button>
       </li>

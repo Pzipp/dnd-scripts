@@ -22,7 +22,7 @@ mapcreator/build-docker.sh check    # svelte-check (typer)
 mapcreator/build-docker.sh test     # vitest
 ```
 
-Dev-containeren (`dnd-webui-dev`, port 8082) har repoet bind-mountet, så en ny bygning er nok; genstart kun ved ændringer i Python eller compose. Kort gemmes i `$USERDATA/mapcreator/` (`/userdata` i containeren = `vol/userdata/` i arbejdsmappen). Produktionsimaget bygger klienten i et Node-trin i `Dockerfile`, og Node er ikke med i det endelige image.
+Dev-containeren (`dnd-tools-dev`, port 8082) har repoet bind-mountet, så en ny bygning er nok; genstart kun ved ændringer i Python eller compose. Kort gemmes i `$USERDATA/mapcreator/` (`/userdata` i containeren = `vol/userdata/` i arbejdsmappen). Produktionsimaget bygger klienten i et Node-trin i `Dockerfile`, og Node er ikke med i det endelige image.
 
 `mapcreator/build-docker.sh` kan køre flere gange samtidig (hver container får et unikt navn).
 
@@ -66,4 +66,4 @@ Grundprincippet: **dokumentet er sandheden**, alt andet (billedet, eksporten) ud
 
 ## Sådan tester man
 
-`check` og `test` skal være grønne før en commit. Røgtesten (`tests/objects.test.ts`) tegner **alle** genstande med alle parametervalg på et lærred, der tager imod alle kald, og `tests/tags.test.ts` tjekker tags. Visuelt tjekkes genstande i galleriet (`/mapcreator?galleri=1`, se `docs/mapcreator-objects.md`), og hele flowet med Playwright i dev-containeren (`docker exec dnd-webui-dev python <script>`; skærmbilleder kan åbnes med Read-værktøjet).
+`check` og `test` skal være grønne før en commit. Røgtesten (`tests/objects.test.ts`) tegner **alle** genstande med alle parametervalg på et lærred, der tager imod alle kald, og `tests/tags.test.ts` tjekker tags. Visuelt tjekkes genstande i galleriet (`/mapcreator?galleri=1`, se `docs/mapcreator-objects.md`), og hele flowet med Playwright i dev-containeren (`docker exec dnd-tools-dev python <script>`; skærmbilleder kan åbnes med Read-værktøjet).

@@ -7,7 +7,7 @@ COPY mapcreator/ ./
 ENV MAPCREATOR_OUT=/out
 RUN npm run build
 
-# Webui til dnd-scripts: HTML og PDF. PDF laves med Playwright + Chromium (scripts/pdf/).
+# Webui til dnd-tools: HTML og PDF. PDF laves med Playwright + Chromium (scripts/pdf/).
 # Python 3.12 er nødvendig: scripts/karakterark bruger f-strings, der kræver det.
 FROM python:3.12-slim
 
@@ -27,6 +27,9 @@ RUN pip install --no-cache-dir -r requirements.txt -r webui/requirements.txt \
     && rm -rf /var/lib/apt/lists/*
 
 COPY . .
+# Bygningens commit (vises som version, og skrives i kort og karakterer). Sæt den med --build-arg APP_COMMIT=<hash>.
+ARG APP_COMMIT=""
+ENV APP_COMMIT=${APP_COMMIT}
 COPY --from=mapcreator-build /out /app/webui/static/mapcreator
 
 EXPOSE 8080

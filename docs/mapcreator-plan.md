@@ -42,12 +42,12 @@ Et værktøj til at lave alle slags D&D-kort (top-down, malet stil, uden grid i 
 ## Sådan genoptager du
 
 ```bash
-cd stacks/games/dnd-scripts-dev
+cd stacks/games/dnd-tools-dev
 mapcreator/build-docker.sh test    # enhedstests
 mapcreator/build-docker.sh check   # typer
 mapcreator/build-docker.sh build   # bygger til webui/static/mapcreator/
 ```
 
-Siden er på `http://localhost:8082/mapcreator` (dev-containeren `dnd-webui-dev`; koden er bind-mountet, så en ny bygning er nok, genstart er kun nødvendig ved ændringer i Python eller compose). Test mod 8082, aldrig prod (8081). Tegn og tjek visuelt med Playwright i containeren (se tidligere tests: `docker exec dnd-webui-dev python <script>`).
+Siden er på `http://localhost:8082/mapcreator` (dev-containeren `dnd-tools-dev`; koden er bind-mountet, så en ny bygning er nok, genstart er kun nødvendig ved ændringer i Python eller compose). Test mod 8082, aldrig prod (8081). Tegn og tjek visuelt med Playwright i containeren (se tidligere tests: `docker exec dnd-tools-dev python <script>`).
 
 Arbejdsregler: commit færdige ændringer løbende; rør ikke andres `karakterer/`-ændringer; `docs/mapcreator.md` opdateres, når noget ændres.

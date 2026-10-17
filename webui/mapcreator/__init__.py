@@ -19,6 +19,8 @@ from pathlib import Path
 from flask import Blueprint, jsonify, make_response, render_template, request, send_file
 from PIL import Image, UnidentifiedImageError
 
+from builder.appstamp import appinfo
+
 bp = Blueprint("mapcreator", __name__)
 
 STATIC_DIST = Path(__file__).resolve().parent.parent / "static" / "mapcreator"
@@ -122,6 +124,7 @@ def list_maps():
                 "id": p.stem, "name": str(d.get("name", p.stem)),
                 "widthCells": d.get("widthCells"), "heightCells": d.get("heightCells"),
                 "modified": _iso(p.stat().st_mtime),
+                "createdWith": appinfo.label(d.get("app"), "created"), "savedWith": appinfo.label(d.get("app"), "saved"),
             })
         except (OSError, ValueError):
             continue  # ødelagt fil: vis den ikke, men slet den heller ikke
@@ -143,6 +146,12 @@ def put_map(map_id: str):
     if (request.content_length or 0) > MAX_DOC_BYTES:
         raise Fejl("Kortet er for stort.", 413)
     doc = validate_doc(request.get_json(silent=True), map_id)
+    previous = None
+    try:
+        previous = json.loads(p.read_text("utf-8")).get("app") if p.is_file() else None
+    except (OSError, ValueError):
+        pass
+    doc["app"] = appinfo.stamp(previous)  # udgaven kortet er lavet og gemt med (se docs/versioner.md)
     with LOCK:  # skriv atomisk: aldrig et halvt kort på disken
         fd, tmp = tempfile.mkstemp(dir=p.parent, prefix=".tmp-", suffix=".json")
         try:

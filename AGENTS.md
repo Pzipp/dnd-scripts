@@ -19,7 +19,7 @@ Nye karakterer bygges i webui'en. Ældre karakterer (`karakter.yaml`) bruges sta
 
 ## Kommandoer
 
-Porte i homelab: dev-containeren `dnd-webui-dev` svarer på `http://localhost:8082`, prod (`../dnd-scripts`) på 8081; 8080 er kun containerens interne port og standarden for `python webui/app.py`. Test mod 8082, aldrig 8081 (prod).
+Porte i homelab: dev-containeren `dnd-tools-dev` svarer på `http://localhost:8082`, prod (`../dnd-tools`) på 8081; 8080 er kun containerens interne port og standarden for `python webui/app.py`. Test mod 8082, aldrig 8081 (prod).
 
 Webui'en (nyt system) køres fra roden: `python webui/app.py` (se `webui/README.md`) eller i Docker. Alle karakterbyggerens data kommer fra 5etools' regeldata, som skal være mountet på `/e5tools`.
 
@@ -60,6 +60,7 @@ python3 dnd.py llm-opslag ...                 # opslag i 5etools til dig (script
 | `data/feats-XPHB-da.yaml` | Alle XPHB-feats med danske felter. Lav/opdatér med `scripts/data/feats_xphb.py`. Format: `docs/feats-xphb-da.md` |
 | `vol/` | Runtime-data, ikke i git. `vol/userdata/` (mountet som `/userdata`) er brugerdata og det eneste sted at tage backup: `mapcreator/`, `simpelvtt/`, `homebrew/` |
 | `docs/` | Formater, navnekonvention, todo |
+| `VERSION`, `CHANGELOG.md`, `scripts/release.py`, `scripts/appinfo.py` | Udgaver, ændringslog og udgivelsesscript; se `docs/versioner.md`. Commit-beskeder skrives `område: hvad` |
 
 ## Sådan laver du en ny karakter med `character.yaml` (LLM-vejen, uden bygger)
 

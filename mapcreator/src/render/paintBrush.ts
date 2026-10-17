@@ -3,8 +3,8 @@ import {
   type PaintData, type Tile, type TileSnapshot,
 } from '../model/paint';
 import type { Rect } from '../model/types';
-import { setShadeScale, shade, shadeOut } from './materials';
-import { fbm, valueNoise } from './noise';
+import { isVoid, rimShade, setShadeScale, shade, shadeOut } from './materials';
+import { fbm, smoothstep, valueNoise } from './noise';
 import { isStoneMaterial, STONE_STYLES, stone, stoneAt, stoneColor } from './stones';
 
 const T = PAINT_TILE;
@@ -49,6 +49,9 @@ interface StrokeTile {
 }
 
 const smooth = (t: number): number => t * t * (3 - 2 * t);
+
+/** Tomrummets klippekant: bredden (verdenspixels) fra land til sort, som penselkanten spredes over. */
+const RIM_WIDTH = 34;
 
 export class PaintStroke {
   private tiles = new Map<number, StrokeTile>();
@@ -151,6 +154,7 @@ export class PaintStroke {
     setShadeScale(s);
     const inner = R * b.hardness;
     const hard = b.hardness >= 0.97;
+    const rim = !b.erase && isVoid(b.material);
     const ns = R * 0.5 + 8;
     let touched = false;
     for (let ty = Math.floor(y0 / T); ty <= Math.floor(y1 / T); ty++) {
@@ -177,7 +181,10 @@ export class PaintStroke {
                 const n1 = fbm(wxx / ns, wyy / ns, b.seed + 501, 2) - 0.5;
                 const n2 = valueNoise(wxx / 7, wyy / 7, b.seed + 503) - 0.5;
                 const rr = R + amp * (n1 * 2.2 + n2 * 0.9);
-                a = Math.min(1, Math.max(0, (rr - d) * s * 1.4 + 0.5));
+                a = rim ? Math.min(1, Math.max(0, (rr - d) / RIM_WIDTH)) : Math.min(1, Math.max(0, (rr - d) * s * 1.4 + 0.5));
+              } else if (rim) {
+                // tomrum: dækningen stiger jævnt fra kanten og ind, og det bliver til klippekanten
+                a = Math.min(1, Math.max(0, (R - d) / RIM_WIDTH));
               } else if (hard) {
                 a = Math.min(1, Math.max(0, (R - d) * s + 0.5));
               } else if (d >= R) a = 0;
@@ -225,6 +232,10 @@ export class PaintStroke {
       data[o + 3] = a0 * (1 - m) * 255;
       return;
     }
+    if (isVoid(b.material)) {
+      this.composeVoid(st, i, wx, wy, r0, g0, b0, a0);
+      return;
+    }
     if (!st.has[i]) {
       this.colorAt(wx, wy);
       st.color[o] = shadeOut[0]!;
@@ -245,6 +256,28 @@ export class PaintStroke {
     data[o + 1] = st.color[o + 1]! * k1 + g0 * k0;
     data[o + 2] = st.color[o + 2]! * k1 + b0 * k0;
     data[o + 3] = oa * 255;
+  }
+
+  /**
+   * Tomrum med klippekant: maskens værdi (0 ved kanten, 1 inde i tomrummet) bliver til land i skygge, en lys klippekant, klippeflade og
+   * så sort. Land er flisens indhold før strøget; hvor der intet er, vokser kanten ud af ingenting.
+   */
+  private composeVoid(st: StrokeTile, i: number, wx: number, wy: number, r0: number, g0: number, b0: number, a0: number): void {
+    const data = st.tile.data;
+    const o = i * 4;
+    const jag = (valueNoise(wx / 7, wy / 7, this.brush.seed + 121) - 0.5) * 0.16;
+    const u = Math.min(1, Math.max(0, st.mask[i]! / 255 + jag));
+    const dark = 1 - 0.5 * smoothstep(0.0, 0.2, u);
+    const lr = r0 * dark, lg = g0 * dark, lb = b0 * dark;
+    rimShade(this.brush.material, wx, wy, this.brush.seed);
+    const toRim = smoothstep(0.17, 0.21, u);
+    const toBlack = smoothstep(0.7, 0.84, u);
+    const hi = 1 + 0.3 * Math.max(0, 1 - Math.abs(u - 0.2) / 0.025);
+    const k = 1 - toBlack;
+    data[o] = (lr + (shadeOut[0]! * hi - lr) * toRim) * k + 8 * toBlack;
+    data[o + 1] = (lg + (shadeOut[1]! * hi - lg) * toRim) * k + 7 * toBlack;
+    data[o + 2] = (lb + (shadeOut[2]! * hi - lb) * toRim) * k + 9 * toBlack;
+    data[o + 3] = (a0 + (1 - a0) * smoothstep(0.1, 0.2, u)) * 255;
   }
 
   /** Hele sten: hver sten, der rører området, males helt, hvis maskens værdi ved stenens midte er stor nok (hver sten kun én gang). */

@@ -24,6 +24,20 @@ from mapcreator import bp as mapcreator_bp  # noqa: E402
 app.register_blueprint(mapcreator_bp)
 
 
+from builder.appstamp import appinfo  # noqa: E402
+
+
+@app.context_processor
+def _app_info():
+    return {"app_info": appinfo.info()}
+
+
+@app.get("/api/version")
+def api_version():
+    """Udgaven og bygningen, webui'en kører (se docs/versioner.md)."""
+    return jsonify(appinfo.info())
+
+
 @app.get("/")
 def index():
     return render_template("menu.html")

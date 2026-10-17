@@ -54,7 +54,7 @@ Webuien serverer selve 5etools-siden fra `/e5tools` på `/5etools/` (fx `http://
 
 Repoet har en `Dockerfile` (Python 3.12, Flask, PyYAML, ruamel.yaml og Playwright med Chromium til PDF) og en `docker-compose.yml`. Imaget er stort (Chromium), så den første build tager et stykke tid. Containeren lytter internt på port 8080 (`PORT` i `Dockerfile`).
 
-`docker-compose.yml` er tilpasset homelab-opsætningen: containeren `dnd-webui-dev`, det eksterne netværk `proxy`, 5etools-klonen mountet på `/e5tools` og `vol/userdata/homebrew` oven på `/e5tools/homebrew`. En tjeneste `5etools-updater` kører først og opdaterer 5etools-klonen, hvis `UPDATE_E5TOOLS=true`. Compose-filen publicerer porten som `${DND_BIND_IP:-127.0.0.1}:${DND_PORT:-8081}:8080`. Porte på værten: **dev (`dnd-webui-dev`, denne mappe) kører på 8082, prod (`../dnd-scripts`) på 8081**; internt i containeren er det altid 8080. Hent aldrig porten fra gætværk; den står i `.env` (`DND_PORT`). Fra projektets rod:
+`docker-compose.yml` er tilpasset homelab-opsætningen: containeren `dnd-tools-dev`, det eksterne netværk `proxy`, 5etools-klonen mountet på `/e5tools` og `vol/userdata/homebrew` oven på `/e5tools/homebrew`. En tjeneste `5etools-updater` kører først og opdaterer 5etools-klonen, hvis `UPDATE_E5TOOLS=true`. Compose-filen publicerer porten som `${DND_BIND_IP:-127.0.0.1}:${DND_PORT:-8081}:8080`. Porte på værten: **dev (`dnd-tools-dev`, denne mappe) kører på 8082, prod (`../dnd-tools`) på 8081**; internt i containeren er det altid 8080. Hent aldrig porten fra gætværk; den står i `.env` (`DND_PORT`). Fra projektets rod:
 
 ```bash
 cp .env.example .env     # ret efter behov (se nedenfor)
@@ -80,8 +80,8 @@ Compose-filen bind-mounter hele repoet, så `karakterer/` og `udskrifter/` ligge
 Uden compose kan du køre containeren direkte (husk 5etools-data på `/e5tools`):
 
 ```bash
-docker build -t dnd-webui .
-docker run --rm -p 8080:8080 --user "$(id -u):$(id -g)" -v "$PWD":/app -v /sti/til/5etools:/e5tools:ro dnd-webui
+docker build -t dnd-tools .
+docker run --rm -p 8080:8080 --user "$(id -u):$(id -g)" -v "$PWD":/app -v /sti/til/5etools:/e5tools:ro dnd-tools
 ```
 
 ## Stop

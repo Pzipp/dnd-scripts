@@ -196,12 +196,49 @@ def tjek():
     return fejl_antal
 
 
+def versioner(aeldre_end=None):
+    """Vis udgaven og hvilke udgaver karakterer og kort er lavet og gemt med (kun de ældre end `aeldre_end`, hvis den er givet)."""
+    import json
+    sys.path.insert(0, os.path.join(HER, "scripts"))
+    import appinfo
+    import yaml
+    i = appinfo.info()
+    print(f"D&D Tools {i['label']}")
+    rader = []
+    for navn in faelles.karakter_navne():
+        for fil in ("choices.yaml", "character.yaml"):
+            p = os.path.join(faelles.karakter_mappe(navn), fil)
+            if os.path.isfile(p):
+                try:
+                    app = (yaml.safe_load(open(p, encoding="utf-8")) or {}).get("app")
+                except yaml.YAMLError:
+                    app = None
+                rader.append((f"karakter {navn}", appinfo.label(app, "created"), appinfo.label(app, "saved"), app))
+                break
+    maps = os.path.join(os.environ.get("USERDATA", os.path.join(HER, "vol", "userdata")), "mapcreator", "maps")
+    if os.path.isdir(maps):
+        for f in sorted(os.listdir(maps)):
+            if f.endswith(".json") and not f.startswith("."):
+                try:
+                    d = json.load(open(os.path.join(maps, f), encoding="utf-8"))
+                except (OSError, ValueError):
+                    continue
+                rader.append((f"kort {d.get('name', f)}", appinfo.label(d.get("app"), "created"), appinfo.label(d.get("app"), "saved"), d.get("app")))
+    vist = [r for r in rader if aeldre_end is None or appinfo.older_than(r[3], aeldre_end)]
+    for navn, lavet, gemt, _ in vist:
+        print(f"  {navn:<32} lavet med {lavet:<22} sidst gemt med {gemt}")
+    if aeldre_end is not None:
+        print(f"{len(vist)} af {len(rader)} er gemt med en ældre udgave end {aeldre_end}.")
+
+
 def main():
     if len(sys.argv) > 1 and sys.argv[1] == "llm-opslag":   # alle flag (også --help) går videre til scriptet
         sys.exit(llm_opslag(sys.argv[2:]) or 0)
     ap = argparse.ArgumentParser(prog="dnd.py", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="kommando", required=True)
     sub.add_parser("liste", help="vis karakterer")
+    p = sub.add_parser("version", help="vis udgaven og hvilke udgaver karakterer og kort er lavet med")
+    p.add_argument("--aeldre-end", metavar="X.Y.Z", help="vis kun dem, der sidst er gemt med en ældre udgave")
     sub.add_parser("tjek", help="byg alt og meld fejl i data")
     p = sub.add_parser("tjek-ark", help="kontrollér character.yaml + sheets.yaml (exit 1 ved fejl)")
     p.add_argument("navn", help="karakternavn (mappen i karakterer/)")
@@ -225,6 +262,8 @@ def main():
 
     if a.kommando == "liste":
         return liste()
+    if a.kommando == "version":
+        return versioner(a.aeldre_end)
     if a.kommando == "tjek":
         sys.exit(1 if tjek() else 0)
     if a.kommando == "tjek-ark":

@@ -37,6 +37,9 @@ export const WALL_STYLES: WallStyleDef[] = [
   { key: 'bridge_stone', label: 'Stenbro', thickness: 1.6, fill: [150, 148, 140], outline: [40, 38, 36], joint: [84, 82, 78], shadow: 14, group: 'Broer', solid: false },
   { key: 'bridge_rope', label: 'Rebbro', thickness: 1.2, fill: [136, 104, 70], outline: [40, 26, 14], joint: [90, 64, 38], shadow: 10, group: 'Broer', solid: false },
   { key: 'cliff', label: 'Klippekant', thickness: 1.5, fill: [120, 104, 88], outline: [30, 24, 18], joint: [70, 58, 48], shadow: 0, group: 'Kløft og klippe', solid: false },
+  { key: 'cave_rim', label: 'Grottekant, brun', thickness: 1.5, fill: [132, 108, 84], outline: [30, 24, 18], joint: [64, 50, 40], shadow: 0, group: 'Kløft og klippe', solid: false },
+  { key: 'cave_rim_purple', label: 'Grottekant, lilla', thickness: 1.5, fill: [110, 80, 108], outline: [24, 16, 28], joint: [46, 34, 52], shadow: 0, group: 'Kløft og klippe', solid: false },
+  { key: 'cave_rim_ice', label: 'Grottekant, is', thickness: 1.5, fill: [206, 226, 238], outline: [40, 62, 84], joint: [104, 136, 160], shadow: 0, group: 'Kløft og klippe', solid: false },
   { key: 'ravine', label: 'Kløft', thickness: 2, fill: [120, 104, 88], outline: [30, 24, 18], joint: [70, 58, 48], shadow: 0, group: 'Kløft og klippe', solid: false },
   { key: 'fence', label: 'Hegn', thickness: 0.35, fill: [140, 100, 62], outline: [42, 26, 14], joint: [80, 54, 30], shadow: 6, group: 'Hæk og hegn', solid: false },
 ];

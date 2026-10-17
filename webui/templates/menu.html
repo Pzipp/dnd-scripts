@@ -6,7 +6,7 @@
   <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="48x48">
   <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32.png') }}">
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
-  <title>D&D WebUI</title>
+  <title>D&D Tools</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&display=swap">
   <link rel="stylesheet" href="{{ url_for('static', filename='builder.css') }}">
 </head>
@@ -39,5 +39,6 @@
     <a class="btn secondary" href="/5etools/managebrew.html">Manage Homebrew</a>
   </section>
 </main>
+<footer class="app-version" style="text-align:center;color:var(--muted,#888);font-size:12px;padding:14px">Version {{ app_info.label }}</footer>
 </body>
 </html>

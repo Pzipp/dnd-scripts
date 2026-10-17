@@ -23,6 +23,7 @@ from pathlib import Path
 
 import yaml
 
+from . import appstamp
 from . import e5tools as e
 from . import feat_rules
 from . import items
@@ -82,8 +83,9 @@ def load(character_dir: Path) -> dict:
 
 
 def save(character_dir: Path, data: dict) -> None:
-    choices_path(character_dir).write_text(
-        yaml.safe_dump(data, allow_unicode=True, sort_keys=False), encoding="utf-8"
+    path = choices_path(character_dir)
+    path.write_text(
+        yaml.safe_dump(appstamp.stamped(path, data), allow_unicode=True, sort_keys=False), encoding="utf-8"
     )
 
 

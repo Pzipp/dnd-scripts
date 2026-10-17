@@ -2,7 +2,7 @@
 # Opdaterer /e5tools (git-klonen bag 5etools) ved container-start, hvis
 # UPDATE_E5TOOLS=true er sat. Fejler aldrig hårdt - en manglende opdatering
 # (ingen netværk, lokale ændringer, afvigende historie) skal ikke blokere
-# dnd-webui fra at starte, kun logges, så den kørende version altid bevares
+# dnd-tools fra at starte, kun logges, så den kørende version altid bevares
 # som fallback.
 
 if [ "${UPDATE_E5TOOLS:-false}" != "true" ]; then

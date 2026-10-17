@@ -37,7 +37,7 @@ export interface MapElement {
 export type WallStyle =
   | 'stone' | 'brick' | 'wood' | 'hedge' | 'cave' | 'cave_dark' | 'cave_ice'
   // linjer uden åbninger: stier, broer, kløfter og hegn (se render/lines.ts)
-  | 'path_dirt' | 'path_gravel' | 'path_cobble' | 'bridge_wood' | 'bridge_stone' | 'bridge_rope' | 'cliff' | 'ravine' | 'fence';
+  | 'path_dirt' | 'path_gravel' | 'path_cobble' | 'bridge_wood' | 'bridge_stone' | 'bridge_rope' | 'cliff' | 'ravine' | 'cave_rim' | 'cave_rim_purple' | 'cave_rim_ice' | 'fence';
 export type OpeningKind = 'opening' | 'door' | 'double_door' | 'gate' | 'window';
 
 /** Noget i en mur: en åbning, en dør, en port eller et vindue. Placeret ved buelængden `at` fra murens start. */

@@ -1,6 +1,8 @@
 import { pathLength, pathOf, pointAt, subPath, type Pt } from '../model/walls';
 import type { Layer, MapDoc, Wall } from '../model/types';
 import { rng, rgb, shift, type RGB } from '../objects/util';
+import { rimShade, shadeOut } from './materials';
+import { fbm, smoothstep, valueNoise } from './noise';
 import { wallStyle } from './walls';
 
 /**
@@ -215,6 +217,104 @@ function rock(g: G, path: Pt[], t: number, R: () => number, def: { fill: RGB; ou
   }
 }
 
+/** Tomrummets klippekant som linje: materialet bag grottekanterne, de tre `Tomrum`-materialer i paletten (id 19–21). */
+const CAVE_RIM: Record<string, number> = { cave_rim: 19, cave_rim_purple: 20, cave_rim_ice: 21 };
+/** Bredden (pixels) fra land til sort; samme som penslens `RIM_WIDTH`. */
+const CAVE_RIM_W = 34;
+/** Bredden af skyggen på landsiden. */
+const CAVE_SHADOW = 14;
+const CAVE_CHUNK = 512;
+
+/**
+ * Grottekant: land i skygge, en lys klippekant, klippeflade af kantede sten og så sort tomrum (til `depth`), på den ene side af linjen.
+ * Samme farver og udseende som Tomrum-penslen, men regnet ud fra afstanden til linjen. Tegnes i stykker á 512 × 512 pixels.
+ */
+function caveRim(g: G, path: Pt[], depth: number, flip: 1 | -1, voidId: number, seed: number): void {
+  const reach = Math.max(depth, CAVE_RIM_W) + 4;
+  const m = Math.max(reach, CAVE_SHADOW) + 4;
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const p of path) {
+    x0 = Math.min(x0, p[0]); y0 = Math.min(y0, p[1]); x1 = Math.max(x1, p[0]); y1 = Math.max(y1, p[1]);
+  }
+  x0 = Math.floor(x0 - m); y0 = Math.floor(y0 - m); x1 = Math.ceil(x1 + m); y1 = Math.ceil(y1 + m);
+  const C = CAVE_CHUNK;
+  const dist = new Float32Array(C * C);
+  const side = new Int8Array(C * C);
+  const cv = document.createElement('canvas');
+  cv.width = C;
+  cv.height = C;
+  const cg = cv.getContext('2d');
+  if (!cg) return;
+  const img = cg.createImageData(C, C);
+  const out = img.data;
+  for (let cy = y0; cy < y1; cy += C) {
+    for (let cx = x0; cx < x1; cx += C) {
+      dist.fill(1e9);
+      let any = false;
+      for (let k = 0; k + 1 < path.length; k++) {
+        const [ax, ay] = path[k]!;
+        const [bx, by] = path[k + 1]!;
+        const sx0 = Math.max(cx, Math.floor(Math.min(ax, bx) - m));
+        const sx1 = Math.min(cx + C, Math.ceil(Math.max(ax, bx) + m));
+        const sy0 = Math.max(cy, Math.floor(Math.min(ay, by) - m));
+        const sy1 = Math.min(cy + C, Math.ceil(Math.max(ay, by) + m));
+        if (sx0 >= sx1 || sy0 >= sy1) continue;
+        const dx = bx - ax, dy = by - ay;
+        const len2 = dx * dx + dy * dy || 1;
+        const len = Math.sqrt(len2);
+        for (let py = sy0; py < sy1; py++) {
+          for (let px = sx0; px < sx1; px++) {
+            const qx = px + 0.5 - ax, qy = py + 0.5 - ay;
+            const u = Math.min(1, Math.max(0, (qx * dx + qy * dy) / len2));
+            const d = Math.hypot(qx - dx * u, qy - dy * u);
+            const i = (py - cy) * C + (px - cx);
+            if (d < dist[i]!) {
+              dist[i] = d;
+              // positivt til den side, som `offsetPath` kalder positiv (højre for retningen på skærmen)
+              side[i] = (-(dx * qy - dy * qx) / len) * flip >= 0 ? 1 : -1;
+              any = true;
+            }
+          }
+        }
+      }
+      if (!any) continue;
+      out.fill(0);
+      for (let py = cy; py < Math.min(cy + C, y1); py++) {
+        for (let px = cx; px < Math.min(cx + C, x1); px++) {
+          const i = (py - cy) * C + (px - cx);
+          const d0 = dist[i]!;
+          if (d0 > m) continue;
+          const wx = px + 0.5, wy = py + 0.5;
+          // ujævn kant: lidt støj på afstanden
+          const sd = side[i]! * d0 + (fbm(wx / 30, wy / 30, seed + 101, 2) - 0.5) * 8 + (valueNoise(wx / 7, wy / 7, seed + 103) - 0.5) * 3;
+          const o = i * 4;
+          if (sd <= -CAVE_SHADOW) continue;
+          if (sd < 0) {
+            // landsiden: en blød skygge
+            out[o + 3] = 115 * smoothstep(-CAVE_SHADOW, 0, sd);
+            continue;
+          }
+          if (sd > depth) continue;
+          const jag = (valueNoise(wx / 7, wy / 7, seed + 121) - 0.5) * 0.16;
+          const u = Math.max(0, sd / CAVE_RIM_W + jag);
+          rimShade(voidId, wx, wy, seed);
+          const toRim = smoothstep(0.17, 0.21, u);
+          const toBlack = smoothstep(0.7, 0.84, u);
+          const hi = 1 + 0.3 * Math.max(0, 1 - Math.abs(u - 0.2) / 0.025);
+          const k = 1 - toBlack;
+          const shadow = 0.5 * smoothstep(0, 0.2, u);
+          out[o] = shadeOut[0]! * hi * toRim * k + 8 * toBlack;
+          out[o + 1] = shadeOut[1]! * hi * toRim * k + 7 * toBlack;
+          out[o + 2] = shadeOut[2]! * hi * toRim * k + 9 * toBlack;
+          out[o + 3] = (shadow + (1 - shadow) * toRim) * 255;
+        }
+      }
+      cg.putImageData(img, 0, 0);
+      g.drawImage(cv, cx, cy);
+    }
+  }
+}
+
 export function drawLine(g: G, wall: Wall, layer: Layer, doc: Pick<MapDoc, 'lightAngle'>, deviceScale: number): void {
   const def = wallStyle(wall.style);
   const t = wall.thickness;
@@ -311,6 +411,11 @@ export function drawLine(g: G, wall: Wall, layer: Layer, doc: Pick<MapDoc, 'ligh
       }
       break;
     }
+    case 'cave_rim':
+    case 'cave_rim_purple':
+    case 'cave_rim_ice':
+      caveRim(g, path, t, flip as 1 | -1, CAVE_RIM[wall.style]!, wall.seed);
+      break;
     case 'cliff':
       rock(g, path, t, R, def, [flip as 1 | -1], t);
       break;
