@@ -72,6 +72,8 @@ Fælles felter: `id`, `name`, `type` (`ground | floor | objects | walls | effect
 
 ## Versionering
 
+`app` ({ `created`, `saved` }: `version`, `build`, `date`) sættes af serveren ved hvert gem og fortæller, hvilken udgave af programmet kortet er lavet og sidst gemt med (se [versioner.md](versioner.md)); klienten kender det ikke og beholder det ikke, så serveren bevarer `created` fra filen på disken. Kort fra før versioneringen har ikke feltet.
+
 `version` er dokumentets formatversion (nu 1). Et kort fra en nyere version afvises af klienten med en forklaring. Nye valgfrie felter kræver ikke ny version; klienten udfylder manglende felter ved indlæsning (`parseDoc` i `model/doc.ts`), så ældre kort stadig kan åbnes.
 
 ## API

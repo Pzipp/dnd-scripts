@@ -7,6 +7,9 @@ export interface MapInfo {
   widthCells: number;
   heightCells: number;
   modified: string;
+  /** Udgaven kortet er lavet og sidst gemt med, fx "0.1.0 (5af8728)" eller "før versionering". */
+  createdWith?: string;
+  savedWith?: string;
 }
 
 async function call<T>(url: string, init?: RequestInit): Promise<T> {

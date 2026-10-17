@@ -60,6 +60,7 @@ python3 dnd.py llm-opslag ...                 # opslag i 5etools til dig (script
 | `data/feats-XPHB-da.yaml` | Alle XPHB-feats med danske felter. Lav/opdatér med `scripts/data/feats_xphb.py`. Format: `docs/feats-xphb-da.md` |
 | `vol/` | Runtime-data, ikke i git. `vol/userdata/` (mountet som `/userdata`) er brugerdata og det eneste sted at tage backup: `mapcreator/`, `simpelvtt/`, `homebrew/` |
 | `docs/` | Formater, navnekonvention, todo |
+| `VERSION`, `CHANGELOG.md`, `scripts/release.py`, `scripts/appinfo.py` | Udgaver, ændringslog og udgivelsesscript; se `docs/versioner.md`. Commit-beskeder skrives `område: hvad` |
 
 ## Sådan laver du en ny karakter med `character.yaml` (LLM-vejen, uden bygger)
 

@@ -10,6 +10,10 @@ egen regeldata (mountet på `/e5tools`, se `webui/builder/e5tools.py`).
 En karakter har en `karakter.yaml` (den manuelle, ældre vej), en
 `choices.yaml` (bygget via `/builder`) eller begge (konverterede karakterer beholder deres gamle fil).
 
+## `app`: hvilken udgave filen er lavet med
+
+Øverst i filen står `app` (`created` og `saved`, hver med `version`, `build` og `date`), som serveren sætter ved hvert gem; se [versioner.md](versioner.md). Rediger det ikke i hånden. Karakterer fra før versioneringen har intet `app` og vises som "før versionering". `character.yaml` har det samme mærke.
+
 ## To niveauer: rå valg vs. udregnet state
 
 `choices.yaml` gemmer kun de RÅ VALG brugeren har truffet (hvilken race,
